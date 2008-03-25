@@ -122,9 +122,6 @@ jfieldID AwtWindow::warningStringID;
 jfieldID AwtWindow::locationByPlatformID;
 jfieldID AwtWindow::autoRequestFocusID;
 
-jclass AwtWindow::wwindowPeerCls;
-jmethodID AwtWindow::getActiveWindowsMID;
-
 jfieldID AwtWindow::sysXID;
 jfieldID AwtWindow::sysYID;
 jfieldID AwtWindow::sysWID;

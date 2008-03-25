@@ -57,11 +57,6 @@ public:
     static jfieldID screenID; /* screen number passed over from WindowPeer */
     static jfieldID autoRequestFocusID;
 
-    /* WWindowPeer class */
-    static jclass wwindowPeerCls;
-    /* long[] getActiveWindowHandles() method in WWindowPeer */
-    static jmethodID getActiveWindowsMID;
-
     // The coordinates at the peer.
     static jfieldID sysXID;
     static jfieldID sysYID;
