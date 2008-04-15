@@ -1530,6 +1530,9 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
                 // so ProgressSource is null.
                 http.parseHTTP(responses, null, this);
 
+                /* Log the response to the CONNECT */
+                logger.fine(responses.toString());
+
                 statusLine = responses.getValue(0);
                 StringTokenizer st = new StringTokenizer(statusLine);
                 st.nextToken();
@@ -1626,6 +1629,10 @@ public class HttpURLConnection extends java.net.HttpURLConnection {
         requests.setIfNotSet("Accept", acceptString);
 
         setPreemptiveProxyAuthentication(requests);
+
+         /* Log the CONNECT request */
+        logger.fine(requests.toString());
+
         http.writeRequests(requests, null);
         // remove CONNECT header
         requests.set(0, null, null);
