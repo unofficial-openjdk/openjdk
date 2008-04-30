@@ -114,7 +114,9 @@ FILES_cpp_shared = \
 
 
 ifeq ($(PLATFORM),windows)
-FILES_c_platform = fontpath.c
+FILES_c_platform = fontpath.c \
+                   lcdglyph.c
+
 FILES_cpp_platform =
 else
 FILES_c_platform = X11FontScaler.c \
