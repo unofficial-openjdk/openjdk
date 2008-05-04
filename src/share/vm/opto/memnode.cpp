@@ -241,36 +241,91 @@ Node *MemNode::Ideal_common(PhaseGVN *phase, bool can_reshape) {
 }
 
 // Helper function for proving some simple control dominations.
-// Attempt to prove that control input 'dom' dominates (or equals) 'sub'.
+// Attempt to prove that all control inputs of 'dom' dominate 'sub'.
 // Already assumes that 'dom' is available at 'sub', and that 'sub'
 // is not a constant (dominated by the method's StartNode).
 // Used by MemNode::find_previous_store to prove that the
 // control input of a memory operation predates (dominates)
 // an allocation it wants to look past.
-bool MemNode::detect_dominating_control(Node* dom, Node* sub) {
-  if (dom == NULL)      return false;
-  if (dom->is_Proj())   dom = dom->in(0);
-  if (dom->is_Start())  return true; // anything inside the method
-  if (dom->is_Root())   return true; // dom 'controls' a constant
-  int cnt = 20;                      // detect cycle or too much effort
-  while (sub != NULL) {              // walk 'sub' up the chain to 'dom'
-    if (--cnt < 0)   return false;   // in a cycle or too complex
-    if (sub == dom)  return true;
-    if (sub->is_Start())  return false;
-    if (sub->is_Root())   return false;
-    Node* up = sub->in(0);
-    if (sub == up && sub->is_Region()) {
-      for (uint i = 1; i < sub->req(); i++) {
-        Node* in = sub->in(i);
-        if (in != NULL && !in->is_top() && in != sub) {
-          up = in; break;            // take any path on the way up to 'dom'
+bool MemNode::all_controls_dominate(Node* dom, Node* sub) {
+  if (dom == NULL || dom->is_top() || sub == NULL || sub->is_top())
+    return false; // Conservative answer for dead code
+
+  // Check 'dom'.
+  dom = dom->find_exact_control(dom);
+  if (dom == NULL || dom->is_top())
+    return false; // Conservative answer for dead code
+
+  if (dom->is_Start() || dom->is_Root() || dom == sub)
+    return true;
+
+  // 'dom' dominates 'sub' if its control edge and control edges
+  // of all its inputs dominate or equal to sub's control edge.
+
+  // Currently 'sub' is either Allocate, Initialize or Start nodes.
+  assert(sub->is_Allocate() || sub->is_Initialize() || sub->is_Start(), "expecting only these nodes");
+
+  // Get control edge of 'sub'.
+  sub = sub->find_exact_control(sub->in(0));
+  if (sub == NULL || sub->is_top())
+    return false; // Conservative answer for dead code
+
+  assert(sub->is_CFG(), "expecting control");
+
+  if (sub == dom)
+    return true;
+
+  if (sub->is_Start() || sub->is_Root())
+    return false;
+
+  {
+    // Check all control edges of 'dom'.
+
+    ResourceMark rm;
+    Arena* arena = Thread::current()->resource_area();
+    Node_List nlist(arena);
+    Unique_Node_List dom_list(arena);
+
+    dom_list.push(dom);
+    bool only_dominating_controls = false;
+
+    for (uint next = 0; next < dom_list.size(); next++) {
+      Node* n = dom_list.at(next);
+      if (!n->is_CFG() && n->pinned()) {
+        // Check only own control edge for pinned non-control nodes.
+        n = n->find_exact_control(n->in(0));
+        if (n == NULL || n->is_top())
+          return false; // Conservative answer for dead code
+        assert(n->is_CFG(), "expecting control");
+      }
+      if (n->is_Start() || n->is_Root()) {
+        only_dominating_controls = true;
+      } else if (n->is_CFG()) {
+        if (n->dominates(sub, nlist))
+          only_dominating_controls = true;
+        else
+          return false;
+      } else {
+        // First, own control edge.
+        Node* m = n->find_exact_control(n->in(0));
+        if (m == NULL)
+          continue;
+        if (m->is_top())
+          return false; // Conservative answer for dead code
+        dom_list.push(m);
+
+        // Now, the rest of edges.
+        uint cnt = n->req();
+        for (uint i = 1; i < cnt; i++) {
+          m = n->find_exact_control(n->in(i));
+          if (m == NULL || m->is_top())
+            continue;
+          dom_list.push(m);
         }
       }
     }
-    if (sub == up)  return false;    // some kind of tight cycle
-    sub = up;
+    return only_dominating_controls;
   }
-  return false;
 }
 
 //---------------------detect_ptr_independence---------------------------------
@@ -291,9 +346,9 @@ bool MemNode::detect_ptr_independence(Node* p1, AllocateNode* a1,
     return (a1 != a2);
   } else if (a1 != NULL) {                  // one allocation a1
     // (Note:  p2->is_Con implies p2->in(0)->is_Root, which dominates.)
-    return detect_dominating_control(p2->in(0), a1->in(0));
+    return all_controls_dominate(p2, a1);
   } else { //(a2 != NULL)                   // one allocation a2
-    return detect_dominating_control(p1->in(0), a2->in(0));
+    return all_controls_dominate(p1, a2);
   }
   return false;
 }
@@ -379,8 +434,7 @@ Node* MemNode::find_previous_store(PhaseTransform* phase) {
         known_identical = true;
       else if (alloc != NULL)
         known_independent = true;
-      else if (ctrl != NULL &&
-               detect_dominating_control(ctrl, st_alloc->in(0)))
+      else if (all_controls_dominate(this, st_alloc))
         known_independent = true;
 
       if (known_independent) {
@@ -549,6 +603,10 @@ Node *MemNode::Ideal_DU_postCCP( PhaseCCP *ccp ) {
         adr = adr->in(AddPNode::Base);
         continue;
 
+      case Op_DecodeN:         // No change to NULL-ness, so peek thru
+        adr = adr->in(1);
+        continue;
+
       case Op_CastPP:
         // If the CastPP is useless, just peek on through it.
         if( ccp->type(adr) == ccp->type(adr->in(1)) ) {
@@ -605,6 +663,7 @@ Node *MemNode::Ideal_DU_postCCP( PhaseCCP *ccp ) {
       case Op_CastX2P:          // no null checks on native pointers
       case Op_Parm:             // 'this' pointer is not null
       case Op_LoadP:            // Loading from within a klass
+      case Op_LoadN:            // Loading from within a klass
       case Op_LoadKlass:        // Loading from within a klass
       case Op_ConP:             // Loading from a klass
       case Op_CreateEx:         // Sucking up the guts of an exception oop
@@ -669,7 +728,9 @@ void LoadNode::dump_spec(outputStream *st) const {
 
 //----------------------------LoadNode::make-----------------------------------
 // Polymorphic factory method:
-LoadNode *LoadNode::make( Compile *C, Node *ctl, Node *mem, Node *adr, const TypePtr* adr_type, const Type *rt, BasicType bt ) {
+Node *LoadNode::make( PhaseGVN& gvn, Node *ctl, Node *mem, Node *adr, const TypePtr* adr_type, const Type *rt, BasicType bt ) {
+  Compile* C = gvn.C;
+
   // sanity check the alias category against the created node type
   assert(!(adr_type->isa_oopptr() &&
            adr_type->offset() == oopDesc::klass_offset_in_bytes()),
@@ -687,7 +748,24 @@ LoadNode *LoadNode::make( Compile *C, Node *ctl, Node *mem, Node *adr, const Typ
   case T_FLOAT:   return new (C, 3) LoadFNode(ctl, mem, adr, adr_type, rt              );
   case T_DOUBLE:  return new (C, 3) LoadDNode(ctl, mem, adr, adr_type, rt              );
   case T_ADDRESS: return new (C, 3) LoadPNode(ctl, mem, adr, adr_type, rt->is_ptr()    );
-  case T_OBJECT:  return new (C, 3) LoadPNode(ctl, mem, adr, adr_type, rt->is_oopptr());
+  case T_OBJECT:
+#ifdef _LP64
+    if (adr->bottom_type()->is_narrow()) {
+      const TypeNarrowOop* narrowtype;
+      if (rt->isa_narrowoop()) {
+        narrowtype = rt->is_narrowoop();
+      } else {
+        narrowtype = rt->is_oopptr()->make_narrowoop();
+      }
+      Node* load  = gvn.transform(new (C, 3) LoadNNode(ctl, mem, adr, adr_type, narrowtype));
+
+      return DecodeNNode::decode(&gvn, load);
+    } else
+#endif
+      {
+        assert(!adr->bottom_type()->is_narrow(), "should have got back a narrow oop");
+        return new (C, 3) LoadPNode(ctl, mem, adr, adr_type, rt->is_oopptr());
+      }
   }
   ShouldNotReachHere();
   return (LoadNode*)NULL;
@@ -1068,7 +1146,7 @@ Node *LoadNode::Ideal(PhaseGVN *phase, bool can_reshape) {
     Node*    base   = AddPNode::Ideal_base_and_offset(address, phase, ignore);
     if (base != NULL
         && phase->type(base)->higher_equal(TypePtr::NOTNULL)
-        && detect_dominating_control(base->in(0), phase->C->start())) {
+        && all_controls_dominate(base, phase->C->start())) {
       // A method-invariant, non-null address (constant or 'this' argument).
       set_req(MemNode::Control, NULL);
     }
@@ -1743,7 +1821,9 @@ Node* LoadRangeNode::Identity( PhaseTransform *phase ) {
 //=============================================================================
 //---------------------------StoreNode::make-----------------------------------
 // Polymorphic factory method:
-StoreNode* StoreNode::make( Compile *C, Node* ctl, Node* mem, Node* adr, const TypePtr* adr_type, Node* val, BasicType bt ) {
+StoreNode* StoreNode::make( PhaseGVN& gvn, Node* ctl, Node* mem, Node* adr, const TypePtr* adr_type, Node* val, BasicType bt ) {
+  Compile* C = gvn.C;
+
   switch (bt) {
   case T_BOOLEAN:
   case T_BYTE:    return new (C, 4) StoreBNode(ctl, mem, adr, adr_type, val);
@@ -1754,7 +1834,19 @@ StoreNode* StoreNode::make( Compile *C, Node* ctl, Node* mem, Node* adr, const T
   case T_FLOAT:   return new (C, 4) StoreFNode(ctl, mem, adr, adr_type, val);
   case T_DOUBLE:  return new (C, 4) StoreDNode(ctl, mem, adr, adr_type, val);
   case T_ADDRESS:
-  case T_OBJECT:  return new (C, 4) StorePNode(ctl, mem, adr, adr_type, val);
+  case T_OBJECT:
+#ifdef _LP64
+    if (adr->bottom_type()->is_narrow() ||
+        (UseCompressedOops && val->bottom_type()->isa_klassptr() &&
+         adr->bottom_type()->isa_rawptr())) {
+      const TypePtr* type = val->bottom_type()->is_ptr();
+      Node* cp = EncodePNode::encode(&gvn, val);
+      return new (C, 4) StoreNNode(ctl, mem, adr, adr_type, cp);
+    } else
+#endif
+      {
+        return new (C, 4) StorePNode(ctl, mem, adr, adr_type, val);
+      }
   }
   ShouldNotReachHere();
   return (StoreNode*)NULL;
@@ -2136,7 +2228,7 @@ Node* ClearArrayNode::clear_memory(Node* ctl, Node* mem, Node* dest,
     Node* adr = new (C, 4) AddPNode(dest, dest, phase->MakeConX(offset));
     adr = phase->transform(adr);
     const TypePtr* atp = TypeRawPtr::BOTTOM;
-    mem = StoreNode::make(C, ctl, mem, adr, atp, phase->zerocon(T_INT), T_INT);
+    mem = StoreNode::make(*phase, ctl, mem, adr, atp, phase->zerocon(T_INT), T_INT);
     mem = phase->transform(mem);
     offset += BytesPerInt;
   }
@@ -2199,7 +2291,7 @@ Node* ClearArrayNode::clear_memory(Node* ctl, Node* mem, Node* dest,
     Node* adr = new (C, 4) AddPNode(dest, dest, phase->MakeConX(done_offset));
     adr = phase->transform(adr);
     const TypePtr* atp = TypeRawPtr::BOTTOM;
-    mem = StoreNode::make(C, ctl, mem, adr, atp, phase->zerocon(T_INT), T_INT);
+    mem = StoreNode::make(*phase, ctl, mem, adr, atp, phase->zerocon(T_INT), T_INT);
     mem = phase->transform(mem);
     done_offset += BytesPerInt;
   }
@@ -2489,7 +2581,7 @@ bool InitializeNode::detect_init_independence(Node* n,
     // must have preceded the init, or else be equal to the init.
     // Even after loop optimizations (which might change control edges)
     // a store is never pinned *before* the availability of its inputs.
-    if (!MemNode::detect_dominating_control(ctl, this->in(0)))
+    if (!MemNode::all_controls_dominate(n, this))
       return false;                  // failed to prove a good control
 
   }
@@ -2556,9 +2648,7 @@ int InitializeNode::captured_store_insertion_point(intptr_t start,
   assert(allocation() != NULL, "must be present");
 
   // no negatives, no header fields:
-  if (start < (intptr_t) sizeof(oopDesc))  return FAIL;
-  if (start < (intptr_t) sizeof(arrayOopDesc) &&
-      start < (intptr_t) allocation()->minimum_header_size())  return FAIL;
+  if (start < (intptr_t) allocation()->minimum_header_size())  return FAIL;
 
   // after a certain size, we bail out on tracking all the stores:
   intptr_t ti_limit = (TrackedInitializationLimit * HeapWordSize);
@@ -2895,14 +2985,14 @@ InitializeNode::coalesce_subword_stores(intptr_t header_size,
     if (!split) {
       ++new_long;
       off[nst] = offset;
-      st[nst++] = StoreNode::make(C, ctl, zmem, adr, atp,
+      st[nst++] = StoreNode::make(*phase, ctl, zmem, adr, atp,
                                   phase->longcon(con), T_LONG);
     } else {
       // Omit either if it is a zero.
       if (con0 != 0) {
         ++new_int;
         off[nst]  = offset;
-        st[nst++] = StoreNode::make(C, ctl, zmem, adr, atp,
+        st[nst++] = StoreNode::make(*phase, ctl, zmem, adr, atp,
                                     phase->intcon(con0), T_INT);
       }
       if (con1 != 0) {
@@ -2910,7 +3000,7 @@ InitializeNode::coalesce_subword_stores(intptr_t header_size,
         offset += BytesPerInt;
         adr = make_raw_address(offset, phase);
         off[nst]  = offset;
-        st[nst++] = StoreNode::make(C, ctl, zmem, adr, atp,
+        st[nst++] = StoreNode::make(*phase, ctl, zmem, adr, atp,
                                     phase->intcon(con1), T_INT);
       }
     }
@@ -3018,9 +3108,10 @@ Node* InitializeNode::complete_stores(Node* rawctl, Node* rawmem, Node* rawptr,
   Node* zmem = zero_memory();   // initially zero memory state
   Node* inits = zmem;           // accumulating a linearized chain of inits
   #ifdef ASSERT
-  intptr_t last_init_off = sizeof(oopDesc);  // previous init offset
-  intptr_t last_init_end = sizeof(oopDesc);  // previous init offset+size
-  intptr_t last_tile_end = sizeof(oopDesc);  // previous tile offset+size
+  intptr_t first_offset = allocation()->minimum_header_size();
+  intptr_t last_init_off = first_offset;  // previous init offset
+  intptr_t last_init_end = first_offset;  // previous init offset+size
+  intptr_t last_tile_end = first_offset;  // previous tile offset+size
   #endif
   intptr_t zeroes_done = header_size;
 
@@ -3155,7 +3246,8 @@ Node* InitializeNode::complete_stores(Node* rawctl, Node* rawmem, Node* rawptr,
 bool InitializeNode::stores_are_sane(PhaseTransform* phase) {
   if (is_complete())
     return true;                // stores could be anything at this point
-  intptr_t last_off = sizeof(oopDesc);
+  assert(allocation() != NULL, "must be present");
+  intptr_t last_off = allocation()->minimum_header_size();
   for (uint i = InitializeNode::RawStores; i < req(); i++) {
     Node* st = in(i);
     intptr_t st_off = get_store_offset(st, phase);
