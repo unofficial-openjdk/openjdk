@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,38 +23,22 @@
 
 /*
  * @test
- * @bug 4896879
- * @summary Tests for StringIndexOutOfBoundsException in Introspector.getTargetEventInfo()
- * @author Mark Davidson
+ * @bug 6690791
+ * @summary Checks that there is no ClassCastException
+ * in MenuSelectionManager.processMouseEvent()
+ * @author Mikhail Lapshin
+ * @run main bug6690791
  */
 
-import java.util.EventListener;
+import javax.swing.*;
+import java.awt.event.MouseEvent;
 
-public class Test4896879 {
-    public static void main(String[] args) {
-        test(A.class);
-        test(B.class);
-    }
-
-    private static void test(Class type) {
-        if (BeanUtils.getEventSetDescriptors(type).length != 0) {
-            throw new Error("Should not have any EventSetDescriptors");
-        }
-    }
-
-    public static class A implements EventListener {
-        public void addB(B a) {
-        }
-
-        public void removeB(B b) {
-        }
-    }
-
-    public static class B implements EventListener {
-        public void addA(A a) {
-        }
-
-        public void removeA(A a) {
-        }
+public class bug6690791 {
+    public static void main(String[] args) throws Exception {
+        MouseEvent me = new MouseEvent(new JLabel(), MouseEvent.MOUSE_CLICKED,
+                System.currentTimeMillis(), MouseEvent.ALT_MASK,
+                10, 10, 100, 100, 1, false, MouseEvent.BUTTON1);
+        me.setSource(new Object());
+        MenuSelectionManager.defaultManager().processMouseEvent(me);
     }
 }
