@@ -357,6 +357,7 @@ TOOLS = \
 	com/sun/jarsigner	\
 	com/sun/mirror		\
 	com/sun/source          \
+	com/sun/tools/classfile \
 	com/sun/tools/doclets   \
 	com/sun/tools/example/debug/expr \
 	com/sun/tools/example/debug/tty  \
@@ -366,6 +367,7 @@ TOOLS = \
 	com/sun/tools/javadoc   \
 	com/sun/tools/apt       \
 	com/sun/tools/javah     \
+	com/sun/tools/javap     \
 	com/sun/tools/corba     \
 	com/sun/tools/internal/xjc       \
 	com/sun/tools/internal/ws       \
@@ -558,6 +560,8 @@ $(NOT_RT_JAR_LIST): FRC
 	$(ECHO) "sun/tools/java/" >> $@
 	$(ECHO) "sun/tools/javac/" >> $@
 	$(ECHO) "sun/tools/javap/" >> $@
+	$(ECHO) "com/sun/tools/classfile/" >> $@
+	$(ECHO) "com/sun/tools/javap/" >> $@
 	$(ECHO) "sun/tools/jconsole/" >> $@
 	$(ECHO) "sun/tools/jps/" >> $@
 	$(ECHO) "sun/tools/jstat/" >> $@
