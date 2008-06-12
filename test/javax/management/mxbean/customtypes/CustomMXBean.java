@@ -1,12 +1,10 @@
 /*
- * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,16 +21,10 @@
  * have any questions.
  */
 
-package sun.nio.ch;
+// CustomMXBean.java - see CustomTypeTest
 
+package customtypes;
 
-// Signalling operations on native threads
-
-
-class NativeThread {
-
-    static long current() { return -1; }
-
-    static void signal(long nt) { }
-
+public interface CustomMXBean {
+    public Integer getX();
 }
