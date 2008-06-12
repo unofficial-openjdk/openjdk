@@ -79,6 +79,7 @@ public abstract class SunGraphicsEnvironment extends GraphicsEnvironment
 
     public static boolean isLinux;
     public static boolean isSolaris;
+    public static boolean isOpenSolaris;
     public static boolean isWindows;
     public static boolean noType1Font;
     private static Font defaultFont;
@@ -168,6 +169,23 @@ public abstract class SunGraphicsEnvironment extends GraphicsEnvironment
                     isLinux = true;
                 } else if ("SunOS".equals(osName)) {
                     isSolaris = true;
+                    String version = System.getProperty("os.version", "0.0");
+                    try {
+                        float ver = Float.parseFloat(version);
+                        if (ver > 5.10f) {
+                            File f = new File("/etc/release");
+                            FileInputStream fis = new FileInputStream(f);
+                            InputStreamReader isr
+                                = new InputStreamReader(fis, "ISO-8859-1");
+                            BufferedReader br = new BufferedReader(isr);
+                            String line = br.readLine();
+                            if (line.indexOf("OpenSolaris") >= 0) {
+                                isOpenSolaris = true;
+                            }
+                            fis.close();
+                        }
+                    } catch (Exception e) {
+                    }
                 } else if ("Windows".equals(osName)) {
                     isWindows = true;
                 }
@@ -175,11 +193,7 @@ public abstract class SunGraphicsEnvironment extends GraphicsEnvironment
                 noType1Font = "true".
                     equals(System.getProperty("sun.java2d.noType1Font"));
 
-                if (isOpenJDK()) {
-                    String[] fontInfo = FontManager.getDefaultPlatformFont();
-                    defaultFontName = fontInfo[0];
-                    defaultFontFileName = fontInfo[1];
-                } else {
+                if (!isOpenJDK()) {
                     defaultFontName = lucidaFontName;
                     if (useAbsoluteFontFileNames()) {
                         defaultFontFileName =
@@ -245,6 +259,11 @@ public abstract class SunGraphicsEnvironment extends GraphicsEnvironment
                  * that might be specified.
                  */
                 fontConfig = createFontConfiguration();
+                if (isOpenJDK()) {
+                    String[] fontInfo = FontManager.getDefaultPlatformFont();
+                    defaultFontName = fontInfo[0];
+                    defaultFontFileName = fontInfo[1];
+                }
                 getPlatformFontPathFromFontConfig();
 
                 String extraFontPath = fontConfig.getExtraFontPath();
@@ -1052,7 +1071,7 @@ public abstract class SunGraphicsEnvironment extends GraphicsEnvironment
             String fontFileName =
                 getFileNameFromPlatformName(platformFontName);
             String[] nativeNames = null;
-            if (fontFileName == null) {
+            if (fontFileName == null || fontFileName.equals(platformFontName)){
                 /* No file located, so register using the platform name,
                  * i.e. as a native font.
                  */
