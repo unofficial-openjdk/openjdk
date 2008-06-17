@@ -467,8 +467,7 @@ public class ContainerOrderFocusTraversalPolicy extends FocusTraversalPolicy
      *         enabled, and focusable; <code>false</code> otherwise
      */
     protected boolean accept(Component aComponent) {
-        if (!(aComponent.isVisible() && aComponent.isDisplayable() &&
-              aComponent.isFocusable() && aComponent.isEnabled())) {
+        if (!aComponent.canBeFocusOwner()) {
             return false;
         }
 
