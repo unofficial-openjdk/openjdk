@@ -62,6 +62,7 @@ import static com.sun.tools.javac.util.ListBuffer.lb;
 // TEMP, until we have a more efficient way to save doc comment info
 import com.sun.tools.javac.parser.DocCommentScanner;
 
+import java.util.Queue;
 import javax.lang.model.SourceVersion;
 
 /** This class could be the main entry point for GJC when GJC is used as a
@@ -454,11 +455,11 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
             return log.nerrors;
     }
 
-    protected final <T> List<T> stopIfError(ListBuffer<T> listBuffer) {
+    protected final <T> Queue<T> stopIfError(Queue<T> queue) {
         if (errorCount() == 0)
-            return listBuffer.toList();
+            return queue;
         else
-            return List.nil();
+            return ListBuffer.lb();
     }
 
     protected final <T> List<T> stopIfError(List<T> list) {
@@ -764,8 +765,8 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
                 break;
 
             case BY_FILE:
-                for (List<Env<AttrContext>> list : groupByFile(flow(attribute(todo))).values())
-                    generate(desugar(list));
+                for (Queue<Env<AttrContext>> queue : groupByFile(flow(attribute(todo))).values())
+                    generate(desugar(queue));
                 break;
 
             case BY_TODO:
@@ -782,7 +783,7 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
         }
 
         if (verbose) {
-            elapsed_msec = elapsed(start_msec);;
+            elapsed_msec = elapsed(start_msec);
             printVerbose("total", Long.toString(elapsed_msec));
         }
 
@@ -1020,11 +1021,11 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
      * Attribution of the entries in the list does not stop if any errors occur.
      * @returns a list of environments for attributd classes.
      */
-    public List<Env<AttrContext>> attribute(ListBuffer<Env<AttrContext>> envs) {
+    public Queue<Env<AttrContext>> attribute(Queue<Env<AttrContext>> envs) {
         ListBuffer<Env<AttrContext>> results = lb();
-        while (envs.nonEmpty())
-            results.append(attribute(envs.next()));
-        return results.toList();
+        while (!envs.isEmpty())
+            results.append(attribute(envs.remove()));
+        return results;
     }
 
     /**
@@ -1062,10 +1063,10 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
      * If any errors occur, an empty list will be returned.
      * @returns the list of attributed parse trees
      */
-    public List<Env<AttrContext>> flow(List<Env<AttrContext>> envs) {
+    public Queue<Env<AttrContext>> flow(Queue<Env<AttrContext>> envs) {
         ListBuffer<Env<AttrContext>> results = lb();
-        for (List<Env<AttrContext>> l = envs; l.nonEmpty(); l = l.tail) {
-            flow(l.head, results);
+        for (Env<AttrContext> env: envs) {
+            flow(env, results);
         }
         return stopIfError(results);
     }
@@ -1073,7 +1074,7 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
     /**
      * Perform dataflow checks on an attributed parse tree.
      */
-    public List<Env<AttrContext>> flow(Env<AttrContext> env) {
+    public Queue<Env<AttrContext>> flow(Env<AttrContext> env) {
         ListBuffer<Env<AttrContext>> results = lb();
         flow(env, results);
         return stopIfError(results);
@@ -1126,10 +1127,10 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
      * If any errors occur, an empty list will be returned.
      * @returns a list containing the classes to be generated
      */
-    public List<Pair<Env<AttrContext>, JCClassDecl>> desugar(List<Env<AttrContext>> envs) {
+    public Queue<Pair<Env<AttrContext>, JCClassDecl>> desugar(Queue<Env<AttrContext>> envs) {
         ListBuffer<Pair<Env<AttrContext>, JCClassDecl>> results = lb();
-        for (List<Env<AttrContext>> l = envs; l.nonEmpty(); l = l.tail)
-            desugar(l.head, results);
+        for (Env<AttrContext> env: envs)
+            desugar(env, results);
         return stopIfError(results);
     }
 
@@ -1139,7 +1140,7 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
      * the current implicitSourcePolicy is taken into account.
      * The preparation stops as soon as an error is found.
      */
-    protected void desugar(Env<AttrContext> env, ListBuffer<Pair<Env<AttrContext>, JCClassDecl>> results) {
+    protected void desugar(Env<AttrContext> env, Queue<Pair<Env<AttrContext>, JCClassDecl>> results) {
         if (errorCount() > 0)
             return;
 
@@ -1174,7 +1175,7 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
                     List<JCTree> pdef = lower.translateTopLevelClass(env, env.tree, localMake);
                     if (pdef.head != null) {
                         assert pdef.tail.isEmpty();
-                        results.append(new Pair<Env<AttrContext>, JCClassDecl>(env, (JCClassDecl)pdef.head));
+                        results.add(new Pair<Env<AttrContext>, JCClassDecl>(env, (JCClassDecl)pdef.head));
                     }
                 }
                 return;
@@ -1188,7 +1189,7 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
                     rootClasses.contains((JCClassDecl)untranslated) &&
                     ((cdef.mods.flags & (Flags.PROTECTED|Flags.PUBLIC)) != 0 ||
                      cdef.sym.packge().getQualifiedName() == names.java_lang)) {
-                    results.append(new Pair<Env<AttrContext>, JCClassDecl>(env, removeMethodBodies(cdef)));
+                    results.add(new Pair<Env<AttrContext>, JCClassDecl>(env, removeMethodBodies(cdef)));
                 }
                 return;
             }
@@ -1204,7 +1205,7 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
                 JCClassDecl cdef = (JCClassDecl)env.tree;
                 if (untranslated instanceof JCClassDecl &&
                     rootClasses.contains((JCClassDecl)untranslated)) {
-                    results.append(new Pair<Env<AttrContext>, JCClassDecl>(env, cdef));
+                    results.add(new Pair<Env<AttrContext>, JCClassDecl>(env, cdef));
                 }
                 return;
             }
@@ -1218,7 +1219,7 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
             //generate code for each class
             for (List<JCTree> l = cdefs; l.nonEmpty(); l = l.tail) {
                 JCClassDecl cdef = (JCClassDecl)l.head;
-                results.append(new Pair<Env<AttrContext>, JCClassDecl>(env, cdef));
+                results.add(new Pair<Env<AttrContext>, JCClassDecl>(env, cdef));
             }
         }
         finally {
@@ -1269,15 +1270,14 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
      * based upon the compiler's options.
      * Generation stops if an error occurs while writing files.
      */
-    public void generate(List<Pair<Env<AttrContext>, JCClassDecl>> list) {
-        generate(list, null);
+    public void generate(Queue<Pair<Env<AttrContext>, JCClassDecl>> queue) {
+        generate(queue, null);
     }
 
-    public void generate(List<Pair<Env<AttrContext>, JCClassDecl>> list, ListBuffer<JavaFileObject> results) {
+    public void generate(Queue<Pair<Env<AttrContext>, JCClassDecl>> queue, ListBuffer<JavaFileObject> results) {
         boolean usePrintSource = (stubOutput || sourceOutput || printFlat);
 
-        for (List<Pair<Env<AttrContext>, JCClassDecl>> l = list; l.nonEmpty(); l = l.tail) {
-            Pair<Env<AttrContext>, JCClassDecl> x = l.head;
+        for (Pair<Env<AttrContext>, JCClassDecl> x: queue) {
             Env<AttrContext> env = x.fst;
             JCClassDecl cdef = x.snd;
 
@@ -1319,26 +1319,17 @@ public class JavaCompiler implements ClassReader.SourceCompleter {
     }
 
         // where
-        Map<JCCompilationUnit, List<Env<AttrContext>>> groupByFile(List<Env<AttrContext>> list) {
+        Map<JCCompilationUnit, Queue<Env<AttrContext>>> groupByFile(Queue<Env<AttrContext>> envs) {
             // use a LinkedHashMap to preserve the order of the original list as much as possible
-            Map<JCCompilationUnit, List<Env<AttrContext>>> map = new LinkedHashMap<JCCompilationUnit, List<Env<AttrContext>>>();
-            Set<JCCompilationUnit> fixupSet = new HashSet<JCTree.JCCompilationUnit>();
-            for (List<Env<AttrContext>> l = list; l.nonEmpty(); l = l.tail) {
-                Env<AttrContext> env = l.head;
-                List<Env<AttrContext>> sublist = map.get(env.toplevel);
-                if (sublist == null)
-                    sublist = List.of(env);
-                else {
-                    // this builds the list for the file in reverse order, so make a note
-                    // to reverse the list before returning.
-                    sublist = sublist.prepend(env);
-                    fixupSet.add(env.toplevel);
+            Map<JCCompilationUnit, Queue<Env<AttrContext>>> map = new LinkedHashMap<JCCompilationUnit, Queue<Env<AttrContext>>>();
+            for (Env<AttrContext> env: envs) {
+                Queue<Env<AttrContext>> sublist = map.get(env.toplevel);
+                if (sublist == null) {
+                    sublist = new ListBuffer<Env<AttrContext>>();
+                    map.put(env.toplevel, sublist);
                 }
-                map.put(env.toplevel, sublist);
+                sublist.add(env);
             }
-            // fixup any lists that need reversing back to the correct order
-            for (JCTree.JCCompilationUnit tree: fixupSet)
-                map.put(tree, map.get(tree).reverse());
             return map;
         }
 
