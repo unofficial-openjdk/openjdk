@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -945,6 +945,9 @@ class CommandLineFlags {
                                                                             \
   diagnostic(bool, UseIncDec, true,                                         \
           "Use INC, DEC instructions on x86")                               \
+                                                                            \
+  product(bool, UseNewLongLShift, false,                                    \
+          "Use optimized bitwise shift left")                               \
                                                                             \
   product(bool, UseStoreImmI16, true,                                       \
           "Use store immediate 16-bits value instruction on x86")           \

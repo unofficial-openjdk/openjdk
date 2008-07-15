@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,7 @@ extern void vm_direct_exit(int code);
 // Shutdown the VM but do not exit the process
 extern void vm_shutdown();
 // Shutdown the VM and abort the process
-extern void vm_abort();
+extern void vm_abort(bool dump_core=true);
 
 // Trigger any necessary notification of the VM being shutdown
 extern void notify_vm_shutdown();

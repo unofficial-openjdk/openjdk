@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -447,6 +447,7 @@ void Compile::Shorten_branches(Label *labels, int& code_size, int& reloc_size, i
             // We've got a winner.  Replace this branch.
             MachNode *replacement = mach->short_branch_version(this);
             b->_nodes.map(j, replacement);
+            mach->subsume_by(replacement);
 
             // Update the jmp_end size to save time in our
             // next pass.

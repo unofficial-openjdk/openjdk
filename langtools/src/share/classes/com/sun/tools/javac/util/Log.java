@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,11 +33,13 @@ import java.util.Map;
 import java.util.Set;
 import javax.tools.DiagnosticListener;
 import javax.tools.JavaFileObject;
-import com.sun.tools.javac.code.Source;
+
+import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.tree.JCTree;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticPosition;
 import com.sun.tools.javac.util.JCDiagnostic.DiagnosticType;
 import com.sun.tools.javac.util.JCDiagnostic.SimpleDiagnosticPosition;
+
 import static com.sun.tools.javac.util.LayoutCharacters.*;
 
 /** A class for error logs. Reports errors and warnings, and
@@ -82,10 +84,6 @@ public class Log {
     /** Switch: emit warning messages.
      */
     public boolean emitWarnings;
-
-    /** Enforce mandatory warnings.
-     */
-    private boolean enforceMandatoryWarnings;
 
     /** Print stack trace on errors?
      */
@@ -135,9 +133,6 @@ public class Log {
         DiagnosticListener<? super JavaFileObject> diagListener =
             context.get(DiagnosticListener.class);
         this.diagListener = diagListener;
-
-        Source source = Source.instance(context);
-        this.enforceMandatoryWarnings = source.enforceMandatoryWarnings();
     }
     // where
         private int getIntOption(Options options, String optionName, int defaultValue) {
@@ -470,10 +465,7 @@ public class Log {
      *  @param args   Fields of the warning message.
      */
     public void mandatoryWarning(DiagnosticPosition pos, String key, Object ... args) {
-        if (enforceMandatoryWarnings)
-            report(diags.mandatoryWarning(source, pos, key, args));
-        else
-            report(diags.warning(source, pos, key, args));
+        report(diags.mandatoryWarning(source, pos, key, args));
     }
 
     /** Report a warning that cannot be suppressed.
@@ -511,34 +503,43 @@ public class Log {
     }
 
     /** Provide a non-fatal notification, unless suppressed by the -nowarn option.
+     *  @param file   The file to which the note applies.
+     *  @param key    The key for the localized notification message.
+     *  @param args   Fields of the notification message.
+     */
+    public void note(JavaFileObject file, String key, Object ... args) {
+        report(diags.note(wrap(file), null, key, args));
+    }
+
+    /** Provide a non-fatal notification, unless suppressed by the -nowarn option.
      *  @param key    The key for the localized notification message.
      *  @param args   Fields of the notification message.
      */
     public void mandatoryNote(final JavaFileObject file, String key, Object ... args) {
-        JCDiagnostic.DiagnosticSource wrapper = null;
-        if (file != null) {
-            wrapper = new JCDiagnostic.DiagnosticSource() {
-                    public JavaFileObject getFile() {
-                        return file;
-                    }
-                    public CharSequence getName() {
-                        return JavacFileManager.getJavacBaseFileName(getFile());
-                    }
-                    public int getLineNumber(int pos) {
-                        return Log.this.getLineNumber(pos);
-                    }
-                    public int getColumnNumber(int pos) {
-                        return Log.this.getColumnNumber(pos);
-                    }
-                    public Map<JCTree, Integer> getEndPosTable() {
-                        return (endPosTables == null ? null : endPosTables.get(file));
-                    }
-                };
+        report(diags.mandatoryNote(wrap(file), key, args));
+    }
+
+    private JCDiagnostic.DiagnosticSource wrap(final JavaFileObject file) {
+        if (file == null) {
+            return null;
         }
-        if (enforceMandatoryWarnings)
-            report(diags.mandatoryNote(wrapper, key, args));
-        else
-            report(diags.note(wrapper, null, key, args));
+        return new JCDiagnostic.DiagnosticSource() {
+            public JavaFileObject getFile() {
+                return file;
+            }
+            public CharSequence getName() {
+                return JavacFileManager.getJavacBaseFileName(getFile());
+            }
+            public int getLineNumber(int pos) {
+                return Log.this.getLineNumber(pos);
+            }
+            public int getColumnNumber(int pos) {
+                return Log.this.getColumnNumber(pos);
+            }
+            public Map<JCTree, Integer> getEndPosTable() {
+                return (endPosTables == null ? null : endPosTables.get(file));
+            }
+        };
     }
 
     private DiagnosticPosition wrap(int pos) {

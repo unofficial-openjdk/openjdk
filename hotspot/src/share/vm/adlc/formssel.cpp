@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -729,6 +729,7 @@ bool InstructForm::captures_bottom_type() const {
         !strcmp(_matrule->_rChild->_opType,"DecodeN")    ||
         !strcmp(_matrule->_rChild->_opType,"EncodeP")    ||
         !strcmp(_matrule->_rChild->_opType,"LoadN")      ||
+        !strcmp(_matrule->_rChild->_opType,"LoadNKlass") ||
         !strcmp(_matrule->_rChild->_opType,"CreateEx")   ||  // type of exception
         !strcmp(_matrule->_rChild->_opType,"CheckCastPP")) ) return true;
   else if ( is_ideal_load() == Form::idealP )                return true;
