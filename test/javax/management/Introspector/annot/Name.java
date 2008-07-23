@@ -1,12 +1,10 @@
 /*
- * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
+ * published by the Free Software Foundation.
  *
  * This code is distributed in the hope that it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -23,27 +21,12 @@
  * have any questions.
  */
 
-// getver.cpp : Defines the entry point for the console application.
-//
+package annot;
 
-#include "stdafx.h"
-#include <windows.h>
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-int main(int argc, char* argv[])
-{
-        OSVERSIONINFO verInfo;
-
-        memset(&verInfo,0,sizeof(verInfo));
-        verInfo.dwOSVersionInfoSize = sizeof(verInfo);
-
-        if (GetVersionEx(&verInfo))
-        {
-                printf("%d %d %s",verInfo.dwMajorVersion,verInfo.dwMinorVersion,verInfo.szCSDVersion);
-        }
-        else
-        {
-                printf("No version info available");
-        }
-
-        return 0;
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Name {
+    String value();
 }
