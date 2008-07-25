@@ -1,5 +1,5 @@
 /*
- * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,42 +23,16 @@
  * have any questions.
  */
 
-package com.sun.tools.jdi;
+package javax.management;
 
-import com.sun.jdi.*;
-import java.util.EventObject;
-
-/*
- * The name "action" is used to avoid confusion
- * with JDI events.
+/**
+ * Interface implemented by objects that can be asked to send a notification.
  */
-class VMAction extends EventObject {
-    // Event ids
-    static final int VM_SUSPENDED = 1;
-    static final int VM_NOT_SUSPENDED = 2;
-
-    int id;
-    ThreadReference resumingThread;
-
-    VMAction(VirtualMachine vm, int id) {
-        this(vm, null, id);
-    }
-
-    // For id = VM_NOT_SUSPENDED, if resumingThread != null, then it is
-    // the only thread that is being resumed.
-     VMAction(VirtualMachine vm,  ThreadReference resumingThread, int id) {
-        super(vm);
-        this.id = id;
-        this.resumingThread = resumingThread;
-    }
-    VirtualMachine vm() {
-        return (VirtualMachine)getSource();
-    }
-    int id() {
-        return id;
-    }
-
-    ThreadReference resumingThread() {
-        return resumingThread;
-    }
+public interface SendNotification {
+    /**
+     * Sends a notification.
+     *
+     * @param notification The notification to send.
+     */
+    public void sendNotification(Notification notification);
 }
