@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -422,6 +422,8 @@ ParallelCompactData::create_vspace(size_t count, size_t element_size)
       return vspace;
     }
     delete vspace;
+    // Release memory reserved in the space.
+    rs.release();
   }
 
   return 0;

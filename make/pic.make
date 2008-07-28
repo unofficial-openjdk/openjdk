@@ -1,5 +1,5 @@
 #
-# Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2006-2007 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -22,34 +22,20 @@
 #  
 #
 
-HS_INTERNAL_NAME=jvm
-HS_FNAME=$(HS_INTERNAL_NAME).dll
-AOUT=$(HS_FNAME)
-SAWINDBG=sawindbg.dll
-GENERATED=../generated
+# A list of object files built without the platform specific PIC flags, e.g.
+# -fPIC on linux. Performance measurements show that by compiling GC related 
+# code, we could significantly reduce the GC pause time on 32 bit Linux/Unix
+# platforms. See 6454213 for more details.
+include $(GAMMADIR)/make/scm.make
 
-default:: _build_pch_file.obj $(AOUT) checkAndBuildSA
-
-!include ../local.make
-!include compile.make
-
-CPP_FLAGS=$(CPP_FLAGS) $(FASTDEBUG_OPT_OPTION)
-
-!include $(WorkSpace)/make/windows/makefiles/vm.make
-!include local.make
-
-!include $(GENERATED)/Dependencies
-
-HS_BUILD_ID=$(HS_BUILD_VER)-fastdebug
-
-# Force resources to be rebuilt every time
-$(Res_Files): FORCE
-
-$(AOUT): $(Res_Files) $(Obj_Files)
-	sh $(WorkSpace)/make/windows/build_vm_def.sh
-	$(LINK) @<<
-  $(LINK_FLAGS) /out:$@ /implib:$*.lib /def:vm.def $(Obj_Files) $(Res_Files)
-<<
-
-!include $(WorkSpace)/make/windows/makefiles/shared.make
-!include $(WorkSpace)/make/windows/makefiles/sa.make
+ifneq ($(OSNAME), windows)
+  ifndef LP64
+    NONPIC_DIRS  = memory oops gc_implementation gc_interface 
+    NONPIC_DIRS  := $(foreach dir,$(NONPIC_DIRS), $(GAMMADIR)/src/share/vm/$(dir))
+    # Look for source files under NONPIC_DIRS
+    NONPIC_FILES := $(foreach dir,$(NONPIC_DIRS),\
+                      $(shell find $(dir) \( $(SCM_DIRS) \) -prune -o \
+		      -name '*.cpp' -print))
+    NONPIC_OBJ_FILES := $(notdir $(subst .cpp,.o,$(NONPIC_FILES)))
+  endif
+endif
