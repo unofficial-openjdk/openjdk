@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,8 @@
 
 extern "C" {
   static void unimplemented_panic(const char *fmt, ...) {
-    Unimplemented();
+    // mitigate testing damage from bug 6626677
+    warning("hpi::unimplemented_panic called");
   }
 
   static void unimplemented_monitorRegister(sys_mon_t *mid, char *info_str) {

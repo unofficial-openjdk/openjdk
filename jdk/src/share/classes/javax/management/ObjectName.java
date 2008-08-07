@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@
 package javax.management;
 
 import com.sun.jmx.mbeanserver.GetPropertyAction;
+import com.sun.jmx.mbeanserver.Util;
 import java.io.IOException;
 import java.io.InvalidObjectException;
 import java.io.ObjectInputStream;
@@ -448,7 +449,7 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
         // parses domain part
     domain_parsing:
         while (index < len) {
-            switch (c = name_chars[index]) {
+            switch (name_chars[index]) {
                 case ':' :
                     _domain_length = index++;
                     break domain_parsing;
@@ -618,7 +619,7 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
                     case '\n' :
                         final String ichar = ((c1=='\n')?"\\n":""+c1);
                         throw new MalformedObjectNameException(
-                                                 "Invalid character '" + c1 +
+                                                 "Invalid character '" + ichar +
                                                  "' in value part of property");
                     default :
                         in_index++;
@@ -1385,12 +1386,7 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
             throws NullPointerException {
         if (name.getClass().equals(ObjectName.class))
             return name;
-        try {
-            return new ObjectName(name.getSerializedNameString());
-        } catch (MalformedObjectNameException e) {
-            throw new IllegalArgumentException("Unexpected: " + e);
-            // can't happen
-        }
+        return Util.newObjectName(name.getSerializedNameString());
     }
 
     /**
@@ -1779,8 +1775,13 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
      *
      * @return a string representation of this object name.
      */
+    @Override
     public String toString()  {
         return getSerializedNameString();
+    }
+
+    String toQueryString() {
+        return "like " + Query.value(toString());
     }
 
     /**
@@ -1943,14 +1944,7 @@ public class ObjectName implements Comparable<ObjectName>, QueryExp {
      *
      * @since 1.6
      */
-    public static final ObjectName WILDCARD;
-    static {
-        try {
-            WILDCARD = new ObjectName("*:*");
-        } catch (MalformedObjectNameException e) {
-            throw new Error("Can't initialize wildcard name", e);
-        }
-    }
+    public static final ObjectName WILDCARD = Util.newObjectName("*:*");
 
     // Category : Utilities <===================================
 

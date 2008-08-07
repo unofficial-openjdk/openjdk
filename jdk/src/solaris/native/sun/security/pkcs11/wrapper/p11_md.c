@@ -1,5 +1,5 @@
 /*
- * Portions Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Portions Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  */
 
 /* Copyright  (c) 2002 Graz University of Technology. All rights reserved.
@@ -123,7 +123,10 @@ JNIEXPORT void JNICALL Java_sun_security_pkcs11_wrapper_PKCS11_connect
         C_GetFunctionList = (CK_C_GetFunctionList) dlsym(hModule, getFunctionListStr);
         (*env)->ReleaseStringUTFChars(env, jGetFunctionList, getFunctionListStr);
     }
-    if ((C_GetFunctionList == NULL) || ((systemErrorMessage = dlerror()) != NULL)){
+    if (C_GetFunctionList == NULL) {
+        throwIOException(env, "ERROR: C_GetFunctionList == NULL");
+        return;
+    } else if ( (systemErrorMessage = dlerror()) != NULL ){
         throwIOException(env, systemErrorMessage);
         return;
     }

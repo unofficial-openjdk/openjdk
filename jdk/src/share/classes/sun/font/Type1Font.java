@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -589,7 +589,7 @@ public class Type1Font extends FileFont {
 
     protected synchronized FontScaler getScaler() {
         if (scaler == null) {
-            return FontManager.getScaler(this, 0, false, fileSize);
+            scaler = FontManager.getScaler(this, 0, false, fileSize);
         }
 
         return scaler;

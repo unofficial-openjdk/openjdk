@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-1999 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,7 @@ class RepeatNode extends AbstractTypeNode {
         if (components.size() != 1) {
             error("Repeat must have exactly one member, use Group for more");
         }
-        member = (Node)(components.get(0));
+        member = components.get(0);
         if (!(member instanceof TypeNode)) {
             error("Repeat member must be type specifier");
         }

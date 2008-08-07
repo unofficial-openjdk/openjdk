@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,48 +39,66 @@ import sun.awt.ComponentAccessor;
  * This class implements window which serves as content window for decorated frames.
  * Its purpose to provide correct events dispatching for the complex
  * constructs such as decorated frames.
+ *
+ * It should always be located at (- left inset, - top inset) in the associated
+ * decorated window.  So coordinates in it would be the same as java coordinates.
  */
-public class XContentWindow extends XWindow implements XConstants {
+public final class XContentWindow extends XWindow {
     private static Logger insLog = Logger.getLogger("sun.awt.X11.insets.XContentWindow");
 
-    XDecoratedPeer parentFrame;
+    static XContentWindow createContent(XDecoratedPeer parentFrame) {
+        final WindowDimensions dims = parentFrame.getDimensions();
+        Rectangle rec = dims.getBounds();
+        // Fix for  - set the location of the content window to the (-left inset, -top inset)
+        Insets ins = dims.getInsets();
+        if (ins != null) {
+            rec.x = -ins.left;
+            rec.y = -ins.top;
+        } else {
+            rec.x = 0;
+            rec.y = 0;
+        }
+        final XContentWindow cw = new XContentWindow(parentFrame, rec);
+        cw.xSetVisible(true);
+        return cw;
+    }
+
+    private final XDecoratedPeer parentFrame;
 
     // A list of expose events that come when the parentFrame is iconified
-    private java.util.List<SavedExposeEvent> iconifiedExposeEvents = new java.util.ArrayList<SavedExposeEvent>();
+    private final java.util.List<SavedExposeEvent> iconifiedExposeEvents =
+            new java.util.ArrayList<SavedExposeEvent>();
 
-    XContentWindow(XDecoratedPeer parentFrame, Rectangle bounds) {
+    private XContentWindow(XDecoratedPeer parentFrame, Rectangle bounds) {
         super((Component)parentFrame.getTarget(), parentFrame.getShell(), bounds);
         this.parentFrame = parentFrame;
     }
 
     void preInit(XCreateWindowParams params) {
         super.preInit(params);
-        params.putIfNull(BIT_GRAVITY, Integer.valueOf(NorthWestGravity));
+        params.putIfNull(BIT_GRAVITY, Integer.valueOf(XConstants.NorthWestGravity));
         Long eventMask = (Long)params.get(EVENT_MASK);
         if (eventMask != null) {
-            eventMask = eventMask & ~(StructureNotifyMask);
+            eventMask = eventMask & ~(XConstants.StructureNotifyMask);
             params.put(EVENT_MASK, eventMask);
         }
     }
 
-    void initialize() {
-        xSetVisible(true);
-    }
     protected String getWMName() {
         return "Content window";
     }
     protected boolean isEventDisabled(XEvent e) {
         switch (e.get_type()) {
           // Override parentFrame to receive MouseEnter/Exit
-          case EnterNotify:
-          case LeaveNotify:
+          case XConstants.EnterNotify:
+          case XConstants.LeaveNotify:
               return false;
           // We handle ConfigureNotify specifically in XDecoratedPeer
-          case ConfigureNotify:
+          case XConstants.ConfigureNotify:
               return true;
           // We don't want SHOWN/HIDDEN on content window since it will duplicate XDecoratedPeer
-          case MapNotify:
-          case UnmapNotify:
+          case XConstants.MapNotify:
+          case XConstants.UnmapNotify:
               return true;
           default:
               return super.isEventDisabled(e) || parentFrame.isEventDisabled(e);

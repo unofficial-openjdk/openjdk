@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -690,7 +690,7 @@ void PhaseIdealLoop::insert_pre_post_loops( IdealLoopTree *loop, Node_List &old_
   // (the main-loop trip-counter exit value) because we will be changing
   // the exit value (via unrolling) so we cannot constant-fold away the zero
   // trip guard until all unrolling is done.
-  Node *zer_opaq = new (C, 2) Opaque1Node(incr);
+  Node *zer_opaq = new (C, 2) Opaque1Node(C, incr);
   Node *zer_cmp  = new (C, 3) CmpINode( zer_opaq, limit );
   Node *zer_bol  = new (C, 2) BoolNode( zer_cmp, b_test );
   register_new_node( zer_opaq, new_main_exit );
@@ -760,7 +760,7 @@ void PhaseIdealLoop::insert_pre_post_loops( IdealLoopTree *loop, Node_List &old_
   // pre-loop, the main-loop may not execute at all.  Later in life this
   // zero-trip guard will become the minimum-trip guard when we unroll
   // the main-loop.
-  Node *min_opaq = new (C, 2) Opaque1Node(limit);
+  Node *min_opaq = new (C, 2) Opaque1Node(C, limit);
   Node *min_cmp  = new (C, 3) CmpINode( pre_incr, min_opaq );
   Node *min_bol  = new (C, 2) BoolNode( min_cmp, b_test );
   register_new_node( min_opaq, new_pre_exit );
@@ -810,7 +810,7 @@ void PhaseIdealLoop::insert_pre_post_loops( IdealLoopTree *loop, Node_List &old_
 
   // Save the original loop limit in this Opaque1 node for
   // use by range check elimination.
-  Node *pre_opaq  = new (C, 3) Opaque1Node(pre_limit, limit);
+  Node *pre_opaq  = new (C, 3) Opaque1Node(C, pre_limit, limit);
 
   register_new_node( pre_limit, pre_head->in(0) );
   register_new_node( pre_opaq , pre_head->in(0) );
@@ -1513,7 +1513,8 @@ void IdealLoopTree::adjust_loop_exit_prob( PhaseIdealLoop *phase ) {
              (bol->in(1)->Opcode() == Op_StoreLConditional ) ||
              (bol->in(1)->Opcode() == Op_CompareAndSwapI ) ||
              (bol->in(1)->Opcode() == Op_CompareAndSwapL ) ||
-             (bol->in(1)->Opcode() == Op_CompareAndSwapP )))
+             (bol->in(1)->Opcode() == Op_CompareAndSwapP ) ||
+             (bol->in(1)->Opcode() == Op_CompareAndSwapN )))
           return;               // Allocation loops RARELY take backedge
         // Find the OTHER exit path from the IF
         Node* ex = iff->proj_out(1-test_con);
@@ -1714,6 +1715,7 @@ void IdealLoopTree::iteration_split( PhaseIdealLoop *phase, Node_List &old_new )
   // Gate unrolling, RCE and peeling efforts.
   if( !_child &&                // If not an inner loop, do not split
       !_irreducible &&
+      _allow_optimizations &&
       !tail()->is_top() ) {     // Also ignore the occasional dead backedge
     if (!_has_call) {
       iteration_split_impl( phase, old_new );

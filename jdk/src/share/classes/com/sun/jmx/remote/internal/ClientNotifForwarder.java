@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -435,7 +435,6 @@ public abstract class ClientNotifForwarder {
 
                     clientSequenceNumber = nr.getNextSequenceNumber();
 
-                    final int size = infoList.size();
                     listeners = new HashMap<Integer, ClientListenerInfo>();
 
                     for (int i = 0 ; i < len ; i++) {
@@ -791,9 +790,6 @@ public abstract class ClientNotifForwarder {
     private Integer mbeanRemovedNotifID = null;
 
     private Thread currentFetchThread;
-
-    // admin stuff
-    private boolean inited = false;
 
     // state
     /**

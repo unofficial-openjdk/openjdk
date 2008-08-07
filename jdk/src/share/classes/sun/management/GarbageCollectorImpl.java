@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,7 @@ import com.sun.management.GcInfo;
 import javax.management.openmbean.CompositeData;
 import javax.management.MBeanInfo;
 import javax.management.MBeanAttributeInfo;
+import javax.management.ObjectName;
 
 import java.util.List;
 import java.util.ListIterator;
@@ -86,6 +87,10 @@ class GarbageCollectorImpl extends MemoryManagerImpl
 
         GcInfo info = gcInfoBuilder.getLastGcInfo();
         return info;
+    }
+
+    public ObjectName getObjectName() {
+        return Util.newObjectName(ManagementFactory.GARBAGE_COLLECTOR_MXBEAN_DOMAIN_TYPE, getName());
     }
 
 }

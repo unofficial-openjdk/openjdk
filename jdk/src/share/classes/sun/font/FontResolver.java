@@ -1,5 +1,5 @@
 /*
- * Portions Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Portions Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -117,7 +117,7 @@ public final class FontResolver {
                 Font2D font2D = FontManager.getFont2D(font);
                 if (font2D.hasSupplementaryChars()) {
                     fonts.add(font);
-                    indices.add(new Integer(i));
+                    indices.add(Integer.valueOf(i));
                 }
             }
 

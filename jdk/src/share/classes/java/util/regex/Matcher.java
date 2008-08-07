@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -249,7 +249,7 @@ public final class Matcher implements MatchResult {
         Matcher result = new Matcher(this.parentPattern, text.toString());
         result.first = this.first;
         result.last = this.last;
-        result.groups = (int[])(this.groups.clone());
+        result.groups = this.groups.clone();
         return result;
     }
 

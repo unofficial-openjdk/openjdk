@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,10 +29,26 @@
 //------------------------------split_thru_phi---------------------------------
 // Split Node 'n' through merge point if there is enough win.
 Node *PhaseIdealLoop::split_thru_phi( Node *n, Node *region, int policy ) {
+  if (n->Opcode() == Op_ConvI2L && n->bottom_type() != TypeLong::LONG) {
+    // ConvI2L may have type information on it which is unsafe to push up
+    // so disable this for now
+    return NULL;
+  }
   int wins = 0;
   assert( !n->is_CFG(), "" );
   assert( region->is_Region(), "" );
-  Node *phi = new (C, region->req()) PhiNode( region, n->bottom_type() );
+
+  const Type* type = n->bottom_type();
+  const TypeOopPtr *t_oop = _igvn.type(n)->isa_oopptr();
+  Node *phi;
+  if( t_oop != NULL && t_oop->is_known_instance_field() ) {
+    int iid    = t_oop->instance_id();
+    int index  = C->get_alias_index(t_oop);
+    int offset = t_oop->offset();
+    phi = new (C,region->req()) PhiNode(region, type, NULL, iid, index, offset);
+  } else {
+    phi = new (C,region->req()) PhiNode(region, type);
+  }
   uint old_unique = C->unique();
   for( uint i = 1; i < region->req(); i++ ) {
     Node *x;
@@ -435,9 +451,11 @@ Node *PhaseIdealLoop::conditional_move( Node *region ) {
 
   // Check profitability
   int cost = 0;
+  int phis = 0;
   for (DUIterator_Fast imax, i = region->fast_outs(imax); i < imax; i++) {
     Node *out = region->fast_out(i);
     if( !out->is_Phi() ) continue; // Ignore other control edges, etc
+    phis++;
     PhiNode* phi = out->as_Phi();
     switch (phi->type()->basic_type()) {
     case T_LONG:
@@ -446,6 +464,7 @@ Node *PhaseIdealLoop::conditional_move( Node *region ) {
     case T_FLOAT:
     case T_DOUBLE:
     case T_ADDRESS:             // (RawPtr)
+    case T_NARROWOOP:
       cost++;
       break;
     case T_OBJECT: {            // Base oops are OK, but not derived oops
@@ -489,6 +508,12 @@ Node *PhaseIdealLoop::conditional_move( Node *region ) {
     }
   }
   if( cost >= ConditionalMoveLimit ) return NULL; // Too much goo
+  Node* bol = iff->in(1);
+  assert( bol->Opcode() == Op_Bool, "" );
+  int cmp_op = bol->in(1)->Opcode();
+  // It is expensive to generate flags from a float compare.
+  // Avoid duplicated float compare.
+  if( phis > 1 && (cmp_op == Op_CmpF || cmp_op == Op_CmpD)) return NULL;
 
   // --------------
   // Now replace all Phis with CMOV's
@@ -2233,6 +2258,9 @@ bool PhaseIdealLoop::is_valid_clone_loop_form( IdealLoopTree *loop, Node_List& p
 //
 bool PhaseIdealLoop::partial_peel( IdealLoopTree *loop, Node_List &old_new ) {
 
+  if (!loop->_head->is_Loop()) {
+    return false;  }
+
   LoopNode *head  = loop->_head->as_Loop();
 
   if (head->is_partial_peel_loop() || head->partial_peel_has_failed()) {
@@ -2657,7 +2685,7 @@ void PhaseIdealLoop::reorg_offsets( IdealLoopTree *loop ) {
       if( !cle->stride_is_con() ) continue;
       // Hit!  Refactor use to use the post-incremented tripcounter.
       // Compute a post-increment tripcounter.
-      Node *opaq = new (C, 2) Opaque2Node( cle->incr() );
+      Node *opaq = new (C, 2) Opaque2Node( C, cle->incr() );
       register_new_node( opaq, u_ctrl );
       Node *neg_stride = _igvn.intcon(-cle->stride_con());
       set_ctrl(neg_stride, C->root());

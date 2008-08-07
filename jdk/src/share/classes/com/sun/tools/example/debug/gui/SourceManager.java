@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-1999 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -113,7 +113,7 @@ public class SourceManager {
      * Returns null if not available.
      */
     public SourceModel sourceForClass(ReferenceType refType) {
-        SourceModel sm = (SourceModel)classToSource.get(refType);
+        SourceModel sm = classToSource.get(refType);
         if (sm != null) {
             return sm;
         }
@@ -140,10 +140,10 @@ public class SourceManager {
      */
     //### Use hash table for this?
     public SourceModel sourceForFile(File path) {
-        Iterator iter = sourceList.iterator();
+        Iterator<SourceModel> iter = sourceList.iterator();
         SourceModel sm = null;
         while (iter.hasNext()) {
-            SourceModel candidate = (SourceModel)iter.next();
+            SourceModel candidate = iter.next();
             if (candidate.fileName().equals(path)) {
                 sm = candidate;
                 iter.remove();    // Will move to start of list.

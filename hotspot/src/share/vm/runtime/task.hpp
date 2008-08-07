@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -112,14 +112,4 @@ class PeriodicTask: public CHeapObj {
 
   // The task to perform at each period
   virtual void task() = 0;
-};
-
-class TimeMillisUpdateTask : public PeriodicTask {
- private:
-  static TimeMillisUpdateTask* _task;
- public:
-  TimeMillisUpdateTask(int interval) : PeriodicTask(interval) {}
-  void task();
-  static void engage();
-  static void disengage();
 };

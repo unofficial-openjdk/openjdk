@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -263,6 +263,20 @@ void VM_Version::get_processor_features() {
         UseXmmRegToRegMoveAll = true; // use movaps, movapd only on '10h'
       } else {
         UseXmmRegToRegMoveAll = false;
+      }
+    }
+    if( FLAG_IS_DEFAULT(UseXmmI2F) ) {
+      if( supports_sse4a() ) {
+        UseXmmI2F = true;
+      } else {
+        UseXmmI2F = false;
+      }
+    }
+    if( FLAG_IS_DEFAULT(UseXmmI2D) ) {
+      if( supports_sse4a() ) {
+        UseXmmI2D = true;
+      } else {
+        UseXmmI2D = false;
       }
     }
   }

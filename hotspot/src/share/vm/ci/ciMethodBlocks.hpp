@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2006-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -110,9 +110,10 @@ public:
   void  set_does_jsr()              { _flags |= DoesJsr; }
   void  clear_does_jsr()            { _flags &= ~DoesJsr; }
   void  set_does_ret()              { _flags |= DoesRet; }
-  void  clear_does_ret()            { _flags |= DoesRet; }
+  void  clear_does_ret()            { _flags &= ~DoesRet; }
   void  set_is_ret_target()         { _flags |= RetTarget; }
   void  set_has_handler()           { _flags |= HasHandler; }
+  void  clear_exception_handler()   { _flags &= ~Handler; _ex_start_bci = -1; _ex_limit_bci = -1; }
 #ifndef PRODUCT
   ciMethod *method() const          { return _method; }
   void dump();

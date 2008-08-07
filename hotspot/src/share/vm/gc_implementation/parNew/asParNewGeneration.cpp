@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,8 +74,8 @@ size_t ASParNewGeneration::available_to_live() const {
 #ifdef SHRINKS_AT_END_OF_EDEN
   size_t delta_in_survivor = 0;
   ParallelScavengeHeap* heap = (ParallelScavengeHeap*)Universe::heap();
-  const size_t space_alignment = heap->intra_generation_alignment();
-  const size_t gen_alignment = heap->generation_alignment();
+  const size_t space_alignment = heap->intra_heap_alignment();
+  const size_t gen_alignment = heap->object_heap_alignment();
 
   MutableSpace* space_shrinking = NULL;
   if (from_space()->end() > to_space()->end()) {

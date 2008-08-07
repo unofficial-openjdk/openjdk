@@ -1,5 +1,5 @@
-/* 
- * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
+/*
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,10 +29,10 @@ public final class RuntimeThreadInheritanceLeak_Stub
     implements java.rmi.Remote
 {
     private static final long serialVersionUID = 2;
-    
+
     // constructors
     public RuntimeThreadInheritanceLeak_Stub(java.rmi.server.RemoteRef ref) {
-	super(ref);
+        super(ref);
     }
-    
+
 }

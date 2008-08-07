@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,17 +24,20 @@
  */
 package sun.awt.X11;
 
-import java.util.Vector;
-import java.awt.*;
-import java.awt.peer.*;
-import java.awt.event.*;
-import sun.awt.im.*;
-import sun.awt.*;
-import java.util.logging.*;
-import java.lang.reflect.Field;
-import java.util.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Frame;
+import java.awt.Graphics;
+import java.awt.Insets;
+import java.awt.MenuBar;
+import java.awt.Rectangle;
+import java.awt.peer.FramePeer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
+class XFramePeer extends XDecoratedPeer implements FramePeer {
     private static Logger log = Logger.getLogger("sun.awt.X11.XFramePeer");
     private static Logger stateLog = Logger.getLogger("sun.awt.X11.states");
     private static Logger insLog = Logger.getLogger("sun.awt.X11.insets.XFramePeer");
@@ -68,7 +71,7 @@ class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
         } else {
             winAttr.decorations = winAttr.AWT_DECOR_NONE;
         }
-        winAttr.functions = MWM_FUNC_ALL;
+        winAttr.functions = MWMConstants.MWM_FUNC_ALL;
         winAttr.isResizable = true; // target.isResizable();
         winAttr.title = target.getTitle();
         winAttr.initialResizability = target.isResizable();
@@ -84,15 +87,8 @@ class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
         setupState(true);
     }
 
-    protected Insets guessInsets() {
-        if (isTargetUndecorated()) {
-            return new Insets(0, 0, 0, 0);
-        } else {
-            return super.guessInsets();
-        }
-    }
-
-    private boolean isTargetUndecorated() {
+    @Override
+    boolean isTargetUndecorated() {
         if (undecorated != null) {
             return undecorated.booleanValue();
         } else {
@@ -105,9 +101,9 @@ class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
             state = winAttr.initialState;
         }
         if ((state & Frame.ICONIFIED) != 0) {
-            setInitialState(IconicState);
+            setInitialState(XUtilConstants.IconicState);
         } else {
-            setInitialState(NormalState);
+            setInitialState(XUtilConstants.NormalState);
         }
         setExtendedState(state);
     }
@@ -217,7 +213,7 @@ class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
         XToolkit.awtLock();
         try {
             XSizeHints hints = getHints();
-            hints.set_flags(hints.get_flags() | (int)XlibWrapper.PMaxSize);
+            hints.set_flags(hints.get_flags() | (int)XUtilConstants.PMaxSize);
             if (b.width != Integer.MAX_VALUE) {
                 hints.set_max_width(b.width);
             } else {
@@ -285,19 +281,20 @@ class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
          * Let's see if this is a window state protocol message, and
          * if it is - decode a new state in terms of java constants.
          */
-        Integer newState = XWM.getWM().isStateChange(this, ev);
-        if (newState == null) {
+        if (!XWM.getWM().isStateChange(this, ev)) {
+            stateLog.finer("either not a state atom or state has not been changed");
             return;
         }
 
-        int changed = state ^ newState.intValue();
+        final int newState = XWM.getWM().getState(this);
+        int changed = state ^ newState;
         if (changed == 0) {
             stateLog.finer("State is the same: " + state);
             return;
         }
 
         int old_state = state;
-        state = newState.intValue();
+        state = newState;
 
         if ((changed & Frame.ICONIFIED) != 0) {
             if ((state & Frame.ICONIFIED) != 0) {
@@ -339,7 +336,7 @@ class XFramePeer extends XDecoratedPeer implements FramePeer, XConstants {
         XToolkit.awtLock();
         try {
             XWMHints hints = getWMHints();
-            hints.set_flags((int)XlibWrapper.StateHint | hints.get_flags());
+            hints.set_flags((int)XUtilConstants.StateHint | hints.get_flags());
             hints.set_initial_state(wm_state);
             if (stateLog.isLoggable(Level.FINE)) stateLog.fine("Setting initial WM state on " + this + " to " + wm_state);
             XlibWrapper.XSetWMHints(XToolkit.getDisplay(), getWindow(), hints.pData);

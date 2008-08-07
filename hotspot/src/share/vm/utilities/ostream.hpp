@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,6 +59,7 @@ class outputStream : public ResourceObj {
    int  indentation() const    { return _indentation; }
    void set_indentation(int i) { _indentation = i;    }
    void fill_to(int col);
+   void move_to(int col, int slop = 6, int min_space = 2);
 
    // sizing
    int width()    const { return _width;    }
@@ -78,7 +79,7 @@ class outputStream : public ResourceObj {
    void print_raw_cr(const char* str)         { write(str, strlen(str)); cr(); }
    void print_raw_cr(const char* str, int len){ write(str,         len); cr(); }
    void put(char ch);
-   void sp();
+   void sp(int count = 1);
    void cr();
    void bol() { if (_position > 0)  cr(); }
 
@@ -205,11 +206,12 @@ class bufferedStream : public outputStream {
  protected:
   char*  buffer;
   size_t buffer_pos;
+  size_t buffer_max;
   size_t buffer_length;
   bool   buffer_fixed;
  public:
-  bufferedStream(size_t initial_bufsize = 256);
-  bufferedStream(char* fixed_buffer, size_t fixed_buffer_size);
+  bufferedStream(size_t initial_bufsize = 256, size_t bufmax = 1024*1024*10);
+  bufferedStream(char* fixed_buffer, size_t fixed_buffer_size, size_t bufmax = 1024*1024*10);
   ~bufferedStream();
   virtual void write(const char* c, size_t len);
   size_t      size() { return buffer_pos; }

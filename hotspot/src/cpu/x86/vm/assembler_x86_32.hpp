@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -901,6 +901,8 @@ class Assembler : public AbstractAssembler  {
   void cvtss2sd(XMMRegister dst, XMMRegister src);
   void cvtsd2ss(XMMRegister dst, Address src);   // Convert Scalar Double-Precision Floating-Point Value to Scalar Single-Precision Floating-Point Value
   void cvtsd2ss(XMMRegister dst, XMMRegister src);
+  void cvtdq2pd(XMMRegister dst, XMMRegister src);
+  void cvtdq2ps(XMMRegister dst, XMMRegister src);
 
   void cvtsi2ss(XMMRegister dst, Address src);   // Convert Doubleword Integer to Scalar Single-Precision Floating-Point Value
   void cvtsi2ss(XMMRegister dst, Register src);
@@ -1052,7 +1054,7 @@ class MacroAssembler: public Assembler {
   // range (0 <= offset <= page_size).
 
   void null_check(Register reg, int offset = -1);
-  static bool needs_explicit_null_check(int offset);
+  static bool needs_explicit_null_check(intptr_t offset);
 
   // Required platform-specific helpers for Label::patch_instructions.
   // They _shadow_ the declarations in AbstractAssembler, which are undefined.

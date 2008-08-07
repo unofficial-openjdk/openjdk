@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -367,6 +367,12 @@
   notproduct(bool, PrintEliminateLocks, false,                              \
           "Print out when locks are eliminated")                            \
                                                                             \
+  diagnostic(bool, EliminateAutoBox, false,                                 \
+          "Private flag to control optimizations for autobox elimination")  \
+                                                                            \
+  product(intx, AutoBoxCacheMax, 128,                                       \
+          "Sets max value cached by the java.lang.Integer autobox cache")   \
+                                                                            \
   product(bool, DoEscapeAnalysis, false,                                    \
           "Perform escape analysis")                                        \
                                                                             \
@@ -376,7 +382,16 @@
   product(bool, EliminateAllocations, true,                                 \
           "Use escape analysis to eliminate allocations")                   \
                                                                             \
+  notproduct(bool, PrintEliminateAllocations, false,                        \
+          "Print out when allocations are eliminated")                      \
+                                                                            \
+  product(intx, EliminateAllocationArraySizeLimit, 64,                      \
+          "Array size (number of elements) limit for scalar replacement")   \
+                                                                            \
   product(intx, MaxLabelRootDepth, 1100,                                    \
           "Maximum times call Label_Root to prevent stack overflow")        \
+                                                                            \
+  diagnostic(intx, DominatorSearchLimit, 1000,                              \
+          "Iterations limit in Node::dominates")                            \
 
 C2_FLAGS(DECLARE_DEVELOPER_FLAG, DECLARE_PD_DEVELOPER_FLAG, DECLARE_PRODUCT_FLAG, DECLARE_PD_PRODUCT_FLAG, DECLARE_DIAGNOSTIC_FLAG, DECLARE_NOTPRODUCT_FLAG)

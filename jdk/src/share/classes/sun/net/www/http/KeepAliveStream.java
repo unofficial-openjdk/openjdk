@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -174,8 +174,8 @@ class KeepAliveStream extends MeteredStream implements Hurryable {
 
         if (startCleanupThread) {
             java.security.AccessController.doPrivileged(
-                new java.security.PrivilegedAction() {
-                public Object run() {
+                new java.security.PrivilegedAction<Void>() {
+                public Void run() {
                     // We want to create the Keep-Alive-SocketCleaner in the
                     // system threadgroup
                     ThreadGroup grp = Thread.currentThread().getThreadGroup();

@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -344,8 +344,15 @@ class PSPathGraphics extends PathGraphics {
         double devScaleX = devResX / DEFAULT_USER_RES;
         double devScaleY = devResY / DEFAULT_USER_RES;
 
-        if (scaleX > devScaleX) scaleX = devScaleX;
-        if (scaleY > devScaleY) scaleY = devScaleY;
+        /* check if rotated or sheared */
+        int transformType = fullTransform.getType();
+        boolean clampScale = ((transformType &
+                               (AffineTransform.TYPE_GENERAL_ROTATION |
+                                AffineTransform.TYPE_GENERAL_TRANSFORM)) != 0);
+        if (clampScale) {
+            if (scaleX > devScaleX) scaleX = devScaleX;
+            if (scaleY > devScaleY) scaleY = devScaleY;
+        }
 
         /* We do not need to draw anything if either scaling
          * factor is zero.

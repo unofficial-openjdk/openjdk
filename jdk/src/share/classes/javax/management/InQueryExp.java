@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -91,21 +91,23 @@ class InQueryExp extends QueryEval implements QueryExp {
      * @exception BadAttributeValueExpException
      * @exception InvalidApplicationException
      */
-    public boolean apply(ObjectName name) throws BadStringOperationException, BadBinaryOpValueExpException,
+    public boolean apply(ObjectName name)
+    throws BadStringOperationException, BadBinaryOpValueExpException,
         BadAttributeValueExpException, InvalidApplicationException  {
         if (valueList != null) {
             ValueExp v      = val.apply(name);
             boolean numeric = v instanceof NumericValueExp;
 
-            for (int i = 0; i < valueList.length; i++) {
+            for (ValueExp element : valueList) {
+                element = element.apply(name);
                 if (numeric) {
-                    if (((NumericValueExp)valueList[i]).doubleValue() ==
-                        ((NumericValueExp)v).doubleValue()) {
+                    if (((NumericValueExp) element).doubleValue() ==
+                        ((NumericValueExp) v).doubleValue()) {
                         return true;
                     }
                 } else {
-                    if (((StringValueExp)valueList[i]).getValue().equals(
-                        ((StringValueExp)v).getValue())) {
+                    if (((StringValueExp) element).getValue().equals(
+                        ((StringValueExp) v).getValue())) {
                         return true;
                     }
                 }

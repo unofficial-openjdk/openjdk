@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <wtypes.h>
+#include <commctrl.h>
 
 #include <jni.h>
 #include "java.h"
@@ -52,11 +53,6 @@ static jboolean GetJREPath(char *path, jint pathsize);
 
 static jboolean _isjavaw = JNI_FALSE;
 
-void
-SetJavaw()
-{
-    _isjavaw = JNI_TRUE;
-}
 
 jboolean
 IsJavaw()
@@ -999,3 +995,20 @@ ContinueInNewThread0(int (JNICALL *continuation)(void *), jlong stack_size, void
 
 /* Linux only, empty on windows. */
 void SetJavaLauncherPlatformProps() {}
+
+void
+InitLauncher(boolean javaw)
+{
+    INITCOMMONCONTROLSEX icx;
+
+    /*
+     * Required for javaw mode MessageBox output as well as for
+     * HotSpot -XX:+ShowMessageBoxOnError in java mode, an empty
+     * flag field is sufficient to perform the basic UI initialization.
+     */
+    memset(&icx, 0, sizeof(INITCOMMONCONTROLSEX));
+    icx.dwSize = sizeof(INITCOMMONCONTROLSEX);
+    InitCommonControlsEx(&icx);
+    _isjavaw = javaw;
+    JLI_SetTraceLauncher();
+}

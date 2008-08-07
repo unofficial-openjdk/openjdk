@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,9 +27,11 @@ package javax.management;
 
 
 /**
- * This class represents indexed attributes used as arguments to relational
- * constraints. An QualifiedAttributeValueExp may be used anywhere a
- * ValueExp is required.
+ * <p>Represents attributes used as arguments to relational constraints,
+ * where the attribute must be in an MBean of a specified {@linkplain
+ * MBeanInfo#getClassName() class}. A QualifiedAttributeValueExp may be used
+ * anywhere a ValueExp is required.
+ *
  * @serial include
  *
  * @since 1.5
@@ -48,7 +50,9 @@ class QualifiedAttributeValueExp extends AttributeValueExp   {
 
     /**
      * Basic Constructor.
+     * @deprecated see {@link AttributeValueExp#AttributeValueExp()}
      */
+    @Deprecated
     public QualifiedAttributeValueExp() {
     }
 
@@ -81,6 +85,7 @@ class QualifiedAttributeValueExp extends AttributeValueExp   {
      * @exception BadAttributeValueExpException
      * @exception InvalidApplicationException
      */
+    @Override
     public ValueExp apply(ObjectName name) throws BadStringOperationException, BadBinaryOpValueExpException,
         BadAttributeValueExpException, InvalidApplicationException  {
         try {
@@ -105,9 +110,11 @@ class QualifiedAttributeValueExp extends AttributeValueExp   {
     /**
      * Returns the string representing its value
      */
+    @Override
     public String toString()  {
         if (className != null) {
-            return className + "." + super.toString();
+            return QueryParser.quoteId(className) + "#" +
+                QueryParser.quoteId(super.toString());
         } else {
             return super.toString();
         }

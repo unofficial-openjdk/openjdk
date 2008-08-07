@@ -1,5 +1,5 @@
 /*
- * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@
 // performance-critical call when when the rem set is the most common
 // card-table kind.
 
-void GenRemSet::write_ref_field_gc(oop* field, oop new_val) {
+void GenRemSet::write_ref_field_gc(void* field, oop new_val) {
   if (kind() == CardTableModRef) {
     ((CardTableRS*)this)->inline_write_ref_field_gc(field, new_val);
   } else {

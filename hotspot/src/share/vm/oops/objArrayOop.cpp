@@ -1,5 +1,5 @@
 /*
- * Copyright 1997 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,4 +25,12 @@
 # include "incls/_precompiled.incl"
 # include "incls/_objArrayOop.cpp.incl"
 
-// <<this page is intentionally left blank>>
+#define ObjArrayOop_OOP_ITERATE_DEFN(OopClosureType, nv_suffix)                    \
+                                                                                   \
+int objArrayOopDesc::oop_iterate_range(OopClosureType* blk, int start, int end) {  \
+  SpecializationStats::record_call();                                              \
+  return ((objArrayKlass*)blueprint())->oop_oop_iterate_range##nv_suffix(this, blk, start, end); \
+}
+
+ALL_OOP_OOP_ITERATE_CLOSURES_1(ObjArrayOop_OOP_ITERATE_DEFN)
+ALL_OOP_OOP_ITERATE_CLOSURES_3(ObjArrayOop_OOP_ITERATE_DEFN)

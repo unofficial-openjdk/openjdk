@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -222,8 +222,8 @@ char* GenCollectedHeap::allocate(size_t alignment,
 
   *_total_reserved = total_reserved;
   *_n_covered_regions = n_covered_regions;
-  *heap_rs = ReservedSpace(total_reserved, alignment,
-                           UseLargePages, heap_address);
+  *heap_rs = ReservedHeapSpace(total_reserved, alignment,
+                               UseLargePages, heap_address);
 
   return heap_address;
 }
@@ -624,6 +624,7 @@ public:
   void do_oop(oop* p) {
     assert((*p) == NULL || (*p)->is_perm(), "Referent should be perm.");
   }
+  void do_oop(narrowOop* p) { ShouldNotReachHere(); }
 };
 static AssertIsPermClosure assert_is_perm_closure;
 
@@ -1300,8 +1301,7 @@ void GenCollectedHeap::ensure_parsability(bool retire_tlabs) {
 
 oop GenCollectedHeap::handle_failed_promotion(Generation* gen,
                                               oop obj,
-                                              size_t obj_size,
-                                              oop* ref) {
+                                              size_t obj_size) {
   assert(obj_size == (size_t)obj->size(), "bad obj_size passed in");
   HeapWord* result = NULL;
 

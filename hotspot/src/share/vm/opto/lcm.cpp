@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -110,8 +110,10 @@ void Block::implicit_null_check(PhaseCFG *cfg, Node *proj, Node *val, int allowe
     case Op_LoadI:
     case Op_LoadL:
     case Op_LoadP:
+    case Op_LoadN:
     case Op_LoadS:
     case Op_LoadKlass:
+    case Op_LoadNKlass:
     case Op_LoadRange:
     case Op_LoadD_unaligned:
     case Op_LoadL_unaligned:
@@ -124,6 +126,7 @@ void Block::implicit_null_check(PhaseCFG *cfg, Node *proj, Node *val, int allowe
     case Op_StoreI:
     case Op_StoreL:
     case Op_StoreP:
+    case Op_StoreN:
       was_store = true;         // Memory op is a store op
       // Stores will have their address in slot 2 (memory in slot 1).
       // If the value being nul-checked is in another slot, it means we
@@ -131,6 +134,7 @@ void Block::implicit_null_check(PhaseCFG *cfg, Node *proj, Node *val, int allowe
       if( mach->in(2) != val ) continue;
       break;                    // Found a memory op?
     case Op_StrComp:
+    case Op_AryEq:
       // Not a legit memory op for implicit null check regardless of
       // embedded loads
       continue;
@@ -627,6 +631,10 @@ bool Block::schedule_local(PhaseCFG *cfg, Matcher &matcher, int *ready_cnt, Vect
         // of the phi to be scheduled first. The select() method breaks
         // ties in scheduling by worklist order.
         delay.push(m);
+      } else if (m->is_Mach() && m->as_Mach()->ideal_Opcode() == Op_CreateEx) {
+        // Force the CreateEx to the top of the list so it's processed
+        // first and ends up at the start of the block.
+        worklist.insert(0, m);
       } else {
         worklist.push(m);         // Then on to worklist!
       }

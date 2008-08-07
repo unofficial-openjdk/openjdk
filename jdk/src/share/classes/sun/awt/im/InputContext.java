@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -556,7 +556,7 @@ public class InputContext extends java.awt.im.InputContext
             }
             usedInputMethods.put(inputMethodLocator.deriveLocator(null), inputMethod);
             perInputMethodState.put(inputMethod,
-                                    new Boolean(clientWindowNotificationEnabled));
+                                    Boolean.valueOf(clientWindowNotificationEnabled));
             enableClientWindowNotification(inputMethod, false);
             if (this == inputMethodWindowContext) {
                 inputMethod.hideWindows();
@@ -921,7 +921,7 @@ public class InputContext extends java.awt.im.InputContext
             if (perInputMethodState == null) {
                 perInputMethodState = new HashMap(5);
             }
-            perInputMethodState.put(requester, new Boolean(enable));
+            perInputMethodState.put(requester, Boolean.valueOf(enable));
             return;
         }
 

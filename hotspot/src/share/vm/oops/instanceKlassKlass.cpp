@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -286,17 +286,17 @@ void instanceKlassKlass::oop_copy_contents(PSPromotionManager* pm, oop obj) {
   ik->copy_static_fields(pm);
 
   oop* loader_addr = ik->adr_class_loader();
-  if (PSScavenge::should_scavenge(*loader_addr)) {
+  if (PSScavenge::should_scavenge(loader_addr)) {
     pm->claim_or_forward_breadth(loader_addr);
   }
 
   oop* pd_addr = ik->adr_protection_domain();
-  if (PSScavenge::should_scavenge(*pd_addr)) {
+  if (PSScavenge::should_scavenge(pd_addr)) {
     pm->claim_or_forward_breadth(pd_addr);
   }
 
   oop* sg_addr = ik->adr_signers();
-  if (PSScavenge::should_scavenge(*sg_addr)) {
+  if (PSScavenge::should_scavenge(sg_addr)) {
     pm->claim_or_forward_breadth(sg_addr);
   }
 
@@ -309,17 +309,17 @@ void instanceKlassKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
   ik->push_static_fields(pm);
 
   oop* loader_addr = ik->adr_class_loader();
-  if (PSScavenge::should_scavenge(*loader_addr)) {
+  if (PSScavenge::should_scavenge(loader_addr)) {
     pm->claim_or_forward_depth(loader_addr);
   }
 
   oop* pd_addr = ik->adr_protection_domain();
-  if (PSScavenge::should_scavenge(*pd_addr)) {
+  if (PSScavenge::should_scavenge(pd_addr)) {
     pm->claim_or_forward_depth(pd_addr);
   }
 
   oop* sg_addr = ik->adr_signers();
-  if (PSScavenge::should_scavenge(*sg_addr)) {
+  if (PSScavenge::should_scavenge(sg_addr)) {
     pm->claim_or_forward_depth(sg_addr);
   }
 
@@ -581,7 +581,7 @@ void instanceKlassKlass::oop_print_on(oop obj, outputStream* st) {
   OopMapBlock* map     = ik->start_of_nonstatic_oop_maps();
   OopMapBlock* end_map = map + ik->nonstatic_oop_map_size();
   while (map < end_map) {
-    st->print("%d-%d ", map->offset(), map->offset() + oopSize*(map->length() - 1));
+    st->print("%d-%d ", map->offset(), map->offset() + heapOopSize*(map->length() - 1));
     map++;
   }
   st->cr();
@@ -602,15 +602,17 @@ const char* instanceKlassKlass::internal_name() const {
 
 // Verification
 
-
 class VerifyFieldClosure: public OopClosure {
- public:
-  void do_oop(oop* p) {
+ protected:
+  template <class T> void do_oop_work(T* p) {
     guarantee(Universe::heap()->is_in(p), "should be in heap");
-    guarantee((*p)->is_oop_or_null(), "should be in heap");
+    oop obj = oopDesc::load_decode_heap_oop(p);
+    guarantee(obj->is_oop_or_null(), "should be in heap");
   }
+ public:
+  virtual void do_oop(oop* p)       { VerifyFieldClosure::do_oop_work(p); }
+  virtual void do_oop(narrowOop* p) { VerifyFieldClosure::do_oop_work(p); }
 };
-
 
 void instanceKlassKlass::oop_verify_on(oop obj, outputStream* st) {
   klassKlass::oop_verify_on(obj, st);

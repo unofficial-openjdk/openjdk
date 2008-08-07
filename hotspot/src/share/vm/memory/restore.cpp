@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,6 +49,8 @@ public:
     assert(SharedSkipVerify || obj->is_oop_or_null(), "invalid oop");
     *p = obj;
   }
+
+  void do_oop(narrowOop* p) { ShouldNotReachHere(); }
 
   void do_ptr(void** p) {
     assert(*p == NULL, "initializing previous initialized pointer.");

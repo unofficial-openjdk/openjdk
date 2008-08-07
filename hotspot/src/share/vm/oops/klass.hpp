@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -757,6 +757,7 @@ class Klass : public Klass_vtbl {
   virtual const char* internal_name() const = 0;
   virtual void oop_verify_on(oop obj, outputStream* st);
   virtual void oop_verify_old_oop(oop obj, oop* p, bool allow_dirty);
+  virtual void oop_verify_old_oop(oop obj, narrowOop* p, bool allow_dirty);
   // tells whether obj is partially constructed (gc during class loading)
   virtual bool oop_partially_loaded(oop obj) const { return false; }
   virtual void oop_set_partially_loaded(oop obj) {};

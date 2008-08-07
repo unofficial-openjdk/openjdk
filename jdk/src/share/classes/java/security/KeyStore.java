@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -789,7 +789,7 @@ public class KeyStore {
      * @param alias the alias name
      *
      * @return the certificate chain (ordered with the user's certificate first
-     * and the root certificate authority last), or null if the given alias
+     * followed by zero or more certificate authorities), or null if the given alias
      * does not exist or does not contain a certificate chain
      *
      * @exception KeyStoreException if the keystore has not been initialized

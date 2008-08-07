@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -281,8 +281,10 @@ address CodeSection::target(Label& L, address branch_pc) {
 
     // Need to return a pc, doesn't matter what it is since it will be
     // replaced during resolution later.
-    // (Don't return NULL or badAddress, since branches shouldn't overflow.)
-    return base;
+    // Don't return NULL or badAddress, since branches shouldn't overflow.
+    // Don't return base either because that could overflow displacements
+    // for shorter branches.  It will get checked when bound.
+    return branch_pc;
   }
 }
 
@@ -947,6 +949,7 @@ void CodeComments::print_block_comment(outputStream* stream, intptr_t offset) {
   if (_comments != NULL) {
     CodeComment* c = _comments->find(offset);
     while (c && c->offset() == offset) {
+      stream->bol();
       stream->print("  ;; ");
       stream->print_cr(c->comment());
       c = c->next();

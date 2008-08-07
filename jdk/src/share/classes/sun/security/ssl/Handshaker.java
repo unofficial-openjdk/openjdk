@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -617,7 +617,8 @@ abstract class Handshaker {
         r.write(1);     // single byte of data
 
         if (conn != null) {
-            synchronized (conn.writeLock) {
+            conn.writeLock.lock();
+            try {
                 conn.writeRecord(r);
                 conn.changeWriteCiphers();
                 if (debug != null && Debug.isOn("handshake")) {
@@ -625,6 +626,8 @@ abstract class Handshaker {
                 }
                 mesg.write(output);
                 output.flush();
+            } finally {
+                conn.writeLock.unlock();
             }
         } else {
             synchronized (engine.writeLock) {

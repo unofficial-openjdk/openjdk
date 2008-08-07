@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -425,8 +425,6 @@ public final class NetworkInterface {
         return virtual;
     }
 
-    private native static long getSubnet0(String name, int ind) throws SocketException;
-    private native static Inet4Address getBroadcast0(String name, int ind) throws SocketException;
     private native static boolean isUp0(String name, int ind) throws SocketException;
     private native static boolean isLoopback0(String name, int ind) throws SocketException;
     private native static boolean supportsMulticast0(String name, int ind) throws SocketException;

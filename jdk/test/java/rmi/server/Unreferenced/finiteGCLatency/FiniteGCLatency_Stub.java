@@ -1,5 +1,5 @@
-/* 
- * Copyright 1998 Sun Microsystems, Inc.  All Rights Reserved.
+/*
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,10 +29,10 @@ public final class FiniteGCLatency_Stub
     implements java.rmi.Remote
 {
     private static final long serialVersionUID = 2;
-    
+
     // constructors
     public FiniteGCLatency_Stub(java.rmi.server.RemoteRef ref) {
-	super(ref);
+        super(ref);
     }
-    
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1632,7 +1632,7 @@ void TemplateTable::branch(bool is_jsr, bool is_wide) {
       // We need to prepare to execute the OSR method. First we must
       // migrate the locals and monitors off of the stack.
 
-      __ movl(rsi, rax);                             // save the nmethod
+      __ movl(rbx, rax);                             // save the nmethod
 
       const Register thread = rcx;
       __ get_thread(thread);
@@ -1688,7 +1688,7 @@ void TemplateTable::branch(bool is_jsr, bool is_wide) {
       __ pushl(rdi);
 
       // and begin the OSR nmethod
-      __ jmp(Address(rsi, nmethod::osr_entry_point_offset()));
+      __ jmp(Address(rbx, nmethod::osr_entry_point_offset()));
     }
   }
 }

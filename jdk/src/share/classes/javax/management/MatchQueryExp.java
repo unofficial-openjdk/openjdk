@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -109,11 +109,7 @@ class MatchQueryExp extends QueryEval implements QueryExp {
      * Returns the string representing the object
      */
     public String toString()  {
-        return exp + " like " + new StringValueExp(likeTranslate(pattern));
-    }
-
-    private static String likeTranslate(String s) {
-        return s.replace('?', '_').replace('*', '%');
+        return exp + " like " + new StringValueExp(pattern);
     }
 
     /*

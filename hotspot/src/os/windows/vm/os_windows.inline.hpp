@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -69,3 +69,6 @@ inline void os::bang_stack_shadow_pages() {
     *((int *)(sp - (pages * vm_page_size()))) = 0;
   }
 }
+
+inline bool os::numa_has_static_binding()   { return true;   }
+inline bool os::numa_has_group_homing()     { return false;  }

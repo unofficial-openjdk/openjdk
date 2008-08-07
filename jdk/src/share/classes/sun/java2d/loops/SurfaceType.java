@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -408,7 +408,7 @@ public final class SurfaceType {
             if (unusedUID > 255) {
                 throw new InternalError("surface type id overflow");
             }
-            i = new Integer(unusedUID++);
+            i = Integer.valueOf(unusedUID++);
             surfaceUIDMap.put(desc, i);
         }
         return i.intValue();

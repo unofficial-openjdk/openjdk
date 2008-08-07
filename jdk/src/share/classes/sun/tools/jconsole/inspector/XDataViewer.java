@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2004-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package sun.tools.jconsole.inspector;
 
 import javax.swing.JTable;
@@ -108,6 +109,7 @@ public class XDataViewer {
     public Component createOperationViewer(Object value,
                                            XMBean mbean) {
         if(value instanceof Number) return null;
+        if(value instanceof Component) return (Component) value;
         return createAttributeViewer(value, mbean, null, null);
     }
 

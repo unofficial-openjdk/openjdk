@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,6 +50,7 @@ class NativeInstruction VALUE_OBJ_CLASS_SPEC {
   };
 
   bool is_nop()                        { return ubyte_at(0) == nop_instruction_code; }
+  bool is_dtrace_trap();
   inline bool is_call();
   inline bool is_illegal();
   inline bool is_return();

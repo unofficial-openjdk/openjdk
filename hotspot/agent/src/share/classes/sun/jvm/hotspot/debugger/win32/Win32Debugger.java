@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2002 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,7 +45,9 @@ public interface Win32Debugger extends JVMDebugger {
   public long         readCInteger(long address, long numBytes, boolean isUnsigned)
     throws DebuggerException;
   public Win32Address readAddress(long address) throws DebuggerException;
+  public Win32Address readCompOopAddress(long address) throws DebuggerException;
   public Win32OopHandle readOopHandle(long address) throws DebuggerException;
+  public Win32OopHandle readCompOopHandle(long address) throws DebuggerException;
   public void         writeJBoolean(long address, boolean value) throws DebuggerException;
   public void         writeJByte(long address, byte value) throws DebuggerException;
   public void         writeJChar(long address, char value) throws DebuggerException;

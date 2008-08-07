@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-1999 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -139,7 +139,7 @@ public class StackTraceTool extends JPanel {
                 String methName =
                     meth.declaringType().name() + '.' + meth.name();
                 String position = "";
-                if (meth instanceof Method && ((Method)meth).isNative()) {
+                if (meth.isNative()) {
                     position = " (native method)";
                 } else if (loc.lineNumber() != -1) {
                     position = ":" + loc.lineNumber();

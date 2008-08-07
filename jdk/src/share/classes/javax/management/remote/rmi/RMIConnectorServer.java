@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -365,7 +365,7 @@ public class RMIConnectorServer extends JMXConnectorServer {
                 // Access file property specified, create an instance
                 // of the MBeanServerFileAccessController class
                 //
-                MBeanServerForwarder mbsf = null;
+                MBeanServerForwarder mbsf;
                 try {
                     mbsf = new MBeanServerFileAccessController(accessFile);
                 } catch (IOException e) {

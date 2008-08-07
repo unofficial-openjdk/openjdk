@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -211,6 +211,7 @@ Form::DataType Form::ideal_to_const_type(const char *name) const {
 
   if (strcmp(name,"ConI")==0) return Form::idealI;
   if (strcmp(name,"ConP")==0) return Form::idealP;
+  if (strcmp(name,"ConN")==0) return Form::idealN;
   if (strcmp(name,"ConL")==0) return Form::idealL;
   if (strcmp(name,"ConF")==0) return Form::idealF;
   if (strcmp(name,"ConD")==0) return Form::idealD;
@@ -251,11 +252,13 @@ Form::DataType Form::is_load_from_memory(const char *opType) const {
   if( strcmp(opType,"LoadF")==0 )  return Form::idealF;
   if( strcmp(opType,"LoadI")==0 )  return Form::idealI;
   if( strcmp(opType,"LoadKlass")==0 )  return Form::idealP;
+  if( strcmp(opType,"LoadNKlass")==0 ) return Form::idealN;
   if( strcmp(opType,"LoadL")==0 )  return Form::idealL;
   if( strcmp(opType,"LoadL_unaligned")==0 )  return Form::idealL;
   if( strcmp(opType,"LoadPLocked")==0 )  return Form::idealP;
   if( strcmp(opType,"LoadLLocked")==0 )  return Form::idealL;
   if( strcmp(opType,"LoadP")==0 )  return Form::idealP;
+  if( strcmp(opType,"LoadN")==0 )  return Form::idealN;
   if( strcmp(opType,"LoadRange")==0 )  return Form::idealI;
   if( strcmp(opType,"LoadS")==0 )  return Form::idealS;
   if( strcmp(opType,"Load16B")==0 )  return Form::idealB;
@@ -286,6 +289,7 @@ Form::DataType Form::is_store_to_memory(const char *opType) const {
   if( strcmp(opType,"StoreI")==0)  return Form::idealI;
   if( strcmp(opType,"StoreL")==0)  return Form::idealL;
   if( strcmp(opType,"StoreP")==0)  return Form::idealP;
+  if( strcmp(opType,"StoreN")==0) return Form::idealN;
   if( strcmp(opType,"Store16B")==0)  return Form::idealB;
   if( strcmp(opType,"Store8B")==0)  return Form::idealB;
   if( strcmp(opType,"Store4B")==0)  return Form::idealB;

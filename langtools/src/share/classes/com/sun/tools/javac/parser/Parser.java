@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1006,7 +1006,10 @@ public class Parser {
                     break loop;
                 case DOT:
                     S.nextToken();
+                    int oldmode = mode;
+                    mode &= ~NOPARAMS;
                     typeArgs = typeArgumentsOpt(EXPR);
+                    mode = oldmode;
                     if ((mode & EXPR) != 0) {
                         switch (S.token()) {
                         case CLASS:

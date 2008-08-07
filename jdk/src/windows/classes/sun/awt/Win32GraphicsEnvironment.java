@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,11 @@
 
 package sun.awt;
 
+import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
+import java.awt.peer.ComponentPeer;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -42,6 +44,9 @@ import sun.awt.windows.WPrinterJob;
 import sun.awt.windows.WToolkit;
 import sun.font.FontManager;
 import sun.java2d.SunGraphicsEnvironment;
+import sun.java2d.SurfaceManagerFactory;
+import sun.java2d.WindowsSurfaceManagerFactory;
+import sun.java2d.d3d.D3DGraphicsDevice;
 import sun.java2d.windows.WindowsFlags;
 
 /**
@@ -64,6 +69,9 @@ public class Win32GraphicsEnvironment
         WindowsFlags.initFlags();
         initDisplayWrapper();
         eudcFontFileName = getEUDCFontFile();
+
+        // Install correct surface manager factory.
+        SurfaceManagerFactory.setInstance(new WindowsSurfaceManagerFactory());
     }
 
     /**
@@ -260,6 +268,7 @@ public class Win32GraphicsEnvironment
         try {
             while (!found && parser.hasMoreTokens()) {
                 String newPath = parser.nextToken();
+                boolean ujr = newPath.equals(jreFontDirName);
                 File theFile = new File(newPath, fontFileName);
                 if (theFile.canRead()) {
                     found = true;
@@ -267,11 +276,11 @@ public class Win32GraphicsEnvironment
                     if (defer) {
                         FontManager.registerDeferredFont(fontFileName, path,
                                                          nativeNames,
-                                                         fontFormat, true,
+                                                         fontFormat, ujr,
                                                          fontRank);
                     } else {
                         FontManager.registerFontFile(path, nativeNames,
-                                                     fontFormat, true,
+                                                     fontFormat, ujr,
                                                      fontRank);
                     }
                     break;
@@ -296,7 +305,7 @@ public class Win32GraphicsEnvironment
     }
 
     public static void registerJREFontsForPrinting() {
-        String pathName = null;
+        final String pathName;
         synchronized (Win32GraphicsEnvironment.class) {
             GraphicsEnvironment.getLocalGraphicsEnvironment();
             if (fontsForPrinting == null) {
@@ -305,15 +314,21 @@ public class Win32GraphicsEnvironment
             pathName = fontsForPrinting;
             fontsForPrinting = null;
         }
-        File f1 = new File(pathName);
-        String[] ls = f1.list(new TTFilter());
-        if (ls == null) {
-          return;
-        }
-        for (int i=0; i <ls.length; i++ ) {
-          File fontFile = new File(f1, ls[i]);
-          registerFontWithPlatform(fontFile.getAbsolutePath());
-        }
+        java.security.AccessController.doPrivileged(
+            new java.security.PrivilegedAction() {
+                public Object run() {
+                    File f1 = new File(pathName);
+                    String[] ls = f1.list(new TTFilter());
+                    if (ls == null) {
+                        return null;
+                    }
+                    for (int i=0; i <ls.length; i++ ) {
+                        File fontFile = new File(f1, ls[i]);
+                        registerFontWithPlatform(fontFile.getAbsolutePath());
+                    }
+                    return null;
+                }
+         });
     }
 
     protected static native void registerFontWithPlatform(String fontName);
@@ -321,17 +336,61 @@ public class Win32GraphicsEnvironment
     protected static native void deRegisterFontWithPlatform(String fontName);
 
     protected GraphicsDevice makeScreenDevice(int screennum) {
-        return new Win32GraphicsDevice(screennum);
+        GraphicsDevice device = null;
+        if (WindowsFlags.isD3DEnabled()) {
+            device = D3DGraphicsDevice.createDevice(screennum);
+        }
+        if (device == null) {
+            device = new Win32GraphicsDevice(screennum);
+        }
+        return device;
     }
 
     // Implements SunGraphicsEnvironment.createFontConfiguration.
     protected FontConfiguration createFontConfiguration() {
-        return new WFontConfiguration(this);
+       FontConfiguration fc = new WFontConfiguration(this);
+       fc.init();
+       return fc;
     }
 
     public FontConfiguration createFontConfiguration(boolean preferLocaleFonts,
                                                      boolean preferPropFonts) {
 
         return new WFontConfiguration(this, preferLocaleFonts,preferPropFonts);
+    }
+
+    @Override
+    public boolean isFlipStrategyPreferred(ComponentPeer peer) {
+        GraphicsConfiguration gc;
+        if (peer != null && (gc = peer.getGraphicsConfiguration()) != null) {
+            GraphicsDevice gd = gc.getDevice();
+            if (gd instanceof D3DGraphicsDevice) {
+                return ((D3DGraphicsDevice)gd).isD3DEnabledOnDevice();
+            }
+        }
+        return false;
+    }
+
+    private static volatile boolean isDWMCompositionEnabled;
+    /**
+     * Returns true if dwm composition is currently enabled, false otherwise.
+     *
+     * @return true if dwm composition is enabled, false otherwise
+     */
+    public static boolean isDWMCompositionEnabled() {
+        return isDWMCompositionEnabled;
+    }
+
+    /**
+     * Called from the native code when DWM composition state changed.
+     * May be called multiple times during the lifetime of the application.
+     * REMIND: we may want to create a listener mechanism for this.
+     *
+     * Note: called on the Toolkit thread, no user code or locks are allowed.
+     *
+     * @param enabled indicates the state of dwm composition
+     */
+    private static void dwmCompositionChanged(boolean enabled) {
+        isDWMCompositionEnabled = enabled;
     }
 }

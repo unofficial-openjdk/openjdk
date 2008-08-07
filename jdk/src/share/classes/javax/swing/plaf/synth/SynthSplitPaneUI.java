@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -127,7 +127,7 @@ class SynthSplitPaneUI extends BasicSplitPaneUI implements
         if (style != oldStyle) {
             Object value = style.get(context, "SplitPane.size");
             if (value == null) {
-                value = new Integer(6);
+                value = Integer.valueOf(6);
             }
             LookAndFeel.installProperty(splitPane, "dividerSize", value);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,7 @@ import javax.print.attribute.Attribute;
  * print request's, print job's, or print service's attribute set.
  * <P>
  * The Internet Assigned Numbers Authority maintains the
- * <A HREF="http://www.isi.edu/in-notes/iana/assignments/url-schemes">official
+ * <A HREF="http://www.iana.org/assignments/uri-schemes.html">official
  * list of URI schemes</A>.
  * <p>
  * Class ReferenceUriSchemesSupported defines enumeration values for widely

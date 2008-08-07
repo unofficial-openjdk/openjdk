@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,7 +61,10 @@ void CollectedHeap::post_allocation_install_obj_klass(KlassHandle klass,
   obj->set_klass(klass());
   assert(!Universe::is_fully_initialized() || obj->blueprint() != NULL,
          "missing blueprint");
+}
 
+// Support for jvmti and dtrace
+inline void post_allocation_notify(KlassHandle klass, oop obj) {
   // support for JVMTI VMObjectAlloc event (no-op if not enabled)
   JvmtiExport::vm_object_alloc_event_collector(obj);
 
@@ -79,18 +82,23 @@ void CollectedHeap::post_allocation_setup_obj(KlassHandle klass,
   post_allocation_setup_common(klass, obj, size);
   assert(Universe::is_bootstrapping() ||
          !((oop)obj)->blueprint()->oop_is_array(), "must not be an array");
+  // notify jvmti and dtrace
+  post_allocation_notify(klass, (oop)obj);
 }
 
 void CollectedHeap::post_allocation_setup_array(KlassHandle klass,
                                                 HeapWord* obj,
                                                 size_t size,
                                                 int length) {
-  // Set array length before posting jvmti object alloc event
-  // in post_allocation_setup_common()
+  // Set array length before setting the _klass field
+  // in post_allocation_setup_common() because the klass field
+  // indicates that the object is parsable by concurrent GC.
   assert(length >= 0, "length should be non-negative");
   ((arrayOop)obj)->set_length(length);
   post_allocation_setup_common(klass, obj, size);
   assert(((oop)obj)->blueprint()->oop_is_array(), "must be an array");
+  // notify jvmti and dtrace (must be after length is set for dtrace)
+  post_allocation_notify(klass, (oop)obj);
 }
 
 HeapWord* CollectedHeap::common_mem_allocate_noinit(size_t size, bool is_noref, TRAPS) {
@@ -217,6 +225,7 @@ void CollectedHeap::init_obj(HeapWord* obj, size_t size) {
   assert(obj != NULL, "cannot initialize NULL object");
   const size_t hs = oopDesc::header_size();
   assert(size >= hs, "unexpected object size");
+  ((oop)obj)->set_klass_gap(0);
   Copy::fill_to_aligned_words(obj + hs, size - hs);
 }
 

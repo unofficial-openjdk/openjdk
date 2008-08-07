@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,10 +27,9 @@
  * @summary multi-thread test to exercise sync and contention for removes to transformer registry
  * @author Gabriel Adauto, Wily Technology
  *
- * @ignore Disabled until race condition which hangs test can be fixed.
  * @run build TransformerManagementThreadRemoveTests
- * @run shell MakeJAR.sh basicAgent
- * @run main/othervm -javaagent:basicAgent.jar TransformerManagementThreadRemoveTests TransformerManagementThreadRemoveTests
+ * @run shell MakeJAR.sh redefineAgent
+ * @run main/othervm -javaagent:redefineAgent.jar TransformerManagementThreadRemoveTests TransformerManagementThreadRemoveTests
  */
 import java.util.*;
 
@@ -87,7 +86,12 @@ public class TransformerManagementThreadRemoveTests
 
         while (!testCompleted())
         {
-            Thread.currentThread().yield();
+            // Effective Java - Item 51: Don't depend on the thread scheduler
+            // Use sleep() instead of yield().
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException ie) {
+            }
         }
         assertTrue(finalCheck());
 

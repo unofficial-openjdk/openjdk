@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -362,6 +362,25 @@ const Type *MulDNode::mul_ring(const Type *t0, const Type *t1) const {
   if( t0 == Type::DOUBLE || t1 == Type::DOUBLE ) return Type::DOUBLE;
   // We must be adding 2 double constants.
   return TypeD::make( t0->getd() * t1->getd() );
+}
+
+//=============================================================================
+//------------------------------Value------------------------------------------
+const Type *MulHiLNode::Value( PhaseTransform *phase ) const {
+  // Either input is TOP ==> the result is TOP
+  const Type *t1 = phase->type( in(1) );
+  const Type *t2 = phase->type( in(2) );
+  if( t1 == Type::TOP ) return Type::TOP;
+  if( t2 == Type::TOP ) return Type::TOP;
+
+  // Either input is BOTTOM ==> the result is the local BOTTOM
+  const Type *bot = bottom_type();
+  if( (t1 == bot) || (t2 == bot) ||
+      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) )
+    return bot;
+
+  // It is not worth trying to constant fold this stuff!
+  return TypeLong::LONG;
 }
 
 //=============================================================================

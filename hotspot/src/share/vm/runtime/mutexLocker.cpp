@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -187,10 +187,6 @@ void mutex_init() {
   // CMS_freeList_lock                        leaf + 2
 
   def(Safepoint_lock               , Monitor, safepoint,   true ); // locks SnippetCache_lock/Threads_lock
-
-  if (!UseMembar) {
-    def(SerializePage_lock         , Monitor, leaf,        true );
-  }
 
   def(Threads_lock                 , Monitor, barrier,     true );
 

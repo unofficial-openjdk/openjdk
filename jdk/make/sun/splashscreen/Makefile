@@ -1,5 +1,5 @@
 #
-# Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -84,4 +84,14 @@ vpath %.c   $(PLATFORM_SRC)/native/$(PKGDIR)/splashscreen
 
 CPPFLAGS += -I$(PLATFORM_SRC)/native/$(PKGDIR)/splashscreen -I$(SHARE_SRC)/native/$(PKGDIR)/splashscreen
 CPPFLAGS += -I$(SHARE_SRC)/native/$(PKGDIR)/image/jpeg -I$(SHARE_SRC)/native/java/util/zip/zlib-1.1.3
+
+ifeq ($(PLATFORM), linux)
+  ifeq ($(ARCH_DATA_MODEL), 64)
+    # 64-bit gcc has problems compiling MMX instructions.
+    # Google it for more details. Possibly the newer versions of
+    # the PNG-library and/or the new compiler will not need this
+    # option in the future.
+    CPPFLAGS += -DPNG_NO_MMX_CODE
+  endif
+endif
 

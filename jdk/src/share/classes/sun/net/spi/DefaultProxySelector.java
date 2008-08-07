@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -82,9 +82,9 @@ public class DefaultProxySelector extends ProxySelector {
 
     static {
         final String key = "java.net.useSystemProxies";
-        Boolean b = (Boolean) AccessController.doPrivileged(
-            new PrivilegedAction() {
-                public Object run() {
+        Boolean b = AccessController.doPrivileged(
+            new PrivilegedAction<Boolean>() {
+                public Boolean run() {
                     return NetProperties.getBoolean(key);
                 }});
         if (b != null && b.booleanValue()) {
@@ -197,9 +197,9 @@ public class DefaultProxySelector extends ProxySelector {
          * System properties it does help having only 1 call to doPrivileged.
          * Be mindful what you do in here though!
          */
-        Proxy p = (Proxy) AccessController.doPrivileged(
-            new PrivilegedAction() {
-                public Object run() {
+        Proxy p = AccessController.doPrivileged(
+            new PrivilegedAction<Proxy>() {
+                public Proxy run() {
                     int i, j;
                     String phost =  null;
                     int pport = 0;

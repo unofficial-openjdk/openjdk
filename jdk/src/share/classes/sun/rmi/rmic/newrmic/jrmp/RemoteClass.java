@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -121,7 +121,7 @@ final class RemoteClass {
      * in the array).
      **/
     ClassDoc[] remoteInterfaces() {
-        return (ClassDoc[]) remoteInterfaces.clone();
+        return remoteInterfaces.clone();
     }
 
     /**
@@ -136,7 +136,7 @@ final class RemoteClass {
      * stub/skeleton protocol.
      **/
     Method[] remoteMethods() {
-        return (Method[]) remoteMethods.clone();
+        return remoteMethods.clone();
     }
 
     /**
@@ -559,7 +559,7 @@ final class RemoteClass {
          * methods that can be legally thrown by all of them.
          **/
         ClassDoc[] exceptionTypes() {
-            return (ClassDoc[]) exceptionTypes.clone();
+            return exceptionTypes.clone();
         }
 
         /**

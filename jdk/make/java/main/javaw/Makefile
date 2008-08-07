@@ -1,5 +1,5 @@
 #
-# Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -46,7 +46,7 @@ STATIC_JLI = true
 include $(BUILDDIR)/common/Defs.gmk
 
 OTHER_CPPFLAGS += -DJAVAW
-LDLIBS_COMMON +=  user32.lib
+LDLIBS_COMMON +=  user32.lib comctl32.lib
 
 # Override the default version info with our own resource file (see 5106536)
 ifeq ($(PLATFORM), windows)

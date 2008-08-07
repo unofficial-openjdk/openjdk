@@ -1,5 +1,5 @@
-/* 
- * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
+/*
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,4 +34,3 @@ interface CanCreateStubs extends java.rmi.Remote {
     Object getForbiddenClass() throws Exception;
     ActivationGroupID returnGroupID() throws RemoteException;
 }
-

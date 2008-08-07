@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,10 +61,8 @@ class VMConnection {
     }
 
     private Connector findConnector(String name) {
-        List connectors = Bootstrap.virtualMachineManager().allConnectors();
-        Iterator iter = connectors.iterator();
-        while (iter.hasNext()) {
-            Connector connector = (Connector)iter.next();
+        for (Connector connector :
+                 Bootstrap.virtualMachineManager().allConnectors()) {
             if (connector.name().equals(name)) {
                 return connector;
             }
@@ -108,7 +106,7 @@ class VMConnection {
             String value = token.substring(index + 1,
                                            token.length() - 1); // Remove comma delimiter
 
-            Connector.Argument argument = (Connector.Argument)arguments.get(name);
+            Connector.Argument argument = arguments.get(name);
             if (argument == null) {
                 throw new IllegalArgumentException
                     (MessageOutput.format("Argument is not defined for connector:",
@@ -195,7 +193,7 @@ class VMConnection {
             return false;
         }
 
-        Connector.Argument argument = (Connector.Argument)connectorArgs.get(name);
+        Connector.Argument argument = connectorArgs.get(name);
         if (argument == null) {
             return false;
         }
@@ -204,7 +202,7 @@ class VMConnection {
     }
 
     String connectorArg(String name) {
-        Connector.Argument argument = (Connector.Argument)connectorArgs.get(name);
+        Connector.Argument argument = connectorArgs.get(name);
         if (argument == null) {
             return "";
         }

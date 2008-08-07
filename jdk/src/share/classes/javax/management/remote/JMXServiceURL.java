@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ package javax.management.remote;
 import com.sun.jmx.remote.util.ClassLogger;
 import com.sun.jmx.remote.util.EnvHelp;
 
+import java.beans.ConstructorProperties;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
@@ -161,8 +162,6 @@ public class JMXServiceURL implements Serializable {
                                             requiredPrefix);
         }
 
-        int[] ptr = new int[1];
-
         // Parse the protocol name
         final int protoStart = requiredPrefixLength;
         final int protoEnd = indexOf(serviceURL, ':', protoStart);
@@ -274,6 +273,7 @@ public class JMXServiceURL implements Serializable {
      * is not possible to find the local host name, or if
      * <code>port</code> is negative.
      */
+    @ConstructorProperties({"protocol", "host", "port", "URLPath"})
     public JMXServiceURL(String protocol, String host, int port,
                          String urlPath)
             throws MalformedURLException {
@@ -660,11 +660,6 @@ public class JMXServiceURL implements Serializable {
         hostNameBitSet.or(alphaNumericBitSet);
         hostNameBitSet.set('-');
         hostNameBitSet.set('.');
-    }
-
-    private static void addCharsToBitSet(BitSet set, String chars) {
-        for (int i = 0; i < chars.length(); i++)
-            set.set(chars.charAt(i));
     }
 
     /**

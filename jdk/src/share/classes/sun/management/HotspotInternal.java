@@ -1,5 +1,5 @@
 /*
- * Copyright 2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2004-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,9 @@ import javax.management.ObjectName;
 public class HotspotInternal
     implements HotspotInternalMBean, MBeanRegistration {
 
+    private final static String HOTSPOT_INTERNAL_MBEAN_NAME =
+        "sun.management:type=HotspotInternal";
+    private static ObjectName objName = Util.newObjectName(HOTSPOT_INTERNAL_MBEAN_NAME);
     private MBeanServer server = null;
 
     /**
@@ -52,16 +55,16 @@ public class HotspotInternal
                                   ObjectName name) throws java.lang.Exception {
         // register all internal MBeans when this MBean is instantiated
         // and to be registered in a MBeanServer.
-        ManagementFactory.registerInternalMBeans(server);
+        ManagementFactoryHelper.registerInternalMBeans(server);
         this.server = server;
-        return ManagementFactory.getHotspotInternalObjectName();
+        return objName;
     }
 
     public void postRegister(Boolean registrationDone) {};
 
     public void preDeregister() throws java.lang.Exception {
         // unregister all internal MBeans when this MBean is unregistered.
-        ManagementFactory.unregisterInternalMBeans(server);
+        ManagementFactoryHelper.unregisterInternalMBeans(server);
     }
 
     public void postDeregister() {};

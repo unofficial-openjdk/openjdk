@@ -1,5 +1,5 @@
 /*
- * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -78,7 +78,7 @@ public:
 
 #define LOCALS_SLOT(offset)    ((intptr_t*)&locals[-(offset)])
 #define LOCALS_ADDR(offset)    ((address)locals[-(offset)])
-#define LOCALS_INT(offset)     ((jint)(locals[-(offset)]))
+#define LOCALS_INT(offset)     (*((jint*)&locals[-(offset)]))
 #define LOCALS_FLOAT(offset)   (*((jfloat*)&locals[-(offset)]))
 #define LOCALS_OBJECT(offset)  ((oop)locals[-(offset)])
 #define LOCALS_DOUBLE(offset)  (((VMJavaVal64*)&locals[-((offset) + 1)])->d)

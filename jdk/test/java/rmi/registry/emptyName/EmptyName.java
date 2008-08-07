@@ -1,5 +1,5 @@
-/* 
- * Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
+/*
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,12 +32,12 @@ import java.rmi.server.RemoteObject;
 
 public class EmptyName {
     public static void main(String[] args) throws Exception {
-	Registry impl = LocateRegistry.createRegistry(0);
-	Registry stub = (Registry) RemoteObject.toStub(impl);
-	stub.bind("", stub);
-	stub.lookup("");
-	stub.rebind("", stub);
-	stub.lookup("");
-	stub.unbind("");
+        Registry impl = LocateRegistry.createRegistry(0);
+        Registry stub = (Registry) RemoteObject.toStub(impl);
+        stub.bind("", stub);
+        stub.lookup("");
+        stub.rebind("", stub);
+        stub.lookup("");
+        stub.unbind("");
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -73,7 +73,7 @@ class LockDataConverter extends StandardMBean
         try {
             return (CompositeData) getAttribute("LockInfo");
         } catch (Exception e) {
-            throw Util.newInternalError(e);
+            throw new AssertionError(e);
         }
     }
 
@@ -81,7 +81,7 @@ class LockDataConverter extends StandardMBean
         try {
             return (CompositeData[]) getAttribute("LockedSynchronizers");
         } catch (Exception e) {
-            throw Util.newInternalError(e);
+            throw new AssertionError(e);
         }
     }
 
@@ -89,7 +89,7 @@ class LockDataConverter extends StandardMBean
         try {
             setAttribute(new Attribute("LockInfo", cd));
         } catch (Exception e) {
-            throw Util.newInternalError(e);
+            throw new AssertionError(e);
         }
         return getLockInfo();
     }
@@ -98,7 +98,7 @@ class LockDataConverter extends StandardMBean
         try {
             setAttribute(new Attribute("LockedSynchronizers", cd));
         } catch (Exception e) {
-            throw Util.newInternalError(e);
+            throw new AssertionError(e);
         }
         return getLockedSynchronizers();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -108,8 +108,8 @@ jint ParallelScavengeHeap::initialize() {
   // size than is needed or wanted for the perm gen.  Use the "compound
   // alignment" ReservedSpace ctor to avoid having to use the same page size for
   // all gens.
-  ReservedSpace heap_rs(pg_max_size, pg_align, og_max_size + yg_max_size,
-                        og_align);
+  ReservedHeapSpace heap_rs(pg_max_size, pg_align, og_max_size + yg_max_size,
+                            og_align);
   os::trace_page_sizes("ps perm", pg_min_size, pg_max_size, pg_page_sz,
                        heap_rs.base(), pg_max_size);
   os::trace_page_sizes("ps main", og_min_size + yg_min_size,
@@ -173,7 +173,7 @@ jint ParallelScavengeHeap::initialize() {
     new PSAdaptiveSizePolicy(eden_capacity,
                              initial_promo_size,
                              young_gen()->to_space()->capacity_in_bytes(),
-                             intra_generation_alignment(),
+                             intra_heap_alignment(),
                              max_gc_pause_sec,
                              max_gc_minor_pause_sec,
                              GCTimeRatio
@@ -590,6 +590,31 @@ HeapWord* ParallelScavengeHeap::permanent_mem_allocate(size_t size) {
       full_gc_count = Universe::heap()->total_full_collections();
 
       result = perm_gen()->allocate_permanent(size);
+
+      if (result != NULL) {
+        return result;
+      }
+
+      if (GC_locker::is_active_and_needs_gc()) {
+        // If this thread is not in a jni critical section, we stall
+        // the requestor until the critical section has cleared and
+        // GC allowed. When the critical section clears, a GC is
+        // initiated by the last thread exiting the critical section; so
+        // we retry the allocation sequence from the beginning of the loop,
+        // rather than causing more, now probably unnecessary, GC attempts.
+        JavaThread* jthr = JavaThread::current();
+        if (!jthr->in_critical()) {
+          MutexUnlocker mul(Heap_lock);
+          GC_locker::stall_until_clear();
+          continue;
+        } else {
+          if (CheckJNICalls) {
+            fatal("Possible deadlock due to allocating while"
+                  " in jni critical section");
+          }
+          return NULL;
+        }
+      }
     }
 
     if (result == NULL) {
@@ -622,6 +647,12 @@ HeapWord* ParallelScavengeHeap::permanent_mem_allocate(size_t size) {
       if (op.prologue_succeeded()) {
         assert(Universe::heap()->is_in_permanent_or_null(op.result()),
           "result not in heap");
+        // If GC was locked out during VM operation then retry allocation
+        // and/or stall as necessary.
+        if (op.gc_locked()) {
+          assert(op.result() == NULL, "must be NULL if gc_locked() is true");
+          continue;  // retry and/or stall as necessary
+        }
         // If a NULL results is being returned, an out-of-memory
         // will be thrown now.  Clear the gc_time_limit_exceeded
         // flag to avoid the following situation.

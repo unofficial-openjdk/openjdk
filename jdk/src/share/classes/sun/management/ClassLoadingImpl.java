@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,8 @@
 package sun.management;
 
 import java.lang.management.ClassLoadingMXBean;
+import java.lang.management.ManagementFactory;
+import javax.management.ObjectName;
 
 /**
  * Implementation class for the class loading subsystem.
@@ -62,9 +64,13 @@ class ClassLoadingImpl implements ClassLoadingMXBean {
     }
 
     public void setVerbose(boolean value) {
-        ManagementFactory.checkControlAccess();
+        Util.checkControlAccess();
 
         setVerboseClass(value);
     }
     native static void setVerboseClass(boolean value);
+
+    public ObjectName getObjectName() {
+        return Util.newObjectName(ManagementFactory.CLASS_LOADING_MXBEAN_NAME);
+    }
 }

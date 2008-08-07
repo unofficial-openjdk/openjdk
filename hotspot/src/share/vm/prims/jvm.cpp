@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -624,6 +624,30 @@ JVM_ENTRY(void, JVM_ResolveClass(JNIEnv* env, jclass cls))
   if (PrintJVMWarnings) warning("JVM_ResolveClass not implemented");
 JVM_END
 
+// Rationale behind JVM_FindClassFromBootLoader
+// a> JVM_FindClassFromClassLoader was never exported in the export tables.
+// b> because of (a) java.dll has a direct dependecy on the  unexported
+//    private symbol "_JVM_FindClassFromClassLoader@20".
+// c> the launcher cannot use the private symbol as it dynamically opens
+//    the entry point, so if something changes, the launcher will fail
+//    unexpectedly at runtime, it is safest for the launcher to dlopen a
+//    stable exported interface.
+// d> re-exporting JVM_FindClassFromClassLoader as public, will cause its
+//    signature to change from _JVM_FindClassFromClassLoader@20 to
+//    JVM_FindClassFromClassLoader and will not be backward compatible
+//    with older JDKs.
+// Thus a public/stable exported entry point is the right solution,
+// public here means public in linker semantics, and is exported only
+// to the JDK, and is not intended to be a public API.
+
+JVM_ENTRY(jclass, JVM_FindClassFromBootLoader(JNIEnv* env,
+                                              const char* name,
+                                              jboolean throwError))
+  JVMWrapper3("JVM_FindClassFromBootLoader %s throw %s", name,
+              throwError ? "error" : "exception");
+  return JVM_FindClassFromClassLoader(env, name, JNI_FALSE,
+                                      (jobject)NULL, throwError);
+JVM_END
 
 JVM_ENTRY(jclass, JVM_FindClassFromClassLoader(JNIEnv* env, const char* name,
                                                jboolean init, jobject loader,
@@ -4168,6 +4192,36 @@ JVM_ENTRY(jboolean, JVM_CX8Field(JNIEnv *env, jobject obj, jfieldID fid, jlong o
   return res == oldVal;
 JVM_END
 
+// DTrace ///////////////////////////////////////////////////////////////////
+
+JVM_ENTRY(jint, JVM_DTraceGetVersion(JNIEnv* env))
+  JVMWrapper("JVM_DTraceGetVersion");
+  return (jint)JVM_TRACING_DTRACE_VERSION;
+JVM_END
+
+JVM_ENTRY(jlong,JVM_DTraceActivate(
+    JNIEnv* env, jint version, jstring module_name, jint providers_count,
+    JVM_DTraceProvider* providers))
+  JVMWrapper("JVM_DTraceActivate");
+  return DTraceJSDT::activate(
+    version, module_name, providers_count, providers, CHECK_0);
+JVM_END
+
+JVM_ENTRY(jboolean,JVM_DTraceIsProbeEnabled(JNIEnv* env, jmethodID method))
+  JVMWrapper("JVM_DTraceIsProbeEnabled");
+  return DTraceJSDT::is_probe_enabled(method);
+JVM_END
+
+JVM_ENTRY(void,JVM_DTraceDispose(JNIEnv* env, jlong handle))
+  JVMWrapper("JVM_DTraceDispose");
+  DTraceJSDT::dispose(handle);
+JVM_END
+
+JVM_ENTRY(jboolean,JVM_DTraceIsSupported(JNIEnv* env))
+  JVMWrapper("JVM_DTraceIsSupported");
+  return DTraceJSDT::is_supported();
+JVM_END
+
 // Returns an array of all live Thread objects (VM internal JavaThreads,
 // jvmti agent threads, and JNI attaching threads  are skipped)
 // See CR 6404306 regarding JNI attaching threads
@@ -4496,3 +4550,4 @@ JVM_ENTRY(void, JVM_GetVersionInfo(JNIEnv* env, jvm_version_info* info, size_t i
 #endif // KERNEL
 }
 JVM_END
+

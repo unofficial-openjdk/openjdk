@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,7 @@ const BasicType Type::_basic_type[Type::lastype] = {
   T_INT,        // Int
   T_LONG,       // Long
   T_VOID,       // Half
+  T_NARROWOOP,  // NarrowOop
 
   T_ILLEGAL,    // Tuple
   T_ARRAY,      // Array
@@ -279,15 +280,6 @@ void Type::Initialize_shared(Compile* current) {
   TypeRawPtr::BOTTOM = TypeRawPtr::make( TypePtr::BotPTR );
   TypeRawPtr::NOTNULL= TypeRawPtr::make( TypePtr::NotNull );
 
-  mreg2type[Op_Node] = Type::BOTTOM;
-  mreg2type[Op_Set ] = 0;
-  mreg2type[Op_RegI] = TypeInt::INT;
-  mreg2type[Op_RegP] = TypePtr::BOTTOM;
-  mreg2type[Op_RegF] = Type::FLOAT;
-  mreg2type[Op_RegD] = Type::DOUBLE;
-  mreg2type[Op_RegL] = TypeLong::LONG;
-  mreg2type[Op_RegFlags] = TypeInt::CC;
-
   const Type **fmembar = TypeTuple::fields(0);
   TypeTuple::MEMBAR = TypeTuple::make(TypeFunc::Parms+0, fmembar);
 
@@ -305,9 +297,32 @@ void Type::Initialize_shared(Compile* current) {
                                            false, 0, oopDesc::klass_offset_in_bytes());
   TypeOopPtr::BOTTOM  = TypeOopPtr::make(TypePtr::BotPTR, OffsetBot);
 
+  TypeNarrowOop::NULL_PTR = TypeNarrowOop::make( TypePtr::NULL_PTR );
+  TypeNarrowOop::BOTTOM   = TypeNarrowOop::make( TypeInstPtr::BOTTOM );
+
+  mreg2type[Op_Node] = Type::BOTTOM;
+  mreg2type[Op_Set ] = 0;
+  mreg2type[Op_RegN] = TypeNarrowOop::BOTTOM;
+  mreg2type[Op_RegI] = TypeInt::INT;
+  mreg2type[Op_RegP] = TypePtr::BOTTOM;
+  mreg2type[Op_RegF] = Type::FLOAT;
+  mreg2type[Op_RegD] = Type::DOUBLE;
+  mreg2type[Op_RegL] = TypeLong::LONG;
+  mreg2type[Op_RegFlags] = TypeInt::CC;
+
   TypeAryPtr::RANGE   = TypeAryPtr::make( TypePtr::BotPTR, TypeAry::make(Type::BOTTOM,TypeInt::POS), current->env()->Object_klass(), false, arrayOopDesc::length_offset_in_bytes());
-  // There is no shared klass for Object[].  See note in TypeAryPtr::klass().
-  TypeAryPtr::OOPS    = TypeAryPtr::make(TypePtr::BotPTR, TypeAry::make(TypeInstPtr::BOTTOM,TypeInt::POS), NULL /*ciArrayKlass::make(o)*/,  false,  Type::OffsetBot);
+
+  TypeAryPtr::NARROWOOPS = TypeAryPtr::make(TypePtr::BotPTR, TypeAry::make(TypeNarrowOop::BOTTOM, TypeInt::POS), NULL /*ciArrayKlass::make(o)*/,  false,  Type::OffsetBot);
+
+#ifdef _LP64
+  if (UseCompressedOops) {
+    TypeAryPtr::OOPS  = TypeAryPtr::NARROWOOPS;
+  } else
+#endif
+  {
+    // There is no shared klass for Object[].  See note in TypeAryPtr::klass().
+    TypeAryPtr::OOPS  = TypeAryPtr::make(TypePtr::BotPTR, TypeAry::make(TypeInstPtr::BOTTOM,TypeInt::POS), NULL /*ciArrayKlass::make(o)*/,  false,  Type::OffsetBot);
+  }
   TypeAryPtr::BYTES   = TypeAryPtr::make(TypePtr::BotPTR, TypeAry::make(TypeInt::BYTE      ,TypeInt::POS), ciTypeArrayKlass::make(T_BYTE),   true,  Type::OffsetBot);
   TypeAryPtr::SHORTS  = TypeAryPtr::make(TypePtr::BotPTR, TypeAry::make(TypeInt::SHORT     ,TypeInt::POS), ciTypeArrayKlass::make(T_SHORT),  true,  Type::OffsetBot);
   TypeAryPtr::CHARS   = TypeAryPtr::make(TypePtr::BotPTR, TypeAry::make(TypeInt::CHAR      ,TypeInt::POS), ciTypeArrayKlass::make(T_CHAR),   true,  Type::OffsetBot);
@@ -316,8 +331,10 @@ void Type::Initialize_shared(Compile* current) {
   TypeAryPtr::FLOATS  = TypeAryPtr::make(TypePtr::BotPTR, TypeAry::make(Type::FLOAT        ,TypeInt::POS), ciTypeArrayKlass::make(T_FLOAT),  true,  Type::OffsetBot);
   TypeAryPtr::DOUBLES = TypeAryPtr::make(TypePtr::BotPTR, TypeAry::make(Type::DOUBLE       ,TypeInt::POS), ciTypeArrayKlass::make(T_DOUBLE), true,  Type::OffsetBot);
 
+  // Nobody should ask _array_body_type[T_NARROWOOP]. Use NULL as assert.
+  TypeAryPtr::_array_body_type[T_NARROWOOP] = NULL;
   TypeAryPtr::_array_body_type[T_OBJECT]  = TypeAryPtr::OOPS;
-  TypeAryPtr::_array_body_type[T_ARRAY]   = TypeAryPtr::OOPS;   // arrays are stored in oop arrays
+  TypeAryPtr::_array_body_type[T_ARRAY]   = TypeAryPtr::OOPS; // arrays are stored in oop arrays
   TypeAryPtr::_array_body_type[T_BYTE]    = TypeAryPtr::BYTES;
   TypeAryPtr::_array_body_type[T_BOOLEAN] = TypeAryPtr::BYTES;  // boolean[] is a byte array
   TypeAryPtr::_array_body_type[T_SHORT]   = TypeAryPtr::SHORTS;
@@ -345,6 +362,7 @@ void Type::Initialize_shared(Compile* current) {
   longpair[1] = TypeLong::LONG;
   TypeTuple::LONG_PAIR = TypeTuple::make(2, longpair);
 
+  _const_basic_type[T_NARROWOOP] = TypeNarrowOop::BOTTOM;
   _const_basic_type[T_BOOLEAN] = TypeInt::BOOL;
   _const_basic_type[T_CHAR]    = TypeInt::CHAR;
   _const_basic_type[T_BYTE]    = TypeInt::BYTE;
@@ -359,6 +377,7 @@ void Type::Initialize_shared(Compile* current) {
   _const_basic_type[T_ADDRESS] = TypeRawPtr::BOTTOM;  // both interpreter return addresses & random raw ptrs
   _const_basic_type[T_CONFLICT]= Type::BOTTOM;        // why not?
 
+  _zero_type[T_NARROWOOP] = TypeNarrowOop::NULL_PTR;
   _zero_type[T_BOOLEAN] = TypeInt::ZERO;     // false == 0
   _zero_type[T_CHAR]    = TypeInt::ZERO;     // '\0' == 0
   _zero_type[T_BYTE]    = TypeInt::ZERO;     // 0x00 == 0
@@ -400,6 +419,10 @@ void Type::Initialize(Compile* current) {
     Type* t = (Type*)i._value;
     tdic->Insert(t,t);  // New Type, insert into Type table
   }
+
+#ifdef ASSERT
+  verify_lastype();
+#endif
 }
 
 //------------------------------hashcons---------------------------------------
@@ -467,7 +490,13 @@ bool Type::is_nan()    const {
 // Compute the MEET of two types.  NOT virtual.  It enforces that meet is
 // commutative and the lattice is symmetric.
 const Type *Type::meet( const Type *t ) const {
+  if (isa_narrowoop() && t->isa_narrowoop()) {
+    const Type* result = make_ptr()->meet(t->make_ptr());
+    return result->make_narrowoop();
+  }
+
   const Type *mt = xmeet(t);
+  if (isa_narrowoop() || t->isa_narrowoop()) return mt;
 #ifdef ASSERT
   assert( mt == t->xmeet(this), "meet not commutative" );
   const Type* dual_join = mt->_dual;
@@ -485,23 +514,8 @@ const Type *Type::meet( const Type *t ) const {
     bool    t_interface =    t_inst->klass()->is_interface();
     interface_vs_oop = this_interface ^ t_interface;
   }
-  const Type *tdual = t->_dual;
-  const Type *thisdual = _dual;
-  // strip out instances
-  if (t2t->isa_oopptr() != NULL) {
-    t2t = t2t->isa_oopptr()->cast_to_instance(TypeOopPtr::UNKNOWN_INSTANCE);
-  }
-  if (t2this->isa_oopptr() != NULL) {
-    t2this = t2this->isa_oopptr()->cast_to_instance(TypeOopPtr::UNKNOWN_INSTANCE);
-  }
-  if (tdual->isa_oopptr() != NULL) {
-    tdual = tdual->isa_oopptr()->cast_to_instance(TypeOopPtr::UNKNOWN_INSTANCE);
-  }
-  if (thisdual->isa_oopptr() != NULL) {
-    thisdual = thisdual->isa_oopptr()->cast_to_instance(TypeOopPtr::UNKNOWN_INSTANCE);
-  }
 
-  if( !interface_vs_oop && (t2t != tdual || t2this != thisdual) ) {
+  if( !interface_vs_oop && (t2t != t->_dual || t2this != _dual) ) {
     tty->print_cr("=== Meet Not Symmetric ===");
     tty->print("t   =                   ");         t->dump(); tty->cr();
     tty->print("this=                   ");            dump(); tty->cr();
@@ -554,6 +568,9 @@ const Type *Type::xmeet( const Type *t ) const {
     return t->xmeet(this);
 
   case AryPtr:
+    return t->xmeet(this);
+
+  case NarrowOop:
     return t->xmeet(this);
 
   case Bad:                     // Type check
@@ -613,6 +630,7 @@ const Type::TYPES Type::dual_type[Type::lastype] = {
   Bad,          // Int - handled in v-call
   Bad,          // Long - handled in v-call
   Half,         // Half
+  Bad,          // NarrowOop - handled in v-call
 
   Bad,          // Tuple - handled in v-call
   Bad,          // Array - handled in v-call
@@ -668,11 +686,14 @@ void Type::dump_on(outputStream *st) const {
   ResourceMark rm;
   Dict d(cmpkey,hashkey);       // Stop recursive type dumping
   dump2(d,1, st);
+  if (is_ptr_to_narrowoop()) {
+    st->print(" [narrow]");
+  }
 }
 
 //------------------------------data-------------------------------------------
 const char * const Type::msg[Type::lastype] = {
-  "bad","control","top","int:","long:","half",
+  "bad","control","top","int:","long:","half", "narrowoop:",
   "tuple:", "aryptr",
   "anyptr:", "rawptr:", "java:", "inst:", "ary:", "klass:",
   "func", "abIO", "return_address", "memory",
@@ -735,7 +756,7 @@ void Type::typerr( const Type *t ) const {
 //------------------------------isa_oop_ptr------------------------------------
 // Return true if type is an oop pointer type.  False for raw pointers.
 static char isa_oop_ptr_tbl[Type::lastype] = {
-  0,0,0,0,0,0,0/*tuple*/, 0/*ary*/,
+  0,0,0,0,0,0,0/*narrowoop*/,0/*tuple*/, 0/*ary*/,
   0/*anyptr*/,0/*rawptr*/,1/*OopPtr*/,1/*InstPtr*/,1/*AryPtr*/,1/*KlassPtr*/,
   0/*func*/,0,0/*return_address*/,0,
   /*floats*/0,0,0, /*doubles*/0,0,0,
@@ -898,6 +919,7 @@ const Type *TypeD::xmeet( const Type *t ) const {
   case InstPtr:
   case KlassPtr:
   case AryPtr:
+  case NarrowOop:
   case Int:
   case Long:
   case FloatTop:
@@ -1044,6 +1066,7 @@ const Type *TypeInt::xmeet( const Type *t ) const {
   case InstPtr:
   case KlassPtr:
   case AryPtr:
+  case NarrowOop:
   case Long:
   case FloatTop:
   case FloatCon:
@@ -1285,6 +1308,7 @@ const Type *TypeLong::xmeet( const Type *t ) const {
   case InstPtr:
   case KlassPtr:
   case AryPtr:
+  case NarrowOop:
   case Int:
   case FloatTop:
   case FloatCon:
@@ -1718,6 +1742,9 @@ inline const TypeInt* normalize_array_size(const TypeInt* size) {
 
 //------------------------------make-------------------------------------------
 const TypeAry *TypeAry::make( const Type *elem, const TypeInt *size) {
+  if (UseCompressedOops && elem->isa_oopptr()) {
+    elem = elem->make_narrowoop();
+  }
   size = normalize_array_size(size);
   return (TypeAry*)(new TypeAry(elem,size))->hashcons();
 }
@@ -1800,15 +1827,30 @@ bool TypeAry::ary_must_be_exact() const {
   // In such cases, an array built on this ary must have no subclasses.
   if (_elem == BOTTOM)      return false;  // general array not exact
   if (_elem == TOP   )      return false;  // inverted general array not exact
-  const TypeOopPtr*  toop = _elem->isa_oopptr();
+  const TypeOopPtr*  toop = NULL;
+  if (UseCompressedOops && _elem->isa_narrowoop()) {
+    toop = _elem->make_ptr()->isa_oopptr();
+  } else {
+    toop = _elem->isa_oopptr();
+  }
   if (!toop)                return true;   // a primitive type, like int
   ciKlass* tklass = toop->klass();
   if (tklass == NULL)       return false;  // unloaded class
   if (!tklass->is_loaded()) return false;  // unloaded class
-  const TypeInstPtr* tinst = _elem->isa_instptr();
-  if (tinst)                return tklass->as_instance_klass()->is_final();
-  const TypeAryPtr*  tap = _elem->isa_aryptr();
-  if (tap)                  return tap->ary()->ary_must_be_exact();
+  const TypeInstPtr* tinst;
+  if (_elem->isa_narrowoop())
+    tinst = _elem->make_ptr()->isa_instptr();
+  else
+    tinst = _elem->isa_instptr();
+  if (tinst)
+    return tklass->as_instance_klass()->is_final();
+  const TypeAryPtr*  tap;
+  if (_elem->isa_narrowoop())
+    tap = _elem->make_ptr()->isa_aryptr();
+  else
+    tap = _elem->isa_aryptr();
+  if (tap)
+    return tap->ary()->ary_must_be_exact();
   return false;
 }
 
@@ -1864,6 +1906,7 @@ const Type *TypePtr::xmeet( const Type *t ) const {
   case DoubleTop:
   case DoubleCon:
   case DoubleBot:
+  case NarrowOop:
   case Bottom:                  // Ye Olde Default
     return Type::BOTTOM;
   case Top:
@@ -2096,6 +2139,67 @@ void TypeRawPtr::dump2( Dict &d, uint depth, outputStream *st ) const {
 // Convenience common pre-built type.
 const TypeOopPtr *TypeOopPtr::BOTTOM;
 
+//------------------------------TypeOopPtr-------------------------------------
+TypeOopPtr::TypeOopPtr( TYPES t, PTR ptr, ciKlass* k, bool xk, ciObject* o, int offset, int instance_id )
+  : TypePtr(t, ptr, offset),
+    _const_oop(o), _klass(k),
+    _klass_is_exact(xk),
+    _is_ptr_to_narrowoop(false),
+    _instance_id(instance_id) {
+#ifdef _LP64
+  if (UseCompressedOops && _offset != 0) {
+    if (klass() == NULL) {
+      assert(this->isa_aryptr(), "only arrays without klass");
+      _is_ptr_to_narrowoop = true;
+    } else if (_offset == oopDesc::klass_offset_in_bytes()) {
+      _is_ptr_to_narrowoop = true;
+    } else if (this->isa_aryptr()) {
+      _is_ptr_to_narrowoop = (klass()->is_obj_array_klass() &&
+                             _offset != arrayOopDesc::length_offset_in_bytes());
+    } else if (klass() == ciEnv::current()->Class_klass() &&
+               (_offset == java_lang_Class::klass_offset_in_bytes() ||
+                _offset == java_lang_Class::array_klass_offset_in_bytes())) {
+      // Special hidden fields from the Class.
+      assert(this->isa_instptr(), "must be an instance ptr.");
+      _is_ptr_to_narrowoop = true;
+    } else if (klass()->is_instance_klass()) {
+      ciInstanceKlass* ik = klass()->as_instance_klass();
+      ciField* field = NULL;
+      if (this->isa_klassptr()) {
+        // Perm objects don't use compressed references, except for
+        // static fields which are currently compressed.
+        field = ik->get_field_by_offset(_offset, true);
+        if (field != NULL) {
+          BasicType basic_elem_type = field->layout_type();
+          _is_ptr_to_narrowoop = (basic_elem_type == T_OBJECT ||
+                                  basic_elem_type == T_ARRAY);
+        }
+      } else if (_offset == OffsetBot || _offset == OffsetTop) {
+        // unsafe access
+        _is_ptr_to_narrowoop = true;
+      } else { // exclude unsafe ops
+        assert(this->isa_instptr(), "must be an instance ptr.");
+        // Field which contains a compressed oop references.
+        field = ik->get_field_by_offset(_offset, false);
+        if (field != NULL) {
+          BasicType basic_elem_type = field->layout_type();
+          _is_ptr_to_narrowoop = (basic_elem_type == T_OBJECT ||
+                                  basic_elem_type == T_ARRAY);
+        } else if (klass()->equals(ciEnv::current()->Object_klass())) {
+          // Compile::find_alias_type() cast exactness on all types to verify
+          // that it does not affect alias type.
+          _is_ptr_to_narrowoop = true;
+        } else {
+          // Type for the copy start in LibraryCallKit::inline_native_clone().
+          assert(!klass_is_exact(), "only non-exact klass");
+          _is_ptr_to_narrowoop = true;
+        }
+      }
+    }
+  }
+#endif
+}
+
 //------------------------------make-------------------------------------------
 const TypeOopPtr *TypeOopPtr::make(PTR ptr,
                                    int offset) {
@@ -2103,7 +2207,7 @@ const TypeOopPtr *TypeOopPtr::make(PTR ptr,
   ciKlass*  k = ciKlassKlass::make();
   bool      xk = false;
   ciObject* o = NULL;
-  return (TypeOopPtr*)(new TypeOopPtr(OopPtr, ptr, k, xk, o, offset, UNKNOWN_INSTANCE))->hashcons();
+  return (TypeOopPtr*)(new TypeOopPtr(OopPtr, ptr, k, xk, o, offset, InstanceBot))->hashcons();
 }
 
 
@@ -2115,7 +2219,7 @@ const Type *TypeOopPtr::cast_to_ptr_type(PTR ptr) const {
 }
 
 //-----------------------------cast_to_instance-------------------------------
-const TypeOopPtr *TypeOopPtr::cast_to_instance(int instance_id) const {
+const TypeOopPtr *TypeOopPtr::cast_to_instance_id(int instance_id) const {
   // There are no instances of a general oop.
   // Return self unchanged.
   return this;
@@ -2209,7 +2313,7 @@ const Type *TypeOopPtr::xmeet( const Type *t ) const {
 const Type *TypeOopPtr::xdual() const {
   assert(klass() == ciKlassKlass::make(), "no klasses here");
   assert(const_oop() == NULL,             "no constants here");
-  return new TypeOopPtr(_base, dual_ptr(), klass(), klass_is_exact(), const_oop(), dual_offset(), dual_instance()  );
+  return new TypeOopPtr(_base, dual_ptr(), klass(), klass_is_exact(), const_oop(), dual_offset(), dual_instance_id()  );
 }
 
 //--------------------------make_from_klass_common-----------------------------
@@ -2423,7 +2527,9 @@ void TypeOopPtr::dump2( Dict &d, uint depth, outputStream *st ) const {
   case         0: break;
   default:        st->print("+%d",_offset); break;
   }
-  if (_instance_id != UNKNOWN_INSTANCE)
+  if (_instance_id == InstanceTop)
+    st->print(",iid=top");
+  else if (_instance_id != InstanceBot)
     st->print(",iid=%d",_instance_id);
 }
 #endif
@@ -2455,15 +2561,23 @@ const TypePtr *TypeOopPtr::add_offset( int offset ) const {
   return make( _ptr, xadd_offset(offset) );
 }
 
-int TypeOopPtr::meet_instance(int iid) const {
-  if (iid == 0) {
-    return (_instance_id < 0)  ? _instance_id : UNKNOWN_INSTANCE;
-  } else if (_instance_id == UNKNOWN_INSTANCE) {
-    return (iid < 0)  ? iid : UNKNOWN_INSTANCE;
-  } else {
-    return (_instance_id == iid) ? iid : UNKNOWN_INSTANCE;
-  }
+//------------------------------meet_instance_id--------------------------------
+int TypeOopPtr::meet_instance_id( int instance_id ) const {
+  // Either is 'TOP' instance?  Return the other instance!
+  if( _instance_id == InstanceTop ) return  instance_id;
+  if(  instance_id == InstanceTop ) return _instance_id;
+  // If either is different, return 'BOTTOM' instance
+  if( _instance_id != instance_id ) return InstanceBot;
+  return _instance_id;
 }
+
+//------------------------------dual_instance_id--------------------------------
+int TypeOopPtr::dual_instance_id( ) const {
+  if( _instance_id == InstanceTop ) return InstanceBot; // Map TOP into BOTTOM
+  if( _instance_id == InstanceBot ) return InstanceTop; // Map BOTTOM into TOP
+  return _instance_id;              // Map everything else into self
+}
+
 
 //=============================================================================
 // Convenience common pre-built types.
@@ -2496,7 +2610,7 @@ const TypeInstPtr *TypeInstPtr::make(PTR ptr,
   // Ptr is never Null
   assert( ptr != Null, "NULL pointers are not typed" );
 
-  if (instance_id != UNKNOWN_INSTANCE)
+  if ( instance_id > 0 )
     xk = true;  // instances are always exactly typed
   if (!UseExactTypes)  xk = false;
   if (ptr == Constant) {
@@ -2521,7 +2635,7 @@ const Type *TypeInstPtr::cast_to_ptr_type(PTR ptr) const {
   if( ptr == _ptr ) return this;
   // Reconstruct _sig info here since not a problem with later lazy
   // construction, _sig will show up on demand.
-  return make(ptr, klass(), klass_is_exact(), const_oop(), _offset);
+  return make(ptr, klass(), klass_is_exact(), const_oop(), _offset, _instance_id);
 }
 
 
@@ -2537,11 +2651,15 @@ const Type *TypeInstPtr::cast_to_exactness(bool klass_is_exact) const {
 }
 
 //-----------------------------cast_to_instance-------------------------------
-const TypeOopPtr *TypeInstPtr::cast_to_instance(int instance_id) const {
-  if( instance_id == _instance_id) return this;
-  bool exact = (instance_id == UNKNOWN_INSTANCE) ? _klass_is_exact : true;
-
-  return make(ptr(), klass(), exact, const_oop(), _offset, instance_id);
+const TypeOopPtr *TypeInstPtr::cast_to_instance_id(int instance_id) const {
+  if( instance_id == _instance_id ) return this;
+  bool exact = _klass_is_exact;
+  PTR  ptr_t = _ptr;
+  if ( instance_id > 0 ) { // instances are always exactly typed
+    if (UseExactTypes) exact = true;
+    ptr_t = NotNull;
+  }
+  return make(ptr_t, klass(), exact, const_oop(), _offset, instance_id);
 }
 
 //------------------------------xmeet_unloaded---------------------------------
@@ -2607,6 +2725,7 @@ const Type *TypeInstPtr::xmeet( const Type *t ) const {
   case DoubleTop:
   case DoubleCon:
   case DoubleBot:
+  case NarrowOop:
   case Bottom:                  // Ye Olde Default
     return Type::BOTTOM;
   case Top:
@@ -2621,16 +2740,17 @@ const Type *TypeInstPtr::xmeet( const Type *t ) const {
     const TypeAryPtr *tp = t->is_aryptr();
     int offset = meet_offset(tp->offset());
     PTR ptr = meet_ptr(tp->ptr());
-    int iid = meet_instance(tp->instance_id());
+    int instance_id = meet_instance_id(tp->instance_id());
     switch (ptr) {
     case TopPTR:
     case AnyNull:                // Fall 'down' to dual of object klass
       if (klass()->equals(ciEnv::current()->Object_klass())) {
-        return TypeAryPtr::make(ptr, tp->ary(), tp->klass(), tp->klass_is_exact(), offset, iid);
+        return TypeAryPtr::make(ptr, tp->ary(), tp->klass(), tp->klass_is_exact(), offset, instance_id);
       } else {
         // cannot subclass, so the meet has to fall badly below the centerline
         ptr = NotNull;
-        return TypeInstPtr::make( ptr, ciEnv::current()->Object_klass(), false, NULL, offset, iid);
+        instance_id = InstanceBot;
+        return TypeInstPtr::make( ptr, ciEnv::current()->Object_klass(), false, NULL, offset, instance_id);
       }
     case Constant:
     case NotNull:
@@ -2641,14 +2761,15 @@ const Type *TypeInstPtr::xmeet( const Type *t ) const {
         // then we can subclass in the Java class heirarchy.
         if (klass()->equals(ciEnv::current()->Object_klass())) {
           // that is, tp's array type is a subtype of my klass
-          return TypeAryPtr::make(ptr, tp->ary(), tp->klass(), tp->klass_is_exact(), offset, iid);
+          return TypeAryPtr::make(ptr, tp->ary(), tp->klass(), tp->klass_is_exact(), offset, instance_id);
         }
       }
       // The other case cannot happen, since I cannot be a subtype of an array.
       // The meet falls down to Object class below centerline.
       if( ptr == Constant )
          ptr = NotNull;
-      return make( ptr, ciEnv::current()->Object_klass(), false, NULL, offset, iid );
+      instance_id = InstanceBot;
+      return make( ptr, ciEnv::current()->Object_klass(), false, NULL, offset, instance_id );
     default: typerr(t);
     }
   }
@@ -2660,9 +2781,11 @@ const Type *TypeInstPtr::xmeet( const Type *t ) const {
     PTR ptr = meet_ptr(tp->ptr());
     switch (tp->ptr()) {
     case TopPTR:
-    case AnyNull:
+    case AnyNull: {
+      int instance_id = meet_instance_id(InstanceTop);
       return make(ptr, klass(), klass_is_exact(),
-                  (ptr == Constant ? const_oop() : NULL), offset);
+                  (ptr == Constant ? const_oop() : NULL), offset, instance_id);
+    }
     case NotNull:
     case BotPTR:
       return TypeOopPtr::make(ptr, offset);
@@ -2678,10 +2801,13 @@ const Type *TypeInstPtr::xmeet( const Type *t ) const {
     switch (tp->ptr()) {
     case Null:
       if( ptr == Null ) return TypePtr::make( AnyPtr, ptr, offset );
+      // else fall through to AnyNull
     case TopPTR:
-    case AnyNull:
+    case AnyNull: {
+      int instance_id = meet_instance_id(InstanceTop);
       return make( ptr, klass(), klass_is_exact(),
-                   (ptr == Constant ? const_oop() : NULL), offset );
+                   (ptr == Constant ? const_oop() : NULL), offset, instance_id);
+    }
     case NotNull:
     case BotPTR:
       return TypePtr::make( AnyPtr, ptr, offset );
@@ -2710,7 +2836,7 @@ const Type *TypeInstPtr::xmeet( const Type *t ) const {
     const TypeInstPtr *tinst = t->is_instptr();
     int off = meet_offset( tinst->offset() );
     PTR ptr = meet_ptr( tinst->ptr() );
-    int instance_id = meet_instance(tinst->instance_id());
+    int instance_id = meet_instance_id(tinst->instance_id());
 
     // Check for easy case; klasses are equal (and perhaps not loaded!)
     // If we have constants, then we created oops so classes are loaded
@@ -2779,7 +2905,7 @@ const Type *TypeInstPtr::xmeet( const Type *t ) const {
         // Find out which constant.
         o = (this_klass == klass()) ? const_oop() : tinst->const_oop();
       }
-      return make( ptr, k, xk, o, off );
+      return make( ptr, k, xk, o, off, instance_id );
     }
 
     // Either oop vs oop or interface vs interface or interface vs Object
@@ -2866,7 +2992,7 @@ const Type *TypeInstPtr::xmeet( const Type *t ) const {
 
     // Now we find the LCA of Java classes
     ciKlass* k = this_klass->least_common_ancestor(tinst_klass);
-    return make( ptr, k, false, NULL, off );
+    return make( ptr, k, false, NULL, off, instance_id );
   } // End of case InstPtr
 
   case KlassPtr:
@@ -2893,7 +3019,7 @@ ciType* TypeInstPtr::java_mirror_type() const {
 // Dual: do NOT dual on klasses.  This means I do NOT understand the Java
 // inheritence mechanism.
 const Type *TypeInstPtr::xdual() const {
-  return new TypeInstPtr( dual_ptr(), klass(), klass_is_exact(), const_oop(), dual_offset(), dual_instance()  );
+  return new TypeInstPtr( dual_ptr(), klass(), klass_is_exact(), const_oop(), dual_offset(), dual_instance_id()  );
 }
 
 //------------------------------eq---------------------------------------------
@@ -2945,7 +3071,9 @@ void TypeInstPtr::dump2( Dict &d, uint depth, outputStream *st ) const {
   }
 
   st->print(" *");
-  if (_instance_id != UNKNOWN_INSTANCE)
+  if (_instance_id == InstanceTop)
+    st->print(",iid=top");
+  else if (_instance_id != InstanceBot)
     st->print(",iid=%d",_instance_id);
 }
 #endif
@@ -2959,6 +3087,7 @@ const TypePtr *TypeInstPtr::add_offset( int offset ) const {
 // Convenience common pre-built types.
 const TypeAryPtr *TypeAryPtr::RANGE;
 const TypeAryPtr *TypeAryPtr::OOPS;
+const TypeAryPtr *TypeAryPtr::NARROWOOPS;
 const TypeAryPtr *TypeAryPtr::BYTES;
 const TypeAryPtr *TypeAryPtr::SHORTS;
 const TypeAryPtr *TypeAryPtr::CHARS;
@@ -2972,7 +3101,7 @@ const TypeAryPtr *TypeAryPtr::make( PTR ptr, const TypeAry *ary, ciKlass* k, boo
   assert(!(k == NULL && ary->_elem->isa_int()),
          "integral arrays must be pre-equipped with a class");
   if (!xk)  xk = ary->ary_must_be_exact();
-  if (instance_id != UNKNOWN_INSTANCE)
+  if ( instance_id > 0 )
     xk = true;  // instances are always exactly typed
   if (!UseExactTypes)  xk = (ptr == Constant);
   return (TypeAryPtr*)(new TypeAryPtr(ptr, NULL, ary, k, xk, offset, instance_id))->hashcons();
@@ -2984,7 +3113,7 @@ const TypeAryPtr *TypeAryPtr::make( PTR ptr, ciObject* o, const TypeAry *ary, ci
          "integral arrays must be pre-equipped with a class");
   assert( (ptr==Constant && o) || (ptr!=Constant && !o), "" );
   if (!xk)  xk = (o != NULL) || ary->ary_must_be_exact();
-  if (instance_id != UNKNOWN_INSTANCE)
+  if ( instance_id > 0 )
     xk = true;  // instances are always exactly typed
   if (!UseExactTypes)  xk = (ptr == Constant);
   return (TypeAryPtr*)(new TypeAryPtr(ptr, o, ary, k, xk, offset, instance_id))->hashcons();
@@ -2993,7 +3122,7 @@ const TypeAryPtr *TypeAryPtr::make( PTR ptr, ciObject* o, const TypeAry *ary, ci
 //------------------------------cast_to_ptr_type-------------------------------
 const Type *TypeAryPtr::cast_to_ptr_type(PTR ptr) const {
   if( ptr == _ptr ) return this;
-  return make(ptr, const_oop(), _ary, klass(), klass_is_exact(), _offset);
+  return make(ptr, const_oop(), _ary, klass(), klass_is_exact(), _offset, _instance_id);
 }
 
 
@@ -3006,10 +3135,15 @@ const Type *TypeAryPtr::cast_to_exactness(bool klass_is_exact) const {
 }
 
 //-----------------------------cast_to_instance-------------------------------
-const TypeOopPtr *TypeAryPtr::cast_to_instance(int instance_id) const {
-  if( instance_id == _instance_id) return this;
-  bool exact = (instance_id == UNKNOWN_INSTANCE) ? _klass_is_exact : true;
-  return make(ptr(), const_oop(), _ary, klass(), exact, _offset, instance_id);
+const TypeOopPtr *TypeAryPtr::cast_to_instance_id(int instance_id) const {
+  if( instance_id == _instance_id ) return this;
+  bool exact = _klass_is_exact;
+  PTR  ptr_t = _ptr;
+  if ( instance_id > 0 ) { // instances are always exactly typed
+    if (UseExactTypes) exact = true;
+    ptr_t = NotNull;
+  }
+  return make(ptr_t, const_oop(), _ary, klass(), exact, _offset, instance_id);
 }
 
 //-----------------------------narrow_size_type-------------------------------
@@ -3021,6 +3155,9 @@ static jint max_array_length(BasicType etype) {
   jint res = cache;
   if (res == 0) {
     switch (etype) {
+    case T_NARROWOOP:
+      etype = T_OBJECT;
+      break;
     case T_CONFLICT:
     case T_ILLEGAL:
     case T_VOID:
@@ -3057,7 +3194,7 @@ const TypeAryPtr* TypeAryPtr::cast_to_size(const TypeInt* new_size) const {
     new_size = TypeInt::ZERO; // intermediate dead fast-path goo
   if (new_size == size())  return this;
   const TypeAry* new_ary = TypeAry::make(elem(), new_size);
-  return make(ptr(), const_oop(), new_ary, klass(), klass_is_exact(), _offset);
+  return make(ptr(), const_oop(), new_ary, klass(), klass_is_exact(), _offset, _instance_id);
 }
 
 
@@ -3093,6 +3230,7 @@ const Type *TypeAryPtr::xmeet( const Type *t ) const {
   case DoubleTop:
   case DoubleCon:
   case DoubleBot:
+  case NarrowOop:
   case Bottom:                  // Ye Olde Default
     return Type::BOTTOM;
   case Top:
@@ -3108,8 +3246,11 @@ const Type *TypeAryPtr::xmeet( const Type *t ) const {
     PTR ptr = meet_ptr(tp->ptr());
     switch (tp->ptr()) {
     case TopPTR:
-    case AnyNull:
-      return make(ptr, (ptr == Constant ? const_oop() : NULL), _ary, _klass, _klass_is_exact, offset);
+    case AnyNull: {
+      int instance_id = meet_instance_id(InstanceTop);
+      return make(ptr, (ptr == Constant ? const_oop() : NULL),
+                  _ary, _klass, _klass_is_exact, offset, instance_id);
+    }
     case BotPTR:
     case NotNull:
       return TypeOopPtr::make(ptr, offset);
@@ -3130,8 +3271,12 @@ const Type *TypeAryPtr::xmeet( const Type *t ) const {
       return TypePtr::make(AnyPtr, ptr, offset);
     case Null:
       if( ptr == Null ) return TypePtr::make(AnyPtr, ptr, offset);
-    case AnyNull:
-      return make( ptr, (ptr == Constant ? const_oop() : NULL), _ary, _klass, _klass_is_exact, offset );
+      // else fall through to AnyNull
+    case AnyNull: {
+      int instance_id = meet_instance_id(InstanceTop);
+      return make( ptr, (ptr == Constant ? const_oop() : NULL),
+                  _ary, _klass, _klass_is_exact, offset, instance_id);
+    }
     default: ShouldNotReachHere();
     }
   }
@@ -3143,7 +3288,7 @@ const Type *TypeAryPtr::xmeet( const Type *t ) const {
     int off = meet_offset(tap->offset());
     const TypeAry *tary = _ary->meet(tap->_ary)->is_ary();
     PTR ptr = meet_ptr(tap->ptr());
-    int iid = meet_instance(tap->instance_id());
+    int instance_id = meet_instance_id(tap->instance_id());
     ciKlass* lazy_klass = NULL;
     if (tary->_elem->isa_int()) {
       // Integral array element types have irrelevant lattice relations.
@@ -3164,7 +3309,7 @@ const Type *TypeAryPtr::xmeet( const Type *t ) const {
     case TopPTR:
       // Compute new klass on demand, do not use tap->_klass
       xk = (tap->_klass_is_exact | this->_klass_is_exact);
-      return make( ptr, const_oop(), tary, lazy_klass, xk, off );
+      return make( ptr, const_oop(), tary, lazy_klass, xk, off, instance_id );
     case Constant: {
       ciObject* o = const_oop();
       if( _ptr == Constant ) {
@@ -3176,7 +3321,7 @@ const Type *TypeAryPtr::xmeet( const Type *t ) const {
         o = tap->const_oop();
       }
       xk = true;
-      return TypeAryPtr::make( ptr, o, tary, tap->_klass, xk, off );
+      return TypeAryPtr::make( ptr, o, tary, tap->_klass, xk, off, instance_id );
     }
     case NotNull:
     case BotPTR:
@@ -3187,7 +3332,7 @@ const Type *TypeAryPtr::xmeet( const Type *t ) const {
             xk = this->_klass_is_exact;
       else  xk = (tap->_klass_is_exact & this->_klass_is_exact) &&
               (klass() == tap->klass()); // Only precise for identical arrays
-      return TypeAryPtr::make( ptr, NULL, tary, lazy_klass, xk, off, iid );
+      return TypeAryPtr::make( ptr, NULL, tary, lazy_klass, xk, off, instance_id );
     default: ShouldNotReachHere();
     }
   }
@@ -3197,16 +3342,17 @@ const Type *TypeAryPtr::xmeet( const Type *t ) const {
     const TypeInstPtr *tp = t->is_instptr();
     int offset = meet_offset(tp->offset());
     PTR ptr = meet_ptr(tp->ptr());
-    int iid = meet_instance(tp->instance_id());
+    int instance_id = meet_instance_id(tp->instance_id());
     switch (ptr) {
     case TopPTR:
     case AnyNull:                // Fall 'down' to dual of object klass
       if( tp->klass()->equals(ciEnv::current()->Object_klass()) ) {
-        return TypeAryPtr::make( ptr, _ary, _klass, _klass_is_exact, offset, iid );
+        return TypeAryPtr::make( ptr, _ary, _klass, _klass_is_exact, offset, instance_id );
       } else {
         // cannot subclass, so the meet has to fall badly below the centerline
         ptr = NotNull;
-        return TypeInstPtr::make( ptr, ciEnv::current()->Object_klass(), false, NULL,offset, iid);
+        instance_id = InstanceBot;
+        return TypeInstPtr::make( ptr, ciEnv::current()->Object_klass(), false, NULL,offset, instance_id);
       }
     case Constant:
     case NotNull:
@@ -3217,14 +3363,15 @@ const Type *TypeAryPtr::xmeet( const Type *t ) const {
         // then we can subclass in the Java class heirarchy.
         if( tp->klass()->equals(ciEnv::current()->Object_klass()) ) {
           // that is, my array type is a subtype of 'tp' klass
-          return make( ptr, _ary, _klass, _klass_is_exact, offset, iid );
+          return make( ptr, _ary, _klass, _klass_is_exact, offset, instance_id );
         }
       }
       // The other case cannot happen, since t cannot be a subtype of an array.
       // The meet falls down to Object class below centerline.
       if( ptr == Constant )
          ptr = NotNull;
-      return TypeInstPtr::make( ptr, ciEnv::current()->Object_klass(), false, NULL,offset, iid);
+      instance_id = InstanceBot;
+      return TypeInstPtr::make( ptr, ciEnv::current()->Object_klass(), false, NULL,offset, instance_id);
     default: typerr(t);
     }
   }
@@ -3239,7 +3386,7 @@ const Type *TypeAryPtr::xmeet( const Type *t ) const {
 //------------------------------xdual------------------------------------------
 // Dual: compute field-by-field dual
 const Type *TypeAryPtr::xdual() const {
-  return new TypeAryPtr( dual_ptr(), _const_oop, _ary->dual()->is_ary(),_klass, _klass_is_exact, dual_offset(), dual_instance() );
+  return new TypeAryPtr( dual_ptr(), _const_oop, _ary->dual()->is_ary(),_klass, _klass_is_exact, dual_offset(), dual_instance_id() );
 }
 
 //------------------------------dump2------------------------------------------
@@ -3263,14 +3410,23 @@ void TypeAryPtr::dump2( Dict &d, uint depth, outputStream *st ) const {
     break;
   }
 
-  st->print("*");
-  if (_instance_id != UNKNOWN_INSTANCE)
+  if( _offset != 0 ) {
+    int header_size = objArrayOopDesc::header_size() * wordSize;
+    if( _offset == OffsetTop )       st->print("+undefined");
+    else if( _offset == OffsetBot )  st->print("+any");
+    else if( _offset < header_size ) st->print("+%d", _offset);
+    else {
+      BasicType basic_elem_type = elem()->basic_type();
+      int array_base = arrayOopDesc::base_offset_in_bytes(basic_elem_type);
+      int elem_size = type2aelembytes(basic_elem_type);
+      st->print("[%d]", (_offset - array_base)/elem_size);
+    }
+  }
+  st->print(" *");
+  if (_instance_id == InstanceTop)
+    st->print(",iid=top");
+  else if (_instance_id != InstanceBot)
     st->print(",iid=%d",_instance_id);
-  if( !_offset ) return;
-  if( _offset == OffsetTop )      st->print("+undefined");
-  else if( _offset == OffsetBot ) st->print("+any");
-  else if( _offset < 12 )         st->print("+%d",_offset);
-  else                            st->print("[%d]", (_offset-12)/4 );
 }
 #endif
 
@@ -3283,6 +3439,124 @@ bool TypeAryPtr::empty(void) const {
 const TypePtr *TypeAryPtr::add_offset( int offset ) const {
   return make( _ptr, _const_oop, _ary, _klass, _klass_is_exact, xadd_offset(offset), _instance_id );
 }
+
+
+//=============================================================================
+const TypeNarrowOop *TypeNarrowOop::BOTTOM;
+const TypeNarrowOop *TypeNarrowOop::NULL_PTR;
+
+
+const TypeNarrowOop* TypeNarrowOop::make(const TypePtr* type) {
+  return (const TypeNarrowOop*)(new TypeNarrowOop(type))->hashcons();
+}
+
+//------------------------------hash-------------------------------------------
+// Type-specific hashing function.
+int TypeNarrowOop::hash(void) const {
+  return _ooptype->hash() + 7;
+}
+
+
+bool TypeNarrowOop::eq( const Type *t ) const {
+  const TypeNarrowOop* tc = t->isa_narrowoop();
+  if (tc != NULL) {
+    if (_ooptype->base() != tc->_ooptype->base()) {
+      return false;
+    }
+    return tc->_ooptype->eq(_ooptype);
+  }
+  return false;
+}
+
+bool TypeNarrowOop::singleton(void) const {    // TRUE if type is a singleton
+  return _ooptype->singleton();
+}
+
+bool TypeNarrowOop::empty(void) const {
+  return _ooptype->empty();
+}
+
+//------------------------------meet-------------------------------------------
+// Compute the MEET of two types.  It returns a new Type object.
+const Type *TypeNarrowOop::xmeet( const Type *t ) const {
+  // Perform a fast test for common case; meeting the same types together.
+  if( this == t ) return this;  // Meeting same type-rep?
+
+
+  // Current "this->_base" is OopPtr
+  switch (t->base()) {          // switch on original type
+
+  case Int:                     // Mixing ints & oops happens when javac
+  case Long:                    // reuses local variables
+  case FloatTop:
+  case FloatCon:
+  case FloatBot:
+  case DoubleTop:
+  case DoubleCon:
+  case DoubleBot:
+  case Bottom:                  // Ye Olde Default
+    return Type::BOTTOM;
+  case Top:
+    return this;
+
+  case NarrowOop: {
+    const Type* result = _ooptype->xmeet(t->make_ptr());
+    if (result->isa_ptr()) {
+      return TypeNarrowOop::make(result->is_ptr());
+    }
+    return result;
+  }
+
+  default:                      // All else is a mistake
+    typerr(t);
+
+  case RawPtr:
+  case AnyPtr:
+  case OopPtr:
+  case InstPtr:
+  case KlassPtr:
+  case AryPtr:
+    typerr(t);
+    return Type::BOTTOM;
+
+  } // End of switch
+}
+
+const Type *TypeNarrowOop::xdual() const {    // Compute dual right now.
+  const TypePtr* odual = _ooptype->dual()->is_ptr();
+  return new TypeNarrowOop(odual);
+}
+
+const Type *TypeNarrowOop::filter( const Type *kills ) const {
+  if (kills->isa_narrowoop()) {
+    const Type* ft =_ooptype->filter(kills->is_narrowoop()->_ooptype);
+    if (ft->empty())
+      return Type::TOP;           // Canonical empty value
+    if (ft->isa_ptr()) {
+      return make(ft->isa_ptr());
+    }
+    return ft;
+  } else if (kills->isa_ptr()) {
+    const Type* ft = _ooptype->join(kills);
+    if (ft->empty())
+      return Type::TOP;           // Canonical empty value
+    return ft;
+  } else {
+    return Type::TOP;
+  }
+}
+
+
+intptr_t TypeNarrowOop::get_con() const {
+  return _ooptype->get_con();
+}
+
+#ifndef PRODUCT
+void TypeNarrowOop::dump2( Dict & d, uint depth, outputStream *st ) const {
+  tty->print("narrowoop: ");
+  _ooptype->dump2(d, depth, st);
+}
+#endif
 
 
 //=============================================================================
@@ -3334,31 +3608,36 @@ ciKlass* TypeAryPtr::klass() const {
   ciKlass* k_ary = NULL;
   const TypeInstPtr *tinst;
   const TypeAryPtr *tary;
+  const Type* el = elem();
+  if (el->isa_narrowoop()) {
+    el = el->make_ptr();
+  }
+
   // Get element klass
-  if ((tinst = elem()->isa_instptr()) != NULL) {
+  if ((tinst = el->isa_instptr()) != NULL) {
     // Compute array klass from element klass
     k_ary = ciObjArrayKlass::make(tinst->klass());
-  } else if ((tary = elem()->isa_aryptr()) != NULL) {
+  } else if ((tary = el->isa_aryptr()) != NULL) {
     // Compute array klass from element klass
     ciKlass* k_elem = tary->klass();
     // If element type is something like bottom[], k_elem will be null.
     if (k_elem != NULL)
       k_ary = ciObjArrayKlass::make(k_elem);
-  } else if ((elem()->base() == Type::Top) ||
-             (elem()->base() == Type::Bottom)) {
+  } else if ((el->base() == Type::Top) ||
+             (el->base() == Type::Bottom)) {
     // element type of Bottom occurs from meet of basic type
     // and object; Top occurs when doing join on Bottom.
     // Leave k_ary at NULL.
   } else {
     // Cannot compute array klass directly from basic type,
     // since subtypes of TypeInt all have basic type T_INT.
-    assert(!elem()->isa_int(),
+    assert(!el->isa_int(),
            "integral arrays must be pre-equipped with a class");
     // Compute array klass directly from basic type
-    k_ary = ciTypeArrayKlass::make(elem()->basic_type());
+    k_ary = ciTypeArrayKlass::make(el->basic_type());
   }
 
-  if( this != TypeAryPtr::OOPS )
+  if( this != TypeAryPtr::OOPS ) {
     // The _klass field acts as a cache of the underlying
     // ciKlass for this array type.  In order to set the field,
     // we need to cast away const-ness.
@@ -3373,6 +3652,11 @@ ciKlass* TypeAryPtr::klass() const {
     // a bit less efficient than caching, but calls to
     // TypeAryPtr::OOPS->klass() are not common enough to matter.
     ((TypeAryPtr*)this)->_klass = k_ary;
+    if (UseCompressedOops && k_ary != NULL && k_ary->is_obj_array_klass() &&
+        _offset != 0 && _offset != arrayOopDesc::length_offset_in_bytes()) {
+      ((TypeAryPtr*)this)->_is_ptr_to_narrowoop = true;
+    }
+  }
   return k_ary;
 }
 
@@ -3703,7 +3987,7 @@ void TypeFunc::dump2( Dict &d, uint depth, outputStream *st ) const {
 //------------------------------print_flattened--------------------------------
 // Print a 'flattened' signature
 static const char * const flat_type_msg[Type::lastype] = {
-  "bad","control","top","int","long","_",
+  "bad","control","top","int","long","_", "narrowoop",
   "tuple:", "array:",
   "ptr", "rawptr", "ptr", "ptr", "ptr", "ptr",
   "func", "abIO", "return_address", "mem",

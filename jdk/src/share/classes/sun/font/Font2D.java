@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -241,6 +241,13 @@ public abstract class Font2D {
         if (font.isTransformed()) {
             glyphTx.concatenate(font.getTransform());
         }
+        if (glyphTx.getTranslateX() != 0 || glyphTx.getTranslateY() != 0) {
+            glyphTx.setTransform(glyphTx.getScaleX(),
+                                 glyphTx.getShearY(),
+                                 glyphTx.getShearX(),
+                                 glyphTx.getScaleY(),
+                                 0.0, 0.0);
+        }
         FontStrikeDesc desc = new FontStrikeDesc(devTx, glyphTx,
                                                  font.getStyle(), aa, fm);
         return getStrike(desc, false);
@@ -266,6 +273,13 @@ public abstract class Font2D {
         at.scale(ptSize, ptSize);
         if (font.isTransformed()) {
             at.concatenate(font.getTransform());
+            if (at.getTranslateX() != 0 || at.getTranslateY() != 0) {
+                at.setTransform(at.getScaleX(),
+                                at.getShearY(),
+                                at.getShearX(),
+                                at.getScaleY(),
+                                0.0, 0.0);
+            }
         }
         int aa = FontStrikeDesc.getAAHintIntVal(this, font, frc);
         int fm = FontStrikeDesc.getFMHintIntVal(frc.getFractionalMetricsHint());

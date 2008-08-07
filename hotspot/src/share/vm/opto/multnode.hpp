@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,6 +61,9 @@ public:
     : Node( src ), _con(con), _is_io_use(io_use)
   {
     init_class_id(Class_Proj);
+    // Optimistic setting. Need additional checks in Node::is_dead_loop_safe().
+    if (con != TypeFunc::Memory || src->is_Start())
+      init_flags(Flag_is_dead_loop_safe);
     debug_only(check_con());
   }
   const uint _con;              // The field in the tuple we are projecting

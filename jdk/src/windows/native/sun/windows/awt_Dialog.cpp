@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -273,6 +273,10 @@ LRESULT CALLBACK AwtDialog::MouseHookProc(int nCode,
         {
             HWND blocker = AwtWindow::GetModalBlocker(AwtComponent::GetTopLevelParentForWindow(hWnd));
             HWND topMostBlocker = blocker;
+            HWND prevForegroundWindow = ::GetForegroundWindow();
+            if (::IsWindow(blocker)) {
+                ::BringWindowToTop(hWnd);
+            }
             while (::IsWindow(blocker)) {
                 topMostBlocker = blocker;
                 ::BringWindowToTop(blocker);
@@ -282,7 +286,7 @@ LRESULT CALLBACK AwtDialog::MouseHookProc(int nCode,
                 // no beep/flash if the mouse was clicked in the taskbar menu
                 // or the dialog is currently inactive
                 if ((::WindowFromPoint(mhs->pt) == hWnd) &&
-                    (::GetForegroundWindow() == topMostBlocker))
+                    (prevForegroundWindow == topMostBlocker))
                 {
                     ::MessageBeep(MB_OK);
                     // some heuristics: 3 times x 64 milliseconds
@@ -292,6 +296,7 @@ LRESULT CALLBACK AwtDialog::MouseHookProc(int nCode,
                     ::BringWindowToTop(topMostBlocker);
                     ::SetForegroundWindow(topMostBlocker);
                 }
+                return 1;
             }
         }
     }
@@ -423,8 +428,12 @@ void AwtDialog::ModalActivateNextWindow(HWND dialogHWnd,
 {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
 
-    jlongArray windows = (jlongArray)(env->CallStaticObjectMethod(AwtWindow::wwindowPeerCls,
-                                                                  AwtWindow::getActiveWindowsMID));
+    jclass wwindowPeerCls = env->FindClass("sun/awt/windows/WWindowPeer");
+    jmethodID getActiveWindowsMID = env->GetStaticMethodID(wwindowPeerCls,
+                                                           "getActiveWindowHandles", "()[J");
+    DASSERT(getActiveWindowsMID != NULL);
+    jlongArray windows = (jlongArray)(env->CallStaticObjectMethod(wwindowPeerCls,
+                                                                  getActiveWindowsMID));
     if (windows == NULL) {
         return;
     }

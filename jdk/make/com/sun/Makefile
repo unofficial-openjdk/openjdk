@@ -1,5 +1,5 @@
 #
-# Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,7 @@ endif
 # Omit mirror since it's built with the apt tool.
 SUBDIRS = $(SCRIPT_SUBDIR) image security crypto/provider jndi jmx \
     java inputmethods org xml rowset net/httpserver net/ssl demo \
-    tools jarsigner
+    tools jarsigner tracing
 
 all build clean clobber::
 	$(SUBDIRS-loop)

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,6 +63,11 @@ protected:
   static int  platform_features(int features);
 
   static bool is_niagara1(int features) { return (features & niagara1_m) == niagara1_m; }
+
+  static int maximum_niagara1_processor_count() { return 32; }
+  // Returns true if the platform is in the niagara line and
+  // newer than the niagara1.
+  static bool is_niagara1_plus();
 
 public:
   // Initialization
@@ -129,4 +134,7 @@ public:
 
   // Override the Abstract_VM_Version implementation.
   static uint page_size_count() { return is_sun4v() ? 4 : 2; }
+
+  // Calculates the number of parallel threads
+  static unsigned int calc_parallel_worker_threads();
 };

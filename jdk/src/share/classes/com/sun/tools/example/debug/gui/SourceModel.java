@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-1999 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -187,22 +187,17 @@ public class SourceModel extends AbstractListModel {
      * when sourceLines is set.
      */
     private void markClassLines(ReferenceType refType) {
-        List methods = refType.methods();
-        for (Iterator mit = methods.iterator(); mit.hasNext();) {
-            Method meth = (Method)mit.next();
+        for (Method meth : refType.methods()) {
             try {
-                List lines = meth.allLineLocations();
-                for (Iterator lit = lines.iterator(); lit.hasNext();) {
-                    Location loc = (Location)lit.next();
+                for (Location loc : meth.allLineLocations()) {
                     showExecutable(loc.lineNumber(), refType);
                 }
             } catch (AbsentInformationException exc) {
                 // do nothing
             }
         }
-        List bps = env.getExecutionManager().eventRequestManager().breakpointRequests();
-        for (Iterator it = bps.iterator(); it.hasNext();) {
-            BreakpointRequest bp = (BreakpointRequest)it.next();
+        for (BreakpointRequest bp :
+                 env.getExecutionManager().eventRequestManager().breakpointRequests()) {
             if (bp.location() != null) {
                 Location loc = bp.location();
                 if (loc.declaringType().equals(refType)) {
@@ -224,8 +219,8 @@ public class SourceModel extends AbstractListModel {
         } finally {
             reader.close();
         }
-        for (Iterator it = classes.iterator(); it.hasNext();) {
-            markClassLines((ClassType)it.next());
+        for (ReferenceType refType : classes) {
+            markClassLines(refType);
         }
     }
 

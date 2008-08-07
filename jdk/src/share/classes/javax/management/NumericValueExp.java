@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -83,7 +83,7 @@ class NumericValueExp extends QueryEval implements ValueExp {
      * <p>The <b>serialVersionUID</b> of this class is <code>-4679739485102359104L</code>.
      */
     private static final ObjectStreamField[] serialPersistentFields;
-    private Number val = new Double(0);
+    private Number val = 0.0;
 
     private static boolean compat = false;
     static {
@@ -151,11 +151,18 @@ class NumericValueExp extends QueryEval implements ValueExp {
      * Returns the string representing the object
      */
     public String toString()  {
+      if (val == null)
+        return "null";
       if (val instanceof Long || val instanceof Integer)
       {
-        return String.valueOf(val.longValue());
+        return Long.toString(val.longValue());
       }
-      return String.valueOf(val.doubleValue());
+      double d = val.doubleValue();
+      if (Double.isInfinite(d))
+          return (d > 0) ? "(1.0 / 0.0)" : "(-1.0 / 0.0)";
+      if (Double.isNaN(d))
+          return "(0.0 / 0.0)";
+      return Double.toString(d);
     }
 
     /**
@@ -206,11 +213,11 @@ class NumericValueExp extends QueryEval implements ValueExp {
         }
         if (isLong)
         {
-          this.val = new Long(longVal);
+          this.val = longVal;
         }
         else
         {
-          this.val = new Double(doubleVal);
+          this.val = doubleVal;
         }
       }
       else
@@ -244,4 +251,10 @@ class NumericValueExp extends QueryEval implements ValueExp {
         out.defaultWriteObject();
       }
     }
+
+    @Deprecated
+    public void setMBeanServer(MBeanServer s) {
+        super.setMBeanServer(s);
+    }
+
  }

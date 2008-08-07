@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -568,7 +568,7 @@ class HTMLCodec extends InputStream {
         byte[] headerBytes = null, trailerBytes = null;
 
         try {
-            headerBytes = new String(header).getBytes(ENCODING);
+            headerBytes = header.toString().getBytes(ENCODING);
             trailerBytes = htmlSuffix.getBytes(ENCODING);
         } catch (UnsupportedEncodingException cannotHappen) {
         }

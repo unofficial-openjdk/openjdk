@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -98,7 +98,7 @@ class GIFWritableImageMetadata extends GIFImageMetadata {
         try {
             return data.getBytes("ISO-8859-1");
         } catch (UnsupportedEncodingException e) {
-            return (new String("")).getBytes();
+            return "".getBytes();
         }
     }
 

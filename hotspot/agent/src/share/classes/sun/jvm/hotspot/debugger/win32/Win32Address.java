@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2002 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,6 +72,10 @@ class Win32Address implements Address {
     return debugger.readAddress(addr + offset);
   }
 
+  public Address getCompOopAddressAt(long offset) throws UnalignedAddressException, UnmappedAddressException {
+    return debugger.readCompOopAddress(addr + offset);
+  }
+
   //
   // Java-related routines
   //
@@ -111,6 +115,10 @@ class Win32Address implements Address {
   public OopHandle getOopHandleAt(long offset)
     throws UnalignedAddressException, UnmappedAddressException, NotInHeapException {
     return debugger.readOopHandle(addr + offset);
+  }
+  public OopHandle getCompOopHandleAt(long offset)
+    throws UnalignedAddressException, UnmappedAddressException, NotInHeapException {
+    return debugger.readCompOopHandle(addr + offset);
   }
 
   //

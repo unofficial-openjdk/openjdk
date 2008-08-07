@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1995-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -101,5 +101,10 @@ class MDialogPeer extends MWindowPeer implements DialogPeer, MInputMethodControl
 
     public void blockWindows(java.util.List<Window> toBlock) {
         // do nothing
+    }
+
+    @Override
+    final boolean isTargetUndecorated() {
+        return ((Dialog)target).isUndecorated();
     }
 }

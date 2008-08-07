@@ -1,5 +1,5 @@
-/* 
- * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
+/*
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,13 +32,13 @@ import java.rmi.registry.Registry;
 public class SelfTerminator {
 
     public static void main(String[] args) {
-	try {
-	    Registry registry =
-		LocateRegistry.getRegistry("", TestLibrary.REGISTRY_PORT);
-	    Remote stub = registry.lookup(LeaseCheckInterval.BINDING);
-	    Runtime.getRuntime().halt(0);
-	} catch (Exception e) {
-	    e.printStackTrace();
-	}
+        try {
+            Registry registry =
+                LocateRegistry.getRegistry("", TestLibrary.REGISTRY_PORT);
+            Remote stub = registry.lookup(LeaseCheckInterval.BINDING);
+            Runtime.getRuntime().halt(0);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

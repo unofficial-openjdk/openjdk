@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,17 +60,20 @@ protected:
     debug_only(_adr_type=at; adr_type();)
   }
 
+public:
   // Helpers for the optimizer.  Documented in memnode.cpp.
   static bool detect_ptr_independence(Node* p1, AllocateNode* a1,
                                       Node* p2, AllocateNode* a2,
                                       PhaseTransform* phase);
   static bool adr_phi_is_loop_invariant(Node* adr_phi, Node* cast);
 
-public:
+  static Node *optimize_simple_memory_chain(Node *mchain, const TypePtr *t_adr, PhaseGVN *phase);
+  static Node *optimize_memory_chain(Node *mchain, const TypePtr *t_adr, PhaseGVN *phase);
   // This one should probably be a phase-specific function:
-  static bool detect_dominating_control(Node* dom, Node* sub);
+  static bool all_controls_dominate(Node* dom, Node* sub);
 
-  // Is this Node a MemNode or some descendent?  Default is YES.
+  // Find any cast-away of null-ness and keep its control.
+  static  Node *Ideal_common_DU_postCCP( PhaseCCP *ccp, Node* n, Node* adr );
   virtual Node *Ideal_DU_postCCP( PhaseCCP *ccp );
 
   virtual const class TypePtr *adr_type() const;  // returns bottom_type of address
@@ -97,7 +100,13 @@ public:
 
   // What is the type of the value in memory?  (T_VOID mean "unspecified".)
   virtual BasicType memory_type() const = 0;
-  virtual int memory_size() const { return type2aelembytes[memory_type()]; }
+  virtual int memory_size() const {
+#ifdef ASSERT
+    return type2aelembytes(memory_type(), true);
+#else
+    return type2aelembytes(memory_type());
+#endif
+  }
 
   // Search through memory states which precede this node (load or store).
   // Look for an exact match for the address, with no intervening
@@ -129,7 +138,8 @@ public:
   }
 
   // Polymorphic factory method:
-  static LoadNode* make( Compile *C, Node *c, Node *mem, Node *adr, const TypePtr* at, const Type *rt, BasicType bt );
+  static Node* make( PhaseGVN& gvn, Node *c, Node *mem, Node *adr,
+                     const TypePtr* at, const Type *rt, BasicType bt );
 
   virtual uint hash()   const;  // Check the type
 
@@ -141,9 +151,19 @@ public:
   // zero out the control input.
   virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
 
+  // Split instance field load through Phi.
+  Node* split_through_phi(PhaseGVN *phase);
+
+  // Recover original value from boxed values
+  Node *eliminate_autobox(PhaseGVN *phase);
+
   // Compute a new Type for this node.  Basically we just do the pre-check,
   // then call the virtual add() to set the type.
   virtual const Type *Value( PhaseTransform *phase ) const;
+
+  // Common methods for LoadKlass and LoadNKlass nodes.
+  const Type *klass_value_common( PhaseTransform *phase ) const;
+  Node *klass_identity_common( PhaseTransform *phase );
 
   virtual uint ideal_reg() const;
   virtual const Type *bottom_type() const;
@@ -162,6 +182,9 @@ public:
 
   // Map a load opcode to its corresponding store opcode.
   virtual int store_Opcode() const = 0;
+
+  // Check if the load's memory input is a Phi node with the same control.
+  bool is_instance_field_load_with_local_phi(Node* ctrl);
 
 #ifndef PRODUCT
   virtual void dump_spec(outputStream *st) const;
@@ -316,17 +339,61 @@ public:
   virtual bool depends_only_on_test() const { return adr_type() != TypeRawPtr::BOTTOM; }
 };
 
+
+//------------------------------LoadNNode--------------------------------------
+// Load a narrow oop from memory (either object or array)
+class LoadNNode : public LoadNode {
+public:
+  LoadNNode( Node *c, Node *mem, Node *adr, const TypePtr *at, const Type* t )
+    : LoadNode(c,mem,adr,at,t) {}
+  virtual int Opcode() const;
+  virtual uint ideal_reg() const { return Op_RegN; }
+  virtual int store_Opcode() const { return Op_StoreN; }
+  virtual BasicType memory_type() const { return T_NARROWOOP; }
+  // depends_only_on_test is almost always true, and needs to be almost always
+  // true to enable key hoisting & commoning optimizations.  However, for the
+  // special case of RawPtr loads from TLS top & end, the control edge carries
+  // the dependence preventing hoisting past a Safepoint instead of the memory
+  // edge.  (An unfortunate consequence of having Safepoints not set Raw
+  // Memory; itself an unfortunate consequence of having Nodes which produce
+  // results (new raw memory state) inside of loops preventing all manner of
+  // other optimizations).  Basically, it's ugly but so is the alternative.
+  // See comment in macro.cpp, around line 125 expand_allocate_common().
+  virtual bool depends_only_on_test() const { return adr_type() != TypeRawPtr::BOTTOM; }
+};
+
 //------------------------------LoadKlassNode----------------------------------
 // Load a Klass from an object
 class LoadKlassNode : public LoadPNode {
 public:
-  LoadKlassNode( Node *c, Node *mem, Node *adr, const TypePtr *at, const TypeKlassPtr *tk = TypeKlassPtr::OBJECT )
+  LoadKlassNode( Node *c, Node *mem, Node *adr, const TypePtr *at, const TypeKlassPtr *tk )
     : LoadPNode(c,mem,adr,at,tk) {}
   virtual int Opcode() const;
   virtual const Type *Value( PhaseTransform *phase ) const;
   virtual Node *Identity( PhaseTransform *phase );
   virtual bool depends_only_on_test() const { return true; }
+
+  // Polymorphic factory method:
+  static Node* make( PhaseGVN& gvn, Node *mem, Node *adr, const TypePtr* at,
+                     const TypeKlassPtr *tk = TypeKlassPtr::OBJECT );
 };
+
+//------------------------------LoadNKlassNode---------------------------------
+// Load a narrow Klass from an object.
+class LoadNKlassNode : public LoadNNode {
+public:
+  LoadNKlassNode( Node *c, Node *mem, Node *adr, const TypePtr *at, const TypeNarrowOop *tk )
+    : LoadNNode(c,mem,adr,at,tk) {}
+  virtual int Opcode() const;
+  virtual uint ideal_reg() const { return Op_RegN; }
+  virtual int store_Opcode() const { return Op_StoreN; }
+  virtual BasicType memory_type() const { return T_NARROWOOP; }
+
+  virtual const Type *Value( PhaseTransform *phase ) const;
+  virtual Node *Identity( PhaseTransform *phase );
+  virtual bool depends_only_on_test() const { return true; }
+};
+
 
 //------------------------------LoadSNode--------------------------------------
 // Load a short (16bits signed) from memory
@@ -362,7 +429,8 @@ public:
   }
 
   // Polymorphic factory method:
-  static StoreNode* make( Compile *C, Node *c, Node *mem, Node *adr, const TypePtr* at, Node *val, BasicType bt );
+  static StoreNode* make( PhaseGVN& gvn, Node *c, Node *mem, Node *adr,
+                          const TypePtr* at, Node *val, BasicType bt );
 
   virtual uint hash() const;    // Check the type
 
@@ -472,6 +540,15 @@ public:
   StorePNode( Node *c, Node *mem, Node *adr, const TypePtr* at, Node *val ) : StoreNode(c,mem,adr,at,val) {}
   virtual int Opcode() const;
   virtual BasicType memory_type() const { return T_ADDRESS; }
+};
+
+//------------------------------StoreNNode-------------------------------------
+// Store narrow oop to memory
+class StoreNNode : public StoreNode {
+public:
+  StoreNNode( Node *c, Node *mem, Node *adr, const TypePtr* at, Node *val ) : StoreNode(c,mem,adr,at,val) {}
+  virtual int Opcode() const;
+  virtual BasicType memory_type() const { return T_NARROWOOP; }
 };
 
 //------------------------------StoreCMNode-----------------------------------
@@ -586,6 +663,13 @@ public:
   virtual int Opcode() const;
 };
 
+//------------------------------CompareAndSwapNNode---------------------------
+class CompareAndSwapNNode : public LoadStoreNode {
+public:
+  CompareAndSwapNNode( Node *c, Node *mem, Node *adr, Node *val, Node *ex) : LoadStoreNode(c, mem, adr, val, ex) { }
+  virtual int Opcode() const;
+};
+
 //------------------------------ClearArray-------------------------------------
 class ClearArrayNode: public Node {
 public:
@@ -637,6 +721,18 @@ public:
   // a StrCompNode (conservatively) aliases with everything:
   virtual const TypePtr* adr_type() const { return TypePtr::BOTTOM; }
   virtual uint match_edge(uint idx) const;
+  virtual uint ideal_reg() const { return Op_RegI; }
+  virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
+};
+
+//------------------------------AryEq---------------------------------------
+class AryEqNode: public Node {
+public:
+  AryEqNode(Node *control, Node* s1, Node* s2): Node(control, s1, s2) {};
+  virtual int Opcode() const;
+  virtual bool depends_only_on_test() const { return false; }
+  virtual const Type* bottom_type() const { return TypeInt::BOOL; }
+  virtual const TypePtr* adr_type() const { return TypeAryPtr::CHARS; }
   virtual uint ideal_reg() const { return Op_RegI; }
   virtual Node *Ideal(PhaseGVN *phase, bool can_reshape);
 };

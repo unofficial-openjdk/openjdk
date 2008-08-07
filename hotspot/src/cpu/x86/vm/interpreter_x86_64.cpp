@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -375,7 +375,7 @@ address InterpreterGenerator::generate_accessor_entry(void) {
     __ cmpl(rdx, atos);
     __ jcc(Assembler::notEqual, notObj);
     // atos
-    __ movq(rax, field_address);
+    __ load_heap_oop(rax, field_address);
     __ jmp(xreturn_path);
 
     __ bind(notObj);

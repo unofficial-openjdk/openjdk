@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,12 @@ import sun.jvm.hotspot.types.*;
 import sun.jvm.hotspot.utilities.*;
 
 public class ObjectHeap {
+
+  private static final boolean DEBUG;
+
+  static {
+    DEBUG = System.getProperty("sun.jvm.hotspot.oops.ObjectHeap.DEBUG") != null;
+  }
 
   private OopHandle              symbolKlassHandle;
   private OopHandle              methodKlassHandle;
@@ -152,7 +158,7 @@ public class ObjectHeap {
 
   public ObjectHeap(TypeDataBase db) throws WrongTypeException {
     // Get commonly used sizes of basic types
-    oopSize     = db.getOopSize();
+    oopSize     = VM.getVM().getOopSize();
     byteSize    = db.getJByteType().getSize();
     charSize    = db.getJCharType().getSize();
     booleanSize = db.getJBooleanType().getSize();
@@ -310,6 +316,14 @@ public class ObjectHeap {
     iterateLiveRegions(liveRegions, visitor, null);
   }
 
+  public boolean isValidMethod(OopHandle handle) {
+    OopHandle klass = Oop.getKlassForOopHandle(handle);
+    if (klass != null && klass.equals(methodKlassHandle)) {
+      return true;
+    }
+    return false;
+  }
+
   // Creates an instance from the Oop hierarchy based based on the handle
   public Oop newOop(OopHandle handle) {
     // The only known way to detect the right type of an oop is
@@ -369,8 +383,10 @@ public class ObjectHeap {
       }
     }
 
-    System.err.println("Unknown oop at " + handle);
-    System.err.println("Oop's klass is " + klass);
+    if (DEBUG) {
+      System.err.println("Unknown oop at " + handle);
+      System.err.println("Oop's klass is " + klass);
+    }
 
     throw new UnknownOopException();
   }
@@ -440,12 +456,16 @@ public class ObjectHeap {
       try {
         // Traverses the space from bottom to top
         OopHandle handle = bottom.addOffsetToAsOopHandle(0);
+
         while (handle.lessThan(top)) {
         Oop obj = null;
 
           try {
             obj = newOop(handle);
           } catch (UnknownOopException exp) {
+            if (DEBUG) {
+              throw new RuntimeException(" UnknownOopException  " + exp);
+            }
           }
           if (obj == null) {
              //Find the object size using Printezis bits and skip over

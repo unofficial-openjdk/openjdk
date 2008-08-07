@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2004-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -440,7 +440,9 @@ public class AesDkCrypto extends DkCrypto {
                 for (int i = 0; i < hashSize; i++) {
                     if (calculatedHmac[i] != ciphertext[hmacOffset+i]) {
                         cksumFailed = true;
-                        System.err.println("Checksum failed !");
+                        if (debug) {
+                            System.err.println("Checksum failed !");
+                        }
                         break;
                     }
                 }

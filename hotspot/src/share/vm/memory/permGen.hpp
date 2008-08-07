@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,8 @@ class PermGen : public CHeapObj {
  protected:
   size_t _capacity_expansion_limit;  // maximum expansion allowed without a
                                      // full gc occuring
+
+  HeapWord* mem_allocate_in_gen(size_t size, Generation* gen);
 
  public:
   enum Name {

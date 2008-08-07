@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -101,13 +101,14 @@ public final class AccessControlContext {
     }
 
     /**
-     * Create an AccessControlContext with the given set of ProtectionDomains.
+     * Create an AccessControlContext with the given array of ProtectionDomains.
      * Context must not be null. Duplicate domains will be removed from the
      * context.
      *
      * @param context the ProtectionDomains associated with this context.
      * The non-duplicate domains are copied from the array. Subsequent
      * changes to the array will not affect this AccessControlContext.
+     * @throws NullPointerException if <code>context</code> is <code>null</code>
      */
     public AccessControlContext(ProtectionDomain context[])
     {
@@ -125,8 +126,10 @@ public final class AccessControlContext {
                 if ((context[i] != null) &&  (!v.contains(context[i])))
                     v.add(context[i]);
             }
-            this.context = new ProtectionDomain[v.size()];
-            this.context = v.toArray(this.context);
+            if (!v.isEmpty()) {
+                this.context = new ProtectionDomain[v.size()];
+                this.context = v.toArray(this.context);
+            }
         }
     }
 
@@ -322,7 +325,7 @@ public final class AccessControlContext {
                     debug.println("access denied " + perm);
                 }
 
-                if (Debug.isOn("failure")) {
+                if (Debug.isOn("failure") && debug != null) {
                     // Want to make sure this is always displayed for failure,
                     // but do not want to display again if already displayed
                     // above.

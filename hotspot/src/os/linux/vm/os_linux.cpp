@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -75,8 +75,8 @@ int os::Linux::_page_size = -1;
 bool os::Linux::_is_floating_stack = false;
 bool os::Linux::_is_NPTL = false;
 bool os::Linux::_supports_fast_thread_cpu_time = false;
-char * os::Linux::_glibc_version = NULL;
-char * os::Linux::_libpthread_version = NULL;
+const char * os::Linux::_glibc_version = NULL;
+const char * os::Linux::_libpthread_version = NULL;
 
 static jlong initial_time_count=0;
 
@@ -114,6 +114,20 @@ julong os::Linux::available_memory() {
 
 julong os::physical_memory() {
   return Linux::physical_memory();
+}
+
+julong os::allocatable_physical_memory(julong size) {
+#ifdef _LP64
+  return size;
+#else
+  julong result = MIN2(size, (julong)3800*M);
+   if (!is_allocatable(result)) {
+     // See comments under solaris for alignment considerations
+     julong reasonable_size = (julong)2*G - 2 * os::vm_page_size();
+     result =  MIN2(size, reasonable_size);
+   }
+   return result;
+#endif // _LP64
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -199,9 +213,9 @@ pid_t os::Linux::gettid() {
 // the system call returns 1.  This causes the VM to act as if it is
 // a single processor and elide locking (see is_MP() call).
 static bool unsafe_chroot_detected = false;
-static char *unstable_chroot_error = "/proc file system not found.\n"
-              "Java may be unstable running multithreaded in a chroot "
-              "environment on Linux when /proc filesystem is not mounted.";
+static const char *unstable_chroot_error = "/proc file system not found.\n"
+                     "Java may be unstable running multithreaded in a chroot "
+                     "environment on Linux when /proc filesystem is not mounted.";
 
 void os::Linux::initialize_system_info() {
   _processor_count = sysconf(_SC_NPROCESSORS_CONF);
@@ -530,26 +544,23 @@ void os::Linux::libpthread_init() {
   if (n > 0) {
      char *str = (char *)malloc(n);
      confstr(_CS_GNU_LIBPTHREAD_VERSION, str, n);
-
      // Vanilla RH-9 (glibc 2.3.2) has a bug that confstr() always tells
      // us "NPTL-0.29" even we are running with LinuxThreads. Check if this
-     // is the case:
+     // is the case. LinuxThreads has a hard limit on max number of threads.
+     // So sysconf(_SC_THREAD_THREADS_MAX) will return a positive value.
+     // On the other hand, NPTL does not have such a limit, sysconf()
+     // will return -1 and errno is not changed. Check if it is really NPTL.
      if (strcmp(os::Linux::glibc_version(), "glibc 2.3.2") == 0 &&
-         strstr(str, "NPTL")) {
-        // LinuxThreads has a hard limit on max number of threads. So
-        // sysconf(_SC_THREAD_THREADS_MAX) will return a positive value.
-        // On the other hand, NPTL does not have such a limit, sysconf()
-        // will return -1 and errno is not changed. Check if it is really
-        // NPTL:
-        if (sysconf(_SC_THREAD_THREADS_MAX) > 0) {
-           free(str);
-           str = "linuxthreads";
-        }
+         strstr(str, "NPTL") &&
+         sysconf(_SC_THREAD_THREADS_MAX) > 0) {
+       free(str);
+       os::Linux::set_libpthread_version("linuxthreads");
+     } else {
+       os::Linux::set_libpthread_version(str);
      }
-     os::Linux::set_libpthread_version(str);
   } else {
-     // glibc before 2.3.2 only has LinuxThreads.
-     os::Linux::set_libpthread_version("linuxthreads");
+    // glibc before 2.3.2 only has LinuxThreads.
+    os::Linux::set_libpthread_version("linuxthreads");
   }
 
   if (strstr(libpthread_version(), "NPTL")) {
@@ -1247,17 +1258,11 @@ jlong os::elapsed_frequency() {
   return (1000 * 1000);
 }
 
-jlong os::timeofday() {
+jlong os::javaTimeMillis() {
   timeval time;
   int status = gettimeofday(&time, NULL);
   assert(status != -1, "linux error");
   return jlong(time.tv_sec) * 1000  +  jlong(time.tv_usec / 1000);
-}
-
-// Must return millis since Jan 1 1970 for JVM_CurrentTimeMillis
-// _use_global_time is only set if CacheTimeMillis is true
-jlong os::javaTimeMillis() {
-  return (_use_global_time ? read_global_time() : timeofday());
 }
 
 #ifndef CLOCK_MONOTONIC
@@ -2220,18 +2225,40 @@ bool os::commit_memory(char* addr, size_t size, size_t alignment_hint) {
 }
 
 void os::realign_memory(char *addr, size_t bytes, size_t alignment_hint) { }
-void os::free_memory(char *addr, size_t bytes)         { }
+
+void os::free_memory(char *addr, size_t bytes) {
+  uncommit_memory(addr, bytes);
+}
+
 void os::numa_make_global(char *addr, size_t bytes)    { }
-void os::numa_make_local(char *addr, size_t bytes)     { }
-bool os::numa_topology_changed()                       { return false; }
-size_t os::numa_get_groups_num()                       { return 1; }
-int os::numa_get_group_id()                            { return 0; }
-size_t os::numa_get_leaf_groups(int *ids, size_t size) {
-  if (size > 0) {
-    ids[0] = 0;
-    return 1;
+
+void os::numa_make_local(char *addr, size_t bytes, int lgrp_hint) {
+  Linux::numa_tonode_memory(addr, bytes, lgrp_hint);
+}
+
+bool os::numa_topology_changed()   { return false; }
+
+size_t os::numa_get_groups_num() {
+  int max_node = Linux::numa_max_node();
+  return max_node > 0 ? max_node + 1 : 1;
+}
+
+int os::numa_get_group_id() {
+  int cpu_id = Linux::sched_getcpu();
+  if (cpu_id != -1) {
+    int lgrp_id = Linux::get_node_by_cpu(cpu_id);
+    if (lgrp_id != -1) {
+      return lgrp_id;
+    }
   }
   return 0;
+}
+
+size_t os::numa_get_leaf_groups(int *ids, size_t size) {
+  for (size_t i = 0; i < size; i++) {
+    ids[i] = i;
+  }
+  return size;
 }
 
 bool os::get_page_info(char *start, page_info* info) {
@@ -2241,6 +2268,74 @@ bool os::get_page_info(char *start, page_info* info) {
 char *os::scan_pages(char *start, char* end, page_info* page_expected, page_info* page_found) {
   return end;
 }
+
+extern "C" void numa_warn(int number, char *where, ...) { }
+extern "C" void numa_error(char *where) { }
+
+void os::Linux::libnuma_init() {
+  // sched_getcpu() should be in libc.
+  set_sched_getcpu(CAST_TO_FN_PTR(sched_getcpu_func_t,
+                                  dlsym(RTLD_DEFAULT, "sched_getcpu")));
+
+  if (sched_getcpu() != -1) { // Does it work?
+    void *handle = dlopen("libnuma.so", RTLD_LAZY);
+    if (handle != NULL) {
+      set_numa_node_to_cpus(CAST_TO_FN_PTR(numa_node_to_cpus_func_t,
+                                           dlsym(handle, "numa_node_to_cpus")));
+      set_numa_max_node(CAST_TO_FN_PTR(numa_max_node_func_t,
+                                       dlsym(handle, "numa_max_node")));
+      set_numa_available(CAST_TO_FN_PTR(numa_available_func_t,
+                                        dlsym(handle, "numa_available")));
+      set_numa_tonode_memory(CAST_TO_FN_PTR(numa_tonode_memory_func_t,
+                                            dlsym(handle, "numa_tonode_memory")));
+      if (numa_available() != -1) {
+        // Create a cpu -> node mapping
+        _cpu_to_node = new (ResourceObj::C_HEAP) GrowableArray<int>(0, true);
+        rebuild_cpu_to_node_map();
+      }
+    }
+  }
+}
+
+// rebuild_cpu_to_node_map() constructs a table mapping cpud id to node id.
+// The table is later used in get_node_by_cpu().
+void os::Linux::rebuild_cpu_to_node_map() {
+  int cpu_num = os::active_processor_count();
+  cpu_to_node()->clear();
+  cpu_to_node()->at_grow(cpu_num - 1);
+  int node_num = numa_get_groups_num();
+  int cpu_map_size = (cpu_num + BitsPerLong - 1) / BitsPerLong;
+  unsigned long *cpu_map = NEW_C_HEAP_ARRAY(unsigned long, cpu_map_size);
+  for (int i = 0; i < node_num; i++) {
+    if (numa_node_to_cpus(i, cpu_map, cpu_map_size * sizeof(unsigned long)) != -1) {
+      for (int j = 0; j < cpu_map_size; j++) {
+        if (cpu_map[j] != 0) {
+          for (int k = 0; k < BitsPerLong; k++) {
+            if (cpu_map[j] & (1UL << k)) {
+              cpu_to_node()->at_put(j * BitsPerLong + k, i);
+            }
+          }
+        }
+      }
+    }
+  }
+  FREE_C_HEAP_ARRAY(unsigned long, cpu_map);
+}
+
+int os::Linux::get_node_by_cpu(int cpu_id) {
+  if (cpu_to_node() != NULL && cpu_id >= 0 && cpu_id < cpu_to_node()->length()) {
+    return cpu_to_node()->at(cpu_id);
+  }
+  return -1;
+}
+
+GrowableArray<int>* os::Linux::_cpu_to_node;
+os::Linux::sched_getcpu_func_t os::Linux::_sched_getcpu;
+os::Linux::numa_node_to_cpus_func_t os::Linux::_numa_node_to_cpus;
+os::Linux::numa_max_node_func_t os::Linux::_numa_max_node;
+os::Linux::numa_available_func_t os::Linux::_numa_available;
+os::Linux::numa_tonode_memory_func_t os::Linux::_numa_tonode_memory;
+
 
 bool os::uncommit_memory(char* addr, size_t size) {
   return ::mmap(addr, size,
@@ -2319,8 +2414,20 @@ static bool linux_mprotect(char* addr, size_t size, int prot) {
   return ::mprotect(bottom, size, prot) == 0;
 }
 
-bool os::protect_memory(char* addr, size_t size) {
-  return linux_mprotect(addr, size, PROT_READ);
+// Set protections specified
+bool os::protect_memory(char* addr, size_t bytes, ProtType prot,
+                        bool is_committed) {
+  unsigned int p = 0;
+  switch (prot) {
+  case MEM_PROT_NONE: p = PROT_NONE; break;
+  case MEM_PROT_READ: p = PROT_READ; break;
+  case MEM_PROT_RW:   p = PROT_READ|PROT_WRITE; break;
+  case MEM_PROT_RWX:  p = PROT_READ|PROT_WRITE|PROT_EXEC; break;
+  default:
+    ShouldNotReachHere();
+  }
+  // is_committed is unused.
+  return linux_mprotect(addr, bytes, p);
 }
 
 bool os::guard_memory(char* addr, size_t size) {
@@ -2469,6 +2576,10 @@ size_t os::large_page_size() {
 // memory API. The entire memory region is committed and pinned upfront.
 // Hopefully this will change in the future...
 bool os::can_commit_large_page_memory() {
+  return false;
+}
+
+bool os::can_execute_large_page_memory() {
   return false;
 }
 
@@ -3540,6 +3651,10 @@ jint os::init_2(void)
           Linux::is_floating_stack() ? "floating stack" : "fixed stack");
   }
 
+  if (UseNUMA) {
+    Linux::libnuma_init();
+  }
+
   if (MaxFDLimit) {
     // set the number of file descriptors to max. print out error
     // if getrlimit/setrlimit fails but continue regardless.
@@ -3601,8 +3716,9 @@ void os::make_polling_page_unreadable(void) {
 
 // Mark the polling page as readable
 void os::make_polling_page_readable(void) {
-  if( !protect_memory((char *)_polling_page, Linux::page_size()) )
+  if( !linux_mprotect((char *)_polling_page, Linux::page_size(), PROT_READ)) {
     fatal("Could not enable polling page");
+  }
 };
 
 int os::active_processor_count() {
@@ -4526,11 +4642,7 @@ extern char** environ;
 // Unlike system(), this function can be called from signal handler. It
 // doesn't block SIGINT et al.
 int os::fork_and_exec(char* cmd) {
-  char * argv[4];
-  argv[0] = "sh";
-  argv[1] = "-c";
-  argv[2] = cmd;
-  argv[3] = NULL;
+  const char * argv[4] = {"sh", "-c", cmd, NULL};
 
   // fork() in LinuxThreads/NPTL is not async-safe. It needs to run
   // pthread_atfork handlers and reset pthread library. All we need is a
@@ -4555,7 +4667,7 @@ int os::fork_and_exec(char* cmd) {
     // IA64 should use normal execve() from glibc to match the glibc fork()
     // above.
     NOT_IA64(syscall(__NR_execve, "/bin/sh", argv, environ);)
-    IA64_ONLY(execve("/bin/sh", argv, environ);)
+    IA64_ONLY(execve("/bin/sh", (char* const*)argv, environ);)
 
     // execve failed
     _exit(-1);

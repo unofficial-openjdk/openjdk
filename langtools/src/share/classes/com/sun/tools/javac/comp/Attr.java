@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -454,6 +454,8 @@ public class Attr extends JCTree.Visitor {
     void attribTypeVariables(List<JCTypeParameter> typarams, Env<AttrContext> env) {
         for (JCTypeParameter tvar : typarams) {
             TypeVar a = (TypeVar)tvar.type;
+            a.tsym.flags_field |= UNATTRIBUTED;
+            a.bound = Type.noType;
             if (!tvar.bounds.isEmpty()) {
                 List<Type> bounds = List.of(attribType(tvar.bounds.head, env));
                 for (JCExpression bound : tvar.bounds.tail)
@@ -464,6 +466,7 @@ public class Attr extends JCTree.Visitor {
                 // java.lang.Object.
                 types.setBounds(a, List.of(syms.objectType));
             }
+            a.tsym.flags_field &= ~UNATTRIBUTED;
         }
         for (JCTypeParameter tvar : typarams)
             chk.checkNonCyclic(tvar.pos(), (TypeVar)tvar.type);
@@ -1609,17 +1612,10 @@ public class Attr extends JCTree.Visitor {
                               tree.getTag() - JCTree.ASGOffset,
                               owntype,
                               operand);
-            if (types.isSameType(operator.type.getReturnType(), syms.stringType)) {
-                // String assignment; make sure the lhs is a string
-                chk.checkType(tree.lhs.pos(),
-                              owntype,
-                              syms.stringType);
-            } else {
-                chk.checkDivZero(tree.rhs.pos(), operator, operand);
-                chk.checkCastable(tree.rhs.pos(),
-                                  operator.type.getReturnType(),
-                                  owntype);
-            }
+            chk.checkDivZero(tree.rhs.pos(), operator, operand);
+            chk.checkCastable(tree.rhs.pos(),
+                              operator.type.getReturnType(),
+                              owntype);
         }
         result = check(tree, owntype, VAL, pkind, pt);
     }
@@ -1817,7 +1813,7 @@ public class Attr extends JCTree.Visitor {
             chk.earlyRefError(tree.pos(), sym.kind == VAR ? sym : thisSym(tree.pos(), env));
         }
         Env<AttrContext> env1 = env;
-        if (sym.kind != ERR && sym.owner != null && sym.owner != env1.enclClass.sym) {
+        if (sym.kind != ERR && sym.kind != TYP && sym.owner != null && sym.owner != env1.enclClass.sym) {
             // If the found symbol is inaccessible, then it is
             // accessed through an enclosing instance.  Locate this
             // enclosing instance:
@@ -1885,8 +1881,10 @@ public class Attr extends JCTree.Visitor {
         boolean varArgs = env.info.varArgs;
         tree.sym = sym;
 
-        if (site.tag == TYPEVAR && !isType(sym) && sym.kind != ERR)
-            site = capture(site.getUpperBound());
+        if (site.tag == TYPEVAR && !isType(sym) && sym.kind != ERR) {
+            while (site.tag == TYPEVAR) site = site.getUpperBound();
+            site = capture(site);
+        }
 
         // If that symbol is a variable, ...
         if (sym.kind == VAR) {
@@ -2206,7 +2204,7 @@ public class Attr extends JCTree.Visitor {
                 (env.tree.getTag() != JCTree.ASSIGN ||
                  TreeInfo.skipParens(((JCAssign) env.tree).lhs) != tree)) {
 
-                if (!onlyWarning || isNonStaticEnumField(v)) {
+                if (!onlyWarning || isStaticEnumField(v)) {
                     log.error(tree.pos(), "illegal.forward.ref");
                 } else if (useBeforeDeclarationWarning) {
                     log.warning(tree.pos(), "forward.ref", v);
@@ -2240,7 +2238,7 @@ public class Attr extends JCTree.Visitor {
             // initializer expressions of an enum constant e to refer
             // to itself or to an enum constant of the same type that
             // is declared to the right of e."
-            if (isNonStaticEnumField(v)) {
+            if (isStaticEnumField(v)) {
                 ClassSymbol enclClass = env.info.scope.owner.enclClass();
 
                 if (enclClass == null || enclClass.owner == null)
@@ -2261,8 +2259,14 @@ public class Attr extends JCTree.Visitor {
             }
         }
 
-        private boolean isNonStaticEnumField(VarSymbol v) {
-            return Flags.isEnum(v.owner) && Flags.isStatic(v) && !Flags.isConstant(v);
+        /** Is the given symbol a static, non-constant field of an Enum?
+         *  Note: enum literals should not be regarded as such
+         */
+        private boolean isStaticEnumField(VarSymbol v) {
+            return Flags.isEnum(v.owner) &&
+                   Flags.isStatic(v) &&
+                   !Flags.isConstant(v) &&
+                   v.name != names._class;
         }
 
         /** Can the given symbol be the owner of code which forms part
@@ -2514,6 +2518,7 @@ public class Attr extends JCTree.Visitor {
                     log.error(tree.bounds.tail.head.pos(),
                               "type.var.may.not.be.followed.by.other.bounds");
                     tree.bounds = List.of(tree.bounds.head);
+                    a.bound = bs.head;
                 }
             } else {
                 // if first bound was a class or interface, accept only interfaces

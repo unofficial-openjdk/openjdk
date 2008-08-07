@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2004-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -177,14 +177,23 @@ public class ChunkedOutputStream extends PrintStream {
             return;
         }
 
-        if (len > MAX_BUF_SIZE) {
+        int l = preferredChunkSize - count;
+
+        if ((len > MAX_BUF_SIZE) && (len > l)) {
+            /* current chunk is empty just write the data */
+            if (count == 0) {
+                count = len;
+                flush (b, false, off);
+                return;
+            }
+
             /* first finish the current chunk */
-            int l = preferredChunkSize - count;
             if (l > 0) {
                 System.arraycopy(b, off, buf, count, l);
                 count = preferredChunkSize;
                 flush(buf, false);
             }
+
             count = len - l;
             /* Now write the rest of the data */
             flush (b, false, l+off);

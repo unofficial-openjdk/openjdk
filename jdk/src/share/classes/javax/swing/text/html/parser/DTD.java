@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -113,7 +113,7 @@ class DTD implements DTDConstants {
      *    <code>ch</code> character
      */
     public Entity getEntity(int ch) {
-        return (Entity)entityHash.get(new Integer(ch));
+        return (Entity)entityHash.get(Integer.valueOf(ch));
     }
 
     /**
@@ -178,7 +178,7 @@ class DTD implements DTDConstants {
                 switch (type & ~GENERAL) {
                   case CDATA:
                   case SDATA:
-                    entityHash.put(new Integer(data[0]), ent);
+                      entityHash.put(Integer.valueOf(data[0]), ent);
                     break;
                 }
             }

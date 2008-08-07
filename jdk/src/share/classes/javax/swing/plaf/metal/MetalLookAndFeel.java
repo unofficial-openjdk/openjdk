@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -455,7 +455,7 @@ public class MetalLookAndFeel extends BasicLookAndFeel
 
         Insets zeroInsets = new InsetsUIResource(0, 0, 0, 0);
 
-        Integer zero = new Integer(0);
+        Integer zero = Integer.valueOf(0);
 
         Object textFieldBorder =
             new SwingLazyValue("javax.swing.plaf.metal.MetalBorders",
@@ -853,9 +853,7 @@ public class MetalLookAndFeel extends BasicLookAndFeel
                      "ESCAPE", "cancelSelection",
                      "F2", "editFileName",
                      "F5", "refresh",
-                     "BACK_SPACE", "Go Up",
-                     "ENTER", "approveSelection",
-                "ctrl ENTER", "approveSelection"
+                     "BACK_SPACE", "Go Up"
                  }),
 
 
@@ -904,7 +902,7 @@ public class MetalLookAndFeel extends BasicLookAndFeel
             "ProgressBar.selectionBackground", primaryControlDarkShadow,
             "ProgressBar.border", progressBarBorder,
             "ProgressBar.cellSpacing", zero,
-            "ProgressBar.cellLength", new Integer(1),
+            "ProgressBar.cellLength", Integer.valueOf(1),
 
             // Combo Box
             "ComboBox.background", control,
@@ -971,7 +969,7 @@ public class MetalLookAndFeel extends BasicLookAndFeel
             "DesktopIcon.font", controlTextValue,
             "DesktopIcon.foreground", controlTextColor,
             "DesktopIcon.background", control,
-            "DesktopIcon.width", new Integer(160),
+            "DesktopIcon.width", Integer.valueOf(160),
 
             "Desktop.ancestorInputMap",
                new UIDefaults.LazyInputMap(new Object[] {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -114,8 +114,8 @@ public class XEmbeddedFramePeer extends XFramePeer {
     protected boolean isEventDisabled(XEvent e) {
         if (embedder != null && embedder.isActive()) {
             switch (e.get_type()) {
-              case FocusIn:
-              case FocusOut:
+              case XConstants.FocusIn:
+              case XConstants.FocusOut:
                   return true;
             }
         }
@@ -182,6 +182,12 @@ public class XEmbeddedFramePeer extends XFramePeer {
         } finally {
             XToolkit.awtUnlock();
         }
+    }
+
+    @Override
+    Rectangle constrainBounds(int x, int y, int width, int height) {
+        // We don't constrain the bounds of the EmbeddedFrames
+        return new Rectangle(x, y, width, height);
     }
 
     // don't use getBounds() inherited from XDecoratedPeer

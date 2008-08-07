@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -91,9 +91,10 @@ public class NegotiatorImpl extends Negotiator {
         GSSManagerImpl manager = new GSSManagerImpl(
                 GSSUtil.CALLER_HTTP_NEGOTIATE);
 
-        String peerName = "HTTP/" + hostname;
+        String peerName = "HTTP@" + hostname;
 
-        GSSName serverName = manager.createName(peerName, null);
+        GSSName serverName = manager.createName(peerName,
+                GSSName.NT_HOSTBASED_SERVICE);
         context = manager.createContext(serverName,
                                         oid,
                                         null,

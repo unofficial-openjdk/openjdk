@@ -1,5 +1,5 @@
 #
-# Copyright 1996-2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,7 @@ include $(BUILDDIR)/common/Defs.gmk
 
 # Override the default version info with our own resource file (see 5106536)
 ifeq ($(PLATFORM), windows)
-LDLIBS_COMMON += user32.lib
+LDLIBS_COMMON += user32.lib comctl32.lib
 ifdef OPENJDK
     RC_FLAGS += -i "$(PLATFORM_SRC)/resource/icons"
 else

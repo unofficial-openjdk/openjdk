@@ -1,5 +1,5 @@
 #
-# Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -120,12 +120,4 @@ compare-image-clobber:
 	  $(MAKE) ALT_OUTPUTDIR=$(ABS_OUTPUTDIR) compare-image-clobber )
 
 .PHONY: jdk jdk-build jdk-clobber jdk-sanity 
-
-# FIXUP: Old j2se target names
-j2se-build: jdk-build
-j2se-clobber:: jdk-clobber
-j2se-sanity:: jdk-sanity
-j2se: jdk
-
-.PHONY: j2se j2se-build j2se-clobber j2se-sanity 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,12 +67,13 @@ Node* Parse::array_addressing(BasicType type, int vals, const Type* *result2) {
   const Type*       elemtype = arytype->elem();
 
   if (UseUniqueSubclasses && result2 != NULL) {
-    const TypeInstPtr* toop = elemtype->isa_instptr();
-    if (toop) {
+    const Type* el = elemtype->make_ptr();
+    if (el && el->isa_instptr()) {
+      const TypeInstPtr* toop = el->is_instptr();
       if (toop->klass()->as_instance_klass()->unique_concrete_subklass()) {
         // If we load from "AbstractClass[]" we must see "ConcreteSubClass".
         const Type* subklass = Type::get_const_type(toop->klass());
-        elemtype = subklass->join(elemtype);
+        elemtype = subklass->join(el);
       }
     }
   }
@@ -101,10 +102,19 @@ Node* Parse::array_addressing(BasicType type, int vals, const Type* *result2) {
   if (GenerateRangeChecks && need_range_check) {
     // Range is constant in array-oop, so we can use the original state of mem
     Node* len = load_array_length(ary);
-    // Test length vs index (standard trick using unsigned compare)
-    Node* chk = _gvn.transform( new (C, 3) CmpUNode(idx, len) );
-    BoolTest::mask btest = BoolTest::lt;
-    Node* tst = _gvn.transform( new (C, 2) BoolNode(chk, btest) );
+    Node* tst;
+    if (sizetype->_hi <= 0) {
+      // If the greatest array bound is negative, we can conclude that we're
+      // compiling unreachable code, but the unsigned compare trick used below
+      // only works with non-negative lengths.  Instead, hack "tst" to be zero so
+      // the uncommon_trap path will always be taken.
+      tst = _gvn.intcon(0);
+    } else {
+      // Test length vs index (standard trick using unsigned compare)
+      Node* chk = _gvn.transform( new (C, 3) CmpUNode(idx, len) );
+      BoolTest::mask btest = BoolTest::lt;
+      tst = _gvn.transform( new (C, 2) BoolNode(chk, btest) );
+    }
     // Branch to failure if out of bounds
     { BuildCutout unless(this, tst, PROB_MAX);
       if (C->allow_range_check_smearing()) {
@@ -885,6 +895,9 @@ inline void Parse::repush_if_args() {
 void Parse::do_ifnull(BoolTest::mask btest) {
   int target_bci = iter().get_dest();
 
+  Block* branch_block = successor_for_bci(target_bci);
+  Block* next_block   = successor_for_bci(iter().next_bci());
+
   float cnt;
   float prob = branch_prediction(cnt, btest, target_bci);
   if (prob == PROB_UNKNOWN) {
@@ -902,13 +915,16 @@ void Parse::do_ifnull(BoolTest::mask btest) {
     uncommon_trap(Deoptimization::Reason_unreached,
                   Deoptimization::Action_reinterpret,
                   NULL, "cold");
+    if (EliminateAutoBox) {
+      // Mark the successor blocks as parsed
+      branch_block->next_path_num();
+      next_block->next_path_num();
+    }
     return;
   }
 
   // If this is a backwards branch in the bytecodes, add Safepoint
   maybe_add_safepoint(target_bci);
-  Block* branch_block = successor_for_bci(target_bci);
-  Block* next_block   = successor_for_bci(iter().next_bci());
 
   explicit_null_checks_inserted++;
   Node* a = null();
@@ -935,6 +951,10 @@ void Parse::do_ifnull(BoolTest::mask btest) {
 
     if (stopped()) {            // Path is dead?
       explicit_null_checks_elided++;
+      if (EliminateAutoBox) {
+        // Mark the successor block as parsed
+        branch_block->next_path_num();
+      }
     } else {                    // Path is live.
       // Update method data
       profile_taken_branch(target_bci);
@@ -950,6 +970,10 @@ void Parse::do_ifnull(BoolTest::mask btest) {
 
   if (stopped()) {              // Path is dead?
     explicit_null_checks_elided++;
+    if (EliminateAutoBox) {
+      // Mark the successor block as parsed
+      next_block->next_path_num();
+    }
   } else  {                     // Path is live.
     // Update method data
     profile_not_taken_branch();
@@ -961,6 +985,9 @@ void Parse::do_ifnull(BoolTest::mask btest) {
 //------------------------------------do_if------------------------------------
 void Parse::do_if(BoolTest::mask btest, Node* c) {
   int target_bci = iter().get_dest();
+
+  Block* branch_block = successor_for_bci(target_bci);
+  Block* next_block   = successor_for_bci(iter().next_bci());
 
   float cnt;
   float prob = branch_prediction(cnt, btest, target_bci);
@@ -980,6 +1007,11 @@ void Parse::do_if(BoolTest::mask btest, Node* c) {
     uncommon_trap(Deoptimization::Reason_unreached,
                   Deoptimization::Action_reinterpret,
                   NULL, "cold");
+    if (EliminateAutoBox) {
+      // Mark the successor blocks as parsed
+      branch_block->next_path_num();
+      next_block->next_path_num();
+    }
     return;
   }
 
@@ -1000,10 +1032,27 @@ void Parse::do_if(BoolTest::mask btest, Node* c) {
   Node* tst = _gvn.transform(tst0);
   BoolTest::mask taken_btest   = BoolTest::illegal;
   BoolTest::mask untaken_btest = BoolTest::illegal;
-  if (btest == BoolTest::ne) {
-    // For now, these are the only cases of btest that matter.  (More later.)
-    taken_btest   = taken_if_true ?        btest : BoolTest::eq;
-    untaken_btest = taken_if_true ? BoolTest::eq :        btest;
+
+  if (tst->is_Bool()) {
+    // Refresh c from the transformed bool node, since it may be
+    // simpler than the original c.  Also re-canonicalize btest.
+    // This wins when (Bool ne (Conv2B p) 0) => (Bool ne (CmpP p NULL)).
+    // That can arise from statements like: if (x instanceof C) ...
+    if (tst != tst0) {
+      // Canonicalize one more time since transform can change it.
+      btest = tst->as_Bool()->_test._test;
+      if (!BoolTest(btest).is_canonical()) {
+        // Reverse edges one more time...
+        tst   = _gvn.transform( tst->as_Bool()->negate(&_gvn) );
+        btest = tst->as_Bool()->_test._test;
+        assert(BoolTest(btest).is_canonical(), "sanity");
+        taken_if_true = !taken_if_true;
+      }
+      c = tst->in(1);
+    }
+    BoolTest::mask neg_btest = BoolTest(btest).negate();
+    taken_btest   = taken_if_true ?     btest : neg_btest;
+    untaken_btest = taken_if_true ? neg_btest :     btest;
   }
 
   // Generate real control flow
@@ -1018,15 +1067,17 @@ void Parse::do_if(BoolTest::mask btest, Node* c) {
     untaken_branch = tmp;
   }
 
-  Block* branch_block = successor_for_bci(target_bci);
-  Block* next_block   = successor_for_bci(iter().next_bci());
-
   // Branch is taken:
   { PreserveJVMState pjvms(this);
     taken_branch = _gvn.transform(taken_branch);
     set_control(taken_branch);
 
-    if (!stopped()) {
+    if (stopped()) {
+      if (EliminateAutoBox) {
+        // Mark the successor block as parsed
+        branch_block->next_path_num();
+      }
+    } else {
       // Update method data
       profile_taken_branch(target_bci);
       adjust_map_after_if(taken_btest, c, prob, branch_block, next_block);
@@ -1039,7 +1090,12 @@ void Parse::do_if(BoolTest::mask btest, Node* c) {
   set_control(untaken_branch);
 
   // Branch not taken.
-  if (!stopped()) {
+  if (stopped()) {
+    if (EliminateAutoBox) {
+      // Mark the successor block as parsed
+      next_block->next_path_num();
+    }
+  } else {
     // Update method data
     profile_not_taken_branch();
     adjust_map_after_if(untaken_btest, c, untaken_prob,
@@ -2164,7 +2220,7 @@ void Parse::do_one_bytecode() {
     sprintf(buffer, "Bytecode %d: %s", bci(), Bytecodes::name(bc()));
     bool old = printer->traverse_outs();
     printer->set_traverse_outs(true);
-    printer->print_method(C, buffer, 3);
+    printer->print_method(C, buffer, 4);
     printer->set_traverse_outs(old);
   }
 #endif

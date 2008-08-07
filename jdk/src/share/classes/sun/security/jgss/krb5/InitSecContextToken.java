@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -103,8 +103,7 @@ class InitSecContextToken extends InitialToken {
         apReq = new KrbApReq(apReqBytes, keys, addr);
         //debug("\nReceived AP-REQ and authenticated it.\n");
 
-        EncryptionKey sessionKey
-            = (EncryptionKey) apReq.getCreds().getSessionKey();
+        EncryptionKey sessionKey = apReq.getCreds().getSessionKey();
 
         /*
           System.out.println("\n\nSession key from service ticket is: " +

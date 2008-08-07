@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,13 +53,10 @@ Java_java_io_FileOutputStream_initIDs(JNIEnv *env, jclass fdClass) {
  */
 
 JNIEXPORT void JNICALL
-Java_java_io_FileOutputStream_open(JNIEnv *env, jobject this, jstring path) {
-    fileOpen(env, this, path, fos_fd, O_WRONLY | O_CREAT | O_TRUNC);
-}
-
-JNIEXPORT void JNICALL
-Java_java_io_FileOutputStream_openAppend(JNIEnv *env, jobject this, jstring path) {
-    fileOpen(env, this, path, fos_fd, O_WRONLY | O_CREAT | O_APPEND);
+Java_java_io_FileOutputStream_open(JNIEnv *env, jobject this,
+                                   jstring path, jboolean append) {
+    fileOpen(env, this, path, fos_fd,
+             O_WRONLY | O_CREAT | (append ? O_APPEND : O_TRUNC));
 }
 
 JNIEXPORT void JNICALL

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -267,7 +267,7 @@ inline bool CMSCollector::is_dead_obj(oop obj) const {
          (_permGen->cmsSpace()->is_in_reserved(addr)
           && _permGen->cmsSpace()->block_is_obj(addr)),
          "must be object");
-  return  cms_should_unload_classes() &&
+  return  should_unload_classes() &&
           _collectorState == Sweeping &&
          !_markBitMap.isMarked(addr);
 }

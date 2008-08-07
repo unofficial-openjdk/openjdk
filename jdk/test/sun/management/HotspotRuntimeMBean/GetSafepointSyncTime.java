@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,7 @@ import sun.management.*;
 public class GetSafepointSyncTime {
 
     private static HotspotRuntimeMBean mbean =
-        (HotspotRuntimeMBean)ManagementFactory.getHotspotRuntimeMBean();
+        (HotspotRuntimeMBean)ManagementFactoryHelper.getHotspotRuntimeMBean();
 
     private static final long NUM_THREAD_DUMPS = 300;
 

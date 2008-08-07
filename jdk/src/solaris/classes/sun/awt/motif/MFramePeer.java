@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1995-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -502,5 +502,10 @@ class MFramePeer extends MWindowPeer implements FramePeer, MInputMethodControl {
 
     public Rectangle getBoundsPrivate() {
         return getBounds();
+    }
+
+    @Override
+    final boolean isTargetUndecorated() {
+        return ((Frame)target).isUndecorated();
     }
 }

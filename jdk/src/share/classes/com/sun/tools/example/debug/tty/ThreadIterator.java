@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-1999 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,8 +30,8 @@ import com.sun.jdi.ThreadReference;
 import java.util.List;
 import java.util.Iterator;
 
-class ThreadIterator implements Iterator {
-    Iterator it = null;
+class ThreadIterator implements Iterator<ThreadReference> {
+    Iterator<ThreadReference> it = null;
     ThreadGroupIterator tgi;
 
     ThreadIterator(ThreadGroupReference tg) {
@@ -56,12 +56,12 @@ class ThreadIterator implements Iterator {
         return true;
     }
 
-    public Object next() {
+    public ThreadReference next() {
         return it.next();
     }
 
     public ThreadReference nextThread() {
-        return (ThreadReference)next();
+        return next();
     }
 
     public void remove() {

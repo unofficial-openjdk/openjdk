@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,7 +50,7 @@ import javax.management.loading.ClassLoaderRepository;
  * server.  A Java object cannot be registered in the MBean server
  * unless it is a JMX compliant MBean.</p>
  *
- * <p>When an MBean is registered or unregistered in the MBean server
+ * <p id="notif">When an MBean is registered or unregistered in the MBean server
  * a {@link javax.management.MBeanServerNotification
  * MBeanServerNotification} Notification is emitted. To register an
  * object as listener to MBeanServerNotifications you should call the
@@ -61,7 +61,7 @@ import javax.management.loading.ClassLoaderRepository;
  * <CODE>ObjectName</CODE> is: <BR>
  * <CODE>JMImplementation:type=MBeanServerDelegate</CODE>.</p>
  *
- * <p>An object obtained from the {@link
+ * <p id="security">An object obtained from the {@link
  * MBeanServerFactory#createMBeanServer(String) createMBeanServer} or
  * {@link MBeanServerFactory#newMBeanServer(String) newMBeanServer}
  * methods of the {@link MBeanServerFactory} class applies security
@@ -258,27 +258,43 @@ import javax.management.loading.ClassLoaderRepository;
  */
 public interface MBeanServer extends MBeanServerConnection {
 
-    // doc comment inherited from MBeanServerConnection
+    /**
+     * {@inheritDoc}
+     * <p>If this method successfully creates an MBean, a notification
+     * is sent as described <a href="#notif">above</a>.</p>
+     */
     public ObjectInstance createMBean(String className, ObjectName name)
             throws ReflectionException, InstanceAlreadyExistsException,
                    MBeanRegistrationException, MBeanException,
                    NotCompliantMBeanException;
 
-    // doc comment inherited from MBeanServerConnection
+    /**
+     * {@inheritDoc}
+     * <p>If this method successfully creates an MBean, a notification
+     * is sent as described <a href="#notif">above</a>.</p>
+     */
     public ObjectInstance createMBean(String className, ObjectName name,
                                       ObjectName loaderName)
             throws ReflectionException, InstanceAlreadyExistsException,
                    MBeanRegistrationException, MBeanException,
                    NotCompliantMBeanException, InstanceNotFoundException;
 
-    // doc comment inherited from MBeanServerConnection
+    /**
+     * {@inheritDoc}
+     * <p>If this method successfully creates an MBean, a notification
+     * is sent as described <a href="#notif">above</a>.</p>
+     */
     public ObjectInstance createMBean(String className, ObjectName name,
                                       Object params[], String signature[])
             throws ReflectionException, InstanceAlreadyExistsException,
                    MBeanRegistrationException, MBeanException,
                    NotCompliantMBeanException;
 
-    // doc comment inherited from MBeanServerConnection
+    /**
+     * {@inheritDoc}
+     * <p>If this method successfully creates an MBean, a notification
+     * is sent as described <a href="#notif">above</a>.</p>
+     */
     public ObjectInstance createMBean(String className, ObjectName name,
                                       ObjectName loaderName, Object params[],
                                       String signature[])
@@ -287,12 +303,15 @@ public interface MBeanServer extends MBeanServerConnection {
                    NotCompliantMBeanException, InstanceNotFoundException;
 
     /**
-     * Registers a pre-existing object as an MBean with the MBean
+     * <p>Registers a pre-existing object as an MBean with the MBean
      * server. If the object name given is null, the MBean must
      * provide its own name by implementing the {@link
      * javax.management.MBeanRegistration MBeanRegistration} interface
      * and returning the name from the {@link
-     * MBeanRegistration#preRegister preRegister} method.
+     * MBeanRegistration#preRegister preRegister} method.</p>
+     *
+     * <p>If this method successfully registers an MBean, a notification
+     * is sent as described <a href="#notif">above</a>.</p>
      *
      * @param object The  MBean to be registered as an MBean.
      * @param name The object name of the MBean. May be null.
@@ -319,7 +338,12 @@ public interface MBeanServer extends MBeanServerConnection {
             throws InstanceAlreadyExistsException, MBeanRegistrationException,
                    NotCompliantMBeanException;
 
-    // doc comment inherited from MBeanServerConnection
+    /**
+     * {@inheritDoc}
+     *
+     * <p>If this method successfully unregisters an MBean, a notification
+     * is sent as described <a href="#notif">above</a>.</p>
+     */
     public void unregisterMBean(ObjectName name)
             throws InstanceNotFoundException, MBeanRegistrationException;
 
@@ -637,13 +661,16 @@ public interface MBeanServer extends MBeanServerConnection {
                    ReflectionException;
 
     /**
-     * <p>Return the {@link java.lang.ClassLoader} that was used for
-     * loading the class of the named MBean.</p>
+     * <p>Return the {@link java.lang.ClassLoader} that was used for loading
+     * the class of the named MBean. If the MBean implements the {@link
+     * DynamicWrapperMBean} interface, then the returned value is the
+     * result of the {@link DynamicWrapperMBean#getWrappedClassLoader()}
+     * method.</p>
      *
      * @param mbeanName The ObjectName of the MBean.
      *
      * @return The ClassLoader used for that MBean.  If <var>l</var>
-     * is the MBean's actual ClassLoader, and <var>r</var> is the
+     * is the value specified by the rules above, and <var>r</var> is the
      * returned value, then either:
      *
      * <ul>

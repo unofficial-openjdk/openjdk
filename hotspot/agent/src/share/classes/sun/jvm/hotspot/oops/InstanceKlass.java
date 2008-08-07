@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -467,7 +467,6 @@ public class InstanceKlass extends Klass {
     for (int index = 0; index < length; index += NEXT_OFFSET) {
       short accessFlags    = fields.getShortAt(index + ACCESS_FLAGS_OFFSET);
       short signatureIndex = fields.getShortAt(index + SIGNATURE_INDEX_OFFSET);
-
       FieldType   type   = new FieldType((Symbol) getConstants().getObjAt(signatureIndex));
       AccessFlags access = new AccessFlags(accessFlags);
       if (access.isStatic()) {
@@ -790,7 +789,11 @@ public class InstanceKlass extends Klass {
     short signatureIndex = fields.getShortAt(index + SIGNATURE_INDEX_OFFSET);
     FieldType type = new FieldType((Symbol) getConstants().getObjAt(signatureIndex));
     if (type.isOop()) {
-      return new OopField(this, index);
+     if (VM.getVM().isCompressedOopsEnabled()) {
+        return new NarrowOopField(this, index);
+     } else {
+        return new OopField(this, index);
+     }
     }
     if (type.isByte()) {
       return new ByteField(this, index);

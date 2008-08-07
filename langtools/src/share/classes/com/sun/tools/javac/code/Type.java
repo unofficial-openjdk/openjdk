@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -640,6 +640,10 @@ public class Type implements PrimitiveType {
             return typarams_field;
         }
 
+        public boolean hasErasedSupertypes() {
+            return isRaw();
+        }
+
         public Type getEnclosingType() {
             return outer_field;
         }
@@ -708,6 +712,17 @@ public class Type implements PrimitiveType {
 
         public <R, P> R accept(TypeVisitor<R, P> v, P p) {
             return v.visitDeclared(this, p);
+        }
+    }
+
+    public static class ErasedClassType extends ClassType {
+        public ErasedClassType(Type outer, TypeSymbol tsym) {
+            super(outer, List.<Type>nil(), tsym);
+        }
+
+        @Override
+        public boolean hasErasedSupertypes() {
+            return true;
         }
     }
 

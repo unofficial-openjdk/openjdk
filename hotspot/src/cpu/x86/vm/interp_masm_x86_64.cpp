@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -233,7 +233,7 @@ void InterpreterMacroAssembler::gen_subtype_check(Register Rsub_klass,
   assert(Rsub_klass != rcx, "rcx holds 2ndary super array length");
   assert(Rsub_klass != rdi, "rdi holds 2ndary super array scan ptr");
 
-  Label not_subtype, loop;
+  Label not_subtype, not_subtype_pop, loop;
 
   // Profile the not-null value's klass.
   profile_typecheck(rcx, Rsub_klass, rdi); // blows rcx, rdi
@@ -267,14 +267,30 @@ void InterpreterMacroAssembler::gen_subtype_check(Register Rsub_klass,
   addq(rdi, arrayOopDesc::base_offset_in_bytes(T_OBJECT));
   // Scan rcx words at [rdi] for occurance of rax
   // Set NZ/Z based on last compare
-  repne_scan();
-  // Not equal?
-  jcc(Assembler::notEqual, not_subtype);
+
+  // this part is kind tricky, as values in supers array could be 32 or 64 bit wide
+  // and we store values in objArrays always encoded, thus we need to encode value
+  // before repne
+  if (UseCompressedOops) {
+    pushq(rax);
+    encode_heap_oop(rax);
+    repne_scanl();
+    // Not equal?
+    jcc(Assembler::notEqual, not_subtype_pop);
+    // restore heap oop here for movq
+    popq(rax);
+  } else {
+    repne_scanq();
+    jcc(Assembler::notEqual, not_subtype);
+  }
   // Must be equal but missed in cache.  Update cache.
   movq(Address(Rsub_klass, sizeof(oopDesc) +
                Klass::secondary_super_cache_offset_in_bytes()), rax);
   jmp(ok_is_subtype);
 
+  bind(not_subtype_pop);
+  // restore heap oop here for miss
+  if (UseCompressedOops) popq(rax);
   bind(not_subtype);
   profile_typecheck_failed(rcx); // blows rcx
 }

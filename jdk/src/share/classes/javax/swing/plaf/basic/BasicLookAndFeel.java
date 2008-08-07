@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -654,7 +654,7 @@ public abstract class BasicLookAndFeel extends LookAndFeel implements Serializab
                 "javax.swing.plaf.basic.BasicIconFactory",
                 "getRadioButtonMenuItemIcon");
 
-        Object menuItemAcceleratorDelimiter = new String("+");
+        Object menuItemAcceleratorDelimiter = "+";
 
         // *** OptionPane value objects
 
@@ -1364,6 +1364,7 @@ public abstract class BasicLookAndFeel extends LookAndFeel implements Serializab
                         "LEFT", "positiveUnitIncrement",
                      "KP_LEFT", "positiveUnitIncrement",
                  }),
+            "Slider.onlyLeftMouseButtonDrag", Boolean.TRUE,
 
             // *** Spinner
             "Spinner.font", monospacedPlain12,

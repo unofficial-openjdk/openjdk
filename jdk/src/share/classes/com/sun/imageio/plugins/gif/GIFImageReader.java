@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -504,7 +504,7 @@ public class GIFImageReader extends ImageReader {
             }
 
             // Found position of metadata for image 0
-            imageStartPosition.add(new Long(stream.getStreamPosition()));
+            imageStartPosition.add(Long.valueOf(stream.getStreamPosition()));
         } catch (IOException e) {
             throw new IIOException("I/O error reading header!", e);
         }

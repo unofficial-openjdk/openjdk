@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -242,9 +242,9 @@ public class SocketAdaptor
             throw new SocketException("Socket input is shutdown");
         if (socketInputStream == null) {
             try {
-                socketInputStream = (InputStream)AccessController.doPrivileged(
-                    new PrivilegedExceptionAction() {
-                        public Object run() throws IOException {
+                socketInputStream = AccessController.doPrivileged(
+                    new PrivilegedExceptionAction<InputStream>() {
+                        public InputStream run() throws IOException {
                             return new SocketInputStream();
                         }
                     });
@@ -264,9 +264,9 @@ public class SocketAdaptor
             throw new SocketException("Socket output is shutdown");
         OutputStream os = null;
         try {
-            os = (OutputStream)
-                AccessController.doPrivileged(new PrivilegedExceptionAction() {
-                    public Object run() throws IOException {
+            os = AccessController.doPrivileged(
+                new PrivilegedExceptionAction<OutputStream>() {
+                    public OutputStream run() throws IOException {
                         return Channels.newOutputStream(sc);
                     }
                 });

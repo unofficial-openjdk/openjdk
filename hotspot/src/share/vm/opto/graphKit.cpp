@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -532,7 +532,7 @@ void GraphKit::builtin_throw(Deoptimization::DeoptReason reason, Node* arg) {
         C->log()->elem("hot_throw preallocated='1' reason='%s'",
                        Deoptimization::trap_reason_name(reason));
       const TypeInstPtr* ex_con  = TypeInstPtr::make(ex_obj);
-      Node*              ex_node = _gvn.transform(new (C, 1) ConPNode(ex_con));
+      Node*              ex_node = _gvn.transform( ConNode::make(C, ex_con) );
 
       // Clear the detail message of the preallocated exception object.
       // Weblogic sometimes mutates the detail message of exceptions
@@ -857,6 +857,13 @@ void GraphKit::add_safepoint_edges(SafePointNode* call, bool must_throw) {
     for (j = 0; j < l; j++)
       call->set_req(p++, in_map->in(k+j));
 
+    // Copy any scalar object fields.
+    k = in_jvms->scloff();
+    l = in_jvms->scl_size();
+    out_jvms->set_scloff(p);
+    for (j = 0; j < l; j++)
+      call->set_req(p++, in_map->in(k+j));
+
     // Finish the new jvms.
     out_jvms->set_endoff(p);
 
@@ -864,6 +871,7 @@ void GraphKit::add_safepoint_edges(SafePointNode* call, bool must_throw) {
     assert(out_jvms->depth()      == in_jvms->depth(),      "depth must match");
     assert(out_jvms->loc_size()   == in_jvms->loc_size(),   "size must match");
     assert(out_jvms->mon_size()   == in_jvms->mon_size(),   "size must match");
+    assert(out_jvms->scl_size()   == in_jvms->scl_size(),   "size must match");
     assert(out_jvms->debug_size() == in_jvms->debug_size(), "size must match");
 
     // Update the two tail pointers in parallel.
@@ -1035,7 +1043,7 @@ Node* GraphKit::load_object_klass(Node* obj) {
   Node* akls = AllocateNode::Ideal_klass(obj, &_gvn);
   if (akls != NULL)  return akls;
   Node* k_adr = basic_plus_adr(obj, oopDesc::klass_offset_in_bytes());
-  return _gvn.transform( new (C, 3) LoadKlassNode(0, immutable_memory(), k_adr, TypeInstPtr::KLASS) );
+  return _gvn.transform( LoadKlassNode::make(_gvn, immutable_memory(), k_adr, TypeInstPtr::KLASS) );
 }
 
 //-------------------------load_array_length-----------------------------------
@@ -1320,7 +1328,7 @@ Node* GraphKit::make_load(Node* ctl, Node* adr, const Type* t, BasicType bt,
   if (require_atomic_access && bt == T_LONG) {
     ld = LoadLNode::make_atomic(C, ctl, mem, adr, adr_type, t);
   } else {
-    ld = LoadNode::make(C, ctl, mem, adr, adr_type, t, bt);
+    ld = LoadNode::make(_gvn, ctl, mem, adr, adr_type, t, bt);
   }
   return _gvn.transform(ld);
 }
@@ -1336,7 +1344,7 @@ Node* GraphKit::store_to_memory(Node* ctl, Node* adr, Node *val, BasicType bt,
   if (require_atomic_access && bt == T_LONG) {
     st = StoreLNode::make_atomic(C, ctl, mem, adr, adr_type, val);
   } else {
-    st = StoreNode::make(C, ctl, mem, adr, adr_type, val, bt);
+    st = StoreNode::make(_gvn, ctl, mem, adr, adr_type, val, bt);
   }
   st = _gvn.transform(st);
   set_memory(st, adr_idx);
@@ -1447,7 +1455,7 @@ Node* GraphKit::store_oop_to_unknown(Node* ctl,
 //-------------------------array_element_address-------------------------
 Node* GraphKit::array_element_address(Node* ary, Node* idx, BasicType elembt,
                                       const TypeInt* sizetype) {
-  uint shift  = exact_log2(type2aelembytes[elembt]);
+  uint shift  = exact_log2(type2aelembytes(elembt));
   uint header = arrayOopDesc::base_offset_in_bytes(elembt);
 
   // short-circuit a common case (saves lots of confusing waste motion)
@@ -2202,7 +2210,7 @@ Node* GraphKit::gen_subtype_check(Node* subklass, Node* superklass) {
   // cache which is mutable so can't use immutable memory.  Other
   // types load from the super-class display table which is immutable.
   Node *kmem = might_be_cache ? memory(p2) : immutable_memory();
-  Node *nkls = _gvn.transform( new (C, 3) LoadKlassNode( NULL, kmem, p2, _gvn.type(p2)->is_ptr(), TypeKlassPtr::OBJECT_OR_NULL ) );
+  Node *nkls = _gvn.transform( LoadKlassNode::make( _gvn, kmem, p2, _gvn.type(p2)->is_ptr(), TypeKlassPtr::OBJECT_OR_NULL ) );
 
   // Compile speed common case: ARE a subtype and we canNOT fail
   if( superklass == nkls )
@@ -2793,7 +2801,6 @@ Node* GraphKit::set_output_for_allocation(AllocateNode* alloc,
     // initialization, and source them from the new InitializeNode.
     // This will allow us to observe initializations when they occur,
     // and link them properly (as a group) to the InitializeNode.
-    Node* klass_node = alloc->in(AllocateNode::KlassNode);
     assert(init->in(InitializeNode::Memory) == malloc, "");
     MergeMemNode* minit_in = MergeMemNode::make(C, malloc);
     init->set_req(InitializeNode::Memory, minit_in);
@@ -2808,7 +2815,7 @@ Node* GraphKit::set_output_for_allocation(AllocateNode* alloc,
       ciInstanceKlass* ik = oop_type->klass()->as_instance_klass();
       for (int i = 0, len = ik->nof_nonstatic_fields(); i < len; i++) {
         ciField* field = ik->nonstatic_field_at(i);
-        if (field->offset() >= TrackedInitializationLimit)
+        if (field->offset() >= TrackedInitializationLimit * HeapWordSize)
           continue;  // do not bother to track really large numbers of fields
         // Find (or create) the alias category for this field:
         int fieldidx = C->alias_type(field)->index();
@@ -2914,10 +2921,22 @@ Node* GraphKit::new_instance(Node* klass_node,
   const TypeOopPtr* oop_type = tklass->as_instance_type();
 
   // Now generate allocation code
+
+  // With escape analysis, the entire memory state is needed to be able to
+  // eliminate the allocation.  If the allocations cannot be eliminated, this
+  // will be optimized to the raw slice when the allocation is expanded.
+  Node *mem;
+  if (C->do_escape_analysis()) {
+    mem = reset_memory();
+    set_all_memory(mem);
+  } else {
+    mem = memory(Compile::AliasIdxRaw);
+  }
+
   AllocateNode* alloc
     = new (C, AllocateNode::ParmLimit)
         AllocateNode(C, AllocateNode::alloc_type(),
-                     control(), memory(Compile::AliasIdxRaw), i_o(),
+                     control(), mem, i_o(),
                      size, klass_node,
                      initial_slow_test);
 
@@ -3048,11 +3067,23 @@ Node* GraphKit::new_array(Node* klass_node,     // array klass (maybe variable)
   }
 
   // Now generate allocation code
+
+  // With escape analysis, the entire memory state is needed to be able to
+  // eliminate the allocation.  If the allocations cannot be eliminated, this
+  // will be optimized to the raw slice when the allocation is expanded.
+  Node *mem;
+  if (C->do_escape_analysis()) {
+    mem = reset_memory();
+    set_all_memory(mem);
+  } else {
+    mem = memory(Compile::AliasIdxRaw);
+  }
+
   // Create the AllocateArrayNode and its result projections
   AllocateArrayNode* alloc
     = new (C, AllocateArrayNode::ParmLimit)
         AllocateArrayNode(C, AllocateArrayNode::alloc_type(),
-                          control(), memory(Compile::AliasIdxRaw), i_o(),
+                          control(), mem, i_o(),
                           size, klass_node,
                           initial_slow_test,
                           length);

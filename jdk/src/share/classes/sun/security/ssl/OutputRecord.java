@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -174,6 +174,18 @@ class OutputRecord extends ByteArrayOutputStream implements Record {
         return count == headerSize;
     }
 
+    /*
+     * Return true if the record is of a given alert.
+     */
+    boolean isAlert(byte description) {
+        // An alert is defined with a two bytes struct,
+        // {byte level, byte description}, following after the header bytes.
+        if (count > (headerSize + 1) && contentType == ct_alert) {
+            return buf[headerSize + 1] == description;
+        }
+
+        return false;
+    }
 
     /*
      * Compute the MAC and append it to this record.  In case we

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -92,15 +92,25 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     SurfaceData surfaceData;
 
     XRepaintArea paintArea;
-    // fallback default font object
-    final static Font defaultFont = new Font(Font.DIALOG, Font.PLAIN, 12);
 
-    /*
-     * Keeps all buttons which were pressed at the time of the last mouse
-     * drag until all buttons will be released, contains state as bit masks
-     * Button1Mask, Button2Mask, Button3Mask
-     */
-    private int mouseDragState = 0;
+    // fallback default font object
+    private static Font defaultFont;
+
+    static synchronized Font getDefaultFont() {
+        if (null == defaultFont) {
+            defaultFont = new Font(Font.DIALOG, Font.PLAIN, 12);
+        }
+        return defaultFont;
+    }
+
+    /* A bitmask keeps the button's numbers as Button1Mask, Button2Mask, Button3Mask
+     * which are allowed to
+     * generate the CLICK event after the RELEASE has happened.
+     * There are conditions that must be true for that sending CLICK event:
+     * 1) button was initially PRESSED
+     * 2) no movement or drag has happened until RELEASE
+    */
+    private int mouseButtonClickAllowed = 0;
 
     native int getNativeColor(Color clr, GraphicsConfiguration gc);
     native void getWMInsets(long window, long left, long top, long right, long bottom, long border);
@@ -170,10 +180,10 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         AwtGraphicsConfigData gData = getGraphicsConfigurationData();
         X11GraphicsConfig config = (X11GraphicsConfig) getGraphicsConfiguration();
         XVisualInfo visInfo = gData.get_awt_visInfo();
-        params.putIfNull(EVENT_MASK, KeyPressMask | KeyReleaseMask
-            | FocusChangeMask | ButtonPressMask | ButtonReleaseMask
-            | EnterWindowMask | LeaveWindowMask | PointerMotionMask
-            | ButtonMotionMask | ExposureMask | StructureNotifyMask);
+        params.putIfNull(EVENT_MASK, XConstants.KeyPressMask | XConstants.KeyReleaseMask
+            | XConstants.FocusChangeMask | XConstants.ButtonPressMask | XConstants.ButtonReleaseMask
+            | XConstants.EnterWindowMask | XConstants.LeaveWindowMask | XConstants.PointerMotionMask
+            | XConstants.ButtonMotionMask | XConstants.ExposureMask | XConstants.StructureNotifyMask);
 
         if (target != null) {
             params.putIfNull(BOUNDS, target.getBounds());
@@ -184,9 +194,9 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         getColorModel(); // fix 4948833: this call forces the color map to be initialized
         params.putIfNull(COLORMAP, gData.get_awt_cmap());
         params.putIfNull(DEPTH, gData.get_awt_depth());
-        params.putIfNull(VISUAL_CLASS, Integer.valueOf((int)XlibWrapper.InputOutput));
+        params.putIfNull(VISUAL_CLASS, Integer.valueOf((int)XConstants.InputOutput));
         params.putIfNull(VISUAL, visInfo.get_visual());
-        params.putIfNull(VALUE_MASK, XlibWrapper.CWBorderPixel | XlibWrapper.CWEventMask | XlibWrapper.CWColormap);
+        params.putIfNull(VALUE_MASK, XConstants.CWBorderPixel | XConstants.CWEventMask | XConstants.CWColormap);
         Long parentWindow = (Long)params.get(PARENT_WINDOW);
         if (parentWindow == null || parentWindow.longValue() == 0) {
             XToolkit.awtLock();
@@ -333,7 +343,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         }
         Font font = afont;
         if (font == null) {
-            font = defaultFont;
+            font = XWindow.getDefaultFont();
         }
         return new SunGraphics2D(surfData, fgColor, bgColor, font);
     }
@@ -545,10 +555,10 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     static int getModifiers(int state, int button, int keyCode) {
         int modifiers = 0;
 
-        if (((state & XlibWrapper.ShiftMask) != 0) ^ (keyCode == KeyEvent.VK_SHIFT)) {
+        if (((state & XConstants.ShiftMask) != 0) ^ (keyCode == KeyEvent.VK_SHIFT)) {
             modifiers |= InputEvent.SHIFT_DOWN_MASK;
         }
-        if (((state & XlibWrapper.ControlMask) != 0) ^ (keyCode == KeyEvent.VK_CONTROL)) {
+        if (((state & XConstants.ControlMask) != 0) ^ (keyCode == KeyEvent.VK_CONTROL)) {
             modifiers |= InputEvent.CTRL_DOWN_MASK;
         }
         if (((state & XToolkit.metaMask) != 0) ^ (keyCode == KeyEvent.VK_META)) {
@@ -560,13 +570,13 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         if (((state & XToolkit.modeSwitchMask) != 0) ^ (keyCode == KeyEvent.VK_ALT_GRAPH)) {
             modifiers |= InputEvent.ALT_GRAPH_DOWN_MASK;
         }
-        if (((state & XlibWrapper.Button1Mask) != 0) ^ (button == MouseEvent.BUTTON1)) {
+        if (((state & XConstants.Button1Mask) != 0) ^ (button == MouseEvent.BUTTON1)) {
             modifiers |= InputEvent.BUTTON1_DOWN_MASK;
         }
-        if (((state & XlibWrapper.Button2Mask) != 0) ^ (button == MouseEvent.BUTTON2)) {
+        if (((state & XConstants.Button2Mask) != 0) ^ (button == MouseEvent.BUTTON2)) {
             modifiers |= InputEvent.BUTTON2_DOWN_MASK;
         }
-        if (((state & XlibWrapper.Button3Mask) != 0) ^ (button == MouseEvent.BUTTON3)) {
+        if (((state & XConstants.Button3Mask) != 0) ^ (button == MouseEvent.BUTTON3)) {
             modifiers |= InputEvent.BUTTON3_DOWN_MASK;
         }
         return modifiers;
@@ -576,10 +586,10 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         int mods = stroke.getModifiers();
         int res = 0;
         if ((mods & (InputEvent.SHIFT_DOWN_MASK | InputEvent.SHIFT_MASK)) != 0) {
-            res |= XToolkit.ShiftMask;
+            res |= XConstants.ShiftMask;
         }
         if ((mods & (InputEvent.CTRL_DOWN_MASK | InputEvent.CTRL_MASK)) != 0) {
-            res |= XToolkit.ControlMask;
+            res |= XConstants.ControlMask;
         }
         if ((mods & (InputEvent.ALT_DOWN_MASK | InputEvent.ALT_MASK)) != 0) {
             res |= XToolkit.altMask;
@@ -594,12 +604,12 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     }
 
     private static int getButtonMask(long mouseButton) {
-        if (mouseButton == XlibWrapper.Button1) {
-            return XlibWrapper.Button1Mask;
-        } else if (mouseButton == XlibWrapper.Button2) {
-            return XlibWrapper.Button2Mask;
-        } else if (mouseButton == XlibWrapper.Button3) {
-            return XlibWrapper.Button3Mask;
+        if (mouseButton == XConstants.Button1) {
+            return XConstants.Button1Mask;
+        } else if (mouseButton == XConstants.Button2) {
+            return XConstants.Button2Mask;
+        } else if (mouseButton == XConstants.Button3) {
+            return XConstants.Button3Mask;
         }
         return 0;
     }
@@ -651,7 +661,9 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
             y = localXY.y;
         }
 
-        if (type == XlibWrapper.ButtonPress) {
+        if (type == XConstants.ButtonPress) {
+            //Allow this mouse button to generate CLICK event on next ButtonRelease
+            mouseButtonClickAllowed |= getButtonMask(lbutton);
             XWindow lastWindow = (lastWindowRef != null) ? ((XWindow)lastWindowRef.get()):(null);
             /*
                multiclick checking
@@ -681,16 +693,16 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
             }
         }
 
-        if (lbutton == XlibWrapper.Button1)
+        if (lbutton == XConstants.Button1)
             button = MouseEvent.BUTTON1;
-        else if (lbutton ==  XlibWrapper.Button2 )
+        else if (lbutton ==  XConstants.Button2 )
             button = MouseEvent.BUTTON2;
-        else if (lbutton == XlibWrapper.Button3)
+        else if (lbutton == XConstants.Button3)
             button = MouseEvent.BUTTON3;
-        else if (lbutton == XlibWrapper.Button4) {
+        else if (lbutton == XConstants.Button4) {
             button = 4;
             wheel_mouse = true;
-        } else if (lbutton == XlibWrapper.Button5) {
+        } else if (lbutton == XConstants.Button5) {
             button = 5;
             wheel_mouse = true;
         }
@@ -699,7 +711,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
 
         if (!wheel_mouse) {
             MouseEvent me = new MouseEvent((Component)getEventSource(),
-                                           type == XlibWrapper.ButtonPress ? MouseEvent.MOUSE_PRESSED : MouseEvent.MOUSE_RELEASED,
+                                           type == XConstants.ButtonPress ? MouseEvent.MOUSE_PRESSED : MouseEvent.MOUSE_RELEASED,
                                            jWhen,modifiers, x, y,
                                            xbe.get_x_root(),
                                            xbe.get_y_root(),
@@ -707,8 +719,8 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
 
             postEventToEventQueue(me);
 
-            if (((mouseDragState & getButtonMask(lbutton)) == 0) && // No up-button in the drag-state
-                (type == XlibWrapper.ButtonRelease))
+            if ((type == XConstants.ButtonRelease) &&
+                ((mouseButtonClickAllowed & getButtonMask(lbutton)) != 0) ) // No up-button in the drag-state
             {
                 postEventToEventQueue(me = new MouseEvent((Component)getEventSource(),
                                                      MouseEvent.MOUSE_CLICKED,
@@ -723,7 +735,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
 
         }
         else {
-            if (xev.get_type() == XlibWrapper.ButtonPress) {
+            if (xev.get_type() == XConstants.ButtonPress) {
                 MouseWheelEvent mwe = new MouseWheelEvent((Component)getEventSource(),MouseEvent.MOUSE_WHEEL, jWhen,
                                                           modifiers,
                                                           x, y,
@@ -735,7 +747,11 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
             }
         }
 
-        mouseDragState &= ~getButtonMask(lbutton); // Exclude the up-button from the drag-state
+        /* Update the state variable AFTER the CLICKED event post. */
+        if (type == XConstants.ButtonRelease) {
+            /* Exclude this mouse button from allowed list.*/
+            mouseButtonClickAllowed &= ~getButtonMask(lbutton);
+        }
     }
 
     public void handleMotionNotify(XEvent xev) {
@@ -745,7 +761,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
             return;
         }
 
-        int mouseKeyState = (xme.get_state() & (Button1Mask | Button2Mask | Button3Mask));
+        int mouseKeyState = (xme.get_state() & (XConstants.Button1Mask | XConstants.Button2Mask | XConstants.Button3Mask));
         boolean isDragging = (mouseKeyState != 0);
         int mouseEventType = 0;
 
@@ -768,7 +784,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
                Math.abs(lastY - y) < AWT_MULTICLICK_SMUDGE))) {
           clickCount = 0;
           lastWindowRef = null;
-          mouseDragState = mouseKeyState;
+          mouseButtonClickAllowed = 0;
           lastTime = 0;
           lastX = 0;
           lastY = 0;
@@ -815,10 +831,10 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         // accordingly. This leads to impossibility to make a double click on Component (6404708)
         XWindowPeer toplevel = getToplevelXWindow();
         if (toplevel != null && !toplevel.isModalBlocked()){
-            if (xce.get_mode() != NotifyNormal) {
+            if (xce.get_mode() != XConstants.NotifyNormal) {
                 // 6404708 : need update cursor in accordance with skipping Leave/EnterNotify event
                 // whereas it doesn't need to handled further.
-                if (xce.get_type() == EnterNotify) {
+                if (xce.get_type() == XConstants.EnterNotify) {
                     XAwtState.setComponentMouseEntered(getEventSource());
                     XGlobalCursorManager.nativeUpdateCursor(getEventSource());
                 } else { // LeaveNotify:
@@ -832,7 +848,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         // From java point the event is bogus as ancestor is obscured, so if
         // the child can get java event itself, we skip it on ancestor.
         long childWnd = xce.get_subwindow();
-        if (childWnd != None) {
+        if (childWnd != XConstants.None) {
             XBaseWindow child = XToolkit.windowToXWindow(childWnd);
             if (child != null && child instanceof XWindow &&
                 !child.isEventDisabled(xev))
@@ -845,7 +861,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
         final Component compWithMouse = XAwtState.getComponentMouseEntered();
         if (toplevel != null) {
             if(!toplevel.isModalBlocked()){
-                if (xce.get_type() == EnterNotify) {
+                if (xce.get_type() == XConstants.EnterNotify) {
                     // Change XAwtState's component mouse entered to the up-to-date one before requesting
                     // to update the cursor since XAwtState.getComponentMouseEntered() is used when the
                     // cursor is updated (in XGlobalCursorManager.findHeavyweightUnderCursor()).
@@ -887,7 +903,7 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
             eventLog.finest("Clearing last window ref");
             lastWindowRef = null;
         }
-        if (xce.get_type() == EnterNotify) {
+        if (xce.get_type() == XConstants.EnterNotify) {
             MouseEvent me = new MouseEvent(getEventSource(), MouseEvent.MOUSE_ENTERED,
                 jWhen, modifiers, xce.get_x(), xce.get_y(), xce.get_x_root(), xce.get_y_root(), clickCount,
                 popupTrigger, MouseEvent.NOBUTTON);
@@ -902,12 +918,10 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
 
         super.handleConfigureNotifyEvent(xev);
         insLog.log(Level.FINER, "Configure, {0}, event disabled: {1}",
-                   new Object[] {xev, isEventDisabled(xev)});
+                   new Object[] {xev.get_xconfigure(), isEventDisabled(xev)});
         if (isEventDisabled(xev)) {
             return;
         }
-
-        long eventWindow = xev.get_xany().get_window();
 
 //  if ( Check if it's a resize, a move, or a stacking order change )
 //  {
@@ -982,10 +996,9 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     // called directly from this package, unlike handleKeyRelease.
     // un-final it if you need to override it in a subclass.
     final void handleKeyPress(XKeyEvent ev) {
-        int keycode = java.awt.event.KeyEvent.VK_UNDEFINED;
         long keysym[] = new long[2];
         char unicodeKey = 0;
-        keysym[0] = NoSymbol;
+        keysym[0] = XConstants.NoSymbol;
 
         if (keyEventLog.isLoggable(Level.FINE)) {
             logIncomingKeyEvent( ev );
@@ -1066,10 +1079,9 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     }
     // un-private it if you need to call it from elsewhere
     private void handleKeyRelease(XKeyEvent ev) {
-        int keycode = java.awt.event.KeyEvent.VK_UNDEFINED;
         long keysym[] = new long[2];
         char unicodeKey = 0;
-        keysym[0] = NoSymbol;
+        keysym[0] = XConstants.NoSymbol;
 
         if (keyEventLog.isLoggable(Level.FINE)) {
             logIncomingKeyEvent( ev );
@@ -1149,10 +1161,10 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     }
 
     void updateSizeHints(int x, int y, int width, int height) {
-        long flags = XlibWrapper.PSize | (isLocationByPlatform() ? 0 : (XlibWrapper.PPosition | XlibWrapper.USPosition));
+        long flags = XUtilConstants.PSize | (isLocationByPlatform() ? 0 : (XUtilConstants.PPosition | XUtilConstants.USPosition));
         if (!isResizable()) {
             log.log(Level.FINER, "Window {0} is not resizable", new Object[] {this});
-            flags |= XlibWrapper.PMinSize | XlibWrapper.PMaxSize;
+            flags |= XUtilConstants.PMinSize | XUtilConstants.PMaxSize;
         } else {
             log.log(Level.FINER, "Window {0} is resizable", new Object[] {this});
         }
@@ -1160,10 +1172,10 @@ public class XWindow extends XBaseWindow implements X11ComponentPeer {
     }
 
     void updateSizeHints(int x, int y) {
-        long flags = isLocationByPlatform() ? 0 : (XlibWrapper.PPosition | XlibWrapper.USPosition);
+        long flags = isLocationByPlatform() ? 0 : (XUtilConstants.PPosition | XUtilConstants.USPosition);
         if (!isResizable()) {
             log.log(Level.FINER, "Window {0} is not resizable", new Object[] {this});
-            flags |= XlibWrapper.PMinSize | XlibWrapper.PMaxSize | XlibWrapper.PSize;
+            flags |= XUtilConstants.PMinSize | XUtilConstants.PMaxSize | XUtilConstants.PSize;
         } else {
             log.log(Level.FINER, "Window {0} is resizable", new Object[] {this});
         }

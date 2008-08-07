@@ -368,7 +368,7 @@ Java_sun_font_FreetypeFontScaler_createScalerContextNative(
         //text can not be smaller than 1 point
         ptsz = 1.0;
     }
-    context->ptsz = (((int) ptsz) << 6);
+    context->ptsz = (int)(ptsz * 64);
     context->transform.xx =  FloatToFTFixed((float)dmat[0]/ptsz);
     context->transform.yx = -FloatToFTFixed((float)dmat[1]/ptsz);
     context->transform.xy = -FloatToFTFixed((float)dmat[2]/ptsz);
@@ -770,22 +770,31 @@ Java_sun_font_FreetypeFontScaler_getGlyphImageNative(
     glyphInfo->topLeftX  = (float)  ftglyph->bitmap_left;
     glyphInfo->topLeftY  = (float) -ftglyph->bitmap_top;
 
-    if (context->aaType == TEXT_AA_LCD_HRGB ||
-        context->aaType == TEXT_AA_LCD_HBGR) {
+    if (ftglyph->bitmap.pixel_mode ==  FT_PIXEL_MODE_LCD) {
         glyphInfo->width = width/3;
-    } else if (context->aaType == TEXT_AA_LCD_VRGB ||
-               context->aaType == TEXT_AA_LCD_VBGR) {
+    } else if (ftglyph->bitmap.pixel_mode ==  FT_PIXEL_MODE_LCD_V) {
         glyphInfo->height = glyphInfo->height/3;
     }
 
     if (context->fmType == TEXT_FM_ON) {
-        glyphInfo->advanceX = FT26Dot6ToFloat(ftglyph->advance.x);
-        glyphInfo->advanceY = FT26Dot6ToFloat(-ftglyph->advance.y);
-    } else {
+        double advh = FTFixedToFloat(ftglyph->linearHoriAdvance);
         glyphInfo->advanceX =
-           (float) ROUND(FT26Dot6ToFloat(ftglyph->advance.x));
+            (float) (advh * FTFixedToFloat(context->transform.xx));
         glyphInfo->advanceY =
-           (float) ROUND(FT26Dot6ToFloat(-ftglyph->advance.y));
+            (float) (advh * FTFixedToFloat(context->transform.xy));
+    } else {
+        if (!ftglyph->advance.y) {
+            glyphInfo->advanceX =
+                (float) ROUND(FT26Dot6ToFloat(ftglyph->advance.x));
+            glyphInfo->advanceY = 0;
+        } else if (!ftglyph->advance.x) {
+            glyphInfo->advanceX = 0;
+            glyphInfo->advanceY =
+                (float) ROUND(FT26Dot6ToFloat(-ftglyph->advance.y));
+        } else {
+            glyphInfo->advanceX = FT26Dot6ToFloat(ftglyph->advance.x);
+            glyphInfo->advanceY = FT26Dot6ToFloat(-ftglyph->advance.y);
+        }
     }
 
     if (imageSize == 0) {
@@ -974,7 +983,7 @@ static FT_Outline* getFTOutline(JNIEnv* env, jobject font2D,
 
     FT_Outline_Translate(&ftglyph->outline,
                          FloatToF26Dot6(xpos),
-                         FloatToF26Dot6(ypos));
+                         -FloatToF26Dot6(ypos));
 
     return &ftglyph->outline;
 }

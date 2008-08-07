@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,15 +63,8 @@
 #define CLOSEIO
 #endif /* NO_INTERRUPTIBLE_IO */
 
-/*
- * Linux <sys/resource.h> does not define rlim_t (solaris
- * does). THIS IS PROBABLY NOT THE RIGHT THING TO DO, so
- * somebody please fix this.
- */
-#ifdef __linux__
-typedef int rlim_t ;
-#endif
-
+/* Get typedef for rlim_t */
+#include <sys/resource.h>
 
 #ifdef CLOSEIO
 

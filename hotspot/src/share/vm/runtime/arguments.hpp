@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -291,8 +291,6 @@ class Arguments : AllStatic {
   static bool _CIDynamicCompilePriority;
   static intx _Tier2CompileThreshold;
 
-  // GC processing
-  static int nof_parallel_gc_threads();
   // CMS/ParNew garbage collectors
   static void set_parnew_gc_flags();
   static void set_cms_and_parnew_gc_flags();
@@ -385,6 +383,8 @@ class Arguments : AllStatic {
  public:
   // Parses the arguments
   static jint parse(const JavaVMInitArgs* args);
+  // Check for consistency in the selection of the garbage collector.
+  static bool check_gc_consistency();
   // Check consistecy or otherwise of VM argument settings
   static bool check_vm_args_consistency();
   // Used by os_solaris

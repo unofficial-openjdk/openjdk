@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -621,7 +621,12 @@ julong os::physical_memory() {
 }
 
 julong os::allocatable_physical_memory(julong size) {
+#ifdef _LP64
+  return size;
+#else
+  // Limit to 1400m because of the 2gb address space wall
   return MIN2(size, (julong)1400*M);
+#endif
 }
 
 // VC6 lacks DWORD_PTR
@@ -732,20 +737,13 @@ FILETIME java_to_windows_time(jlong l) {
   return result;
 }
 
-jlong os::timeofday() {
-  FILETIME wt;
-  GetSystemTimeAsFileTime(&wt);
-  return windows_to_java_time(wt);
-}
-
-
-// Must return millis since Jan 1 1970 for JVM_CurrentTimeMillis
-// _use_global_time is only set if CacheTimeMillis is true
 jlong os::javaTimeMillis() {
   if (UseFakeTimers) {
     return fake_time++;
   } else {
-    return (_use_global_time ? read_global_time() : timeofday());
+    FILETIME wt;
+    GetSystemTimeAsFileTime(&wt);
+    return windows_to_java_time(wt);
   }
 }
 
@@ -2172,6 +2170,7 @@ LONG WINAPI topLevelExceptionFilter(struct _EXCEPTION_POINTERS* exceptionInfo) {
             // Windows 98 reports faulting addresses incorrectly
             if (!MacroAssembler::needs_explicit_null_check((intptr_t)addr) ||
                 !os::win32::is_nt()) {
+
               return Handle_Exception(exceptionInfo,
                   SharedRuntime::continuation_for_implicit_exception(thread, pc, SharedRuntime::IMPLICIT_NULL));
             }
@@ -2518,9 +2517,13 @@ bool os::can_commit_large_page_memory() {
   return false;
 }
 
+bool os::can_execute_large_page_memory() {
+  return true;
+}
+
 char* os::reserve_memory_special(size_t bytes) {
   DWORD flag = MEM_RESERVE | MEM_COMMIT | MEM_LARGE_PAGES;
-  char * res = (char *)VirtualAlloc(NULL, bytes, flag, PAGE_READWRITE);
+  char * res = (char *)VirtualAlloc(NULL, bytes, flag, PAGE_EXECUTE_READWRITE);
   return res;
 }
 
@@ -2561,9 +2564,33 @@ bool os::release_memory(char* addr, size_t bytes) {
   return VirtualFree(addr, 0, MEM_RELEASE) != 0;
 }
 
-bool os::protect_memory(char* addr, size_t bytes) {
+// Set protections specified
+bool os::protect_memory(char* addr, size_t bytes, ProtType prot,
+                        bool is_committed) {
+  unsigned int p = 0;
+  switch (prot) {
+  case MEM_PROT_NONE: p = PAGE_NOACCESS; break;
+  case MEM_PROT_READ: p = PAGE_READONLY; break;
+  case MEM_PROT_RW:   p = PAGE_READWRITE; break;
+  case MEM_PROT_RWX:  p = PAGE_EXECUTE_READWRITE; break;
+  default:
+    ShouldNotReachHere();
+  }
+
   DWORD old_status;
-  return VirtualProtect(addr, bytes, PAGE_READONLY, &old_status) != 0;
+
+  // Strange enough, but on Win32 one can change protection only for committed
+  // memory, not a big deal anyway, as bytes less or equal than 64K
+  if (!is_committed && !commit_memory(addr, bytes)) {
+    fatal("cannot commit protection page");
+  }
+  // One cannot use os::guard_memory() here, as on Win32 guard page
+  // have different (one-shot) semantics, from MSDN on PAGE_GUARD:
+  //
+  // Pages in the region become guard pages. Any attempt to access a guard page
+  // causes the system to raise a STATUS_GUARD_PAGE exception and turn off
+  // the guard page status. Guard pages thus act as a one-time access alarm.
+  return VirtualProtect(addr, bytes, p, &old_status) != 0;
 }
 
 bool os::guard_memory(char* addr, size_t bytes) {
@@ -2579,7 +2606,7 @@ bool os::unguard_memory(char* addr, size_t bytes) {
 void os::realign_memory(char *addr, size_t bytes, size_t alignment_hint) { }
 void os::free_memory(char *addr, size_t bytes)         { }
 void os::numa_make_global(char *addr, size_t bytes)    { }
-void os::numa_make_local(char *addr, size_t bytes)     { }
+void os::numa_make_local(char *addr, size_t bytes, int lgrp_hint)    { }
 bool os::numa_topology_changed()                       { return false; }
 size_t os::numa_get_groups_num()                       { return 1; }
 int os::numa_get_group_id()                            { return 0; }
@@ -3114,7 +3141,7 @@ jint os::init_2(void) {
   // as reserve size, since on a 64-bit platform we'll run into that more
   // often than running out of virtual memory space.  We can use the
   // lower value of the two calculations as the os_thread_limit.
-  size_t max_address_space = ((size_t)1 << (BitsPerOop - 1)) - (200 * K * K);
+  size_t max_address_space = ((size_t)1 << (BitsPerWord - 1)) - (200 * K * K);
   win32::_os_thread_limit = (intx)(max_address_space / actual_reserve_size);
 
   // at exit methods are called in the reverse order of their registration.

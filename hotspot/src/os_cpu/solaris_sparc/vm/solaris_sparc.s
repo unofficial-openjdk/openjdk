@@ -1,5 +1,5 @@
 !!
-!! Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
+!! Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
 !! DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 !!
 !! This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,9 @@
     !! by the .il "call", in some cases optimizing the code, completely eliding it,
     !! or by moving the code from the "call site". 
         
-
+     !! ASM better know we may use G6 for our own purposes
+    .register %g6, #ignore
+        
     .globl  SafeFetch32
     .align  32
     .global Fetch32PFI, Fetch32Resume 
@@ -106,6 +108,7 @@ SpinPause:
     .globl _raw_thread_id
     .align 32
  _raw_thread_id:
+    .register %g7, #scratch
         retl
         mov     %g7, %o0
  

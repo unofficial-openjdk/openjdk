@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -155,8 +155,8 @@ bool Dictionary::do_unloading(BoolObjectClosure* is_alive) {
         for (int i = ik->previous_versions()->length() - 1; i >= 0; i--) {
           // check the previous versions array for GC'ed weak refs
           PreviousVersionNode * pv_node = ik->previous_versions()->at(i);
-          jweak cp_ref = pv_node->prev_constant_pool();
-          assert(cp_ref != NULL, "weak cp ref was unexpectedly cleared");
+          jobject cp_ref = pv_node->prev_constant_pool();
+          assert(cp_ref != NULL, "cp ref was unexpectedly cleared");
           if (cp_ref == NULL) {
             delete pv_node;
             ik->previous_versions()->remove_at(i);

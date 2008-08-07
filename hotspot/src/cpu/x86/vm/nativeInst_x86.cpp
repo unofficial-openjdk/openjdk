@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -471,4 +471,8 @@ address NativeGeneralJump::jump_destination() const {
     return addr_at(0) + length + int_at(offset);
   else
     return addr_at(0) + length + sbyte_at(offset);
+}
+
+bool NativeInstruction::is_dtrace_trap() {
+  return (*(int32_t*)this & 0xff) == 0xcc;
 }

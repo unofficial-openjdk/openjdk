@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -100,9 +100,12 @@ public class Check {
 
         boolean verboseDeprecated = lint.isEnabled(LintCategory.DEPRECATION);
         boolean verboseUnchecked = lint.isEnabled(LintCategory.UNCHECKED);
+        boolean enforceMandatoryWarnings = source.enforceMandatoryWarnings();
 
-        deprecationHandler = new MandatoryWarningHandler(log,verboseDeprecated, "deprecated");
-        uncheckedHandler = new MandatoryWarningHandler(log, verboseUnchecked, "unchecked");
+        deprecationHandler = new MandatoryWarningHandler(log, verboseDeprecated,
+                enforceMandatoryWarnings, "deprecated");
+        uncheckedHandler = new MandatoryWarningHandler(log, verboseUnchecked,
+                enforceMandatoryWarnings, "unchecked");
     }
 
     /** Switch: generics enabled?
@@ -173,7 +176,7 @@ public class Check {
      *  @param ex         The failure to report.
      */
     public Type completionError(DiagnosticPosition pos, CompletionFailure ex) {
-        log.error(pos, "cant.access", ex.sym, ex.errmsg);
+        log.error(pos, "cant.access", ex.sym, ex.getDetailValue());
         if (ex instanceof ClassReader.BadClassFile) throw new Abort();
         else return syms.errType;
     }
@@ -1247,7 +1250,7 @@ public class Check {
                 for (Type t2 = sup;
                      t2.tag == CLASS;
                      t2 = types.supertype(t2)) {
-                    for (Scope.Entry e2 = t1.tsym.members().lookup(s1.name);
+                    for (Scope.Entry e2 = t2.tsym.members().lookup(s1.name);
                          e2.scope != null;
                          e2 = e2.next()) {
                         Symbol s2 = e2.sym;
@@ -1367,12 +1370,46 @@ public class Check {
                         types.isSameType(rt1, rt2) ||
                         rt1.tag >= CLASS && rt2.tag >= CLASS &&
                         (types.covariantReturnType(rt1, rt2, Warner.noWarnings) ||
-                         types.covariantReturnType(rt2, rt1, Warner.noWarnings));
+                         types.covariantReturnType(rt2, rt1, Warner.noWarnings)) ||
+                         checkCommonOverriderIn(s1,s2,site);
                     if (!compat) return s2;
                 }
             }
         }
         return null;
+    }
+    //WHERE
+    boolean checkCommonOverriderIn(Symbol s1, Symbol s2, Type site) {
+        Map<TypeSymbol,Type> supertypes = new HashMap<TypeSymbol,Type>();
+        Type st1 = types.memberType(site, s1);
+        Type st2 = types.memberType(site, s2);
+        closure(site, supertypes);
+        for (Type t : supertypes.values()) {
+            for (Scope.Entry e = t.tsym.members().lookup(s1.name); e.scope != null; e = e.next()) {
+                Symbol s3 = e.sym;
+                if (s3 == s1 || s3 == s2 || s3.kind != MTH || (s3.flags() & (BRIDGE|SYNTHETIC)) != 0) continue;
+                Type st3 = types.memberType(site,s3);
+                if (types.overrideEquivalent(st3, st1) && types.overrideEquivalent(st3, st2)) {
+                    if (s3.owner == site.tsym) {
+                        return true;
+                    }
+                    List<Type> tvars1 = st1.getTypeArguments();
+                    List<Type> tvars2 = st2.getTypeArguments();
+                    List<Type> tvars3 = st3.getTypeArguments();
+                    Type rt1 = st1.getReturnType();
+                    Type rt2 = st2.getReturnType();
+                    Type rt13 = types.subst(st3.getReturnType(), tvars3, tvars1);
+                    Type rt23 = types.subst(st3.getReturnType(), tvars3, tvars2);
+                    boolean compat =
+                        rt13.tag >= CLASS && rt23.tag >= CLASS &&
+                        (types.covariantReturnType(rt13, rt1, Warner.noWarnings) &&
+                         types.covariantReturnType(rt23, rt2, Warner.noWarnings));
+                    if (compat)
+                        return true;
+                }
+            }
+        }
+        return false;
     }
 
     /** Check that a given method conforms with any method it overrides.
@@ -1394,6 +1431,16 @@ public class Check {
             while (e.scope != null) {
                 if (m.overrides(e.sym, origin, types, false))
                     checkOverride(tree, m, (MethodSymbol)e.sym, origin);
+                else if (e.sym.isInheritedIn(origin, types) && !m.isConstructor()) {
+                    Type er1 = m.erasure(types);
+                    Type er2 = e.sym.erasure(types);
+                    if (types.isSameType(er1,er2)) {
+                            log.error(TreeInfo.diagnosticPositionFor(m, tree),
+                                    "name.clash.same.erasure.no.override",
+                                    m, m.location(),
+                                    e.sym, e.sym.location());
+                    }
+                }
                 e = e.next();
             }
         }
@@ -1476,6 +1523,8 @@ public class Check {
 
     private void checkNonCyclic1(DiagnosticPosition pos, Type t, Set<TypeVar> seen) {
         final TypeVar tv;
+        if  (t.tag == TYPEVAR && (t.tsym.flags() & UNATTRIBUTED) != 0)
+            return;
         if (seen.contains(t)) {
             tv = (TypeVar)t;
             tv.bound = new ErrorType();

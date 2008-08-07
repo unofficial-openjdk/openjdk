@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,7 +47,7 @@ typedef AwtObject* PDATA;
     JNI_CHECK_NULL_GOTO(peer, "peer", where);                             \
     pData = JNI_GET_PDATA(peer);                                          \
     if (pData == NULL) {                                                  \
-        JNU_ThrowNullPointerException(env, "null pData");                 \
+        THROW_NULL_PDATA_IF_NOT_DESTROYED(peer);                          \
         goto where;                                                       \
     }                                                                     \
 }
@@ -63,7 +63,7 @@ typedef AwtObject* PDATA;
     JNI_CHECK_NULL_RETURN(peer, "peer");                                  \
     pData = JNI_GET_PDATA(peer);                                          \
     if (pData == NULL) {                                                  \
-        JNU_ThrowNullPointerException(env, "null pData");                 \
+        THROW_NULL_PDATA_IF_NOT_DESTROYED(peer);                          \
         return;                                                           \
     }                                                                     \
 }
@@ -96,7 +96,7 @@ typedef AwtObject* PDATA;
     JNI_CHECK_NULL_RETURN_NULL(peer, "peer");                             \
     pData = JNI_GET_PDATA(peer);                                          \
     if (pData == NULL) {                                                  \
-        JNU_ThrowNullPointerException(env, "null pData");                 \
+        THROW_NULL_PDATA_IF_NOT_DESTROYED(peer);                          \
         return 0;                                                         \
     }                                                                     \
 }
@@ -105,16 +105,27 @@ typedef AwtObject* PDATA;
     JNI_CHECK_NULL_RETURN_VAL(peer, "peer", val);                         \
     pData = JNI_GET_PDATA(peer);                                          \
     if (pData == NULL) {                                                  \
-        JNU_ThrowNullPointerException(env, "null pData");                 \
+        THROW_NULL_PDATA_IF_NOT_DESTROYED(peer);                          \
         return val;                                                       \
     }                                                                     \
 }
 
+#define THROW_NULL_PDATA_IF_NOT_DESTROYED(peer) {                         \
+    jboolean destroyed = JNI_GET_DESTROYED(peer);                         \
+    if (destroyed != JNI_TRUE) {                                          \
+        JNU_ThrowNullPointerException(env, "null pData");                 \
+    }                                                                     \
+}
+
 #define JNI_GET_PDATA(peer) (PDATA) env->GetLongField(peer, AwtObject::pDataID)
+#define JNI_GET_DESTROYED(peer) env->GetBooleanField(peer, AwtObject::destroyedID)
 
 #define JNI_SET_PDATA(peer, data) env->SetLongField(peer,                  \
-                                                   AwtObject::pDataID,    \
-                                                   (jlong)data)
+                                                    AwtObject::pDataID,    \
+                                                    (jlong)data)
+#define JNI_SET_DESTROYED(peer) env->SetBooleanField(peer,                   \
+                                                     AwtObject::destroyedID, \
+                                                     JNI_TRUE)
 /*  /NEW JNI */
 
 /*
@@ -144,6 +155,7 @@ typedef AwtObject* PDATA;
 #endif
 #define IS_NT      (IS_WIN32 && !(::GetVersion() & 0x80000000))
 #define IS_WIN2000 (IS_NT && LOBYTE(LOWORD(::GetVersion())) >= 5)
+#define IS_WIN2003 (IS_NT && LOBYTE(LOWORD(::GetVersion())) == 5 && HIBYTE(LOWORD(::GetVersion())) >= 2)
 #define IS_WINXP   (IS_NT && (IS_WIN2000 && HIBYTE(LOWORD(::GetVersion())) >= 1) || LOBYTE(LOWORD(::GetVersion())) > 5)
 #define IS_WINVISTA (IS_NT && LOBYTE(LOWORD(::GetVersion())) >= 6)
 #define IS_WIN32S  (IS_WIN32 && !IS_NT && LOBYTE(LOWORD(::GetVersion())) < 4)

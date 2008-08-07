@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -96,12 +96,12 @@ public class XKeyboardFocusManagerPeer implements KeyboardFocusManagerPeer {
             Component focusOwner = activeWindow.getFocusOwner();
             if (focusLog.isLoggable(Level.FINE)) focusLog.fine("Clearing global focus owner " + focusOwner);
             if (focusOwner != null) {
-                XComponentPeer nativePeer = XComponentPeer.getNativeContainer(focusOwner);
-                if (nativePeer != null) {
+//                XComponentPeer nativePeer = XComponentPeer.getNativeContainer(focusOwner);
+//                if (nativePeer != null) {
                     FocusEvent fl = new CausedFocusEvent(focusOwner, FocusEvent.FOCUS_LOST, false, null,
                                                          CausedFocusEvent.Cause.CLEAR_GLOBAL_FOCUS_OWNER);
                     XWindow.sendEvent(fl);
-                }
+//                }
             }
         }
    }

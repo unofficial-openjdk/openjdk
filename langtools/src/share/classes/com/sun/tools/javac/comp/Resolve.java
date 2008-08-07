@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -228,7 +228,7 @@ public class Resolve {
                 // another symbol which is a member of `site'
                 // (because, if it is overridden, `sym' is not strictly
                 // speaking a member of `site'.)
-                (sym.kind != MTH || sym.isConstructor() ||
+                (sym.kind != MTH || sym.isConstructor() || sym.isStatic() ||
                  ((MethodSymbol)sym).implementation(site.tsym, types, true) == sym);
         default: // this case includes erroneous combinations as well
             return isAccessible(env, site);
@@ -407,6 +407,8 @@ public class Resolve {
                      Type site,
                      Name name,
                      TypeSymbol c) {
+        while (c.type.tag == TYPEVAR)
+            c = c.type.getUpperBound().tsym;
         Symbol bestSoFar = varNotFound;
         Symbol sym;
         Scope.Entry e = c.members().lookup(name);
@@ -418,7 +420,7 @@ public class Resolve {
             e = e.next();
         }
         Type st = types.supertype(c.type);
-        if (st != null && st.tag == CLASS) {
+        if (st != null && (st.tag == CLASS || st.tag == TYPEVAR)) {
             sym = findField(env, site, name, st.tsym);
             if (sym.kind < bestSoFar.kind) bestSoFar = sym;
         }
@@ -733,7 +735,9 @@ public class Resolve {
                               boolean allowBoxing,
                               boolean useVarargs,
                               boolean operator) {
-        for (Type ct = intype; ct.tag == CLASS; ct = types.supertype(ct)) {
+        for (Type ct = intype; ct.tag == CLASS || ct.tag == TYPEVAR; ct = types.supertype(ct)) {
+            while (ct.tag == TYPEVAR)
+                ct = ct.getUpperBound();
             ClassSymbol c = (ClassSymbol)ct.tsym;
             if ((c.flags() & (ABSTRACT | INTERFACE)) == 0)
                 abstractok = false;

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,18 +86,18 @@ public class MotifInternalFrameTitlePane
 
     protected void assembleSystemMenu() {
         systemMenu = new JPopupMenu();
-        JMenuItem mi = (JMenuItem)systemMenu.add(new JMenuItem(restoreAction));
+        JMenuItem mi = systemMenu.add(new JMenuItem(restoreAction));
         mi.setMnemonic('R');
-        mi = (JMenuItem) systemMenu.add(new JMenuItem(moveAction));
+        mi = systemMenu.add(new JMenuItem(moveAction));
         mi.setMnemonic('M');
-        mi = (JMenuItem) systemMenu.add(new JMenuItem(sizeAction));
+        mi = systemMenu.add(new JMenuItem(sizeAction));
         mi.setMnemonic('S');
-        mi = (JMenuItem) systemMenu.add(new JMenuItem(iconifyAction));
+        mi = systemMenu.add(new JMenuItem(iconifyAction));
         mi.setMnemonic('n');
-        mi = (JMenuItem) systemMenu.add(new JMenuItem(maximizeAction));
+        mi = systemMenu.add(new JMenuItem(maximizeAction));
         mi.setMnemonic('x');
         systemMenu.add(new JSeparator());
-        mi = (JMenuItem) systemMenu.add(new JMenuItem(closeAction));
+        mi = systemMenu.add(new JMenuItem(closeAction));
         mi.setMnemonic('C');
 
         systemButton = new SystemButton();
@@ -157,7 +157,7 @@ public class MotifInternalFrameTitlePane
     }
 
     public void propertyChange(PropertyChangeEvent evt) {
-        String prop = (String)evt.getPropertyName();
+        String prop = evt.getPropertyName();
         JInternalFrame f = (JInternalFrame)evt.getSource();
         boolean value = false;
         if (JInternalFrame.IS_SELECTED_PROPERTY.equals(prop)) {

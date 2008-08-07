@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,18 +23,10 @@
  * have any questions.
  */
 
-
 /*
- * The contents of this file are subject to the Sun Public License
- * Version 1.0 (the "License"); you may not use this file except in
- * compliance with the License. A copy of the License is available at
- * http://www.sun.com/, and in the file LICENSE.html in the
- * doc directory.
- *
  * The Original Code is HAT. The Initial Developer of the
  * Original Code is Bill Foote, with contributions from others
- * at JavaSoft/Sun. Portions created by Bill Foote and others
- * at Javasoft/Sun are Copyright (C) 1997-2004. All Rights Reserved.
+ * at JavaSoft/Sun.
  */
 
 package com.sun.tools.hat;

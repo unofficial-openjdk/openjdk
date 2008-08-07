@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,8 +52,9 @@ void outputStream::update_position(const char* s, size_t len) {
       _precount += _position + 1;
       _position = 0;
     } else if (ch == '\t') {
-      _position += 8;
-      _precount -= 7;  // invariant:  _precount + _position == total count
+      int tw = 8 - (_position & 7);
+      _position += tw;
+      _precount -= tw-1;  // invariant:  _precount + _position == total count
     } else {
       _position += 1;
     }
@@ -133,7 +134,17 @@ void outputStream::vprint_cr(const char* format, va_list argptr) {
 }
 
 void outputStream::fill_to(int col) {
-  while (position() < col) sp();
+  int need_fill = col - position();
+  sp(need_fill);
+}
+
+void outputStream::move_to(int col, int slop, int min_space) {
+  if (position() >= col + slop)
+    cr();
+  int need_fill = col - position();
+  if (need_fill < min_space)
+    need_fill = min_space;
+  sp(need_fill);
 }
 
 void outputStream::put(char ch) {
@@ -142,8 +153,23 @@ void outputStream::put(char ch) {
   write(buf, 1);
 }
 
-void outputStream::sp() {
-  this->write(" ", 1);
+#define SP_USE_TABS false
+
+void outputStream::sp(int count) {
+  if (count < 0)  return;
+  if (SP_USE_TABS && count >= 8) {
+    int target = position() + count;
+    while (count >= 8) {
+      this->write("\t", 1);
+      count -= 8;
+    }
+    count = target - position();
+  }
+  while (count > 0) {
+    int nw = (count > 8) ? 8 : count;
+    this->write("        ", nw);
+    count -= nw;
+  }
 }
 
 void outputStream::cr() {
@@ -727,21 +753,28 @@ void staticBufferStream::vprint_cr(const char* format, va_list argptr) {
   write(str, len);
 }
 
-bufferedStream::bufferedStream(size_t initial_size) : outputStream() {
+bufferedStream::bufferedStream(size_t initial_size, size_t bufmax) : outputStream() {
   buffer_length = initial_size;
   buffer        = NEW_C_HEAP_ARRAY(char, buffer_length);
   buffer_pos    = 0;
   buffer_fixed  = false;
+  buffer_max    = bufmax;
 }
 
-bufferedStream::bufferedStream(char* fixed_buffer, size_t fixed_buffer_size) : outputStream() {
+bufferedStream::bufferedStream(char* fixed_buffer, size_t fixed_buffer_size, size_t bufmax) : outputStream() {
   buffer_length = fixed_buffer_size;
   buffer        = fixed_buffer;
   buffer_pos    = 0;
   buffer_fixed  = true;
+  buffer_max    = bufmax;
 }
 
 void bufferedStream::write(const char* s, size_t len) {
+
+  if(buffer_pos + len > buffer_max) {
+    flush();
+  }
+
   size_t end = buffer_pos + len;
   if (end >= buffer_length) {
     if (buffer_fixed) {
@@ -785,7 +818,7 @@ bufferedStream::~bufferedStream() {
 #endif
 
 // Network access
-networkStream::networkStream() {
+networkStream::networkStream() : bufferedStream(1024*10, 1024*10) {
 
   _socket = -1;
 
@@ -805,7 +838,9 @@ int networkStream::read(char *buf, size_t len) {
 
 void networkStream::flush() {
   if (size() != 0) {
-    hpi::send(_socket, (char *)base(), (int)size(), 0);
+    int result = hpi::raw_send(_socket, (char *)base(), (int)size(), 0);
+    assert(result != -1, "connection error");
+    assert(result == (int)size(), "didn't send enough data");
   }
   reset();
 }
@@ -829,7 +864,7 @@ bool networkStream::connect(const char *ip, short port) {
   server.sin_port = htons(port);
 
   server.sin_addr.s_addr = inet_addr(ip);
-  if (server.sin_addr.s_addr == (unsigned long)-1) {
+  if (server.sin_addr.s_addr == (uint32_t)-1) {
 #ifdef _WINDOWS
     struct hostent* host = hpi::get_host_by_name((char*)ip);
 #else

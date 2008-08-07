@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -102,7 +102,7 @@ public:
   BasicType layout_type() { return type2field[(_type == NULL) ? T_OBJECT : _type->basic_type()]; }
 
   // How big is this field in memory?
-  int size_in_bytes() { return type2aelembytes[layout_type()]; }
+  int size_in_bytes() { return type2aelembytes(layout_type()); }
 
   // What is the offset of this field?
   int offset() {

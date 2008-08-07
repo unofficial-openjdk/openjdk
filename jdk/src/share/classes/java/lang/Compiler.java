@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1995-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,9 +53,9 @@ public final class Compiler  {
 
     static {
         registerNatives();
-        java.security.AccessController.doPrivileged
-            (new java.security.PrivilegedAction() {
-                public Object run() {
+        java.security.AccessController.doPrivileged(
+            new java.security.PrivilegedAction<Void>() {
+                public Void run() {
                     boolean loaded = false;
                     String jit = System.getProperty("java.compiler");
                     if ((jit != null) && (!jit.equals("NONE")) &&

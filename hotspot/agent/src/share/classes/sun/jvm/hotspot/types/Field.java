@@ -1,5 +1,5 @@
 /*
- * Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -109,6 +109,8 @@ public interface Field {
   public Address   getAddress  (Address addr) throws UnmappedAddressException, UnalignedAddressException, WrongTypeException;
   public OopHandle getOopHandle(Address addr)
     throws UnmappedAddressException, UnalignedAddressException, WrongTypeException, NotInHeapException;
+  public OopHandle getNarrowOopHandle(Address addr)
+    throws UnmappedAddressException, UnalignedAddressException, WrongTypeException, NotInHeapException;
 
   /** <P> These accessors require that the field be static; otherwise,
       a WrongTypeException will be thrown. Note that type checking is
@@ -137,5 +139,7 @@ public interface Field {
     throws UnmappedAddressException, UnalignedAddressException, WrongTypeException;
   public Address   getAddress  () throws UnmappedAddressException, UnalignedAddressException;
   public OopHandle getOopHandle()
+    throws UnmappedAddressException, UnalignedAddressException, NotInHeapException;
+  public OopHandle getNarrowOopHandle()
     throws UnmappedAddressException, UnalignedAddressException, NotInHeapException;
 }

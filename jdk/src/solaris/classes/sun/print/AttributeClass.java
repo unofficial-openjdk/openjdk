@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ public class AttributeClass {
     private int nameLen;
     private Object myValue;
 
+    public static final int TAG_UNSUPPORTED_VALUE = 0x10;
     public static final int TAG_INT = 0x21;
     public static final int TAG_BOOL = 0x22;
     public static final int TAG_ENUM = 0x23;

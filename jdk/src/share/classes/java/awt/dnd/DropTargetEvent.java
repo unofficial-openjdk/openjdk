@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,10 +45,13 @@ public class DropTargetEvent extends java.util.EventObject {
     private static final long serialVersionUID = 2821229066521922993L;
 
     /**
-     * Construct a <code>DropTargetEvent</code> with
-     * a specified <code>DropTargetContext</code>.
+     * Construct a <code>DropTargetEvent</code> object with
+     * the specified <code>DropTargetContext</code>.
      * <P>
-     * @param dtc the <code>DropTargetContext</code>
+     * @param dtc The <code>DropTargetContext</code>
+     * @throws NullPointerException if {@code dtc} equals {@code null}.
+     * @see #getSource()
+     * @see #getDropTargetContext()
      */
 
     public DropTargetEvent(DropTargetContext dtc) {

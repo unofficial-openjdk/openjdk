@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,8 @@ const RegMask &BoxLockNode::out_RegMask() const {
 
 uint BoxLockNode::size_of() const { return sizeof(*this); }
 
-BoxLockNode::BoxLockNode( int slot ) : Node( Compile::current()->root() ), _slot(slot) {
+BoxLockNode::BoxLockNode( int slot ) : Node( Compile::current()->root() ),
+                                       _slot(slot), _is_eliminated(false) {
   init_class_id(Class_BoxLock);
   init_flags(Flag_rematerialize);
   OptoReg::Name reg = OptoReg::stack2reg(_slot);

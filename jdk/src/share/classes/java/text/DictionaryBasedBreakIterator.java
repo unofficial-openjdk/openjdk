@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -384,7 +384,7 @@ class DictionaryBasedBreakIterator extends RuleBasedBreakIterator {
             // on the last character of a legal word.  Push that position onto
             // the possible-break-positions stack
             if (dictionary.getNextState(state, 0) == -1) {
-                possibleBreakPositions.push(new Integer(text.getIndex()));
+                possibleBreakPositions.push(Integer.valueOf(text.getIndex()));
             }
 
             // look up the new state to transition to in the dictionary
@@ -395,7 +395,7 @@ class DictionaryBasedBreakIterator extends RuleBasedBreakIterator {
             // and we've successfully traversed the whole range.  Drop out
             // of the loop.
             if (state == -1) {
-                currentBreakPositions.push(new Integer(text.getIndex()));
+                currentBreakPositions.push(Integer.valueOf(text.getIndex()));
                 break;
             }
 
@@ -496,7 +496,7 @@ class DictionaryBasedBreakIterator extends RuleBasedBreakIterator {
         if (!currentBreakPositions.isEmpty()) {
             currentBreakPositions.pop();
         }
-        currentBreakPositions.push(new Integer(endPos));
+        currentBreakPositions.push(Integer.valueOf(endPos));
 
         // create a regular array to hold the break positions and copy
         // the break positions from the stack to the array (in addition,

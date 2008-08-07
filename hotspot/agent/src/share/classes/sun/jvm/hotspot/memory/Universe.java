@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,6 +53,8 @@ public class Universe {
   // system obj array klass object
   private static sun.jvm.hotspot.types.OopField systemObjArrayKlassObjField;
 
+  private static AddressField heapBaseField;
+
   static {
     VM.registerVMInitializedObserver(new Observer() {
         public void update(Observable o, Object data) {
@@ -83,6 +85,8 @@ public class Universe {
     doubleArrayKlassObjField = type.getOopField("_doubleArrayKlassObj");
 
     systemObjArrayKlassObjField = type.getOopField("_systemObjArrayKlassObj");
+
+    heapBaseField = type.getAddressField("_heap_base");
   }
 
   public Universe() {
@@ -93,6 +97,14 @@ public class Universe {
       return (CollectedHeap) heapConstructor.instantiateWrapperFor(collectedHeapField.getValue());
     } catch (WrongTypeException e) {
       return new CollectedHeap(collectedHeapField.getValue());
+    }
+  }
+
+  public static long getHeapBase() {
+    if (heapBaseField.getValue() == null) {
+      return 0;
+    } else {
+      return heapBaseField.getValue().minus(null);
     }
   }
 

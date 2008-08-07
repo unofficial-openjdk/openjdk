@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1835,6 +1835,7 @@ public class Lower extends TreeTranslator {
                                           + "" + rval.hashCode()),
                                       type,
                                       currentMethodSym);
+        rval = convert(rval,type);
         JCVariableDecl def = make.VarDef(var, (JCExpression)rval); // XXX cast
         JCTree built = builder.build(make.Ident(var));
         JCTree res = make.LetExpr(def, built);
@@ -2862,13 +2863,15 @@ public class Lower extends TreeTranslator {
             JCExpressionStatement step = make.Exec(makeUnary(JCTree.PREINC, make.Ident(index)));
 
             Type elemtype = types.elemtype(tree.expr.type);
-            JCStatement loopvarinit = make.
-                VarDef(tree.var.sym,
-                       make.
-                       Indexed(make.Ident(arraycache), make.Ident(index)).
-                       setType(elemtype));
+            JCExpression loopvarinit = make.Indexed(make.Ident(arraycache),
+                                                    make.Ident(index)).setType(elemtype);
+            JCVariableDecl loopvardef = (JCVariableDecl)make.VarDef(tree.var.mods,
+                                                  tree.var.name,
+                                                  tree.var.vartype,
+                                                  loopvarinit).setType(tree.var.type);
+            loopvardef.sym = tree.var.sym;
             JCBlock body = make.
-                Block(0, List.of(loopvarinit, tree.body));
+                Block(0, List.of(loopvardef, tree.body));
 
             result = translate(make.
                                ForLoop(loopinit,
@@ -2943,7 +2946,11 @@ public class Lower extends TreeTranslator {
             JCExpression vardefinit = make.App(make.Select(make.Ident(itvar), next));
             if (iteratorTarget != syms.objectType)
                 vardefinit = make.TypeCast(iteratorTarget, vardefinit);
-            JCVariableDecl indexDef = make.VarDef(tree.var.sym, vardefinit);
+            JCVariableDecl indexDef = (JCVariableDecl)make.VarDef(tree.var.mods,
+                                                  tree.var.name,
+                                                  tree.var.vartype,
+                                                  vardefinit).setType(tree.var.type);
+            indexDef.sym = tree.var.sym;
             JCBlock body = make.Block(0, List.of(indexDef, tree.body));
             result = translate(make.
                 ForLoop(List.of(init),

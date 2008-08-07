@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -109,7 +109,7 @@ public class BasicButtonUI extends ButtonUI{
             LookAndFeel.installProperty(b, "rolloverEnabled", rollover);
         }
 
-        LookAndFeel.installProperty(b, "iconTextGap", new Integer(4));
+        LookAndFeel.installProperty(b, "iconTextGap", Integer.valueOf(4));
     }
 
     protected void installListeners(AbstractButton b) {

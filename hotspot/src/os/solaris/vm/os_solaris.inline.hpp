@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -204,3 +204,6 @@ do { \
   RESTARTABLE(_cmd, _result); \
   return _result; \
 } while(false)
+
+inline bool os::numa_has_static_binding()   { return false; }
+inline bool os::numa_has_group_homing()     { return true;  }

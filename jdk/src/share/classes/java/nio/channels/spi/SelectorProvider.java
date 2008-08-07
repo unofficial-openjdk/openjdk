@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -167,9 +167,9 @@ public abstract class SelectorProvider {
         synchronized (lock) {
             if (provider != null)
                 return provider;
-            return (SelectorProvider)AccessController
-                .doPrivileged(new PrivilegedAction() {
-                        public Object run() {
+            return AccessController.doPrivileged(
+                new PrivilegedAction<SelectorProvider>() {
+                    public SelectorProvider run() {
                             if (loadProviderFromProperty())
                                 return provider;
                             if (loadProviderAsService())

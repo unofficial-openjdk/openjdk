@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,7 +58,6 @@ public class XEmbedHelper {
     final static int XEMBED_REGISTER_ACCELERATOR =    12;
     final static int XEMBED_UNREGISTER_ACCELERATOR=   13;
     final static int XEMBED_ACTIVATE_ACCELERATOR  =   14;
-    final static int _SUN_XEMBED_START = 1119;
 
     final static int NON_STANDARD_XEMBED_GTK_GRAB_KEY = 108;
     final static int NON_STANDARD_XEMBED_GTK_UNGRAB_KEY = 109;
@@ -95,7 +94,7 @@ public class XEmbedHelper {
     }
     void sendMessage(long window, int message, long detail, long data1, long data2) {
         XClientMessageEvent msg = new XClientMessageEvent();
-        msg.set_type((int)XlibWrapper.ClientMessage);
+        msg.set_type((int)XConstants.ClientMessage);
         msg.set_window(window);
         msg.set_message_type(XEmbed.getAtom());
         msg.set_format(32);
@@ -107,7 +106,7 @@ public class XEmbedHelper {
         XToolkit.awtLock();
         try {
             if (xembedLog.isLoggable(Level.FINE)) xembedLog.fine("Sending " + XEmbedMessageToString(msg));
-            XlibWrapper.XSendEvent(XToolkit.getDisplay(), window, false, XlibWrapper.NoEventMask, msg.pData);
+            XlibWrapper.XSendEvent(XToolkit.getDisplay(), window, false, XConstants.NoEventMask, msg.pData);
         }
         finally {
             XToolkit.awtUnlock();
@@ -151,8 +150,6 @@ public class XEmbedHelper {
               return "NON_STANDARD_XEMBED_GTK_UNGRAB_KEY";
           case NON_STANDARD_XEMBED_GTK_GRAB_KEY:
               return "NON_STANDARD_XEMBED_GTK_GRAB_KEY";
-          case _SUN_XEMBED_START:
-              return "XEMBED_START";
           case XConstants.KeyPress | XEmbedServerTester.SYSTEM_EVENT_MASK:
               return "KeyPress";
           case XConstants.MapNotify | XEmbedServerTester.SYSTEM_EVENT_MASK:

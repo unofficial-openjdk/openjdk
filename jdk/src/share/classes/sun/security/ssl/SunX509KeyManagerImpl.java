@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -172,7 +172,7 @@ final class SunX509KeyManagerImpl extends X509ExtendedKeyManager {
         if (cred == null) {
             return null;
         } else {
-            return (X509Certificate[])cred.certificates.clone();
+            return cred.certificates.clone();
         }
     }
 
@@ -255,7 +255,7 @@ final class SunX509KeyManagerImpl extends X509ExtendedKeyManager {
         String[] aliases;
 
         if (issuers == null || issuers.length == 0) {
-            aliases = (String[])serverAliasCache.get(keyType);
+            aliases = serverAliasCache.get(keyType);
             if (aliases == null) {
                 aliases = getServerAliases(keyType, issuers);
                 // Cache the result (positive and negative lookups)
@@ -388,7 +388,7 @@ final class SunX509KeyManagerImpl extends X509ExtendedKeyManager {
             }
         }
 
-        String[] aliasStrings = (String[])aliases.toArray(STRING0);
+        String[] aliasStrings = aliases.toArray(STRING0);
         return ((aliasStrings.length == 0) ? null : aliasStrings);
     }
 

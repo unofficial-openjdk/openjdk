@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -541,6 +541,7 @@ bool ThreadStackTrace::is_owned_monitor_on_stack(oop object) {
 
 Handle ThreadStackTrace::allocate_fill_stack_trace_element_array(TRAPS) {
   klassOop k = SystemDictionary::stackTraceElement_klass();
+  assert(k != NULL, "must be loaded in 1.4+");
   instanceKlassHandle ik(THREAD, k);
 
   // Allocate an array of java/lang/StackTraceElement object
