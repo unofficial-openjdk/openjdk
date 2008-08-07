@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,6 @@
 
 // property name tagging windows disabled by modality
 static LPCTSTR ModalBlockerProp = TEXT("SunAwtModalBlockerProp");
-static LPCTSTR ModalSaveWSEXProp = TEXT("SunAwtModalSaveWSEXProp");
 static LPCTSTR ModalDialogPeerProp = TEXT("SunAwtModalDialogPeerProp");
 
 #ifndef WH_MOUSE_LL
@@ -58,10 +57,11 @@ public:
     static jfieldID screenID; /* screen number passed over from WindowPeer */
     static jfieldID autoRequestFocusID;
 
-    /* WWindowPeer class */
-    static jclass wwindowPeerCls;
-    /* long[] getActiveWindowHandles() method in WWindowPeer */
-    static jmethodID getActiveWindowsMID;
+    // The coordinates at the peer.
+    static jfieldID sysXID;
+    static jfieldID sysYID;
+    static jfieldID sysWID;
+    static jfieldID sysHID;
 
     AwtWindow();
     virtual ~AwtWindow();
@@ -161,8 +161,6 @@ public:
     virtual MsgRouting WmClose();
     virtual MsgRouting WmDestroy();
     virtual MsgRouting WmShowWindow(BOOL show, UINT status);
-    virtual MsgRouting WmDDEnterFullScreen(HMONITOR monitor);
-    virtual MsgRouting WmDDExitFullScreen(HMONITOR monitor);
     virtual MsgRouting WmGetMinMaxInfo(LPMINMAXINFO lpmmi);
     virtual MsgRouting WmMove(int x, int y);
     virtual MsgRouting WmSize(UINT type, int w, int h);

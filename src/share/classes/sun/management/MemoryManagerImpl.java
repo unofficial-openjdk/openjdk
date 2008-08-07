@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,8 +25,11 @@
 
 package sun.management;
 
+import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryManagerMXBean;
 import java.lang.management.MemoryPoolMXBean;
+
+import javax.management.ObjectName;
 
 /**
  * Implementation class for a memory manager.
@@ -72,5 +75,9 @@ class MemoryManagerImpl implements MemoryManagerMXBean {
         return pools;
     }
     private native MemoryPoolMXBean[] getMemoryPools0();
+
+    public ObjectName getObjectName() {
+        return Util.newObjectName(ManagementFactory.MEMORY_MANAGER_MXBEAN_DOMAIN_TYPE, getName());
+    }
 
 }

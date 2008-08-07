@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,8 +43,8 @@ class Reflect {                                 // package-private
     }
 
     private static void setAccessible(final AccessibleObject ao) {
-        AccessController.doPrivileged(new PrivilegedAction() {
-                public Object run() {
+        AccessController.doPrivileged(new PrivilegedAction<Void>() {
+                public Void run() {
                     ao.setAccessible(true);
                     return null;
                 }});
@@ -54,7 +54,7 @@ class Reflect {                                 // package-private
                                          Class[] paramTypes)
     {
         try {
-            Class cl = Class.forName(className);
+            Class<?> cl = Class.forName(className);
             Constructor c = cl.getDeclaredConstructor(paramTypes);
             setAccessible(c);
             return c;
@@ -82,7 +82,7 @@ class Reflect {                                 // package-private
                                Class[] paramTypes)
     {
         try {
-            Class cl = Class.forName(className);
+            Class<?> cl = Class.forName(className);
             Method m = cl.getDeclaredMethod(methodName, paramTypes);
             setAccessible(m);
             return m;

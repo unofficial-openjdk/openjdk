@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1099,7 +1099,7 @@ public class CSS implements Serializable {
      */
     static String colorToHex(Color color) {
 
-      String colorstr = new String("#");
+      String colorstr = "#";
 
       // Red
       String str = Integer.toHexString(color.getRed());

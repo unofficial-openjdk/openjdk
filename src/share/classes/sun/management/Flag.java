@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,7 +64,8 @@ class Flag {
     }
 
     VMOption getVMOption() {
-        return new VMOption(name, value.toString(), writeable, origin);
+        String val = value == null ? "" : value.toString();
+        return new VMOption(name, val, writeable, origin);
     }
 
     static Flag getFlag(String name) {

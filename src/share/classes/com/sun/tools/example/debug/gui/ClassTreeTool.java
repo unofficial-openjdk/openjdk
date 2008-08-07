@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-1999 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -124,9 +124,7 @@ public class ClassTreeTool extends JPanel {
         public void sessionStart(EventObject e) {
             // Get system classes and any others loaded before attaching.
             try {
-                Iterator iter = runtime.allClasses().iterator();
-                while (iter.hasNext()) {
-                    ReferenceType type = ((ReferenceType)iter.next());
+                for (ReferenceType type : runtime.allClasses()) {
                     root.addClass(type);
                 }
             } catch (VMDisconnectedException ee) {

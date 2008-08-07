@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -204,4 +204,10 @@ public class MEmbeddedFramePeer extends MFramePeer {
     }
 
     public native Rectangle getBoundsPrivate();
+
+    @Override
+    Rectangle constrainBounds(int x, int y, int width, int height) {
+        // We don't constrain the bounds of the EmbeddedFrames
+        return new Rectangle(x, y, width, height);
+    }
 }

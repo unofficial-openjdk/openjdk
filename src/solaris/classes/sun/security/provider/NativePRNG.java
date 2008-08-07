@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,8 +71,9 @@ public final class NativePRNG extends SecureRandomSpi {
     private static final RandomIO INSTANCE = initIO();
 
     private static RandomIO initIO() {
-        Object o = AccessController.doPrivileged(new PrivilegedAction() {
-            public Object run() {
+        return AccessController.doPrivileged(
+            new PrivilegedAction<RandomIO>() {
+                public RandomIO run() {
                 File randomFile = new File(NAME_RANDOM);
                 if (randomFile.exists() == false) {
                     return null;
@@ -88,7 +89,6 @@ public final class NativePRNG extends SecureRandomSpi {
                 }
             }
         });
-        return (RandomIO)o;
     }
 
     // return whether the NativePRNG is available

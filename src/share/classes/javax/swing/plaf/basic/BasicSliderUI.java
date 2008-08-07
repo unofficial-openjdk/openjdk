@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,24 +25,11 @@
 
 package javax.swing.plaf.basic;
 
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Adjustable;
 import java.awt.event.*;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.Dimension;
-import java.awt.Rectangle;
-import java.awt.Point;
-import java.awt.Insets;
-import java.awt.Color;
-import java.awt.IllegalComponentStateException;
-import java.awt.Polygon;
+import java.awt.*;
 import java.beans.*;
 import java.util.Dictionary;
 import java.util.Enumeration;
-
-import javax.swing.border.AbstractBorder;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -409,7 +396,7 @@ public class BasicSliderUI extends SliderUI{
                 Enumeration elements = dictionary.elements();
                 int baseline = -1;
                 while (elements.hasMoreElements()) {
-                    Component label = (Component)elements.nextElement();
+                    JComponent label = (JComponent) elements.nextElement();
                     Dimension pref = label.getPreferredSize();
                     int labelBaseline = label.getBaseline(pref.width,
                                                           pref.height);
@@ -552,20 +539,28 @@ public class BasicSliderUI extends SliderUI{
         contentRect.height = focusRect.height - (focusInsets.top + focusInsets.bottom);
     }
 
+    private int getTickSpacing() {
+        int majorTickSpacing = slider.getMajorTickSpacing();
+        int minorTickSpacing = slider.getMinorTickSpacing();
+
+        int result;
+
+        if (minorTickSpacing > 0) {
+            result = minorTickSpacing;
+        } else if (majorTickSpacing > 0) {
+            result = majorTickSpacing;
+        } else {
+            result = 0;
+        }
+
+        return result;
+    }
+
     protected void calculateThumbLocation() {
         if ( slider.getSnapToTicks() ) {
             int sliderValue = slider.getValue();
             int snappedValue = sliderValue;
-            int majorTickSpacing = slider.getMajorTickSpacing();
-            int minorTickSpacing = slider.getMinorTickSpacing();
-            int tickSpacing = 0;
-
-            if ( minorTickSpacing > 0 ) {
-                tickSpacing = minorTickSpacing;
-            }
-            else if ( majorTickSpacing > 0 ) {
-                tickSpacing = majorTickSpacing;
-            }
+            int tickSpacing = getTickSpacing();
 
             if ( tickSpacing != 0 ) {
                 // If it's not on a tick, change the value
@@ -626,7 +621,7 @@ public class BasicSliderUI extends SliderUI{
 
 
     protected void calculateTrackRect() {
-        int centerSpacing = 0; // used to center sliders added using BorderLayout.CENTER (bug 4275631)
+        int centerSpacing; // used to center sliders added using BorderLayout.CENTER (bug 4275631)
         if ( slider.getOrientation() == JSlider.HORIZONTAL ) {
             centerSpacing = thumbRect.height;
             if ( slider.getPaintTicks() ) centerSpacing += getTickLength();
@@ -756,7 +751,7 @@ public class BasicSliderUI extends SliderUI{
         if ( dictionary != null ) {
             Enumeration keys = dictionary.keys();
             while ( keys.hasMoreElements() ) {
-                Component label = (Component)dictionary.get( keys.nextElement() );
+                JComponent label = (JComponent) dictionary.get(keys.nextElement());
                 widest = Math.max( label.getPreferredSize().width, widest );
             }
         }
@@ -769,7 +764,7 @@ public class BasicSliderUI extends SliderUI{
         if ( dictionary != null ) {
             Enumeration keys = dictionary.keys();
             while ( keys.hasMoreElements() ) {
-                Component label = (Component)dictionary.get( keys.nextElement() );
+                JComponent label = (JComponent) dictionary.get(keys.nextElement());
                 tallest = Math.max( label.getPreferredSize().height, tallest );
             }
         }
@@ -993,22 +988,14 @@ public class BasicSliderUI extends SliderUI{
 
     public void paintTicks(Graphics g)  {
         Rectangle tickBounds = tickRect;
-        int i;
-        int maj, min, max;
-        int w = tickBounds.width;
-        int h = tickBounds.height;
-        int centerEffect, tickHeight;
 
         g.setColor(DefaultLookup.getColor(slider, this, "Slider.tickColor", Color.black));
-
-        maj = slider.getMajorTickSpacing();
-        min = slider.getMinorTickSpacing();
 
         if ( slider.getOrientation() == JSlider.HORIZONTAL ) {
            g.translate( 0, tickBounds.y);
 
             int value = slider.getMinimum();
-            int xPos = 0;
+            int xPos;
 
             if ( slider.getMinorTickSpacing() > 0 ) {
                 while ( value <= slider.getMaximum() ) {
@@ -1034,7 +1021,7 @@ public class BasicSliderUI extends SliderUI{
            g.translate(tickBounds.x, 0);
 
             int value = slider.getMinimum();
-            int yPos = 0;
+            int yPos;
 
             if ( slider.getMinorTickSpacing() > 0 ) {
                 int offset = 0;
@@ -1103,10 +1090,19 @@ public class BasicSliderUI extends SliderUI{
                 Integer key = (Integer)keys.nextElement();
                 int value = key.intValue();
                 if (value >= minValue && value <= maxValue) {
-                    Component label = (Component)dictionary.get( key );
-                    if (label instanceof JComponent) {
-                        ((JComponent)label).setEnabled(enabled);
+                    JComponent label = (JComponent) dictionary.get(key);
+                    label.setEnabled(enabled);
+
+                    if (label instanceof JLabel) {
+                        Icon icon = label.isEnabled() ? ((JLabel) label).getIcon() : ((JLabel) label).getDisabledIcon();
+
+                        if (icon instanceof ImageIcon) {
+                            // Register Slider as an image observer. It allows to catch notifications about
+                            // image changes (e.g. gif animation)
+                            Toolkit.getDefaultToolkit().checkImage(((ImageIcon) icon).getImage(), -1, -1, slider);
+                        }
                     }
+
                     if ( slider.getOrientation() == JSlider.HORIZONTAL ) {
                         g.translate( 0, labelBounds.y );
                         paintHorizontalLabel( g, value, label );
@@ -1273,28 +1269,34 @@ public class BasicSliderUI extends SliderUI{
 
     public void scrollByBlock(int direction)    {
         synchronized(slider)    {
-
-            int oldValue = slider.getValue();
             int blockIncrement =
                 (slider.getMaximum() - slider.getMinimum()) / 10;
-            if (blockIncrement <= 0 &&
-                slider.getMaximum() > slider.getMinimum()) {
-
+            if (blockIncrement == 0) {
                 blockIncrement = 1;
             }
 
+            if (slider.getSnapToTicks()) {
+                int tickSpacing = getTickSpacing();
+
+                if (blockIncrement < tickSpacing) {
+                    blockIncrement = tickSpacing;
+                }
+            }
+
             int delta = blockIncrement * ((direction > 0) ? POSITIVE_SCROLL : NEGATIVE_SCROLL);
-            slider.setValue(oldValue + delta);
+            slider.setValue(slider.getValue() + delta);
         }
     }
 
     public void scrollByUnit(int direction) {
         synchronized(slider)    {
+            int delta = ((direction > 0) ? POSITIVE_SCROLL : NEGATIVE_SCROLL);
 
-            int oldValue = slider.getValue();
-            int delta = 1 * ((direction > 0) ? POSITIVE_SCROLL : NEGATIVE_SCROLL);
+            if (slider.getSnapToTicks()) {
+                delta *= getTickSpacing();
+            }
 
-            slider.setValue(oldValue + delta);
+            slider.setValue(slider.getValue() + delta);
         }
     }
 
@@ -1350,7 +1352,7 @@ public class BasicSliderUI extends SliderUI{
         int min = slider.getMinimum();
         int max = slider.getMaximum();
         double valueRange = (double)max - (double)min;
-        double pixelsPerValue = (double)trackHeight / (double)valueRange;
+        double pixelsPerValue = (double)trackHeight / valueRange;
         int trackBottom = trackY + (trackHeight - 1);
         int yPosition;
 
@@ -1573,6 +1575,11 @@ public class BasicSliderUI extends SliderUI{
 
             // Clicked in the Thumb area?
             if (thumbRect.contains(currentMouseX, currentMouseY)) {
+                if (UIManager.getBoolean("Slider.onlyLeftMouseButtonDrag")
+                        && !SwingUtilities.isLeftMouseButton(e)) {
+                    return;
+                }
+
                 switch (slider.getOrientation()) {
                 case JSlider.VERTICAL:
                     offset = currentMouseY - thumbRect.y;
@@ -1584,6 +1591,11 @@ public class BasicSliderUI extends SliderUI{
                 isDragging = true;
                 return;
             }
+
+            if (!SwingUtilities.isLeftMouseButton(e)) {
+                return;
+            }
+
             isDragging = false;
             slider.setValueIsAdjusting(true);
 
@@ -1691,7 +1703,7 @@ public class BasicSliderUI extends SliderUI{
         * of the thumb relative to the origin of the track.
         */
         public void mouseDragged(MouseEvent e) {
-            int thumbMiddle = 0;
+            int thumbMiddle;
 
             if (!slider.isEnabled()) {
                 return;
@@ -1817,7 +1829,7 @@ public class BasicSliderUI extends SliderUI{
         public void componentResized(ComponentEvent e)  {
             getHandler().componentResized(e);
         }
-    };
+    }
 
     /**
      * Focus-change listener.
@@ -1879,7 +1891,7 @@ public class BasicSliderUI extends SliderUI{
             return b;
         }
 
-    };
+    }
 
 
     /**

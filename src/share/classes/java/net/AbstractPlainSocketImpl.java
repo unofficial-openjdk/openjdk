@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1995-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -664,7 +664,6 @@ abstract class AbstractPlainSocketImpl extends SocketImpl
     abstract void socketSetOption(int cmd, boolean on, Object value)
         throws SocketException;
     abstract int socketGetOption(int opt, Object iaContainerObj) throws SocketException;
-    abstract int socketGetOption1(int opt, Object iaContainerObj, FileDescriptor fd) throws SocketException;
     abstract void socketSendUrgentData(int data)
         throws IOException;
 

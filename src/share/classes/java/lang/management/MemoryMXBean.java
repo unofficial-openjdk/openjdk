@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,6 +45,9 @@ import javax.management.openmbean.CompositeData;
  *    {@link ManagementFactory#MEMORY_MXBEAN_NAME
  *           <tt>java.lang:type=Memory</tt>}
  * </blockquote>
+ *
+ * It can be obtained by calling the
+ * {@link PlatformManagedObject#getObjectName} method.
  *
  * <h4> Memory </h4>
  * The memory system of the Java virtual machine manages
@@ -190,6 +193,7 @@ import javax.management.openmbean.CompositeData;
  * emitter.addNotificationListener(listener, null, null);
  * </pre></blockquote>
  *
+ * @see ManagementFactory#getPlatformMXBeans(Class)
  * @see <a href="../../../javax/management/package-summary.html">
  *      JMX Specification.</a>
  * @see <a href="package-summary.html#examples">
@@ -198,7 +202,7 @@ import javax.management.openmbean.CompositeData;
  * @author  Mandy Chung
  * @since   1.5
  */
-public interface MemoryMXBean {
+public interface MemoryMXBean extends PlatformManagedObject {
     /**
      * Returns the approximate number of objects for which
      * finalization is pending.

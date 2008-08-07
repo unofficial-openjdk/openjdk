@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,10 +56,8 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
     public String toString() {
         String string = "event set, policy:" + suspendPolicy +
                         ", count:" + this.size() + " = {";
-        Iterator iter = this.iterator();
         boolean first = true;
-        while (iter.hasNext()) {
-            Event event = (Event)iter.next();
+        for (Event event : this) {
             if (!first) {
                 string += ", ";
             }
@@ -210,8 +208,9 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
         }
 
         public String toString() {
-            return eventName() + "@" + location().toString() +
-                                 " in thread " + thread().name();
+            return eventName() + "@" +
+                   ((location() == null) ? " null" : location().toString()) +
+                   " in thread " + thread().name();
         }
     }
 
@@ -787,9 +786,7 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
     }
 
     private ThreadReference eventThread() {
-        Iterator iter = this.iterator();
-        while (iter.hasNext()) {
-            Event event = (Event)iter.next();
+        for (Event event : this) {
             if (event instanceof ThreadedEventImpl) {
                 return ((ThreadedEventImpl)event).thread();
             }
@@ -846,7 +843,7 @@ public class EventSetImpl extends ArrayList<Event> implements EventSet {
         }
 
         public Event nextEvent() {
-            return (Event)next();
+            return next();
         }
 
         public void remove() {

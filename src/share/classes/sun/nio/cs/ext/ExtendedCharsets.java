@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,9 +21,6 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- */
-
-/*
  */
 
 package sun.nio.cs.ext;
@@ -181,6 +178,25 @@ public class ExtendedCharsets
                     "x0212",
                     "iso-ir-159",
                     "csISO159JISX02121990"
+                });
+
+        charset("x-SJIS_0213", "SJIS_0213",
+                new String[] {
+                    "sjis-0213",
+                    "sjis_0213",
+                    "sjis:2004",
+                    "sjis_0213:2004",
+                    "shift_jis_0213:2004",
+                    "shift_jis:2004"
+                });
+
+        charset("x-MS932_0213", "MS932_0213",
+                new String[] {
+                    "MS932-0213",
+                    "MS932_0213",
+                    "MS932:2004",
+                    "windows-932-0213",
+                    "windows-932:2004"
                 });
 
         charset("EUC-JP", "EUC_JP",

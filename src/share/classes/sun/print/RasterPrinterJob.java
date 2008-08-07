@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -245,7 +245,7 @@ public abstract class RasterPrinterJob extends PrinterJob {
     /**
      * The name of the job being printed.
      */
-    private String mDocName = new String("Java Printing");
+    private String mDocName = "Java Printing";
 
 
     /**

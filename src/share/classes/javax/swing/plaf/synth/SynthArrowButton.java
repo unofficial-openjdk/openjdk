@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,7 +53,7 @@ class SynthArrowButton extends JButton implements SwingConstants, UIResource {
 
     public void setDirection(int dir) {
         direction = dir;
-        putClientProperty("__arrow_direction__", new Integer(dir));
+        putClientProperty("__arrow_direction__", Integer.valueOf(dir));
         repaint();
     }
 

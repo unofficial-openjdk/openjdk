@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1195,10 +1195,10 @@ public class BasicOptionPaneUI extends OptionPaneUI {
                 if (options == null) {
                     if (optionType == JOptionPane.OK_CANCEL_OPTION &&
                         buttonIndex == 1) {
-                        optionPane.setValue(new Integer(2));
+                        optionPane.setValue(Integer.valueOf(2));
 
                     } else {
-                        optionPane.setValue(new Integer(buttonIndex));
+                        optionPane.setValue(Integer.valueOf(buttonIndex));
                     }
                 } else {
                     optionPane.setValue(options[buttonIndex]);
@@ -1393,7 +1393,7 @@ public class BasicOptionPaneUI extends OptionPaneUI {
             if (getName() == CLOSE) {
                 JOptionPane optionPane = (JOptionPane)e.getSource();
 
-                optionPane.setValue(new Integer(JOptionPane.CLOSED_OPTION));
+                optionPane.setValue(Integer.valueOf(JOptionPane.CLOSED_OPTION));
             }
         }
     }

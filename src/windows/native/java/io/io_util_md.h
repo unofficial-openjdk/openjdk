@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,6 @@ void fileOpen(JNIEnv *env, jobject this, jstring path, jfieldID fid, int flags);
 int handleAvailable(jlong fd, jlong *pbytes);
 JNIEXPORT int handleSync(jlong fd);
 int handleSetLength(jlong fd, jlong length);
-int handleFileSizeFD(jlong fd, jlong *size);
 JNIEXPORT size_t handleRead(jlong fd, void *buf, jint len);
 JNIEXPORT size_t handleWrite(jlong fd, const void *buf, jint len);
 jint handleClose(JNIEnv *env, jobject this, jfieldID fid);

@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -108,11 +108,18 @@ class WDialogPeer extends WWindowPeer implements DialogPeer {
         }
     }
 
+    @Override
+    boolean isTargetUndecorated() {
+        return ((Dialog)target).isUndecorated();
+    }
+
     public void reshape(int x, int y, int width, int height) {
+        Rectangle newBounds = constrainBounds(x, y, width, height);
+
         if (((Dialog)target).isUndecorated()) {
-            super.reshape(x,y,width,height);
+            super.reshape(newBounds.x, newBounds.y, newBounds.width, newBounds.height);
         } else {
-            reshapeFrame(x,y,width,height);
+            reshapeFrame(newBounds.x, newBounds.y, newBounds.width, newBounds.height);
         }
     }
 

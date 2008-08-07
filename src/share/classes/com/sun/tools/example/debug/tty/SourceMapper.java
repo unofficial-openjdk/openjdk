@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2001 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,15 +39,13 @@ class SourceMapper {
 
     private final String[] dirs;
 
-    SourceMapper(List sourcepath) {
+    SourceMapper(List<String> sourcepath) {
         /*
          * sourcepath can arrive from the debugee as a List.
          * (via PathSearchingVirtualMachine.classPath())
          */
         List<String> dirList = new ArrayList<String>();
-        Iterator iter = sourcepath.iterator();
-        while (iter.hasNext()) {
-            String element = (String)iter.next();
+        for (String element : sourcepath) {
             //XXX remove .jar and .zip files; we want only directories on
             //the source path. (Bug ID 4186582)
             if ( ! (element.endsWith(".jar") ||
@@ -55,7 +53,7 @@ class SourceMapper {
                 dirList.add(element);
             }
         }
-        dirs = (String[])dirList.toArray(new String[0]);
+        dirs = dirList.toArray(new String[0]);
     }
 
     SourceMapper(String sourcepath) {
@@ -79,7 +77,7 @@ class SourceMapper {
                 dirList.add(s);
             }
         }
-        dirs = (String[])dirList.toArray(new String[0]);
+        dirs = dirList.toArray(new String[0]);
     }
 
     /*

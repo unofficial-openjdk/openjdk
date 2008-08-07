@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1995-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -504,7 +504,7 @@ class Random implements java.io.Serializable {
 
         // The seed is read in as {@code long} for
         // historical reasons, but it is converted to an AtomicLong.
-        long seedVal = (long) fields.get("seed", -1L);
+        long seedVal = fields.get("seed", -1L);
         if (seedVal < 0)
           throw new java.io.StreamCorruptedException(
                               "Random: invalid seed");

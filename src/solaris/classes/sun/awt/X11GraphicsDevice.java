@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -164,7 +164,7 @@ public class X11GraphicsDevice
                 if (ret[i] == null) {
                     boolean doubleBuffer =
                         (dbeSupported &&
-                         doubleBufferVisuals.contains(new Integer(visNum)));
+                         doubleBufferVisuals.contains(Integer.valueOf(visNum)));
                     ret[i] = X11GraphicsConfig.getConfig(this, visNum, depth,
                             getConfigColormap(i, screen),
                             doubleBuffer);
@@ -199,7 +199,7 @@ public class X11GraphicsDevice
     public static native boolean isDBESupported();
     // Callback for adding a new double buffer visual into our set
     private void addDoubleBufferVisual(int visNum) {
-        doubleBufferVisuals.add(new Integer(visNum));
+        doubleBufferVisuals.add(Integer.valueOf(visNum));
     }
     // Enumerates all visuals that support double buffering
     private native void getDoubleBufferVisuals(int screen);
@@ -239,7 +239,7 @@ public class X11GraphicsDevice
                     doubleBufferVisuals = new HashSet();
                     getDoubleBufferVisuals(screen);
                     doubleBuffer =
-                        doubleBufferVisuals.contains(new Integer(visNum));
+                        doubleBufferVisuals.contains(Integer.valueOf(visNum));
                 }
                 defaultConfig = X11GraphicsConfig.getConfig(this, visNum,
                                                             depth, getConfigColormap(0, screen),
@@ -384,6 +384,9 @@ public class X11GraphicsDevice
         if (w == null) {
             throw new IllegalStateException("Must be in fullscreen mode " +
                                             "in order to set display mode");
+        }
+        if (getDisplayMode().equals(dm)) {
+            return;
         }
         if (dm == null ||
             (dm = getMatchingDisplayMode(dm)) == null)

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1195,7 +1195,7 @@ public class JSplitPane extends JComponent implements Accessible
          * @return a localized String describing the value of this object
          */
         public Number getCurrentAccessibleValue() {
-            return new Integer(getDividerLocation());
+            return Integer.valueOf(getDividerLocation());
         }
 
 
@@ -1220,7 +1220,7 @@ public class JSplitPane extends JComponent implements Accessible
          * @return The minimum value of this object.
          */
         public Number getMinimumAccessibleValue() {
-            return new Integer(getUI().getMinimumDividerLocation(
+            return Integer.valueOf(getUI().getMinimumDividerLocation(
                                                         JSplitPane.this));
         }
 
@@ -1231,7 +1231,7 @@ public class JSplitPane extends JComponent implements Accessible
          * @return The maximum value of this object.
          */
         public Number getMaximumAccessibleValue() {
-            return new Integer(getUI().getMaximumDividerLocation(
+            return Integer.valueOf(getUI().getMaximumDividerLocation(
                                                         JSplitPane.this));
         }
 

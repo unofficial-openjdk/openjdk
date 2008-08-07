@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1286,7 +1286,7 @@ public class MessageFormat extends Format {
                             characterIterators.add(
                                          createAttributedCharacterIterator(
                                          subIterator, Field.ARGUMENT,
-                                         new Integer(argumentNumber)));
+                                         Integer.valueOf(argumentNumber)));
                             last = result.length();
                         }
                         arg = null;
@@ -1296,7 +1296,7 @@ public class MessageFormat extends Format {
                         characterIterators.add(
                                  createAttributedCharacterIterator(
                                  arg, Field.ARGUMENT,
-                                 new Integer(argumentNumber)));
+                                 Integer.valueOf(argumentNumber)));
                         last = result.length();
                     }
                 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1995-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -587,9 +587,9 @@ public class AppletViewer extends Frame implements AppletContext,
         Dimension d = panel.size();
         Insets in = panel.insets();
         panel.atts.put("width",
-                       new Integer(d.width - (in.left + in.right)).toString());
+                       Integer.toString(d.width - (in.left + in.right)));
         panel.atts.put("height",
-                       new Integer(d.height - (in.top + in.bottom)).toString());
+                       Integer.toString(d.height - (in.top + in.bottom)));
     }
 
     /**

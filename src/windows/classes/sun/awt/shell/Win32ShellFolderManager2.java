@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -234,11 +234,11 @@ public class Win32ShellFolderManager2 extends ShellFolderManager {
                         // Add third level for "My Computer"
                         if (folder.equals(drives)) {
                             File[] thirdLevelFolders = folder.listFiles();
-                            if (thirdLevelFolders != null) {
-                                Arrays.sort(thirdLevelFolders, driveComparator);
-                                for (File thirdLevelFolder : thirdLevelFolders) {
-                                    folders.add(thirdLevelFolder);
-                                }
+                            if (thirdLevelFolders != null && thirdLevelFolders.length > 0) {
+                                List<File> thirdLevelFoldersList = Arrays.asList(thirdLevelFolders);
+
+                                folder.sortChildren(thirdLevelFoldersList);
+                                folders.addAll(thirdLevelFoldersList);
                             }
                         }
                     }
@@ -313,13 +313,12 @@ public class Win32ShellFolderManager2 extends ShellFolderManager {
                 return null;
             }
             return Win32ShellFolder2.getSystemIcon(iconType);
-        } else if (key.startsWith("shell32Icon ")) {
-            int i;
-            String name = key.substring(key.indexOf(" ")+1);
+        } else if (key.startsWith("shell32Icon ") || key.startsWith("shell32LargeIcon ")) {
+            String name = key.substring(key.indexOf(" ") + 1);
             try {
-                i = Integer.parseInt(name);
+                int i = Integer.parseInt(name);
                 if (i >= 0) {
-                    return Win32ShellFolder2.getShell32Icon(i);
+                    return Win32ShellFolder2.getShell32Icon(i, key.startsWith("shell32LargeIcon "));
                 }
             } catch (NumberFormatException ex) {
             }
@@ -363,27 +362,6 @@ public class Win32ShellFolderManager2 extends ShellFolderManager {
         return false;
     }
 
-    private Comparator driveComparator = new Comparator() {
-        public int compare(Object o1, Object o2) {
-            Win32ShellFolder2 shellFolder1 = (Win32ShellFolder2) o1;
-            Win32ShellFolder2 shellFolder2 = (Win32ShellFolder2) o2;
-
-            // Put drives at first
-            boolean isDrive1 = shellFolder1.getPath().endsWith(":\\");
-
-            if (isDrive1 ^ shellFolder2.getPath().endsWith(":\\")) {
-                return isDrive1 ? -1 : 1;
-            } else {
-                return shellFolder1.getPath().compareTo(shellFolder2.getPath());
-            }
-        }
-    };
-
-
-    public void sortFiles(List files) {
-        Collections.sort(files, fileComparator);
-    }
-
     private static List topFolderList = null;
     static int compareShellFolders(Win32ShellFolder2 sf1, Win32ShellFolder2 sf2) {
         boolean special1 = sf1.isSpecial();
@@ -419,19 +397,9 @@ public class Win32ShellFolderManager2 extends ShellFolderManager {
         return compareNames(sf1.getAbsolutePath(), sf2.getAbsolutePath());
     }
 
-    static int compareFiles(File f1, File f2) {
-        if (f1 instanceof Win32ShellFolder2) {
-            return f1.compareTo(f2);
-        }
-        if (f2 instanceof Win32ShellFolder2) {
-            return -1 * f2.compareTo(f1);
-        }
-        return compareNames(f1.getName(), f2.getName());
-    }
-
     static int compareNames(String name1, String name2) {
         // First ignore case when comparing
-        int diff = name1.toLowerCase().compareTo(name2.toLowerCase());
+        int diff = name1.compareToIgnoreCase(name2);
         if (diff != 0) {
             return diff;
         } else {
@@ -440,14 +408,4 @@ public class Win32ShellFolderManager2 extends ShellFolderManager {
             return name1.compareTo(name2);
         }
     }
-
-    private Comparator fileComparator = new Comparator() {
-        public int compare(Object a, Object b) {
-            return compare((File)a, (File)b);
-        }
-
-        public int compare(File f1, File f2) {
-            return compareFiles(f1, f2);
-        }
-    };
 }

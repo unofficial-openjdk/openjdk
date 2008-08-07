@@ -1,5 +1,5 @@
 #
-# Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -84,6 +84,9 @@ TREEAPI_PKGS 	 = com.sun.source.tree \
 
 SMARTCARDIO_PKGS = javax.smartcardio
 
+TRACING_PKGS     = com.sun.tracing         \
+                   com.sun.tracing.dtrace
+
 # non-core packages in rt.jar
 NON_CORE_PKGS    = $(DOMAPI_PKGS) \
                    $(MGMT_PKGS) \
@@ -91,4 +94,5 @@ NON_CORE_PKGS    = $(DOMAPI_PKGS) \
                    $(JGSS_PKGS) \
                    $(OLD_JSSE_PKGS) \
                    $(HTTPSERVER_PKGS) \
-                   $(SMARTCARDIO_PKGS)
+                   $(SMARTCARDIO_PKGS) \
+                   $(TRACING_PKGS)

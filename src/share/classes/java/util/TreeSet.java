@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -195,7 +195,7 @@ public class TreeSet<E> extends AbstractSet<E>
      * @since 1.6
      */
     public NavigableSet<E> descendingSet() {
-        return new TreeSet(m.descendingMap());
+        return new TreeSet<E>(m.descendingMap());
     }
 
     /**
@@ -505,8 +505,8 @@ public class TreeSet<E> extends AbstractSet<E>
         s.writeInt(m.size());
 
         // Write out all elements in the proper order.
-        for (Iterator i=m.keySet().iterator(); i.hasNext(); )
-            s.writeObject(i.next());
+        for (E e : m.keySet())
+            s.writeObject(e);
     }
 
     /**

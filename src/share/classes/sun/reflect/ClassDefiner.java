@@ -1,5 +1,5 @@
 /*
- * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,9 +54,9 @@ class ClassDefiner {
     static Class defineClass(String name, byte[] bytes, int off, int len,
                              final ClassLoader parentClassLoader)
     {
-        ClassLoader newLoader = (ClassLoader)
-            AccessController.doPrivileged(new PrivilegedAction() {
-                    public Object run() {
+        ClassLoader newLoader = AccessController.doPrivileged(
+            new PrivilegedAction<ClassLoader>() {
+                public ClassLoader run() {
                         return new DelegatingClassLoader(parentClassLoader);
                     }
                 });

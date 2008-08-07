@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -96,7 +96,7 @@ class SynthDesktopPaneUI extends BasicDesktopPaneUI implements
             }
             taskBar.setBackground(desktop.getBackground());
             desktop.add(taskBar,
-                new Integer(JLayeredPane.PALETTE_LAYER.intValue() + 1));
+                Integer.valueOf(JLayeredPane.PALETTE_LAYER.intValue() + 1));
             if (desktop.isShowing()) {
                 taskBar.adjustSize();
             }

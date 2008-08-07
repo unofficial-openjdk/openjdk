@@ -1,5 +1,5 @@
 #
-# Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -82,16 +82,17 @@ ifeq ($(PLATFORM), linux)
 endif
 
 ifeq ($(PLATFORM), windows)
-  WINVER=$(JDK_TOPDIR)/make/tools/winver/bin/winver.exe
   FREE_SPACE := $(shell $(DF) -kP $(OUTPUTDIR) | $(TAIL) -1 | $(NAWK) '{print $$4;}')
   TEMP_FREE_SPACE := $(shell $(DF) -kP $(TEMP_DISK) | $(TAIL) -1 | $(NAWK) '{print $$4;}')
-  WINDOWS_VERSION := $(shell \
-      if [ -x $(WINVER) ]; then \
-	$(WINVER) ; \
-      else \
-	$(ECHO) "Unknown Windows Version"; \
-      fi)
-  DXSDK_VER := $(shell $(EGREP) DIRECTDRAW_VERSION $(DXSDK_INCLUDE_PATH)/ddraw.h 2>&1 | \
+  # Localized systeminfo has localized labels, but not localized values.
+  _WINDOWS_VERSION := \
+    $(shell systeminfo 2> $(DEV_NULL) | grep 'Microsoft' | grep 'Windows' | \
+	 cut -d':' -f2)
+  ifeq ($(_WINDOWS_VERSION),)
+    _WINDOWS_VERSION := Windows 2000 or Unknown (no systeminfo utility)
+  endif
+  WINDOWS_VERSION := $(strip $(_WINDOWS_VERSION))
+  DXSDK_VER := $(shell $(EGREP) DIRECT3D_VERSION $(DXSDK_INCLUDE_PATH)/d3d9.h 2>&1 | \
     $(EGREP) "\#define" | $(NAWK) '{print $$3}')
 endif
 
@@ -105,13 +106,21 @@ ZIP_VER    :=$(call GetVersion,"$(_ZIP_VER)")
 UNZIP_VER  :=$(call GetVersion,"$(_UNZIP_VER)")
 BOOT_VER   :=$(call GetVersion,"$(_BOOT_VER)")
 
-REQUIRED_ANT_VER      := 1.6.3
-_ANT_VER              :=$(shell $(ANT) -version 2>&1 )
-ANT_VER               :=$(call GetVersion,"$(_ANT_VER)")
+REQUIRED_ANT_VER := 1.6.3
+ifeq ($(ANT_HOME),)
+  _ANT_VER:=$(shell JAVACMD="$(BOOTDIR)/bin/java" $(ANT) -version 2>&1 )
+else
+  _ANT_VER:=$(shell JAVACMD="$(BOOTDIR)/bin/java" ANT_HOME="$(ANT_HOME)" $(ANT) -version 2>&1 )
+endif
+ANT_VER:=$(call GetVersion,"$(_ANT_VER)")
 
-REQUIRED_FINDBUGS_VER := 1.1
-_FINDBUGS_VER         :=$(shell $(FINDBUGS) -version 2>&1 )
-FINDBUGS_VER          :=$(call GetVersion,"$(_FINDBUGS_VER)")
+REQUIRED_FINDBUGS_VER := 1.2
+ifeq ($(FINDBUGS_HOME),)
+  _FINDBUGS_VER:=$(shell $(FINDBUGS) -javahome "$(BOOTDIR)" -textui -version 2>&1 )
+else
+  _FINDBUGS_VER:=$(shell FINDBUGS_HOME="$(FINDBUGS_HOME)" $(FINDBUGS) -javahome "$(BOOTDIR)" -textui -version 2>&1 )
+endif
+FINDBUGS_VER:=$(call GetVersion,"$(_FINDBUGS_VER)")
 
 ifdef ALT_BINDIR
   ALT_BINDIR_VERSION := $(shell $(ALT_BINDIR)/java$(EXE_SUFFIX) -version 2>&1  | $(NAWK) -F'"' '{ print $$2 }')
@@ -256,9 +265,9 @@ ifndef OPENJDK
 	    "" >> $(WARNING_FILE) ; \
 	fi
   ifeq ($(PLATFORM), windows)
-	@if [ "$(WINDOWS_VERSION)" != "$(REQUIRED_WINDOWS_VERSION)" ]; then \
-	    $(ECHO) "WARNING: $(YOU_ARE_USING) an unsupported version of $(REQUIRED_WINDOWS_NAME). \n" \
-	      "        The supported version is $(REQUIRED_WINDOWS_NAME) $(REQUIRED_WINDOWS_VERSION). \n" \
+	@if [ "$(findstring $(REQUIRED_WINDOWS_VERSION),$(WINDOWS_VERSION))" = "" ]; then \
+	    $(ECHO) "WARNING: $(YOU_ARE_USING) an unknown version of Windows. \n" \
+	      "        The required version is $(REQUIRED_WINDOWS_VERSION). \n" \
 	      "        $(YOU_ARE_USING) $(WINDOWS_VERSION) \n" \
 	      "" >> $(WARNING_FILE) ; \
 	fi
@@ -780,21 +789,17 @@ sane-cacerts:
 
 ifdef OPENJDK
 
-#name of test program that prints out "Failed" if freetype is not good enough
-FREETYPE_VERSION_CHECK_NAME = freetype_versioncheck
-FREETYPE_VERSION_CHECK = $(TEMPDIR)/$(FREETYPE_VERSION_CHECK_NAME)$(EXE_SUFFIX)
+# The freetypecheck Makefile prints out "Failed" if not good enough
+$(TEMPDIR)/freetypeinfo: FRC
+	@$(prep-target)
+	@(($(CD) $(BUILDDIR)/tools/freetypecheck && $(MAKE)) || \
+	    $(ECHO) "Failed to build freetypecheck." ) > $@
 
-sane-freetype:
-	@-($(CD) $(BUILDDIR)/tools/freetypecheck && \
-	$(MAKE) REQUIRED_FREETYPE_VERSION=$(REQUIRED_FREETYPE_VERSION) \
-	        FT_TEST=$(FREETYPE_VERSION_CHECK_NAME) \
-	        FT_HEADERS=$(FREETYPE_HEADERS_PATH) \
-	        FT_LIB=$(FREETYPE_LIB_PATH) \
-	        XARCH=$(XARCH))
-	@if [ ! -r $(FREETYPE_VERSION_CHECK) -o \
-	  "`$(FREETYPE_VERSION_CHECK) | $(GREP) Fail`" != "" ]; then \
+sane-freetype: $(TEMPDIR)/freetypeinfo
+	@if [ "`$(CAT) $< | $(GREP) Fail`" != "" ]; then \
 	  $(ECHO) "ERROR: FreeType version " $(REQUIRED_FREETYPE_VERSION) \
-	          "or higher is required. \n" >> $(ERROR_FILE) ; \
+	          " or higher is required. \n" \
+		  "`$(CAT) $<`  \n" >> $(ERROR_FILE) ; \
 	fi
 
 else
@@ -1253,7 +1258,7 @@ sane-unzip_version:
 ######################################################
 sane-dxsdk:
 ifeq ($(PLATFORM), windows)
-	@if [ ! -r $(DXSDK_INCLUDE_PATH)/ddraw.h  ]; then \
+	@if [ ! -r $(DXSDK_INCLUDE_PATH)/d3d9.h  ]; then \
 	$(ECHO) "ERROR: You do not have access to a valid DirectX SDK Include dir.\n" \
 	  "      The value of DXSDK_INCLUDE_PATH must point a valid DX SDK dir.\n" \
 	  "      Please check your access to \n" \
@@ -1282,7 +1287,7 @@ ifeq ($(PLATFORM), windows)
 		"      This may result in a build failure.\n" \
 		"      The DirectX SDK Include dir was obtained from the following location:\n" \
 		" 	  $(DXSDK_INCLUDE_PATH) \n" \
-		"      Please change your DirectX SDK to version 7 or 9 (Summer 2004 Update or newer).\n" \
+		"      Please change your DirectX SDK to version 9 (Summer 2004 Update or newer).\n" \
 	        "      Microsoft DirectX 9 SDK can be downloaded from the following location:\n" \
 	        "          http://msdn.microsoft.com/library/default.asp?url=/downloads/list/directx.asp\n" \
 		"      Or  http://www.microsoft.com/directx\n" \
@@ -1331,7 +1336,7 @@ sane-compiler: sane-link
 ifndef OPENJDK
 	@if [ "$(CC_CHECK)" != "same" ]; then \
 	      $(ECHO) "WARNING: The $(PLATFORM) compiler is not version $(COMPILER_VERSION) $(REQUIRED_CC_VER) \n" \
-	      "      Specifically the $(COMPILER_NAME) $(CC_TYPE) compiler. \n " \
+	      "      Specifically the $(COMPILER_NAME) compiler. \n " \
 	      "      $(YOU_ARE_USING) compiler version: $(CC_VER) \n" \
 	      "      The compiler was obtained from the following location: \n" \
 	      "          $(COMPILER_PATH) \n" \

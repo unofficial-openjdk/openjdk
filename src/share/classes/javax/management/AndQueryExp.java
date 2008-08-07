@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -100,8 +100,30 @@ class AndQueryExp extends QueryEval implements QueryExp {
    /**
     * Returns a string representation of this AndQueryExp
     */
-   public String toString() {
-     return "(" + exp1 + ") and (" + exp2 + ")";
+    @Override
+    public String toString() {
+        return "(" + exp1 + ") and (" + exp2 + ")";
+    }
+
+    @Override
+    String toQueryString() {
+        // Parentheses are only added if needed to disambiguate.
+        return parens(exp1) + " and " + parens(exp2);
    }
 
- }
+   // Add parens if needed to disambiguate an expression such as
+   // Query.and(Query.or(a, b), c).  We need to return
+   // (a or b) and c
+   // in such a case, because
+   // a or b and c
+   // would mean
+   // a or (b and c)
+   private static String parens(QueryExp exp) {
+       String s = Query.toString(exp);
+       if (exp instanceof OrQueryExp)
+           return "(" + s + ")";
+       else
+           return s;
+   }
+
+}

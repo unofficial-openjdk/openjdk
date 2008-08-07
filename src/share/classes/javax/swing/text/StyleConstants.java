@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -296,7 +296,7 @@ public class StyleConstants {
      * @param o the bidi level value
      */
     public static void setBidiLevel(MutableAttributeSet a, int o) {
-        a.addAttribute(BidiLevel, new Integer(o));
+        a.addAttribute(BidiLevel, Integer.valueOf(o));
     }
 
     /**
@@ -386,7 +386,7 @@ public class StyleConstants {
      * @param s the font size
      */
     public static void setFontSize(MutableAttributeSet a, int s) {
-        a.addAttribute(FontSize, new Integer(s));
+        a.addAttribute(FontSize, Integer.valueOf(s));
     }
 
     /**
@@ -753,7 +753,7 @@ public class StyleConstants {
      * @param align the alignment value
      */
     public static void setAlignment(MutableAttributeSet a, int align) {
-        a.addAttribute(Alignment, new Integer(align));
+        a.addAttribute(Alignment, Integer.valueOf(align));
     }
 
     /**

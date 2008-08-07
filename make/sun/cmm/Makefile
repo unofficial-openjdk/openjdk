@@ -1,5 +1,5 @@
 #
-# Copyright 2006-2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2006-2008 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -41,12 +41,8 @@ endif # OPENJDK
 ICCPROFILE_DEST_DIR = $(LIBDIR)/cmm
 
 iccprofiles: $(ICCPROFILE_DEST_DIR)/sRGB.pf $(ICCPROFILE_DEST_DIR)/GRAY.pf \
-	     $(ICCPROFILE_DEST_DIR)/CIEXYZ.pf
-
-ifndef OPENJDK
-iccprofiles:  $(ICCPROFILE_DEST_DIR)/PYCC.pf \
-	      $(ICCPROFILE_DEST_DIR)/LINEAR_RGB.pf
-endif
+	     $(ICCPROFILE_DEST_DIR)/CIEXYZ.pf $(ICCPROFILE_DEST_DIR)/PYCC.pf \
+	     $(ICCPROFILE_DEST_DIR)/LINEAR_RGB.pf
 
 $(ICCPROFILE_DEST_DIR)/sRGB.pf: $(ICCPROFILE_SRC_DIR)/sRGB.pf
 	$(RM) $(ICCPROFILE_DEST_DIR)/sRGB.pf

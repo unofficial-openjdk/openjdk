@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -98,7 +98,7 @@ class ConstantSetNode extends AbstractNamedNode {
         if (constantMap == null) {
             return "";
         }
-        String com = (String) constantMap.get(key);
+        String com = constantMap.get(key);
         if(com == null){
             return "";
         } else {

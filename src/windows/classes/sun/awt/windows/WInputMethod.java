@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -488,7 +488,7 @@ public class WInputMethod extends InputMethodAdapter
                 attrStr.addAttribute(Attribute.INPUT_METHOD_SEGMENT,
                                         new Annotation(null), 0, text.length());
                 attrStr.addAttribute(Attribute.READING,
-                                        new Annotation(new String("")), 0, text.length());
+                                     new Annotation(""), 0, text.length());
             }
 
             // set Hilight Information

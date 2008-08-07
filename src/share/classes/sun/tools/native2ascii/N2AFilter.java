@@ -1,5 +1,5 @@
 /*
- * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,7 +42,7 @@ class N2AFilter extends FilterWriter {
 
     public void write(char b) throws IOException {
         char[] buf = new char[1];
-        buf[0] = (char)b;
+        buf[0] = b;
         write(buf, 0, 1);
     }
 

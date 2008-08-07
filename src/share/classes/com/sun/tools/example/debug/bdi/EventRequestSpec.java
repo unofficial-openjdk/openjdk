@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -91,9 +91,7 @@ abstract public class EventRequestSpec {
 
     void attemptImmediateResolve(VirtualMachine vm) {
         // try to resolve immediately
-        Iterator iter = vm.allClasses().iterator();
-        while (iter.hasNext()) {
-            ReferenceType refType = (ReferenceType)iter.next();
+        for (ReferenceType refType : vm.allClasses()) {
             if (refSpec.matches(refType)) {
                 try {
                     resolve(refType);

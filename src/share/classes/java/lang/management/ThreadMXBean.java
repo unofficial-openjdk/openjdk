@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,6 +45,9 @@ import java.util.Map;
  *    {@link ManagementFactory#THREAD_MXBEAN_NAME
  *           <tt>java.lang:type=Threading</tt>}
  * </blockquote>
+ *
+ * It can be obtained by calling the
+ * {@link PlatformManagedObject#getObjectName} method.
  *
  * <h4>Thread ID</h4>
  * Thread ID is a positive long value returned by calling the
@@ -108,6 +111,7 @@ import java.util.Map;
  * {@link #findDeadlockedThreads} methods to find deadlocks in
  * the running application.
  *
+ * @see ManagementFactory#getPlatformMXBeans(Class)
  * @see <a href="../../../javax/management/package-summary.html">
  *      JMX Specification.</a>
  * @see <a href="package-summary.html#examples">
@@ -117,7 +121,7 @@ import java.util.Map;
  * @since   1.5
  */
 
-public interface ThreadMXBean {
+public interface ThreadMXBean extends PlatformManagedObject {
     /**
      * Returns the current number of live threads including both
      * daemon and non-daemon threads.

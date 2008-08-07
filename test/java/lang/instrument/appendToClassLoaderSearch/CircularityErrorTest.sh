@@ -1,5 +1,5 @@
 #
-# Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -26,14 +26,14 @@
 # @summary Unit tests for appendToBootstrapClassLoaderSearch and
 #   appendToSystemClasLoaderSearch methods.
 #
-# @run shell CircularityErrorTest.sh
+# @run shell/timeout=240 CircularityErrorTest.sh
 
 if [ "${TESTSRC}" = "" ]
 then
   echo "TESTSRC not set.  Test cannot execute.  Failed."
   exit 1
 fi
-                                                                                                        
+
 . ${TESTSRC}/CommonSetup.sh
 
 # Setup to create circularity condition
@@ -71,5 +71,5 @@ $JAR -cfm "${TESTCLASSES}"/CircularityErrorTest.jar "${MANIFEST}" \
   -C "${TESTCLASSES}" CircularityErrorTest.class
 
 # Finally we run the test
-(cd "${TESTCLASSES}"; 
-  $JAVA -javaagent:CircularityErrorTest.jar CircularityErrorTest)
+(cd "${TESTCLASSES}";
+  $JAVA ${TESTVMOPTS} -javaagent:CircularityErrorTest.jar CircularityErrorTest)

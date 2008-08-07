@@ -1,5 +1,5 @@
 #
-# Copyright 1995-2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 1995-2008 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -63,7 +63,7 @@ SUBDIRS = jar security javazic misc net audio $(RENDER_SUBDIR) image \
           $(HEADLESS_SUBDIR) $(DGA_SUBDIR) \
 	  font jpeg cmm applet rmi beans $(JDBC_SUBDIR) \
 	  jawt text nio launcher management $(ORG_SUBDIR) \
-          native2ascii serialver tools jconsole
+          native2ascii serialver tools jconsole tracing
 
 all build clean clobber::
 	$(SUBDIRS-loop)

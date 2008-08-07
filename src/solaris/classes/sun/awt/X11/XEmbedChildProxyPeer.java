@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,7 +53,7 @@ public class XEmbedChildProxyPeer implements ComponentPeer, XEventDispatcher{
         try {
             XToolkit.addEventDispatcher(handle, this);
             XlibWrapper.XSelectInput(XToolkit.getDisplay(), handle,
-                    XlibWrapper.StructureNotifyMask | XlibWrapper.PropertyChangeMask);
+                    XConstants.StructureNotifyMask | XConstants.PropertyChangeMask);
         }
         finally {
             XToolkit.awtUnlock();
@@ -257,7 +257,7 @@ public class XEmbedChildProxyPeer implements ComponentPeer, XEventDispatcher{
     public void createBuffers(int numBuffers, BufferCapabilities caps)
       throws AWTException { }
     public Image getBackBuffer() { return null; }
-    public void flip(BufferCapabilities.FlipContents flipAction) {  }
+    public void flip(int x1, int y1, int x2, int y2, BufferCapabilities.FlipContents flipAction) {  }
     public void destroyBuffers() { }
 
     /**
@@ -341,10 +341,10 @@ public class XEmbedChildProxyPeer implements ComponentPeer, XEventDispatcher{
     public void dispatchEvent(XEvent xev) {
         int type = xev.get_type();
         switch (type) {
-          case XlibWrapper.PropertyNotify:
+          case XConstants.PropertyNotify:
               handlePropertyNotify(xev);
               break;
-          case XlibWrapper.ConfigureNotify:
+          case XConstants.ConfigureNotify:
               handleConfigureNotify(xev);
               break;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -778,8 +778,8 @@ public abstract class ImageInputStreamImpl implements ImageInputStream {
      */
     public void mark() {
         try {
-            markByteStack.push(new Long(getStreamPosition()));
-            markBitStack.push(new Integer(getBitOffset()));
+            markByteStack.push(Long.valueOf(getStreamPosition()));
+            markBitStack.push(Integer.valueOf(getBitOffset()));
         } catch (IOException e) {
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -121,8 +121,9 @@ final class Finalizer extends FinalReference { /* Package-private; must be in
        invokers of these methods from a stalled or deadlocked finalizer thread.
      */
     private static void forkSecondaryFinalizer(final Runnable proc) {
-        PrivilegedAction pa = new PrivilegedAction() {
-            public Object run() {
+        AccessController.doPrivileged(
+            new PrivilegedAction<Void>() {
+                public Void run() {
                 ThreadGroup tg = Thread.currentThread().getThreadGroup();
                 for (ThreadGroup tgn = tg;
                      tgn != null;
@@ -135,8 +136,7 @@ final class Finalizer extends FinalReference { /* Package-private; must be in
                     /* Ignore */
                 }
                 return null;
-            }};
-        AccessController.doPrivileged(pa);
+                }});
     }
 
     /* Called by Runtime.runFinalization() */

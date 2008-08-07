@@ -1,5 +1,5 @@
 #
-# Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -30,24 +30,10 @@
 BUILDDIR = ..
 include $(BUILDDIR)/common/Defs.gmk
 
-#
-# Files to compile
-#
-AUTO_FILES_JAVA_DIRS =       \
-    javax/naming             \
-    com/sun/naming/internal  \
-    javax/net                \
-    javax/script             \
-    javax/security/auth      \
-    javax/security/cert      \
-    javax/security/sasl      \
-    javax/smartcardio        \
-    javax/tools              \
-    javax/xml
-
 # imageio uses xml, so build it last
 
 SUBDIRS = \
+	others \
 	accessibility \
 	print \
 	swing \
@@ -62,9 +48,4 @@ all build:
 	$(SUBDIRS-loop)
 clean clobber::
 	$(SUBDIRS-loop)
-
-#
-# Rules
-#
-include $(BUILDDIR)/common/Classes.gmk
 

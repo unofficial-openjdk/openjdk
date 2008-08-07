@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -101,10 +101,8 @@ abstract class EventRequestSpec {
                  * so that is all we need to examine.
                  */
                 ArrayList<ExceptionRequest> deleteList = new ArrayList<ExceptionRequest>();
-                Iterator iter =
-                    Env.vm().eventRequestManager().exceptionRequests().iterator();
-                while (iter.hasNext()) {
-                    ExceptionRequest er = (ExceptionRequest)iter.next();
+                for (ExceptionRequest er :
+                         Env.vm().eventRequestManager().exceptionRequests()) {
                     if (prs.matches(er.exception())) {
                         deleteList.add (er);
                     }
@@ -115,9 +113,7 @@ abstract class EventRequestSpec {
     }
 
     private EventRequest resolveAgainstPreparedClasses() throws Exception {
-        Iterator iter = Env.vm().allClasses().iterator();
-        while (iter.hasNext()) {
-            ReferenceType refType = (ReferenceType)iter.next();
+        for (ReferenceType refType : Env.vm().allClasses()) {
             if (refType.isPrepared() && refSpec.matches(refType)) {
                 resolved = resolveEventRequest(refType);
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -150,7 +150,7 @@ public class EventHandler implements Runnable {
                 EventSet eventSet = queue.remove();
                 EventIterator iter = eventSet.eventIterator();
                 while (iter.hasNext()) {
-                    handleExitEvent((Event)iter.next());
+                    handleExitEvent(iter.next());
                 }
             } catch (InterruptedException exc) {
                 // ignore
@@ -183,7 +183,7 @@ public class EventHandler implements Runnable {
              * If any event in the set has a thread associated with it,
              * they all will, so just grab the first one.
              */
-            Event event = (Event)set.iterator().next(); // Is there a better way?
+            Event event = set.iterator().next(); // Is there a better way?
             thread = eventThread(event);
         } else {
             thread = null;

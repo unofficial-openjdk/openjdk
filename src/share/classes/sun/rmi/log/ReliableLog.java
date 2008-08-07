@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -140,8 +140,8 @@ public class ReliableLog {
         throws IOException
     {
         super();
-        this.Debug = ((Boolean) AccessController.doPrivileged(
-            new GetBooleanAction("sun.rmi.log.debug"))).booleanValue();
+        this.Debug = AccessController.doPrivileged(
+            new GetBooleanAction("sun.rmi.log.debug")).booleanValue();
         dir = new File(dirPath);
         if (!(dir.exists() && dir.isDirectory())) {
             // create directory
@@ -333,8 +333,8 @@ public class ReliableLog {
     private static Constructor<? extends LogFile>
         getLogClassConstructor() {
 
-        String logClassName =  ((String) AccessController.doPrivileged(
-            new GetPropertyAction("sun.rmi.log.class")));
+        String logClassName = AccessController.doPrivileged(
+            new GetPropertyAction("sun.rmi.log.class"));
         if (logClassName != null) {
             try {
                 ClassLoader loader =

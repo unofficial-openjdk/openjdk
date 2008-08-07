@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -146,8 +146,9 @@ class VirtualMachineImpl extends MirrorImpl
     public boolean threadResumable(ThreadAction action) {
         /*
          * If any thread is resumed, the VM is considered not suspended.
+         * Just one thread is being resumed so pass it to thaw.
          */
-        state.thaw();
+        state.thaw(action.thread());
         return true;
     }
 
@@ -1191,8 +1192,7 @@ class VirtualMachineImpl extends MirrorImpl
                 }
                 requests = new JDWP.VirtualMachine.DisposeObjects.Request[size];
                 for (int i = 0; i < requests.length; i++) {
-                    SoftObjectReference ref =
-                        (SoftObjectReference)batchedDisposeRequests.get(i);
+                    SoftObjectReference ref = batchedDisposeRequests.get(i);
                     if ((traceFlags & TRACE_OBJREFS) != 0) {
                         printTrace("Disposing object " + ref.key().longValue() +
                                    " (ref count = " + ref.count() + ")");
@@ -1436,7 +1436,7 @@ class VirtualMachineImpl extends MirrorImpl
        }
 
        ObjectReferenceImpl object() {
-           return (ObjectReferenceImpl)get();
+           return get();
        }
    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import java.util.WeakHashMap;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
 
 public class Util {
     static <K, V> Map<K, V> newMap() {
@@ -69,6 +72,10 @@ public class Util {
         return new LinkedHashMap<K, V>();
     }
 
+    static <K, V> WeakHashMap<K, V> newWeakHashMap() {
+        return new WeakHashMap<K, V>();
+    }
+
     static <E> Set<E> newSet() {
         return new HashSet<E>();
     }
@@ -83,6 +90,14 @@ public class Util {
 
     static <E> List<E> newList(Collection<E> c) {
         return new ArrayList<E>(c);
+    }
+
+    public static ObjectName newObjectName(String s) {
+        try {
+            return new ObjectName(s);
+        } catch (MalformedObjectNameException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     /* This method can be used by code that is deliberately violating the

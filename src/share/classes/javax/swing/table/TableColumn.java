@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -281,7 +281,7 @@ public class TableColumn extends Object implements Serializable {
 
     private void firePropertyChange(String propertyName, int oldValue, int newValue) {
         if (oldValue != newValue) {
-            firePropertyChange(propertyName, new Integer(oldValue), new Integer(newValue));
+            firePropertyChange(propertyName, Integer.valueOf(oldValue), Integer.valueOf(newValue));
         }
     }
 

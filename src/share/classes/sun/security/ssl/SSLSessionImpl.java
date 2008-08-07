@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -458,7 +458,7 @@ final class SSLSessionImpl implements SSLSession {
                         + " for Kerberos cipher suites");
         }
         if (peerCerts != null) {
-            return (X509Certificate [])peerCerts.clone();
+            return peerCerts.clone();
         } else {
             throw new SSLPeerUnverifiedException("peer not authenticated");
         }
@@ -489,7 +489,7 @@ final class SSLSessionImpl implements SSLSession {
         if (peerCerts == null) {
             throw new SSLPeerUnverifiedException("peer not authenticated");
         }
-        return ((X500Principal)peerCerts[0].getSubjectX500Principal());
+        return peerCerts[0].getSubjectX500Principal();
     }
 
     /**
@@ -508,7 +508,7 @@ final class SSLSessionImpl implements SSLSession {
                         (KerberosPrincipal)localPrincipal);
         }
         return (localCerts == null ? null :
-            (X500Principal)localCerts[0].getSubjectX500Principal());
+                localCerts[0].getSubjectX500Principal());
     }
 
     /**

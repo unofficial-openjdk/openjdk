@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -100,16 +100,16 @@ public class ETypeInfo2 {
 
         // salt
         if (encoding.getData().available() > 0) {
-            der = encoding.getData().getDerValue();
-            if ((der.getTag() & 0x1F) == 0x01) {
+            if ((encoding.getData().peekByte() & 0x1F) == 0x01) {
+                der = encoding.getData().getDerValue();
                 this.saltStr = der.getData().getGeneralString();
             }
         }
 
         // s2kparams
         if (encoding.getData().available() > 0) {
-            der = encoding.getData().getDerValue();
-            if ((der.getTag() & 0x1F) == 0x02) {
+            if ((encoding.getData().peekByte() & 0x1F) == 0x02) {
+                der = encoding.getData().getDerValue();
                 this.s2kparams = der.getData().getOctetString();
             }
         }

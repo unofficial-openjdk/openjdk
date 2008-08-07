@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,7 @@
 # This script is to generate the supported locale list string and replace the
 # LocaleDataMetaInfo-XLocales.java in <ws>/src/share/classes/sun/util
 # 
-# NAWK & SED is passed in as environment variables.
+# SORT, NAWK & SED is passed in as environment variables.
 #
 
 # A list of resource base name list;
@@ -47,7 +47,7 @@ OUTPUT_FILE=$5
 localelist=
 getlocalelist() {
     localelist=""
-    localelist=`$NAWK -F$1_ '{print $2}' $2 | sort`
+    localelist=`$NAWK -F$1_ '{print $2}' $2 | $SORT`
 }
 
 sed_script="$SED -e \"s@^#warn .*@// -- This file was mechanically generated: Do not edit! -- //@\" " 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2007-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -217,9 +217,6 @@ class DualStackPlainSocketImpl extends AbstractPlainSocketImpl
         }
         return value;
     }
-
-    int socketGetOption1(int opt, Object iaContainerObj, FileDescriptor fd)
-        throws SocketException {return 0;}   // un-implemented REMOVE
 
     void socketSendUrgentData(int data) throws IOException {
         int nativefd = checkAndReturnNativeFD();

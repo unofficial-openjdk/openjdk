@@ -1,5 +1,5 @@
 #
-# Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -37,8 +37,6 @@ include $(BUILDDIR)/common/Defs.gmk
 # windows compiler flags
 ifeq ($(PLATFORM),windows)
   OTHER_CFLAGS =
-  # Files built here do not compile with warning level 3 if warnings are fatal
-  COMPILER_WARNINGS_FATAL=false
   # build directly into BINDIR...
   LIB_LOCATION = $(BINDIR)
   # Exported functions
@@ -394,7 +392,7 @@ LOCALES_GEN_SH = localelist.sh
 $(GENSRCDIR)/sun/util/CoreResourceBundleControl.java: \
 	$(SHARE_SRC)/classes/sun/util/CoreResourceBundleControl-XLocales.java $(LOCALES_GEN_SH)
 	@$(prep-target) 
-	NAWK=$(NAWK) SED=$(SED) $(SH) $(LOCALES_GEN_SH) "$(JRE_NONEXIST_LOCALES)" \
+	NAWK="$(NAWK)" SED="$(SED)" $(SH) $(LOCALES_GEN_SH) "$(JRE_NONEXIST_LOCALES)" \
 		$< $@ 
 clean::
 	$(RM) $(GENSRCDIR)/sun/util/CoreResourceBundleControl.java

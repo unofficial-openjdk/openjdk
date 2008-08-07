@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,9 +48,13 @@ package java.lang.management;
  *    <tt>java.lang:type=GarbageCollector</tt>}<tt>,name=</tt><i>collector's name</i>
  * </blockquote>
  *
+ * It can be obtained by calling the
+ * {@link PlatformManagedObject#getObjectName} method.
+ *
  * A platform usually includes additional platform-dependent information
  * specific to a garbage collection algorithm for monitoring.
  *
+ * @see ManagementFactory#getPlatformMXBeans(Class)
  * @see MemoryMXBean
  *
  * @see <a href="../../../javax/management/package-summary.html">

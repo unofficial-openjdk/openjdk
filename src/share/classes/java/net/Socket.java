@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1995-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -253,7 +253,8 @@ class Socket implements java.io.Closeable {
      *
      * @param host the name of the remote host, or <code>null</code> for the loopback address.
      * @param port the remote port
-     * @param localAddr the local address the socket is bound to
+     * @param localAddr the local address the socket is bound to, or
+     *        <code>null</code> for the <code>anyLocal</code> address.
      * @param localPort the local port the socket is bound to, or
      *        <code>zero</code> for a system selected free port.
      * @exception  IOException  if an I/O error occurs when creating the socket.
@@ -731,7 +732,8 @@ class Socket implements java.io.Closeable {
      * then this method will continue to return the connected address
      * after the socket is closed.
      *
-     * @return a <code>SocketAddress</code> reprensenting the remote endpoint of this
+
+     * @return a <code>SocketAddress</code> representing the remote endpoint of this
      *         socket, or <code>null</code> if it is not connected yet.
      * @see #getInetAddress()
      * @see #getPort()
@@ -847,9 +849,9 @@ class Socket implements java.io.Closeable {
         final Socket s = this;
         InputStream is = null;
         try {
-            is = (InputStream)
-                AccessController.doPrivileged(new PrivilegedExceptionAction() {
-                    public Object run() throws IOException {
+            is = AccessController.doPrivileged(
+                new PrivilegedExceptionAction<InputStream>() {
+                    public InputStream run() throws IOException {
                         return impl.getInputStream();
                     }
                 });
@@ -887,9 +889,9 @@ class Socket implements java.io.Closeable {
         final Socket s = this;
         OutputStream os = null;
         try {
-            os = (OutputStream)
-                AccessController.doPrivileged(new PrivilegedExceptionAction() {
-                    public Object run() throws IOException {
+            os = AccessController.doPrivileged(
+                new PrivilegedExceptionAction<OutputStream>() {
+                    public OutputStream run() throws IOException {
                         return impl.getOutputStream();
                     }
                 });

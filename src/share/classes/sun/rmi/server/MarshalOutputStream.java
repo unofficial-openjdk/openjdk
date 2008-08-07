@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,8 +64,8 @@ public class MarshalOutputStream extends ObjectOutputStream
         super(out);
         this.useProtocolVersion(protocolVersion);
         java.security.AccessController.doPrivileged(
-                                    new java.security.PrivilegedAction() {
-            public Object run() {
+            new java.security.PrivilegedAction<Void>() {
+                public Void run() {
                 enableReplaceObject(true);
                 return null;
             }

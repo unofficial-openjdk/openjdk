@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -217,8 +217,7 @@ class DevPollArrayWrapper {
                         Updator u = null;
                         while ((u = updateList.poll()) != null) {
                             // First add pollfd struct to clear out this fd
-                            putPollFD(updatePollArray, index, u.fd,
-                                      (short)POLLREMOVE);
+                            putPollFD(updatePollArray, index, u.fd, POLLREMOVE);
                             index++;
                             // Now add pollfd to update this fd, if necessary
                             if (u.mask != POLLREMOVE) {

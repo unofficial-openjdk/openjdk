@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,8 @@
 package sun.management;
 
 import java.lang.management.OperatingSystemMXBean;
+import java.lang.management.ManagementFactory;
+import javax.management.ObjectName;
 import sun.misc.Unsafe;
 
 /**
@@ -71,4 +73,9 @@ public class OperatingSystemImpl implements OperatingSystemMXBean {
              return -1.0;
         }
     }
+    public ObjectName getObjectName() {
+        return Util.newObjectName(ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME);
+    }
+
 }
+

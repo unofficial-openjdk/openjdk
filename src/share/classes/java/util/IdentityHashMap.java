@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -173,7 +173,7 @@ public class IdentityHashMap<K,V>
     /**
      * The number of modifications, to support fast-fail iterators
      */
-    private transient volatile int modCount;
+    private transient int modCount;
 
     /**
      * The next size value at which to resize (capacity * load factor).
@@ -188,7 +188,6 @@ public class IdentityHashMap<K,V>
     /**
      * Use NULL_KEY for key if it is null.
      */
-
     private static Object maskNull(Object key) {
         return (key == null ? NULL_KEY : key);
     }
@@ -378,8 +377,8 @@ public class IdentityHashMap<K,V>
      */
     public boolean containsValue(Object value) {
         Object[] tab = table;
-        for (int i = 1; i < tab.length; i+= 2)
-            if (tab[i] == value)
+        for (int i = 1; i < tab.length; i += 2)
+            if (tab[i] == value && tab[i - 1] != null)
                 return true;
 
         return false;
@@ -701,7 +700,7 @@ public class IdentityHashMap<K,V>
         try {
             IdentityHashMap<K,V> m = (IdentityHashMap<K,V>) super.clone();
             m.entrySet = null;
-            m.table = (Object[])table.clone();
+            m.table = table.clone();
             return m;
         } catch (CloneNotSupportedException e) {
             throw new InternalError();
@@ -749,7 +748,6 @@ public class IdentityHashMap<K,V>
             expectedModCount = ++modCount;
             int deletedSlot = lastReturnedIndex;
             lastReturnedIndex = -1;
-            size--;
             // back up index to revisit new contents after deletion
             index = deletedSlot;
             indexValid = false;
@@ -781,6 +779,8 @@ public class IdentityHashMap<K,V>
                 expectedModCount = modCount;
                 return;
             }
+
+            size--;
 
             Object item;
             for (int i = nextKeyIndex(d, len); (item = tab[i]) != null;
@@ -904,7 +904,6 @@ public class IdentityHashMap<K,V>
      * view the first time this view is requested.  The view is stateless,
      * so there's no reason to create more than one.
      */
-
     private transient Set<Map.Entry<K,V>> entrySet = null;
 
     /**
@@ -975,7 +974,7 @@ public class IdentityHashMap<K,V>
          */
         public boolean removeAll(Collection<?> c) {
             boolean modified = false;
-            for (Iterator i = iterator(); i.hasNext(); ) {
+            for (Iterator<K> i = iterator(); i.hasNext(); ) {
                 if (c.contains(i.next())) {
                     i.remove();
                     modified = true;
@@ -1033,7 +1032,7 @@ public class IdentityHashMap<K,V>
             return containsValue(o);
         }
         public boolean remove(Object o) {
-            for (Iterator i = iterator(); i.hasNext(); ) {
+            for (Iterator<V> i = iterator(); i.hasNext(); ) {
                 if (i.next() == o) {
                     i.remove();
                     return true;
@@ -1121,7 +1120,7 @@ public class IdentityHashMap<K,V>
          */
         public boolean removeAll(Collection<?> c) {
             boolean modified = false;
-            for (Iterator i = iterator(); i.hasNext(); ) {
+            for (Iterator<Map.Entry<K,V>> i = iterator(); i.hasNext(); ) {
                 if (c.contains(i.next())) {
                     i.remove();
                     modified = true;

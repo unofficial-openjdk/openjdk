@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -275,7 +275,7 @@ public class TrustAnchor {
             ncBytes = null;
             nc = null;
         } else {
-            ncBytes = (byte []) bytes.clone();
+            ncBytes = bytes.clone();
             // validate DER encoding
             try {
                 nc = new NameConstraintsExtension(Boolean.FALSE, bytes);
@@ -309,7 +309,7 @@ public class TrustAnchor {
      *         or <code>null</code> if not set.
      */
     public final byte [] getNameConstraints() {
-        return (ncBytes == null ? null : (byte []) ncBytes.clone());
+        return ncBytes == null ? null : ncBytes.clone();
     }
 
     /**

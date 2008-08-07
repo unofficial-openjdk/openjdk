@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -265,6 +265,48 @@ setNativeMethodPrefixes(JNIEnv * jnienv, JPLISAgent * agent, jobjectArray prefix
                         jboolean isRetransformable);
 
 #define jvmti(a) a->mNormalEnvironment.mJVMTIEnv
+
+/*
+ * A set of macros for insulating the JLI method callers from
+ * JVMTI_ERROR_WRONG_PHASE return codes.
+ */
+
+/* for a JLI method where "blob" is executed before simply returning */
+#define check_phase_blob_ret(ret, blob)      \
+    if ((ret) == JVMTI_ERROR_WRONG_PHASE) {  \
+        blob;                                \
+        return;                              \
+    }
+
+/* for a JLI method where simply returning is benign */
+#define check_phase_ret(ret)                 \
+    if ((ret) == JVMTI_ERROR_WRONG_PHASE) {  \
+        return;                              \
+    }
+
+/* for a JLI method where returning zero (0) is benign */
+#define check_phase_ret_0(ret)               \
+    if ((ret) == JVMTI_ERROR_WRONG_PHASE) {  \
+        return 0;                            \
+    }
+
+/* for a JLI method where returning one (1) is benign */
+#define check_phase_ret_1(ret)               \
+    if ((ret) == JVMTI_ERROR_WRONG_PHASE) {  \
+        return 1;                            \
+    }
+
+/* for a case where a specific "blob" must be returned */
+#define check_phase_ret_blob(ret, blob)      \
+    if ((ret) == JVMTI_ERROR_WRONG_PHASE) {  \
+        return (blob);                       \
+    }
+
+/* for a JLI method where returning false is benign */
+#define check_phase_ret_false(ret)           \
+    if ((ret) == JVMTI_ERROR_WRONG_PHASE) {  \
+        return (jboolean) 0;                 \
+    }
 
 #ifdef __cplusplus
 } /* extern "C" */

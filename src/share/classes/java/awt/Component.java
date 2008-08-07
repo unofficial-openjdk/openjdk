@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1995-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,6 +49,7 @@ import java.io.ObjectInputStream;
 import java.io.IOException;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.beans.Transient;
 import java.awt.event.InputMethodListener;
 import java.awt.event.InputMethodEvent;
 import java.awt.im.InputContext;
@@ -73,7 +74,11 @@ import sun.awt.dnd.SunDropTargetEvent;
 import sun.awt.im.CompositionArea;
 import sun.java2d.SunGraphics2D;
 import sun.java2d.pipe.Region;
+import sun.awt.image.VSyncedBSManager;
+import sun.java2d.pipe.hw.ExtendedBufferCapabilities;
+import static sun.java2d.pipe.hw.ExtendedBufferCapabilities.VSyncType.*;
 import sun.awt.RequestFocusController;
+import sun.java2d.SunGraphicsEnvironment;
 
 /**
  * A <em>component</em> is an object having a graphical representation
@@ -634,6 +639,13 @@ public abstract class Component implements ImageObserver, MenuContainer,
      */
     private PropertyChangeSupport changeSupport;
 
+    // Note: this field is considered final, though readObject() prohibits
+    // initializing final fields.
+    private transient Object changeSupportLock = new Object();
+    private Object getChangeSupportLock() {
+        return changeSupportLock;
+    }
+
     boolean isPacked = false;
 
     /**
@@ -935,24 +947,26 @@ public abstract class Component implements ImageObserver, MenuContainer,
      */
     public GraphicsConfiguration getGraphicsConfiguration() {
         synchronized(getTreeLock()) {
-            GraphicsConfiguration gc = graphicsConfig;
-            Component parent = getParent();
-            while ((gc == null) && (parent != null)) {
-                gc = parent.getGraphicsConfiguration();
-                parent = parent.getParent();
+            if (graphicsConfig != null) {
+                return graphicsConfig;
+            } else if (getParent() != null) {
+                return getParent().getGraphicsConfiguration();
+            } else {
+                return null;
             }
-            return gc;
         }
     }
 
     final GraphicsConfiguration getGraphicsConfiguration_NoClientCode() {
-        GraphicsConfiguration gc = this.graphicsConfig;
-        Component par = this.parent;
-        while ((gc == null) && (par != null)) {
-            gc = par.getGraphicsConfiguration_NoClientCode();
-            par = par.parent;
+        GraphicsConfiguration graphicsConfig = this.graphicsConfig;
+        Container parent = this.parent;
+        if (graphicsConfig != null) {
+            return graphicsConfig;
+        } else if (parent != null) {
+            return parent.getGraphicsConfiguration_NoClientCode();
+        } else {
+            return null;
         }
-        return gc;
     }
 
     /**
@@ -996,7 +1010,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
 
     /**
      * Gets this component's locking object (the object that owns the thread
-     * sychronization monitor) for AWT component-tree and layout
+     * synchronization monitor) for AWT component-tree and layout
      * operations.
      * @return this component's locking object
      */
@@ -1093,6 +1107,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * @see #setVisible
      * @since JDK1.0
      */
+    @Transient
     public boolean isVisible() {
         return isVisible_NoClientCode();
     }
@@ -1318,12 +1333,15 @@ public abstract class Component implements ImageObserver, MenuContainer,
             KeyboardFocusManager.clearMostRecentFocusOwner(this);
             synchronized (getTreeLock()) {
                 enabled = false;
-                if (isFocusOwner()) {
+                // A disabled lw container is allowed to contain a focus owner.
+                if ((isFocusOwner() || (containsFocus() && !isLightweight())) &&
+                    KeyboardFocusManager.isAutoFocusTransferEnabled())
+                {
                     // Don't clear the global focus owner. If transferFocus
                     // fails, we want the focus to stay on the disabled
                     // Component so that keyboard traversal, et. al. still
                     // makes sense to the user.
-                    autoTransferFocus(false);
+                    transferFocus(false);
                 }
                 ComponentPeer peer = this.peer;
                 if (peer != null) {
@@ -1484,8 +1502,8 @@ public abstract class Component implements ImageObserver, MenuContainer,
             synchronized (getTreeLock()) {
                 visible = false;
                 mixOnHiding(isLightweight());
-                if (containsFocus()) {
-                    autoTransferFocus(true);
+                if (containsFocus() && KeyboardFocusManager.isAutoFocusTransferEnabled()) {
+                    transferFocus(true);
                 }
                 ComponentPeer peer = this.peer;
                 if (peer != null) {
@@ -1524,6 +1542,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * @beaninfo
      *       bound: true
      */
+    @Transient
     public Color getForeground() {
         Color foreground = this.foreground;
         if (foreground != null) {
@@ -1578,6 +1597,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * @see #setBackground
      * @since JDK1.0
      */
+    @Transient
     public Color getBackground() {
         Color background = this.background;
         if (background != null) {
@@ -1637,6 +1657,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * @see #setFont
      * @since JDK1.0
      */
+    @Transient
     public Font getFont() {
         return getFont_NoClientCode();
     }
@@ -3040,10 +3061,24 @@ public abstract class Component implements ImageObserver, MenuContainer,
             // services.  Additionally, the request is restricted to
             // the bounds of the component.
             if (parent != null) {
-                int px = this.x + ((x < 0) ? 0 : x);
-                int py = this.y + ((y < 0) ? 0 : y);
+                if (x < 0) {
+                    width += x;
+                    x = 0;
+                }
+                if (y < 0) {
+                    height += y;
+                    y = 0;
+                }
+
                 int pwidth = (width > this.width) ? this.width : width;
                 int pheight = (height > this.height) ? this.height : height;
+
+                if (pwidth <= 0 || pheight <= 0) {
+                    return;
+                }
+
+                int px = this.x + x;
+                int py = this.y + y;
                 parent.repaint(tm, px, py, pwidth, pheight);
             }
         } else {
@@ -3491,12 +3526,36 @@ public abstract class Component implements ImageObserver, MenuContainer,
         if (numBuffers == 1) {
             bufferStrategy = new SingleBufferStrategy(caps);
         } else {
+            SunGraphicsEnvironment sge = (SunGraphicsEnvironment)
+                GraphicsEnvironment.getLocalGraphicsEnvironment();
+            if (!caps.isPageFlipping() && sge.isFlipStrategyPreferred(peer)) {
+                caps = new ProxyCapabilities(caps);
+            }
             // assert numBuffers > 1;
             if (caps.isPageFlipping()) {
                 bufferStrategy = new FlipSubRegionBufferStrategy(numBuffers, caps);
             } else {
                 bufferStrategy = new BltSubRegionBufferStrategy(numBuffers, caps);
             }
+        }
+    }
+
+    /**
+     * This is a proxy capabilities class used when a FlipBufferStrategy
+     * is created instead of the requested Blit strategy.
+     *
+     * @see sun.awt.SunGraphicsEnvironment#isFlipStrategyPreferred(ComponentPeer)
+     */
+    private class ProxyCapabilities extends ExtendedBufferCapabilities {
+        private BufferCapabilities orig;
+        private ProxyCapabilities(BufferCapabilities orig) {
+            super(orig.getFrontBufferCapabilities(),
+                  orig.getBackBufferCapabilities(),
+                  orig.getFlipContents() ==
+                      BufferCapabilities.FlipContents.BACKGROUND ?
+                      BufferCapabilities.FlipContents.BACKGROUND :
+                      BufferCapabilities.FlipContents.COPIED);
+            this.orig = orig;
         }
     }
 
@@ -3629,16 +3688,30 @@ public abstract class Component implements ImageObserver, MenuContainer,
             width = getWidth();
             height = getHeight();
 
-            if (drawBuffer == null) {
-                peer.createBuffers(numBuffers, caps);
-            } else {
+            if (drawBuffer != null) {
                 // dispose the existing backbuffers
                 drawBuffer = null;
                 drawVBuffer = null;
                 destroyBuffers();
                 // ... then recreate the backbuffers
-                peer.createBuffers(numBuffers, caps);
             }
+
+            if (caps instanceof ExtendedBufferCapabilities) {
+                ExtendedBufferCapabilities ebc =
+                    (ExtendedBufferCapabilities)caps;
+                if (ebc.getVSync() == VSYNC_ON) {
+                    // if this buffer strategy is not allowed to be v-synced,
+                    // change the caps that we pass to the peer but keep on
+                    // trying to create v-synced buffers;
+                    // do not throw IAE here in case it is disallowed, see
+                    // ExtendedBufferCapabilities for more info
+                    if (!VSyncedBSManager.vsyncAllowed(this)) {
+                        caps = ebc.derive(VSYNC_DEFAULT);
+                    }
+                }
+            }
+
+            peer.createBuffers(numBuffers, caps);
             updateInternalBuffers();
         }
 
@@ -3683,7 +3756,23 @@ public abstract class Component implements ImageObserver, MenuContainer,
          */
         protected void flip(BufferCapabilities.FlipContents flipAction) {
             if (peer != null) {
-                peer.flip(flipAction);
+                Image backBuffer = getBackBuffer();
+                if (backBuffer != null) {
+                    peer.flip(0, 0,
+                              backBuffer.getWidth(null),
+                              backBuffer.getHeight(null), flipAction);
+                }
+            } else {
+                throw new IllegalStateException(
+                    "Component must have a valid peer");
+            }
+        }
+
+        void flipSubRegion(int x1, int y1, int x2, int y2,
+                      BufferCapabilities.FlipContents flipAction)
+        {
+            if (peer != null) {
+                peer.flip(x1, y1, x2, y2, flipAction);
             } else {
                 throw new IllegalStateException(
                     "Component must have a valid peer");
@@ -3694,6 +3783,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
          * Destroys the buffers created through this object
          */
         protected void destroyBuffers() {
+            VSyncedBSManager.releaseVsync(this);
             if (peer != null) {
                 peer.destroyBuffers();
             } else {
@@ -3706,7 +3796,11 @@ public abstract class Component implements ImageObserver, MenuContainer,
          * @return the buffering capabilities of this strategy
          */
         public BufferCapabilities getCapabilities() {
-            return caps;
+            if (caps instanceof ProxyCapabilities) {
+                return ((ProxyCapabilities)caps).orig;
+            } else {
+                return caps;
+            }
         }
 
         /**
@@ -3791,6 +3885,14 @@ public abstract class Component implements ImageObserver, MenuContainer,
          */
         public void show() {
             flip(caps.getFlipContents());
+        }
+
+        /**
+         * Makes specified region of the the next available buffer visible
+         * by either blitting or flipping.
+         */
+        void showSubRegion(int x1, int y1, int x2, int y2) {
+            flipSubRegion(x1, y1, x2, y2, caps.getFlipContents());
         }
 
         /**
@@ -4063,8 +4165,6 @@ public abstract class Component implements ImageObserver, MenuContainer,
 
     /**
      * Private class to perform sub-region flipping.
-     * REMIND: this subclass currently punts on subregions and
-     * flips the entire buffer.
      */
     private class FlipSubRegionBufferStrategy extends FlipBufferStrategy
         implements SubRegionShowable
@@ -4078,14 +4178,13 @@ public abstract class Component implements ImageObserver, MenuContainer,
         }
 
         public void show(int x1, int y1, int x2, int y2) {
-            show();
+            showSubRegion(x1, y1, x2, y2);
         }
 
         // This is invoked by Swing on the toolkit thread.
-        public boolean validateAndShow(int x1, int y1, int x2, int y2) {
-            revalidate(false);
-            if (!contentsRestored() && !contentsLost()) {
-                show();
+        public boolean showIfNotLost(int x1, int y1, int x2, int y2) {
+            if (!contentsLost()) {
+                showSubRegion(x1, y1, x2, y2);
                 return !contentsLost();
             }
             return false;
@@ -4113,9 +4212,8 @@ public abstract class Component implements ImageObserver, MenuContainer,
         }
 
         // This method is called by Swing on the toolkit thread.
-        public boolean validateAndShow(int x1, int y1, int x2, int y2) {
-            revalidate(false);
-            if (!contentsRestored() && !contentsLost()) {
+        public boolean showIfNotLost(int x1, int y1, int x2, int y2) {
+            if (!contentsLost()) {
                 showSubRegion(x1, y1, x2, y2);
                 return !contentsLost();
             }
@@ -4602,7 +4700,8 @@ public abstract class Component implements ImageObserver, MenuContainer,
                                              e.isPopupTrigger(),
                                              e.getScrollType(),
                                              e.getScrollAmount(),
-                                             e.getWheelRotation());
+                                             e.getWheelRotation(),
+                                             e.getPreciseWheelRotation());
                 ((AWTEvent)e).copyPrivateDataInto(newMWE);
                 // When dispatching a wheel event to
                 // ancestor, there is no need trying to find descendant
@@ -6484,7 +6583,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
                 // will need some help.
                 Container parent = this.parent;
                 if (parent != null && parent.peer instanceof LightweightPeer) {
-                    nativeInLightFixer = new NativeInLightFixer();
+                    relocateComponent();
                 }
             }
             invalidate();
@@ -6568,12 +6667,8 @@ public abstract class Component implements ImageObserver, MenuContainer,
         }
 
         synchronized (getTreeLock()) {
-            if (isFocusOwner()
-                && KeyboardFocusManager.isAutoFocusTransferEnabled()
-                && !nextFocusHelper())
-            {
-                KeyboardFocusManager.getCurrentKeyboardFocusManager().
-                    clearGlobalFocusOwner();
+            if (isFocusOwner() && KeyboardFocusManager.isAutoFocusTransferEnabledFor(this)) {
+                transferFocus(true);
             }
 
             if (getContainer() != null && isAddNotifyComplete) {
@@ -6593,10 +6688,6 @@ public abstract class Component implements ImageObserver, MenuContainer,
                 if (inputContext != null) {
                     inputContext.removeNotify(this);
                 }
-            }
-
-            if (nativeInLightFixer != null) {
-                nativeInLightFixer.uninstall();
             }
 
             ComponentPeer p = peer;
@@ -6712,8 +6803,8 @@ public abstract class Component implements ImageObserver, MenuContainer,
 
         firePropertyChange("focusable", oldFocusable, focusable);
         if (oldFocusable && !focusable) {
-            if (isFocusOwner()) {
-                autoTransferFocus(true);
+            if (isFocusOwner() && KeyboardFocusManager.isAutoFocusTransferEnabled()) {
+                transferFocus(true);
             }
             KeyboardFocusManager.clearMostRecentFocusOwner(this);
         }
@@ -7367,69 +7458,6 @@ public abstract class Component implements ImageObserver, MenuContainer,
         }
     }
 
-    private void autoTransferFocus(boolean clearOnFailure) {
-        Component toTest = KeyboardFocusManager.
-            getCurrentKeyboardFocusManager().getFocusOwner();
-        if (toTest != this) {
-            if (toTest != null) {
-                toTest.autoTransferFocus(clearOnFailure);
-            }
-            return;
-        }
-
-        // Check if there are pending focus requests.  We shouldn't do
-        // auto-transfer if user has already took care of this
-        // component becoming ineligible to hold focus.
-        if (!KeyboardFocusManager.isAutoFocusTransferEnabled()) {
-            return;
-        }
-
-        // the following code will execute only if this Component is the focus
-        // owner
-
-        if (!(isDisplayable() && isVisible() && isEnabled() && isFocusable())) {
-            doAutoTransfer(clearOnFailure);
-            return;
-        }
-
-        toTest = getParent();
-
-        while (toTest != null && !(toTest instanceof Window)) {
-            if (!(toTest.isDisplayable() && toTest.isVisible() &&
-                  (toTest.isEnabled() || toTest.isLightweight()))) {
-                doAutoTransfer(clearOnFailure);
-                return;
-            }
-            toTest = toTest.getParent();
-        }
-    }
-    private void doAutoTransfer(boolean clearOnFailure) {
-        if (focusLog.isLoggable(Level.FINER)) {
-            focusLog.log(Level.FINER, "this = " + this + ", clearOnFailure = " + clearOnFailure);
-        }
-        if (clearOnFailure) {
-            if (!nextFocusHelper()) {
-                if (focusLog.isLoggable(Level.FINER)) {
-                    focusLog.log(Level.FINER, "clear global focus owner");
-                }
-                KeyboardFocusManager.getCurrentKeyboardFocusManager().
-                    clearGlobalFocusOwner();
-            }
-        } else {
-            transferFocus();
-        }
-    }
-
-    /**
-     * Transfers the focus to the next component, as though this Component were
-     * the focus owner.
-     * @see       #requestFocus()
-     * @since     JDK1.1
-     */
-    public void transferFocus() {
-        nextFocus();
-    }
-
     /**
      * Returns the Container which is the focus cycle root of this Component's
      * focus traversal cycle. Each focus traversal cycle has only a single
@@ -7469,31 +7497,51 @@ public abstract class Component implements ImageObserver, MenuContainer,
         return (rootAncestor == container);
     }
 
+    Container getTraversalRoot() {
+        return getFocusCycleRootAncestor();
+    }
+
+    /**
+     * Transfers the focus to the next component, as though this Component were
+     * the focus owner.
+     * @see       #requestFocus()
+     * @since     JDK1.1
+     */
+    public void transferFocus() {
+        nextFocus();
+    }
+
     /**
      * @deprecated As of JDK version 1.1,
      * replaced by transferFocus().
      */
     @Deprecated
     public void nextFocus() {
-        nextFocusHelper();
+        transferFocus(false);
     }
 
-    private boolean nextFocusHelper() {
-        Component toFocus = preNextFocusHelper();
+    boolean transferFocus(boolean clearOnFailure) {
         if (focusLog.isLoggable(Level.FINER)) {
-            focusLog.log(Level.FINER, "toFocus = " + toFocus);
+            focusLog.finer("clearOnFailure = " + clearOnFailure);
         }
-        if (isFocusOwner() && toFocus == this) {
-            return false;
+        Component toFocus = getNextFocusCandidate();
+        boolean res = false;
+        if (toFocus != null && !toFocus.isFocusOwner() && toFocus != this) {
+            res = toFocus.requestFocusInWindow(CausedFocusEvent.Cause.TRAVERSAL_FORWARD);
         }
-        return postNextFocusHelper(toFocus, CausedFocusEvent.Cause.TRAVERSAL_FORWARD);
+        if (clearOnFailure && !res) {
+            if (focusLog.isLoggable(Level.FINER)) {
+                focusLog.finer("clear global focus owner");
+            }
+            KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
+        }
+        if (focusLog.isLoggable(Level.FINER)) {
+            focusLog.finer("returning result: " + res);
+        }
+        return res;
     }
 
-    Container getTraversalRoot() {
-        return getFocusCycleRootAncestor();
-    }
-
-    final Component preNextFocusHelper() {
+    final Component getNextFocusCandidate() {
         Container rootAncestor = getTraversalRoot();
         Component comp = this;
         while (rootAncestor != null &&
@@ -7505,18 +7553,19 @@ public abstract class Component implements ImageObserver, MenuContainer,
             rootAncestor = comp.getFocusCycleRootAncestor();
         }
         if (focusLog.isLoggable(Level.FINER)) {
-            focusLog.log(Level.FINER, "comp = " + comp + ", root = " + rootAncestor);
+            focusLog.finer("comp = " + comp + ", root = " + rootAncestor);
         }
+        Component candidate = null;
         if (rootAncestor != null) {
             FocusTraversalPolicy policy = rootAncestor.getFocusTraversalPolicy();
             Component toFocus = policy.getComponentAfter(rootAncestor, comp);
             if (focusLog.isLoggable(Level.FINER)) {
-                focusLog.log(Level.FINER, "component after is " + toFocus);
+                focusLog.finer("component after is " + toFocus);
             }
             if (toFocus == null) {
                 toFocus = policy.getDefaultComponent(rootAncestor);
                 if (focusLog.isLoggable(Level.FINER)) {
-                    focusLog.log(Level.FINER, "default component is " + toFocus);
+                    focusLog.finer("default component is " + toFocus);
                 }
             }
             if (toFocus == null) {
@@ -7525,23 +7574,12 @@ public abstract class Component implements ImageObserver, MenuContainer,
                     toFocus = applet;
                 }
             }
-            return toFocus;
+            candidate = toFocus;
         }
-        return null;
-    }
-
-    static boolean postNextFocusHelper(Component toFocus, CausedFocusEvent.Cause cause) {
-        if (toFocus != null) {
-            if (focusLog.isLoggable(Level.FINER)) {
-                focusLog.log(Level.FINER, "Next component " + toFocus);
-            }
-            boolean res = toFocus.requestFocusInWindow(cause);
-            if (focusLog.isLoggable(Level.FINER)) {
-                focusLog.log(Level.FINER, "Request focus returned " + res);
-            }
-            return res;
+        if (focusLog.isLoggable(Level.FINER)) {
+            focusLog.finer("Focus transfer candidate: " + candidate);
         }
-        return false;
+        return candidate;
     }
 
     /**
@@ -7551,6 +7589,10 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * @since     1.4
      */
     public void transferFocusBackward() {
+        transferFocusBackward(false);
+    }
+
+    boolean transferFocusBackward(boolean clearOnFailure) {
         Container rootAncestor = getTraversalRoot();
         Component comp = this;
         while (rootAncestor != null &&
@@ -7561,6 +7603,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
             comp = rootAncestor;
             rootAncestor = comp.getFocusCycleRootAncestor();
         }
+        boolean res = false;
         if (rootAncestor != null) {
             FocusTraversalPolicy policy = rootAncestor.getFocusTraversalPolicy();
             Component toFocus = policy.getComponentBefore(rootAncestor, comp);
@@ -7568,9 +7611,19 @@ public abstract class Component implements ImageObserver, MenuContainer,
                 toFocus = policy.getDefaultComponent(rootAncestor);
             }
             if (toFocus != null) {
-                toFocus.requestFocusInWindow(CausedFocusEvent.Cause.TRAVERSAL_BACKWARD);
+                res = toFocus.requestFocusInWindow(CausedFocusEvent.Cause.TRAVERSAL_BACKWARD);
             }
         }
+        if (!res) {
+            if (focusLog.isLoggable(Level.FINER)) {
+                focusLog.finer("clear global focus owner");
+            }
+            KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
+        }
+        if (focusLog.isLoggable(Level.FINER)) {
+            focusLog.finer("returning result: " + res);
+        }
+        return res;
     }
 
     /**
@@ -7643,6 +7696,20 @@ public abstract class Component implements ImageObserver, MenuContainer,
      */
     public boolean isFocusOwner() {
         return hasFocus();
+    }
+
+    /*
+     * Used to disallow auto-focus-transfer on disposal of the focus owner
+     * in the process of disposing its parent container.
+     */
+    private boolean autoFocusTransferOnDisposal = true;
+
+    void setAutoFocusTransferOnDisposal(boolean value) {
+        autoFocusTransferOnDisposal = value;
+    }
+
+    boolean isAutoFocusTransferOnDisposal() {
+        return autoFocusTransferOnDisposal;
     }
 
     /**
@@ -7836,15 +7903,17 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * @see #getPropertyChangeListeners
      * @see #addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener)
      */
-    public synchronized void addPropertyChangeListener(
+    public void addPropertyChangeListener(
                                                        PropertyChangeListener listener) {
-        if (listener == null) {
-            return;
+        synchronized (getChangeSupportLock()) {
+            if (listener == null) {
+                return;
+            }
+            if (changeSupport == null) {
+                changeSupport = new PropertyChangeSupport(this);
+            }
+            changeSupport.addPropertyChangeListener(listener);
         }
-        if (changeSupport == null) {
-            changeSupport = new PropertyChangeSupport(this);
-        }
-        changeSupport.addPropertyChangeListener(listener);
     }
 
     /**
@@ -7860,12 +7929,14 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * @see #getPropertyChangeListeners
      * @see #removePropertyChangeListener(java.lang.String,java.beans.PropertyChangeListener)
      */
-    public synchronized void removePropertyChangeListener(
+    public void removePropertyChangeListener(
                                                           PropertyChangeListener listener) {
-        if (listener == null || changeSupport == null) {
-            return;
+        synchronized (getChangeSupportLock()) {
+            if (listener == null || changeSupport == null) {
+                return;
+            }
+            changeSupport.removePropertyChangeListener(listener);
         }
-        changeSupport.removePropertyChangeListener(listener);
     }
 
     /**
@@ -7882,11 +7953,13 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * @see      java.beans.PropertyChangeSupport#getPropertyChangeListeners
      * @since    1.4
      */
-    public synchronized PropertyChangeListener[] getPropertyChangeListeners() {
-        if (changeSupport == null) {
-            return new PropertyChangeListener[0];
+    public PropertyChangeListener[] getPropertyChangeListeners() {
+        synchronized (getChangeSupportLock()) {
+            if (changeSupport == null) {
+                return new PropertyChangeListener[0];
+            }
+            return changeSupport.getPropertyChangeListeners();
         }
-        return changeSupport.getPropertyChangeListeners();
     }
 
     /**
@@ -7920,16 +7993,18 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * @see #getPropertyChangeListeners(java.lang.String)
      * @see #addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener)
      */
-    public synchronized void addPropertyChangeListener(
+    public void addPropertyChangeListener(
                                                        String propertyName,
                                                        PropertyChangeListener listener) {
-        if (listener == null) {
-            return;
+        synchronized (getChangeSupportLock()) {
+            if (listener == null) {
+                return;
+            }
+            if (changeSupport == null) {
+                changeSupport = new PropertyChangeSupport(this);
+            }
+            changeSupport.addPropertyChangeListener(propertyName, listener);
         }
-        if (changeSupport == null) {
-            changeSupport = new PropertyChangeSupport(this);
-        }
-        changeSupport.addPropertyChangeListener(propertyName, listener);
     }
 
     /**
@@ -7948,13 +8023,15 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * @see #getPropertyChangeListeners(java.lang.String)
      * @see #removePropertyChangeListener(java.beans.PropertyChangeListener)
      */
-    public synchronized void removePropertyChangeListener(
+    public void removePropertyChangeListener(
                                                           String propertyName,
                                                           PropertyChangeListener listener) {
-        if (listener == null || changeSupport == null) {
-            return;
+        synchronized (getChangeSupportLock()) {
+            if (listener == null || changeSupport == null) {
+                return;
+            }
+            changeSupport.removePropertyChangeListener(propertyName, listener);
         }
-        changeSupport.removePropertyChangeListener(propertyName, listener);
     }
 
     /**
@@ -7971,12 +8048,14 @@ public abstract class Component implements ImageObserver, MenuContainer,
      * @see #getPropertyChangeListeners
      * @since 1.4
      */
-    public synchronized PropertyChangeListener[] getPropertyChangeListeners(
+    public PropertyChangeListener[] getPropertyChangeListeners(
                                                                             String propertyName) {
-        if (changeSupport == null) {
-            return new PropertyChangeListener[0];
+        synchronized (getChangeSupportLock()) {
+            if (changeSupport == null) {
+                return new PropertyChangeListener[0];
+            }
+            return changeSupport.getPropertyChangeListeners(propertyName);
         }
-        return changeSupport.getPropertyChangeListeners(propertyName);
     }
 
     /**
@@ -7991,7 +8070,10 @@ public abstract class Component implements ImageObserver, MenuContainer,
      */
     protected void firePropertyChange(String propertyName,
                                       Object oldValue, Object newValue) {
-        PropertyChangeSupport changeSupport = this.changeSupport;
+        PropertyChangeSupport changeSupport;
+        synchronized (getChangeSupportLock()) {
+            changeSupport = this.changeSupport;
+        }
         if (changeSupport == null ||
             (oldValue != null && newValue != null && oldValue.equals(newValue))) {
             return;
@@ -8291,6 +8373,8 @@ public abstract class Component implements ImageObserver, MenuContainer,
     private void readObject(ObjectInputStream s)
       throws ClassNotFoundException, IOException
     {
+        changeSupportLock = new Object();
+
         s.defaultReadObject();
 
         appContext = AppContext.getAppContext();
@@ -8491,8 +8575,6 @@ public abstract class Component implements ImageObserver, MenuContainer,
         setComponentOrientation(orientation);
     }
 
-    transient NativeInLightFixer nativeInLightFixer;
-
     /**
      * Checks that this component meets the prerequesites to be focus owner:
      * - it is enabled, visible, focusable
@@ -8518,188 +8600,25 @@ public abstract class Component implements ImageObserver, MenuContainer,
     }
 
     /**
-     * This odd class is to help out a native component that has been
-     * embedded in a lightweight component.  Moving lightweight
-     * components around and changing their visibility is not seen
-     * by the native window system.  This is a feature for lightweights,
-     * but a problem for native components that depend upon the
-     * lightweights.  An instance of this class listens to the lightweight
-     * parents of an associated native component (the outer class).
-     *
-     * @author  Timothy Prinzing
+     * Fix the location of the HW component in a LW container hierarchy.
      */
-    final class NativeInLightFixer implements ComponentListener, ContainerListener {
-
-        NativeInLightFixer() {
-            lightParents = new Vector();
-            install(parent);
-        }
-
-        void install(Container parent) {
-            lightParents.clear();
-            Container p = parent;
-            boolean isLwParentsVisible = true;
-            // stash a reference to the components that are being observed so that
-            // we can reliably remove ourself as a listener later.
-            for (; p.peer instanceof LightweightPeer; p = p.parent) {
-
-                // register listeners and stash a reference
-                p.addComponentListener(this);
-                p.addContainerListener(this);
-                lightParents.addElement(p);
-                isLwParentsVisible &= p.isVisible();
+    final void relocateComponent() {
+        synchronized (getTreeLock()) {
+            if (peer == null) {
+                return;
             }
-            // register with the native host (native parent of associated native)
-            // to get notified if the top-level lightweight is removed.
-            nativeHost = p;
-            p.addContainerListener(this);
-
-            // kick start the fixup.  Since the event isn't looked at
-            // we can simulate movement notification.
-            componentMoved(null);
-            if (!isLwParentsVisible) {
-                synchronized (getTreeLock()) {
-                    if (peer != null) {
-                        peer.hide();
-                    }
-                }
-            }
-        }
-
-        void uninstall() {
-            if (nativeHost != null) {
-                removeReferences();
-            }
-        }
-
-        // --- ComponentListener -------------------------------------------
-
-        /**
-         * Invoked when one of the lightweight parents has been resized.
-         * This doesn't change the position of the native child so it
-         * is ignored.
-         */
-        public void componentResized(ComponentEvent e) {
-        }
-
-        /**
-         * Invoked when one of the lightweight parents has been moved.
-         * The native peer must be told of the new position which is
-         * relative to the native container that is hosting the
-         * lightweight components.
-         */
-        public void componentMoved(ComponentEvent e) {
-            synchronized (getTreeLock()) {
-                int nativeX = x;
-                int nativeY = y;
-                for(Component c = parent; (c != null) &&
-                        (c.peer instanceof LightweightPeer);
-                    c = c.parent) {
-
-                    nativeX += c.x;
-                    nativeY += c.y;
-                }
-                if (peer != null) {
-                    peer.setBounds(nativeX, nativeY, width, height,
-                                   ComponentPeer.SET_LOCATION);
-                }
-            }
-        }
-
-        /**
-         * Invoked when a lightweight parent component has been
-         * shown.  The associated native component must also be
-         * shown if it hasn't had an overriding hide done on it.
-         */
-        public void componentShown(ComponentEvent e) {
-            if (shouldShow()) {
-                synchronized (getTreeLock()) {
-                    if (peer != null) {
-                        peer.show();
-                    }
-                }
-            }
-        }
-
-        /**
-         * Invoked when one of the lightweight parents become visible.
-         * Returns true if component and all its lightweight
-         * parents are visible.
-         */
-        private boolean shouldShow() {
-            boolean isLwParentsVisible = visible;
-            for (int i = lightParents.size() - 1;
-                 i >= 0 && isLwParentsVisible;
-                 i--)
+            int nativeX = x;
+            int nativeY = y;
+            for (Component cont = getContainer();
+                    cont != null && cont.isLightweight();
+                    cont = cont.getContainer())
             {
-                isLwParentsVisible &=
-                    ((Container) lightParents.elementAt(i)).isVisible();
+                nativeX += cont.x;
+                nativeY += cont.y;
             }
-            return isLwParentsVisible;
+            peer.setBounds(nativeX, nativeY, width, height,
+                    ComponentPeer.SET_LOCATION);
         }
-
-        /**
-         * Invoked when component has been hidden.
-         */
-        public void componentHidden(ComponentEvent e) {
-            if (visible) {
-                synchronized (getTreeLock()) {
-                    if (peer != null) {
-                        peer.hide();
-                    }
-                }
-            }
-        }
-
-        // --- ContainerListener ------------------------------------
-
-        /**
-         * Invoked when a component has been added to a lightweight
-         * parent.  This doesn't effect the native component.
-         */
-        public void componentAdded(ContainerEvent e) {
-        }
-
-        /**
-         * Invoked when a lightweight parent has been removed.
-         * This means the services of this listener are no longer
-         * required and it should remove all references (ie
-         * registered listeners).
-         */
-        public void componentRemoved(ContainerEvent e) {
-            Component c = e.getChild();
-            if (c == Component.this) {
-                removeReferences();
-            } else {
-                int n = lightParents.size();
-                for (int i = 0; i < n; i++) {
-                    Container p = (Container) lightParents.elementAt(i);
-                    if (p == c) {
-                        removeReferences();
-                        break;
-                    }
-                }
-            }
-        }
-
-        /**
-         * Removes references to this object so it can be
-         * garbage collected.
-         */
-        void removeReferences() {
-            int n = lightParents.size();
-            for (int i = 0; i < n; i++) {
-                Container c = (Container) lightParents.elementAt(i);
-                c.removeComponentListener(this);
-                c.removeContainerListener(this);
-            }
-            nativeHost.removeContainerListener(this);
-            lightParents.clear();
-            nativeHost = null;
-        }
-
-        Vector lightParents;
-        Container nativeHost;
     }
 
     /**
@@ -9453,6 +9372,19 @@ public abstract class Component implements ImageObserver, MenuContainer,
     // ************************** MIXING CODE *******************************
 
     /**
+     * Check whether we can trust the current bounds of the component.
+     * The return value of false indicates that the container of the
+     * component is invalid, and therefore needs to be layed out, which would
+     * probably mean changing the bounds of its children.
+     * Null-layout of the container or absence of the container mean
+     * the bounds of the component are final and can be trusted.
+     */
+    private boolean areBoundsValid() {
+        Container cont = getContainer();
+        return cont == null || cont.isValid() || cont.getLayout() == null;
+    }
+
+    /**
      * Applies the shape to the component
      * @param shape Shape to be applied to the component
      */
@@ -9475,7 +9407,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
                 // to modify the object outside of the mixing code.
                 this.compoundShape = shape;
 
-                if (isValid()) {
+                if (areBoundsValid()) {
                     Point compAbsolute = getLocationOnWindow();
 
                     if (mixingLog.isLoggable(Level.FINER)) {
@@ -9602,7 +9534,7 @@ public abstract class Component implements ImageObserver, MenuContainer,
 
     void applyCurrentShape() {
         checkTreeLock();
-        if (!isValid()) {
+        if (!areBoundsValid()) {
             return; // Because applyCompoundShape() ignores such components anyway
         }
         if (mixingLog.isLoggable(Level.FINE)) {

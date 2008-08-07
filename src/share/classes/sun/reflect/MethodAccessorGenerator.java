@@ -1,5 +1,5 @@
 /*
- * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -392,11 +392,12 @@ class MethodAccessorGenerator extends AccessorGenerator {
         // same namespace as the target class. Since the generated code
         // is privileged anyway, the protection domain probably doesn't
         // matter.
-        return (MagicAccessorImpl)
-            AccessController.doPrivileged(new PrivilegedAction() {
-                    public Object run() {
+        return AccessController.doPrivileged(
+            new PrivilegedAction<MagicAccessorImpl>() {
+                public MagicAccessorImpl run() {
                         try {
-                            return ClassDefiner.defineClass
+                        return (MagicAccessorImpl)
+                        ClassDefiner.defineClass
                                 (generatedName,
                                  bytes,
                                  0,

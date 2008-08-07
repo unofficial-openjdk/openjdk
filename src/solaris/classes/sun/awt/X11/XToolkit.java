@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2002-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,11 +25,9 @@
 package sun.awt.X11;
 
 import java.awt.*;
-import java.awt.event.*;
-import java.awt.peer.*;
-import java.beans.PropertyChangeListener;
-import sun.awt.*;
-import java.util.*;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
+import java.awt.datatransfer.Clipboard;
 import java.awt.dnd.DragSource;
 import java.awt.dnd.DragGestureListener;
 import java.awt.dnd.DragGestureEvent;
@@ -37,20 +35,26 @@ import java.awt.dnd.DragGestureRecognizer;
 import java.awt.dnd.MouseDragGestureRecognizer;
 import java.awt.dnd.InvalidDnDOperationException;
 import java.awt.dnd.peer.DragSourceContextPeer;
-import java.awt.image.*;
-import java.security.*;
 import java.awt.im.InputMethodHighlight;
 import java.awt.im.spi.InputMethodDescriptor;
-import java.awt.datatransfer.Clipboard;
+import java.awt.image.ColorModel;
+import java.awt.peer.*;
+import java.beans.PropertyChangeListener;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.LookAndFeel;
 import javax.swing.UIDefaults;
-import java.util.logging.*;
+import sun.awt.*;
 import sun.font.FontManager;
 import sun.misc.PerformanceLogger;
 import sun.print.PrintJob2D;
-import java.lang.reflect.*;
 
-public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
+public final class XToolkit extends UNIXToolkit implements Runnable {
     private static Logger log = Logger.getLogger("sun.awt.X11.XToolkit");
     private static Logger eventLog = Logger.getLogger("sun.awt.X11.event.XToolkit");
     private static final Logger timeoutTaskLog = Logger.getLogger("sun.awt.X11.timeoutTask.XToolkit");
@@ -164,7 +168,7 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
     static XErrorHandler IgnoreBadWindowHandler = new XErrorHandler() {
             public int handleError(long display, XErrorEvent err) {
                 XERROR_SAVE(err);
-                if (err.get_error_code() == BadWindow) {
+                if (err.get_error_code() == XConstants.BadWindow) {
                     return 0;
                 } else {
                     return SAVED_ERROR_HANDLER(display, err);
@@ -420,7 +424,7 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
         // Only our windows guaranteely generate MotionNotify, so we
         // should track enter/leave, to catch the moment when to
         // switch to XQueryPointer
-        if (e.get_type() == MotionNotify) {
+        if (e.get_type() == XConstants.MotionNotify) {
             XMotionEvent ev = e.get_xmotion();
             awtLock();
             try {
@@ -432,7 +436,7 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
             } finally {
                 awtUnlock();
             }
-        } else if (e.get_type() == LeaveNotify) {
+        } else if (e.get_type() == XConstants.LeaveNotify) {
             // Leave from our window
             awtLock();
             try {
@@ -440,7 +444,7 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
             } finally {
                 awtUnlock();
             }
-        } else if (e.get_type() == EnterNotify) {
+        } else if (e.get_type() == XConstants.EnterNotify) {
             // Entrance into our window
             XCrossingEvent ev = e.get_xcrossing();
             awtLock();
@@ -487,7 +491,7 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
         final XAnyEvent xany = ev.get_xany();
 
         if (windowToXWindow(xany.get_window()) != null &&
-             (ev.get_type() == MotionNotify || ev.get_type() == EnterNotify || ev.get_type() == LeaveNotify))
+             (ev.get_type() == XConstants.MotionNotify || ev.get_type() == XConstants.EnterNotify || ev.get_type() == XConstants.LeaveNotify))
         {
             processGlobalMotionEvent(ev);
         }
@@ -544,15 +548,15 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
                     // If no events are queued, waitForEvents() causes calls to
                     // awtUnlock(), awtJNI_ThreadYield, poll, awtLock(),
                     // so it spends most of its time in poll, without holding the lock.
-                    while ((XlibWrapper.XEventsQueued(getDisplay(), XlibWrapper.QueuedAfterReading) == 0) &&
-                           (XlibWrapper.XEventsQueued(getDisplay(), XlibWrapper.QueuedAfterFlush) == 0)) {
+                    while ((XlibWrapper.XEventsQueued(getDisplay(), XConstants.QueuedAfterReading) == 0) &&
+                           (XlibWrapper.XEventsQueued(getDisplay(), XConstants.QueuedAfterFlush) == 0)) {
                         callTimeoutTasks();
                         waitForEvents(getNextTaskTime());
                     }
                     XlibWrapper.XNextEvent(getDisplay(),ev.pData);
                 }
 
-                if (ev.get_type() != NoExpose) {
+                if (ev.get_type() != XConstants.NoExpose) {
                     eventNumber++;
                 }
 
@@ -577,13 +581,13 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
                         }
                     }
                 }
-                if( keyEventLog.isLoggable(Level.FINE) && (ev.get_type() == KeyPress || ev.get_type() == KeyRelease) ) {
+                if( keyEventLog.isLoggable(Level.FINE) && (ev.get_type() == XConstants.KeyPress || ev.get_type() == XConstants.KeyRelease) ) {
                     keyEventLog.fine("before XFilterEvent:"+ev);
                 }
                 if (XlibWrapper.XFilterEvent(ev.getPData(), w)) {
                     continue;
                 }
-                if( keyEventLog.isLoggable(Level.FINE) && (ev.get_type() == KeyPress || ev.get_type() == KeyRelease) ) {
+                if( keyEventLog.isLoggable(Level.FINE) && (ev.get_type() == XConstants.KeyPress || ev.get_type() == XConstants.KeyRelease) ) {
                     keyEventLog.fine("after XFilterEvent:"+ev); // IS THIS CORRECT?
                 }
 
@@ -745,7 +749,7 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
              * _NET_WM_STRUT[_PARTIAL] hints for iconified windows
              * are not included to the screen insets.
              */
-            if (XlibUtil.getWindowMapState(window) == XlibWrapper.IsUnmapped)
+            if (XlibUtil.getWindowMapState(window) == XConstants.IsUnmapped)
             {
                 continue;
             }
@@ -1284,7 +1288,7 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
     new XEventDispatcher() {
             public void dispatchEvent(XEvent ev) {
                 switch (ev.get_type()) {
-                  case PropertyNotify:
+                  case XConstants.PropertyNotify:
                       XPropertyEvent xpe = ev.get_xproperty();
 
                       awtLock();
@@ -1317,7 +1321,7 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
                 XlibWrapper.XChangeProperty(XToolkit.getDisplay(),
                                             XBaseWindow.getXAWTRootWindow().getWindow(),
                                             _XA_JAVA_TIME_PROPERTY_ATOM.getAtom(), XAtom.XA_ATOM, 32,
-                                            PropModeAppend,
+                                            XConstants.PropModeAppend,
                                             0, 0);
                 XlibWrapper.XFlush(XToolkit.getDisplay());
 
@@ -1534,8 +1538,8 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
         final int shiftLock = keysymToPrimaryKeycode(XKeySymConstants.XK_Shift_Lock);
         final int capsLock  = keysymToPrimaryKeycode(XKeySymConstants.XK_Caps_Lock);
 
-        final int modmask[] = { ShiftMask, LockMask, ControlMask, Mod1Mask,
-            Mod2Mask, Mod3Mask, Mod4Mask, Mod5Mask };
+        final int modmask[] = { XConstants.ShiftMask, XConstants.LockMask, XConstants.ControlMask, XConstants.Mod1Mask,
+            XConstants.Mod2Mask, XConstants.Mod3Mask, XConstants.Mod4Mask, XConstants.Mod5Mask };
 
         log.fine("In setupModifierMap");
         awtLock();
@@ -1871,9 +1875,7 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
     }
 
     public boolean isAlwaysOnTopSupported() {
-        Iterator iter = XWM.getWM().getProtocols(XLayerProtocol.class).iterator();
-        while (iter.hasNext()) {
-            XLayerProtocol proto = (XLayerProtocol)iter.next();
+        for (XLayerProtocol proto : XWM.getWM().getProtocols(XLayerProtocol.class)) {
             if (proto.supportsLayer(XLayerProtocol.LAYER_ALWAYS_ON_TOP)) {
                 return true;
             }
@@ -2044,7 +2046,7 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
         if (oops_waiter == null) {
             oops_waiter = new XEventDispatcher() {
                     public void dispatchEvent(XEvent e) {
-                        if (e.get_type() == SelectionNotify) {
+                        if (e.get_type() == XConstants.SelectionNotify) {
                             XSelectionEvent pe = e.get_xselection();
                             if (pe.get_property() == oops.getAtom()) {
                                 oops_updated = true;
@@ -2080,7 +2082,7 @@ public class XToolkit extends UNIXToolkit implements Runnable, XConstants {
             eventLog.log(Level.FINER, "WM_S0 selection owner {0}", new Object[] {XlibWrapper.XGetSelectionOwner(getDisplay(), atom.getAtom())});
             XlibWrapper.XConvertSelection(getDisplay(), atom.getAtom(),
                                           XAtom.get("VERSION").getAtom(), oops.getAtom(),
-                                          win.getWindow(), XlibWrapper.CurrentTime);
+                                          win.getWindow(), XConstants.CurrentTime);
             XSync();
 
 

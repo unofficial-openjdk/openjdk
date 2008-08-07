@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-# Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,6 @@
 #
 
 
-#%E
 #
 # Common setup for unit tests. Setups up the following variables:
 #
@@ -66,7 +65,7 @@ then
   echo "TESTSRC not set.  Test cannot execute.  Failed."
   exit 1
 fi
- 
+
 if [ "${TESTCLASSES}" = "" ]
 then
   echo "TESTCLASSES not set.  Test cannot execute.  Failed."

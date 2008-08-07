@@ -1,5 +1,5 @@
 /*
- * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2007-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -302,11 +302,6 @@ class PlainSocketImpl extends AbstractPlainSocketImpl
 
     int socketGetOption(int opt, Object iaContainerObj) throws SocketException {
         return impl.socketGetOption(opt, iaContainerObj);
-    }
-
-    int socketGetOption1(int opt, Object iaContainerObj, FileDescriptor fd)
-        throws SocketException {
-        return impl.socketGetOption1(opt, iaContainerObj, fd);
     }
 
     void socketSendUrgentData(int data) throws IOException {

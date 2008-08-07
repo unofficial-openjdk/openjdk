@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,8 @@
 
 package java.util.logging;
 
+import java.lang.management.PlatformManagedObject;
+
 /**
  * The management interface for the logging facility.
  *
@@ -43,14 +45,17 @@ package java.util.logging;
  *           <tt>java.util.logging:type=Logging</tt>}
  * </blockquote>
  *
- * @see java.lang.management.ManagementFactory
+ * It can be obtained by calling the
+ * {@link PlatformManagedObject#getObjectName} method.
+ *
+ * @see java.lang.management.ManagementFactory#getPlatformMXBeans(Class)
  *
  * @author  Ron Mann
  * @author  Mandy Chung
  * @since   1.5
  *
  */
-public interface LoggingMXBean {
+public interface LoggingMXBean extends PlatformManagedObject {
 
     /**
      * Returns the list of currently registered loggers. This method

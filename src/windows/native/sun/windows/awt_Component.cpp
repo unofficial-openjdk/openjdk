@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,7 +45,6 @@
 #include "awt_Unicode.h"
 #include "awt_Window.h"
 #include "awt_Win32GraphicsDevice.h"
-#include "ddrawUtils.h"
 #include "Hashtable.h"
 #include "ComCtl32Util.h"
 
@@ -165,6 +164,11 @@ struct SetRectangularShapeStruct {
     jint x1, x2, y1, y2;
     jobject region;
 };
+// Struct for _GetInsets function
+struct GetInsetsStruct {
+    jobject window;
+    RECT *insets;
+};
 /************************************************************************/
 
 //////////////////////////////////////////////////////////////////////////
@@ -226,12 +230,15 @@ BOOL AwtComponent::m_QueryNewPaletteCalled = FALSE;
 CriticalSection windowMoveLock;
 BOOL windowMoveLockHeld = FALSE;
 
+int AwtComponent::sm_wheelRotationAmount = 0;
+
 /************************************************************************
  * AwtComponent methods
  */
 
 AwtComponent::AwtComponent()
 {
+    m_mouseButtonClickAllowed = 0;
     m_callbacksEnabled = FALSE;
     m_hwnd = NULL;
 
@@ -244,7 +251,6 @@ AwtComponent::AwtComponent()
     m_nextControlID = 1;
     m_childList = NULL;
     m_myControlID = 0;
-    m_mouseDragState = 0;
     m_hdwp = NULL;
     m_validationNestCount = 0;
 
@@ -412,7 +418,10 @@ BOOL AwtComponent::IsFocusable() {
     jobject peer = GetPeer(env);
     jobject target = env->GetObjectField(peer, AwtObject::targetID);
     BOOL res = env->GetBooleanField(target, focusableID);
-    res &= GetContainer()->IsFocusableWindow();
+    AwtWindow *pCont = GetContainer();
+    if (pCont) {
+        res &= pCont->IsFocusableWindow();
+    }
     env->DeleteLocalRef(target);
     return res;
 }
@@ -901,8 +910,27 @@ void AwtComponent::Show()
 
 void AwtComponent::Hide()
 {
+    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+    jobject peer = GetPeer(env);
+    BOOL oldValue = sm_suppressFocusAndActivation;
     m_visible = false;
+
+    // On disposal the focus owner actually loses focus at the moment of hiding.
+    // So, focus change suppression (if requested) should be made here.
+    if (GetHWnd() == sm_focusOwner &&
+        !JNU_CallMethodByName(env, NULL, peer, "isAutoFocusTransferOnDisposal", "()Z").z)
+   {
+        sm_suppressFocusAndActivation = TRUE;
+        // The native system may autotransfer focus on hiding to the parent
+        // of the component. Nevertheless this focus change won't be posted
+        // to the Java level, we're better to avoid this. Anyway, after
+        // the disposal focus should be requested to the right component.
+        ::SetFocus(NULL);
+        sm_focusOwner = NULL;
+    }
     ::ShowWindow(GetHWnd(), SW_HIDE);
+
+    sm_suppressFocusAndActivation = oldValue;
 }
 
 BOOL
@@ -1915,25 +1943,6 @@ LRESULT AwtComponent::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
                                                   *((SIZE *)lParam));
           mr = mrConsume;
           break;
-      case WM_AWT_DD_CREATE_SURFACE:
-      {
-          return (LRESULT)WmDDCreateSurface((Win32SDOps*)wParam);
-      }
-      case WM_AWT_DD_ENTER_FULLSCREEN:
-      {
-          mr = WmDDEnterFullScreen((HMONITOR)wParam);
-          break;
-      }
-      case WM_AWT_DD_EXIT_FULLSCREEN:
-      {
-          mr = WmDDExitFullScreen((HMONITOR)wParam);
-          break;
-      }
-      case WM_AWT_DD_SET_DISPLAY_MODE:
-      {
-          mr = WmDDSetDisplayMode((HMONITOR)wParam, (DDrawDisplayMode*)lParam);
-          break;
-      }
       case WM_UNDOCUMENTED_CLICKMENUBAR:
       {
           if (::IsWindow(AwtWindow::GetModalBlocker(GetHWnd()))) {
@@ -2074,6 +2083,8 @@ MsgRouting AwtComponent::WmSetFocus(HWND hWndLostFocus)
         sm_realFocusOpposite = NULL;
     }
 
+    sm_wheelRotationAmount = 0;
+
     SendFocusEvent(java_awt_event_FocusEvent_FOCUS_GAINED, hWndLostFocus);
 
     return mrDoDefault;
@@ -2105,6 +2116,7 @@ MsgRouting AwtComponent::WmKillFocus(HWND hWndGotFocus)
     }
 
     sm_focusOwner = NULL;
+    sm_wheelRotationAmount = 0;
 
     SendFocusEvent(java_awt_event_FocusEvent_FOCUS_LOST, hWndGotFocus);
     return mrDoDefault;
@@ -2190,13 +2202,17 @@ AwtComponent::AwtSetFocus()
         DWORD fgProcessID;
         ::GetWindowThreadProcessId(fgWindow, &fgProcessID);
 
-        if (fgProcessID != ::GetCurrentProcessId()) {
-            // fix for 6458497.  we shouldn't request focus if it is out of our application.
+        if (fgProcessID != ::GetCurrentProcessId()
+            && !AwtToolkit::GetInstance().IsEmbedderProcessId(fgProcessID))
+        {
+            // fix for 6458497.  we shouldn't request focus if it is out of both
+            // our and embedder process.
             return FALSE;
         }
     }
 
-    AwtFrame *owner = GetContainer()->GetOwningFrameOrDialog();
+    AwtWindow *pCont = GetContainer();
+    AwtFrame *owner = pCont ? pCont->GetOwningFrameOrDialog() : NULL;
 
     if (owner == NULL) {
         ::SetFocus(hwnd);
@@ -2487,9 +2503,11 @@ MsgRouting AwtComponent::WmMouseDown(UINT flags, int x, int y, int button)
         lastClickX = x;
         lastClickY = y;
     }
+    /*
+     *Set appropriate bit of the mask on WM_MOUSE_DOWN message.
+     */
+    m_mouseButtonClickAllowed |= GetButtonMK(button);
     lastTime = now;
-    // it's needed only if WM_LBUTTONUP doesn't come for some reason
-    m_mouseDragState &= ~GetButtonMK(button);
 
     MSG msg;
     InitMessage(&msg, lastMessage, flags, MAKELPARAM(x, y), x, y);
@@ -2527,14 +2545,17 @@ MsgRouting AwtComponent::WmMouseUp(UINT flags, int x, int y, int button)
                    (GetButton(button) == java_awt_event_MouseEvent_BUTTON3 ?
                     TRUE : FALSE), GetButton(button), &msg);
     /*
-     * If no movement, then report a click following the button release
+     * If no movement, then report a click following the button release.
+     * When WM_MOUSEUP comes to a window without previous WM_MOUSEDOWN,
+     * spurous MOUSE_CLICK is about to happen. See 6430553.
      */
-    if (!(m_mouseDragState & GetButtonMK(button))) { // No up-button in the drag-state
+    if ((m_mouseButtonClickAllowed & GetButtonMK(button)) != 0) { //CLICK allowed
         SendMouseEvent(java_awt_event_MouseEvent_MOUSE_CLICKED,
                        TimeHelper::getMessageTimeUTC(), x, y, GetJavaModifiers(),
                        clickCount, JNI_FALSE, GetButton(button));
     }
-    m_mouseDragState &= ~GetButtonMK(button); // Exclude the up-button from the drag-state
+    // Exclude button from allowed to generate CLICK messages
+    m_mouseButtonClickAllowed &= ~GetButtonMK(button);
 
     if ((flags & ALL_MK_BUTTONS) == 0) {
         // only update if all buttons have been released
@@ -2578,7 +2599,8 @@ MsgRouting AwtComponent::WmMouseMove(UINT flags, int x, int y)
             SendMouseEvent(java_awt_event_MouseEvent_MOUSE_DRAGGED, TimeHelper::getMessageTimeUTC(), x, y,
                            GetJavaModifiers(), 0, JNI_FALSE,
                            java_awt_event_MouseEvent_NOBUTTON, &msg);
-            m_mouseDragState = flags;
+            //dragging means no more CLICKs until next WM_MOUSE_DOWN/WM_MOUSE_UP message sequence
+            m_mouseButtonClickAllowed = 0;
         } else {
             MSG msg;
             InitMessage(&msg, lastMessage, flags, MAKELPARAM(x, y), x, y);
@@ -2619,9 +2641,13 @@ MsgRouting AwtComponent::WmMouseWheel(UINT flags, int x, int y,
     BOOL result;
     UINT platformLines;
 
+    sm_wheelRotationAmount += wheelRotation;
+
     // AWT interprets wheel rotation differently than win32, so we need to
     // decode wheel amount.
-    jint newWheelRotation = wheelRotation / (-1 * WHEEL_DELTA);
+    jint roundedWheelRotation = sm_wheelRotationAmount / (-1 * WHEEL_DELTA);
+    jdouble preciseWheelRotation = (jdouble) wheelRotation / (-1 * WHEEL_DELTA);
+
     MSG msg;
 
     if (IS_WIN95 && !IS_WIN98) {
@@ -2654,7 +2680,9 @@ MsgRouting AwtComponent::WmMouseWheel(UINT flags, int x, int y,
 
     SendMouseWheelEvent(java_awt_event_MouseEvent_MOUSE_WHEEL, TimeHelper::getMessageTimeUTC(),
                         eventPt.x, eventPt.y, GetJavaModifiers(), 0, 0, scrollType,
-                        scrollLines, newWheelRotation, &msg);
+                        scrollLines, roundedWheelRotation, preciseWheelRotation, &msg);
+
+    sm_wheelRotationAmount %= WHEEL_DELTA;
     return mrConsume;
 }
 
@@ -3425,6 +3453,21 @@ UINT AwtComponent::WindowsKeyToJavaKey(UINT windowsKey, UINT modifiers)
     return java_awt_event_KeyEvent_VK_UNDEFINED;
 }
 
+BOOL AwtComponent::IsNavigationKey(UINT wkey) {
+    switch (wkey) {
+      case VK_END:
+      case VK_PRIOR:  // PageUp
+      case VK_NEXT:  // PageDown
+      case VK_HOME:
+      case VK_LEFT:
+      case VK_UP:
+      case VK_RIGHT:
+      case VK_DOWN:
+          return TRUE;
+    }
+    return FALSE;
+}
+
 // determine if a key is a numpad key (distinguishes the numpad
 // arrow keys from the non-numpad arrow keys, for example).
 BOOL AwtComponent::IsNumPadKey(UINT vkey, BOOL extended)
@@ -3524,7 +3567,10 @@ UINT AwtComponent::WindowsKeyToJavaChar(UINT wkey, UINT modifiers, TransOps ops)
         // fix for 4623376,4737679,4501485,4740906,4708221 (4173679/4122715)
         // Here we try to resolve a conflict with ::ToAsciiEx's translating
         // ALT+number key combinations. kdm@sarc.spb.su
-        keyboardState[VK_MENU] &= ~KEY_STATE_DOWN;
+        // yan: Do it for navigation keys only, otherwise some AltGr deadkeys fail.
+        if( IsNavigationKey(wkey) ) {
+            keyboardState[VK_MENU] &= ~KEY_STATE_DOWN;
+        }
 
         if (ctrlIsDown)
         {
@@ -4749,31 +4795,6 @@ jintArray AwtComponent::CreatePrintedPixels(SIZE &loc, SIZE &size) {
     return pixelArray;
 }
 
-BOOL AwtComponent::WmDDCreateSurface(Win32SDOps* wsdo) {
-    return DDCreateSurface(wsdo);
-}
-
-// This method is fully implemented in AwtWindow
-MsgRouting AwtComponent::WmDDEnterFullScreen(HMONITOR monitor) {
-    DASSERT(FALSE);
-    return mrDoDefault;
-}
-
-// This method is fully implemented in AwtWindow
-MsgRouting AwtComponent::WmDDExitFullScreen(HMONITOR monitor) {
-    DASSERT(FALSE);
-    return mrDoDefault;
-}
-
-MsgRouting AwtComponent::WmDDSetDisplayMode(HMONITOR monitor,
-    DDrawDisplayMode* pDisplayMode) {
-
-    DDSetDisplayMode(monitor, *pDisplayMode);
-
-    delete pDisplayMode;
-    return mrDoDefault;
-}
-
 void *
 AwtComponent::GetNativeFocusOwner() {
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
@@ -4986,8 +5007,8 @@ void
 AwtComponent::SendMouseWheelEvent(jint id, jlong when, jint x, jint y,
                                   jint modifiers, jint clickCount,
                                   jboolean popupTrigger, jint scrollType,
-                                  jint scrollAmount, jint wheelRotation,
-                                  MSG *pMsg)
+                                  jint scrollAmount, jint roundedWheelRotation,
+                                  jdouble preciseWheelRotation, MSG *pMsg)
 {
     /* Code based not so loosely on AwtComponent::SendMouseEvent */
     JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
@@ -5015,7 +5036,7 @@ AwtComponent::SendMouseWheelEvent(jint id, jlong when, jint x, jint y,
     if (mouseWheelEventConst == NULL) {
         mouseWheelEventConst =
             env->GetMethodID(mouseWheelEventCls, "<init>",
-                           "(Ljava/awt/Component;IJIIIIZIII)V");
+                           "(Ljava/awt/Component;IJIIIIIIZIIID)V");
         DASSERT(mouseWheelEventConst);
     }
     if (env->EnsureLocalCapacity(2) < 0) {
@@ -5023,14 +5044,16 @@ AwtComponent::SendMouseWheelEvent(jint id, jlong when, jint x, jint y,
     }
     jobject target = GetTarget(env);
     DTRACE_PRINTLN("creating MWE in JNI");
+
     jobject mouseWheelEvent = env->NewObject(mouseWheelEventCls,
                                              mouseWheelEventConst,
                                              target,
                                              id, when, modifiers,
                                              x+insets.left, y+insets.top,
+                                             0, 0,
                                              clickCount, popupTrigger,
                                              scrollType, scrollAmount,
-                                             wheelRotation);
+                                             roundedWheelRotation, preciseWheelRotation);
     if (safe_ExceptionOccurred(env)) {
         env->ExceptionDescribe();
         env->ExceptionClear();
@@ -5318,7 +5341,8 @@ void AwtComponent::SynthesizeMouseMessage(JNIEnv *env, jobject mouseEvent)
     MSG* msg = CreateMessage(message, wParam, MAKELPARAM(x, y), x, y);
     // If the window is not focusable but if this is a focusing
     // message we should skip it then and perform our own actions.
-    if (((AwtWindow*)GetContainer())->IsFocusableWindow() || !ActMouseMessage(msg)) {
+    AwtWindow *pCont = GetContainer();
+    if ((pCont && pCont->IsFocusableWindow()) || !ActMouseMessage(msg)) {
         PostHandleEventMessage(msg, TRUE);
     } else {
         delete msg;
@@ -5400,6 +5424,7 @@ void AwtComponent::UnlinkObjects()
     if (m_peerObject) {
         env->SetLongField(m_peerObject, AwtComponent::hwndID, 0);
         JNI_SET_PDATA(m_peerObject, static_cast<PDATA>(NULL));
+        JNI_SET_DESTROYED(m_peerObject);
         env->DeleteGlobalRef(m_peerObject);
         m_peerObject = NULL;
     }
@@ -5408,7 +5433,13 @@ void AwtComponent::UnlinkObjects()
 void AwtComponent::Enable(BOOL bEnable)
 {
     sm_suppressFocusAndActivation = TRUE;
+
+    if (bEnable && IsTopLevel()) {
+        // we should not enable blocked toplevels
+        bEnable = !::IsWindow(AwtWindow::GetModalBlocker(GetHWnd()));
+    }
     ::EnableWindow(GetHWnd(), bEnable);
+
     sm_suppressFocusAndActivation = FALSE;
     CriticalSection::Lock l(GetLock());
     VerifyState();
@@ -5717,6 +5748,10 @@ void AwtComponent::_NativeHandleEvent(void *param)
                 env->DeleteGlobalRef(event);
                 delete nhes;
                 return;
+
+            } else if (id == java_awt_event_KeyEvent_KEY_PRESSED) {
+                // Fix for 6637607: reset consuming
+                keyDownConsumed = FALSE;
             }
 
             /* Consume a KEY_TYPED event if a KEY_PRESSED had been, to support
@@ -5830,7 +5865,10 @@ void AwtComponent::_NativeHandleEvent(void *param)
                 AwtComponent* p = (AwtComponent*)pData;
                 // If the window is not focusable but if this is a focusing
                 // message we should skip it then and perform our own actions.
-                if (((AwtWindow*)p->GetContainer())->IsFocusableWindow() || !p->ActMouseMessage(&msg)) {
+                AwtWindow *pCont = (AwtWindow*)(p->GetContainer());
+                if ((pCont && pCont->IsFocusableWindow()) ||
+                    !p->ActMouseMessage(&msg))
+                {
                     // Create copy for local msg
                     MSG* pCopiedMsg = new MSG;
                     memmove(pCopiedMsg, &msg, sizeof(MSG));
@@ -6367,6 +6405,46 @@ AwtComponent_GetHWnd(JNIEnv *env, jlong pData)
         return (HWND)0;
     }
     return p->GetHWnd();
+}
+
+static void _GetInsets(void* param)
+{
+    JNIEnv *env = (JNIEnv *)JNU_GetEnv(jvm, JNI_VERSION_1_2);
+
+    GetInsetsStruct *gis = (GetInsetsStruct *)param;
+    jobject self = gis->window;
+
+    gis->insets->left = gis->insets->top =
+        gis->insets->right = gis->insets->bottom = 0;
+
+    PDATA pData;
+    JNI_CHECK_PEER_GOTO(self, ret);
+    AwtComponent *component = (AwtComponent *)pData;
+
+    component->GetInsets(gis->insets);
+
+  ret:
+    env->DeleteGlobalRef(self);
+    delete gis;
+}
+
+/**
+ * This method is called from the WGL pipeline when it needs to retrieve
+ * the insets associated with a ComponentPeer's C++ level object.
+ */
+void AwtComponent_GetInsets(JNIEnv *env, jobject peer, RECT *insets)
+{
+    TRY;
+
+    GetInsetsStruct *gis = new GetInsetsStruct;
+    gis->window = env->NewGlobalRef(peer);
+    gis->insets = insets;
+
+    AwtToolkit::GetInstance().InvokeFunction(_GetInsets, gis);
+    // global refs and mds are deleted in _UpdateWindow
+
+    CATCH_BAD_ALLOC;
+
 }
 
 JNIEXPORT void JNICALL

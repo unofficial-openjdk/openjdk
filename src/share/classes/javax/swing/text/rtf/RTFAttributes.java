@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2002 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -281,7 +281,7 @@ class RTFAttributes
         public AssertiveAttribute(int d, Object s, String r, int v)
         {
             super(d, s, r);
-            swingValue = new Integer(v);
+            swingValue = Integer.valueOf(v);
         }
 
         public boolean set(MutableAttributeSet target)
@@ -343,7 +343,7 @@ class RTFAttributes
         public NumericAttribute(int d, Object s,
                                 String r, int ds, int dr)
         {
-            this(d, s, r, new Integer(ds), dr, 1f);
+            this(d, s, r, Integer.valueOf(ds), dr, 1f);
         }
 
         public NumericAttribute(int d, Object s,
@@ -377,7 +377,7 @@ class RTFAttributes
             Number swingValue;
 
             if (scale == 1f)
-                swingValue = new Integer(parameter);
+                swingValue = Integer.valueOf(parameter);
             else
                 swingValue = new Float(parameter / scale);
             target.addAttribute(swingName, swingValue);

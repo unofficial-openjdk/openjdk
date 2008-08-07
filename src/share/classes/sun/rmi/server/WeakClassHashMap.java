@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -69,7 +69,7 @@ public abstract class WeakClassHashMap<V> {
         synchronized (valueCell) {
             V value = null;
             if (valueCell.ref != null) {
-                value = (V) valueCell.ref.get();
+                value = valueCell.ref.get();
             }
             if (value == null) {
                 value = computeValue(remoteClass);

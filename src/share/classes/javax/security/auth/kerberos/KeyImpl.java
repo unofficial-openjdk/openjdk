@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -66,7 +66,7 @@ class KeyImpl implements SecretKey, Destroyable, Serializable {
      */
     public KeyImpl(byte[] keyBytes,
                        int keyType) {
-        this.keyBytes = (byte[]) keyBytes.clone();
+        this.keyBytes = keyBytes.clone();
         this.keyType = keyType;
     }
 
@@ -151,7 +151,7 @@ class KeyImpl implements SecretKey, Destroyable, Serializable {
     public final byte[] getEncoded() {
         if (destroyed)
             throw new IllegalStateException("This key is no longer valid");
-        return (byte[])keyBytes.clone();
+        return keyBytes.clone();
     }
 
     public void destroy() throws DestroyFailedException {

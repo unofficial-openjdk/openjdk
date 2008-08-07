@@ -1,5 +1,5 @@
 /*
- * Copyright 1998-1999 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1998-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,7 +42,7 @@ public class SearchPath {
             dlist.add(st.nextToken());
         }
         pathString = searchPath;
-        pathArray = (String[])dlist.toArray(new String[dlist.size()]);
+        pathArray = dlist.toArray(new String[dlist.size()]);
     }
 
     public boolean isEmpty() {
@@ -54,7 +54,7 @@ public class SearchPath {
     }
 
     public String[] asArray() {
-        return (String[])pathArray.clone();
+        return pathArray.clone();
     }
 
     public File resolve(String relativeFileName) {
@@ -89,7 +89,7 @@ public class SearchPath {
                 }
             }
         }
-        return (String[])s.toArray(new String[s.size()]);
+        return s.toArray(new String[s.size()]);
     }
 
 }
