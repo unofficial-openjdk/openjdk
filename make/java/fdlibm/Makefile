@@ -47,8 +47,6 @@ ifeq ($(PLATFORM),windows)
   OPTIMIZATION_LEVEL = NONE
   OTHER_CFLAGS =
   CPPFLAGS_DBG += -DLOGGING
-  # Files built here do not compile with warning level 3 if warnings are fatal
-  COMPILER_WARNINGS_FATAL=false
 endif
 
 #
