@@ -77,15 +77,10 @@ FILES_export = \
 
 ifeq ($(PLATFORM), windows)
 
-  # Files built here do not compile with warning level 3 if warnings are fatal
-  COMPILER_WARNINGS_FATAL=false
-
   LDLIBS += user32.lib gdi32.lib $(OBJDIR)/../../../sun.awt/awt/$(OBJDIRNAME)/awt.lib  
 
   OTHER_CFLAGS += -DCC_NOEX
   OTHER_CXXFLAGS += -DCC_NOEX
-
-  FILES_export += sun/java2d/d3d/D3DTextRenderer.java
 
 else # PLATFORM unix
 
@@ -171,7 +166,6 @@ endif
 
 ifeq ($(PLATFORM), windows)
 vpath %.cpp   $(PLATFORM_SRC)/native/sun/windows
-vpath %.cpp   $(PLATFORM_SRC)/native/sun/java2d/d3d
 else # PLATFORM
 
 #
@@ -206,7 +200,6 @@ CPPFLAGS += -I$(SHARE_SRC)/native/$(PKGDIR) \
 	    -I$(TEMPDIR)/../../sun.awt/awt/CClassHeaders
 
 ifeq ($(PLATFORM), windows)
-CPPFLAGS += -I$(PLATFORM_SRC)/native/sun/windows \
-	    -I$(PLATFORM_SRC)/native/sun/java2d/d3d
+CPPFLAGS += -I$(PLATFORM_SRC)/native/sun/windows
 endif
 
