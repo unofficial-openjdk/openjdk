@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -215,12 +215,10 @@ public class JMXConnectorServerFactory {
                 JMXConnectorFactory.
                 getProviderIterator(JMXConnectorServerProvider.class, loader);
 
-        JMXConnectorServer connection = null;
         IOException exception = null;
         while (providers.hasNext()) {
             try {
-                connection = providers.next().newJMXConnectorServer(url, map, mbs);
-                return connection;
+                return providers.next().newJMXConnectorServer(url, map, mbs);
             } catch (JMXProviderException e) {
                 throw e;
             } catch (Exception e) {
@@ -230,7 +228,7 @@ public class JMXConnectorServerFactory {
                                  "] Service provider exception: " + e);
                 if (!(e instanceof MalformedURLException)) {
                     if (exception == null) {
-                        if (exception instanceof IOException) {
+                        if (e instanceof IOException) {
                             exception = (IOException) e;
                         } else {
                             exception = EnvHelp.initCause(

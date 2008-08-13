@@ -1,5 +1,5 @@
 /*
- * Portions Copyright 2004-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Portions Copyright 2004-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -887,10 +887,10 @@ public final class AttributeValues implements Cloneable {
 
         try {
             AffineTransform rtxi = rtx.createInverse();
+            double dx = tx.getTranslateX();
+            double dy = tx.getTranslateY();
             tx.preConcatenate(rtxi);
             if (andTranslation) {
-                double dx = tx.getTranslateX();
-                double dy = tx.getTranslateY();
                 if (dx != 0 || dy != 0) {
                     tx.setTransform(tx.getScaleX(), tx.getShearY(),
                                     tx.getShearX(), tx.getScaleY(), 0, 0);

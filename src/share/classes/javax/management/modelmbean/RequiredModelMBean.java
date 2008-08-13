@@ -1,5 +1,5 @@
 /*
- * Portions Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Portions Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
  * have any questions.
  */
 /*
- * @author    IBM Corp.
+ * @(#)author    IBM Corp.
  *
  * Copyright IBM Corp. 1999-2000.  All rights reserved.
  */
@@ -55,6 +55,7 @@ import javax.management.AttributeChangeNotificationFilter;
 import javax.management.AttributeList;
 import javax.management.AttributeNotFoundException;
 import javax.management.Descriptor;
+import javax.management.DynamicWrapperMBean;
 import javax.management.InstanceNotFoundException;
 import javax.management.InvalidAttributeValueException;
 import javax.management.ListenerNotFoundException;
@@ -115,7 +116,7 @@ import sun.reflect.misc.ReflectUtil;
  */
 
 public class RequiredModelMBean
-    implements ModelMBean, MBeanRegistration, NotificationEmitter {
+    implements ModelMBean, MBeanRegistration, NotificationEmitter, DynamicWrapperMBean {
 
     /*************************************/
     /* attributes                        */
@@ -132,6 +133,9 @@ public class RequiredModelMBean
     /* handle, name, or reference for instance on which the actual invoke
      * and operations will be executed */
     private Object managedResource = null;
+
+    /* true if getWrappedObject returns the wrapped resource */
+    private boolean visible;
 
     /* records the registering in MBeanServer */
     private boolean registered = false;
@@ -318,9 +322,13 @@ public class RequiredModelMBean
      *
      * @param mr Object that is the managed resource
      * @param mr_type The type of reference for the managed resource.
-     *     <br>Can be: "ObjectReference", "Handle", "IOR", "EJBHandle",
-     *         or "RMIReference".
-     *     <br>In this implementation only "ObjectReference" is supported.
+     *     <br>Can be: "ObjectReference", "VisibleObjectReference",
+     *         "Handle", "IOR", "EJBHandle", or "RMIReference".
+     *     <br>In this implementation only "ObjectReference" and
+     *         "VisibleObjectReference" are supported.  The two
+     *         types are equivalent except for the behavior of the
+     *         {@link #getWrappedObject()} and {@link #getWrappedClassLoader()}
+     *         methods.
      *
      * @exception MBeanException The initializer of the object has
      *            thrown an exception.
@@ -340,10 +348,11 @@ public class RequiredModelMBean
                 "setManagedResource(Object,String)","Entry");
         }
 
+        visible = "visibleObjectReference".equalsIgnoreCase(mr_type);
+
         // check that the mr_type is supported by this JMXAgent
         // only "objectReference" is supported
-        if ((mr_type == null) ||
-            (! mr_type.equalsIgnoreCase("objectReference"))) {
+        if (!"objectReference".equalsIgnoreCase(mr_type) && !visible) {
             if (MODELMBEAN_LOGGER.isLoggable(Level.FINER)) {
                 MODELMBEAN_LOGGER.logp(Level.FINER,
                         RequiredModelMBean.class.getName(),
@@ -366,6 +375,51 @@ public class RequiredModelMBean
                     RequiredModelMBean.class.getName(),
                 "setManagedResource(Object, String)", "Exit");
         }
+    }
+
+    /**
+     * <p>Get the managed resource for this Model MBean. For compatibility
+     * reasons, the managed resource is only returned if the resource type
+     * specified to {@link #setManagedResource setManagedResource} was {@code
+     * "visibleObjectReference"}. Otherwise, {@code this} is returned.</p>
+     *
+     * @return The value that was specified to {@link #setManagedResource
+     * setManagedResource}, if the resource type is {@code
+     * "visibleObjectReference"}. Otherwise, {@code this}.
+     */
+    public Object getWrappedObject() {
+        if (visible)
+            return managedResource;
+        else
+            return this;
+    }
+
+    /**
+     * <p>Get the ClassLoader of the managed resource for this Model MBean. For
+     * compatibility reasons, the ClassLoader of the managed resource is only
+     * returned if the resource type specified to {@link #setManagedResource
+     * setManagedResource} was {@code "visibleObjectReference"}. Otherwise,
+     * {@code this.getClass().getClassLoader()} is returned.</p>
+     *
+     * @return The ClassLoader of the value that was specified to
+     * {@link #setManagedResource setManagedResource}, if the resource
+     * type is {@code "visibleObjectReference"}. Otherwise, {@code
+     * this.getClass().getClassLoader()}.
+     */
+    public ClassLoader getWrappedClassLoader() {
+        return getWrappedObject().getClass().getClassLoader();
+    }
+
+    private static boolean isTrue(Descriptor d, String field) {
+        if (d == null)
+            return false;
+        Object x = d.getFieldValue(field);
+        if (x instanceof Boolean)
+            return (Boolean) x;
+        if (!(x instanceof String))
+            return false;
+        String s = (String) x;
+        return ("true".equalsIgnoreCase(s) || "T".equalsIgnoreCase(s));
     }
 
     /**
@@ -1425,9 +1479,7 @@ public class RequiredModelMBean
         }
 
         /* Check attributeDescriptor for getMethod */
-        ModelMBeanAttributeInfo attrInfo=null;
-        Descriptor attrDescr=null;
-        Object response = null;
+        Object response;
 
         try {
             if (modelMBeanInfo == null)
@@ -1435,14 +1487,14 @@ public class RequiredModelMBean
                       "getAttribute failed: ModelMBeanInfo not found for "+
                       attrName);
 
-            attrInfo = modelMBeanInfo.getAttribute(attrName);
+            ModelMBeanAttributeInfo attrInfo = modelMBeanInfo.getAttribute(attrName);
             Descriptor mmbDesc = modelMBeanInfo.getMBeanDescriptor();
 
             if (attrInfo == null)
                 throw new AttributeNotFoundException("getAttribute failed:"+
                       " ModelMBeanAttributeInfo not found for " + attrName);
 
-            attrDescr = attrInfo.getDescriptor();
+            Descriptor attrDescr = attrInfo.getDescriptor();
             if (attrDescr != null) {
                 if (!attrInfo.isReadable())
                     throw new AttributeNotFoundException(
@@ -1684,14 +1736,13 @@ public class RequiredModelMBean
             "getAttributes(String[])","Entry");
         }
 
-        AttributeList responseList = null;
         if (attrNames == null)
             throw new RuntimeOperationsException(new
                 IllegalArgumentException("attributeNames must not be null"),
                 "Exception occurred trying to get attributes of a "+
                 "RequiredModelMBean");
 
-        responseList = new AttributeList();
+        AttributeList responseList = new AttributeList();
         for (int i = 0; i < attrNames.length; i++) {
             try {
                 responseList.add(new Attribute(attrNames[i],
@@ -1699,8 +1750,8 @@ public class RequiredModelMBean
             } catch (Exception e) {
                 // eat exceptions because interface doesn't have an
                 // exception on it
-                if (MODELMBEAN_LOGGER.isLoggable(Level.WARNING)) {
-                    MODELMBEAN_LOGGER.logp(Level.WARNING,
+                if (MODELMBEAN_LOGGER.isLoggable(Level.FINER)) {
+                    MODELMBEAN_LOGGER.logp(Level.FINER,
                             RequiredModelMBean.class.getName(),
                         "getAttributes(String[])",
                             "Failed to get \"" + attrNames[i] + "\": ", e);
@@ -1833,8 +1884,6 @@ public class RequiredModelMBean
                 throw new AttributeNotFoundException("setAttribute failed: "
                                           + attrName + " is not writable ");
 
-            Object setResponse = null;
-
             String attrSetMethod = (String)
                 (attrDescr.getFieldValue("setMethod"));
             String attrGetMethod = (String)
@@ -1862,8 +1911,8 @@ public class RequiredModelMBean
                                             attrValue.getClass().getName() +
                                                            " received.");
                     } catch (ClassNotFoundException x) {
-                        if (MODELMBEAN_LOGGER.isLoggable(Level.WARNING)) {
-                            MODELMBEAN_LOGGER.logp(Level.WARNING,
+                        if (MODELMBEAN_LOGGER.isLoggable(Level.FINER)) {
+                            MODELMBEAN_LOGGER.logp(Level.FINER,
                                     RequiredModelMBean.class.getName(),
                                 "setAttribute(Attribute)","Class " +
                                     attrType + " for attribute "
@@ -1873,9 +1922,9 @@ public class RequiredModelMBean
                 }
                 updateDescriptor = true;
             } else {
-                setResponse = invoke(attrSetMethod,
-                                 (new Object[] {attrValue}),
-                                 (new String[] {attrType}) );
+                invoke(attrSetMethod,
+                       (new Object[] {attrValue}),
+                       (new String[] {attrType}) );
             }
 
             /* change cached value */
@@ -2023,8 +2072,6 @@ public class RequiredModelMBean
     private synchronized void writeToLog(String logFileName,
                                          String logEntry) throws Exception {
 
-        PrintStream logOut = null;
-        FileOutputStream fos = null;
         if (MODELMBEAN_LOGGER.isLoggable(Level.FINER)) {
             MODELMBEAN_LOGGER.logp(Level.FINER,
                     RequiredModelMBean.class.getName(),
@@ -2041,9 +2088,9 @@ public class RequiredModelMBean
             return;
         }
 
+        FileOutputStream fos = new FileOutputStream(logFileName, true);
         try {
-            fos = new FileOutputStream(logFileName, true);
-            logOut = new PrintStream(fos);
+            PrintStream logOut = new PrintStream(fos);
             logOut.println(logEntry);
             logOut.close();
             if (MODELMBEAN_LOGGER.isLoggable(Level.FINER)) {
@@ -2062,6 +2109,8 @@ public class RequiredModelMBean
                         logFileName);
             }
             throw e;
+        } finally {
+            fos.close();
         }
     }
 
@@ -2229,8 +2278,8 @@ public class RequiredModelMBean
                             ntfyObj.getMessage() + " Severity = " +
                             (String)ntfyDesc.getFieldValue("severity"));
                     } catch (Exception e) {
-                        if (MODELMBEAN_LOGGER.isLoggable(Level.WARNING)) {
-                            MODELMBEAN_LOGGER.logp(Level.WARNING,
+                        if (MODELMBEAN_LOGGER.isLoggable(Level.FINE)) {
+                            MODELMBEAN_LOGGER.logp(Level.FINE,
                                     RequiredModelMBean.class.getName(),
                                     "sendNotification(Notification)",
                                     "Failed to log " +
@@ -2623,8 +2672,8 @@ public class RequiredModelMBean
                            " Old value = " + oldv +
                            " New value = " + newv);
                     } catch (Exception e) {
-                        if (MODELMBEAN_LOGGER.isLoggable(Level.WARNING)) {
-                            MODELMBEAN_LOGGER.logp(Level.WARNING,
+                        if (MODELMBEAN_LOGGER.isLoggable(Level.FINE)) {
+                            MODELMBEAN_LOGGER.logp(Level.FINE,
                                     RequiredModelMBean.class.getName(),mth,
                                 "Failed to log " + ntfyObj.getType() +
                                     " notification: ", e);
@@ -2649,8 +2698,8 @@ public class RequiredModelMBean
                            " Old value = " + oldv +
                            " New value = " + newv);
                     } catch (Exception e) {
-                        if (MODELMBEAN_LOGGER.isLoggable(Level.WARNING)) {
-                            MODELMBEAN_LOGGER.logp(Level.WARNING,
+                        if (MODELMBEAN_LOGGER.isLoggable(Level.FINE)) {
+                            MODELMBEAN_LOGGER.logp(Level.FINE,
                                     RequiredModelMBean.class.getName(),mth,
                                 "Failed to log " + ntfyObj.getType() +
                                     " notification: ", e);

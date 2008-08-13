@@ -1,5 +1,5 @@
 /*
- * Portions Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Portions Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -85,7 +85,7 @@ public final class GlyphLayout {
     private GVData _gvdata;
 
     // cached glyph layout data for reuse
-    private static GlyphLayout cache;  // reusable
+    private static volatile GlyphLayout cache;  // reusable
 
     private LayoutEngineFactory _lef;  // set when get is called, unset when done is called
     private TextRecord _textRecord;    // the text we're working on, used by iterators

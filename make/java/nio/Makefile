@@ -1,5 +1,5 @@
 #
-# Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -134,7 +134,6 @@ ifeq ($(PLATFORM),windows)
      $(OBJDIR)/../../../java.lang/java/$(OBJDIRNAME)/FileDescriptor_md.obj
 endif
 ifeq ($(PLATFORM), linux)
-COMPILER_WARNINGS_FATAL=true
 OTHER_LDLIBS += -L$(LIBDIR)/$(LIBARCH) -ljava -lnet -lpthread -ldl
 endif
 ifeq ($(PLATFORM), solaris)
@@ -166,8 +165,8 @@ include $(BUILDDIR)/common/Library.gmk
 # Generate source files
 #
 
-SPP = spp.sh
-SPP_CMD = $(SH) $(SPP)
+SPP_JARFILE = $(BUILDTOOLJARDIR)/spp.jar
+SPP_CMD = $(BOOT_JAVA_CMD) -jar $(SPP_JARFILE)
 
 FILES_genout = $(FILES_gen:%.java=$(GENSRCDIR)/%.java)
 
@@ -183,7 +182,7 @@ CS_GEN=$(NIO_GEN)/charset
 SCH_GEN=$(SNIO_GEN)/ch
 SCS_GEN=$(SNIO_GEN)/cs
 
-sources: $(SPP) $(FILES_genout)
+sources: $(SPP_JARFILE) $(FILES_genout)
 
 #
 # Generated buffer classes
@@ -191,7 +190,7 @@ sources: $(SPP) $(FILES_genout)
 
 GEN_BUFFER_SH = genBuffer.sh
 
-GEN_BUFFER_CMD = SPP="$(SPP_CMD)" NAWK=$(NAWK) SED=$(SED) SH=$(SH) \
+GEN_BUFFER_CMD = SPP="$(SPP_CMD)" NAWK="$(NAWK)" SED="$(SED)" SH="$(SH)" \
                  $(SH) $(GEN_BUFFER_SH)
 
 # Public abstract buffer classes
@@ -582,7 +581,7 @@ $(BUF_GEN)/ByteBufferAsDoubleBuffer%L.java: $(BUF_SRC)/ByteBufferAs-X-Buffer.jav
 
 GEN_CODER_SH = genCoder.sh
 
-GEN_CODER_CMD = SPP="$(SPP_CMD)" SED=$(SED) NAWK=$(NAWK) SH=$(SH) $(SH) $(GEN_CODER_SH)
+GEN_CODER_CMD = SPP="$(SPP_CMD)" SED="$(SED)" NAWK="$(NAWK)" SH="$(SH)" $(SH) $(GEN_CODER_SH)
 
 $(CS_GEN)/CharsetDecoder.java: $(CS_SRC)/Charset-X-Coder.java $(GEN_CODER_SH)
 	$(prep-target)
@@ -602,7 +601,7 @@ $(CS_GEN)/CharsetEncoder.java: $(CS_SRC)/Charset-X-Coder.java $(GEN_CODER_SH)
 
 GEN_EX_SH = genExceptions.sh
  
-GEN_EX_CMD = NAWK=$(NAWK) SH=$(SH) $(SH) $(GEN_EX_SH)
+GEN_EX_CMD = NAWK="$(NAWK)" SH="$(SH)" $(SH) $(GEN_EX_SH)
 
 $(CH_GEN)/%Exception.java: genExceptions.sh $(CH_SRC)/exceptions
 	$(prep-target)
@@ -635,7 +634,7 @@ $(SCS_GEN)/StandardCharsets.java: genCharsetProvider.sh \
     $(HASHER_JARFILE) $(SCS_SRC)/standard-charsets
 	$(prep-target)
 	@$(RM) $@.temp
-	NAWK=$(NAWK) TEMPDIR=$(TEMPDIR) SH=$(SH) \
+	NAWK="$(NAWK)" TEMPDIR="$(TEMPDIR)" SH="$(SH)" \
 	  HASHER="$(BOOT_JAVA_CMD) -jar $(HASHER_JARFILE)" \
 	  $(SH) -e genCharsetProvider.sh $(SCS_SRC)/standard-charsets $(SCS_GEN)
 

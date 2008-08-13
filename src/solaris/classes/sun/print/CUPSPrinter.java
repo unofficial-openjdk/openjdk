@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -333,7 +333,7 @@ public class CUPSPrinter  {
                     AttributeClass.ATTRIBUTES_NATURAL_LANGUAGE,
                     new AttributeClass("requested-attributes",
                                        AttributeClass.TAG_KEYWORD,
-                                       "printer-name")
+                                       "printer-uri-supported")
                 };
 
                 if (IPPPrintService.writeIPPRequest(os,
@@ -354,7 +354,7 @@ public class CUPSPrinter  {
                     ArrayList printerNames = new ArrayList();
                     for (int i=0; i< responseMap.length; i++) {
                         AttributeClass attribClass = (AttributeClass)
-                            responseMap[i].get("printer-name");
+                            responseMap[i].get("printer-uri-supported");
 
                         if (attribClass != null) {
                             String nameStr = attribClass.getStringValue();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1192,10 +1192,6 @@ void ADD_SUFF(IntArgbPreDrawGlyphListAA)(SurfaceDataRasInfo * pRasInfo,
                 *(mlib_f32*)dst = vis_fpack16(dd);
                 dst++;
             }
-
-            ADD_SUFF(IntArgbToIntArgbPreConvert)(dstBase, dstBase, width, 1,
-                                                 pRasInfo, pRasInfo,
-                                                 pPrim, pCompInfo);
 
             PTR_ADD(dstBase, scan);
             pixels += rowBytes;

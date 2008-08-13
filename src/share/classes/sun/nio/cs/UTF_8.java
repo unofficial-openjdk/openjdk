@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -326,7 +326,7 @@ class UTF_8 extends Unicode
 
                         case 12: case 13:
                             // 6 bytes, 31 bits
-                            if (src.remaining() < 4)
+                            if (src.remaining() < 5)
                                 return CoderResult.UNDERFLOW;
                             if (!isContinuation(b2 = src.get()))
                                 return CoderResult.malformedForLength(1);

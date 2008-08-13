@@ -1,5 +1,5 @@
 /*
- * Portions Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Portions Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -944,7 +944,7 @@ public class ModelMBeanInfoSupport extends MBeanInfo implements ModelMBeanInfo {
      * @exception RuntimeOperationsException if Descriptor is invalid
      */
     private Descriptor validDescriptor(final Descriptor in) throws RuntimeOperationsException {
-        Descriptor clone = null;
+        Descriptor clone;
         if (in == null) {
             clone = new DescriptorSupport();
             MODELMBEAN_LOGGER.finer("Null Descriptor, creating new.");

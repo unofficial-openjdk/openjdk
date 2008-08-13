@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -100,12 +100,13 @@ class AndQueryExp extends QueryEval implements QueryExp {
    /**
     * Returns a string representation of this AndQueryExp
     */
-   public String toString() {
-     return "(" + exp1 + ") and (" + exp2 + ")";
-   }
+    @Override
+    public String toString() {
+        return "(" + exp1 + ") and (" + exp2 + ")";
+    }
 
-   @Override
-   String toQueryString() {
+    @Override
+    String toQueryString() {
         // Parentheses are only added if needed to disambiguate.
         return parens(exp1) + " and " + parens(exp2);
    }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -961,6 +961,7 @@ public class URLClassPath {
      * from a file URL that refers to a directory.
      */
     private static class FileLoader extends Loader {
+        /* Canonicalized File */
         private File dir;
 
         FileLoader(URL url) throws IOException {
@@ -970,7 +971,7 @@ public class URLClassPath {
             }
             String path = url.getFile().replace('/', File.separatorChar);
             path = ParseUtil.decode(path);
-            dir = new File(path);
+            dir = (new File(path)).getCanonicalFile();
         }
 
         /*
@@ -997,8 +998,19 @@ public class URLClassPath {
 
                 if (check)
                     URLClassPath.check(url);
-                final File file =
-                    new File(dir, name.replace('/', File.separatorChar));
+
+                final File file;
+                if (name.indexOf("..") != -1) {
+                    file = (new File(dir, name.replace('/', File.separatorChar)))
+                          .getCanonicalFile();
+                    if ( !((file.getPath()).startsWith(dir.getPath())) ) {
+                        /* outside of base dir */
+                        return null;
+                    }
+                } else {
+                    file = new File(dir, name.replace('/', File.separatorChar));
+                }
+
                 if (file.exists()) {
                     return new Resource() {
                         public String getName() { return name; };

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2002 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,8 @@
 
 typedef jushort Ushort555RgbxPixelType;
 typedef jushort Ushort555RgbxDataType;
+
+#define Ushort555RgbxIsOpaque 1
 
 #define Ushort555RgbxPixelStride        2
 

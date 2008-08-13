@@ -1,5 +1,5 @@
 #
-# Copyright 1995-2007 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 1995-2008 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -28,23 +28,11 @@ PACKAGE = java.awt
 PRODUCT = sun
 include $(BUILDDIR)/common/Defs.gmk
 
-# WARNING: Make sure the OPENJDK plugs are up-to-date, see make/common/internal/BinaryPlugs.gmk
 
 #
 # Files
 #
 AUTO_FILES_JAVA_DIRS = java/awt sun/awt/geom
-
-#
-# Specific to OPENJDK
-#
-ifdef OPENJDK
-
-build: import-binary-plug-awt-classes
-
-include $(BUILDDIR)/common/internal/BinaryPlugs.gmk
-
-endif
 
 build: properties cursors
 

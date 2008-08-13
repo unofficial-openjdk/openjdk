@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1999-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -240,14 +240,12 @@ class MLetParser {
                                 MLET_LOGGER.logp(Level.FINER,
                                         MLetParser.class.getName(),
                                         mth, requiresCodeWarning);
-                                atts = null;
                                 throw new IOException(requiresCodeWarning);
                             }
                             if (atts.get("archive") == null) {
                                 MLET_LOGGER.logp(Level.FINER,
                                         MLetParser.class.getName(),
                                         mth, requiresJarsWarning);
-                                atts = null;
                                 throw new IOException(requiresJarsWarning);
                             }
                         }
@@ -265,7 +263,7 @@ class MLetParser {
     public List<MLetContent> parseURL(String urlname) throws IOException {
         // Parse the document
         //
-        URL url = null;
+        URL url;
         if (urlname.indexOf(':') <= 1) {
             String userDir = System.getProperty("user.dir");
             String prot;

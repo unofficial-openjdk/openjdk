@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -231,10 +231,13 @@ public class MBeanServerFileAccessController
     private static Properties propertiesFromFile(String fname)
         throws IOException {
         FileInputStream fin = new FileInputStream(fname);
-        Properties p = new Properties();
-        p.load(fin);
-        fin.close();
-        return p;
+        try {
+            Properties p = new Properties();
+            p.load(fin);
+            return p;
+        } finally {
+            fin.close();
+        }
     }
 
     private void checkAccessLevel(String accessLevel) {
