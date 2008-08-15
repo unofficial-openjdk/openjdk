@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,14 +23,16 @@
 
 /**
  * @test
- * @bug 5045412 6627366
- * @compile -Xlint:serial -XDfailcomplete=java.io.Serializable Foo.java
+ * @bug 6718364
+ * @summary inference fails when a generic method is invoked with raw arguments
+ * @compile/ref=T6718364.out -XDstdout -XDrawDiagnostics -Xlint:unchecked T6718364.java
  */
+class T6718364 {
+    class X<T> {}
 
-/**
- * @test
- * @bug 5045412 6627366
- * @compile -Xlint:serial -XDfailcomplete=java.io.Serializable Foo.java Bar.java
- */
+    public <T> void m(X<T> x, T t) {}
 
-class Foo { }
+    public void test() {
+        m(new X<X<Integer>>(), new X());
+    }
+}

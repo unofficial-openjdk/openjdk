@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,16 +21,11 @@
  * have any questions.
  */
 
-/**
+/*
  * @test
- * @bug 5045412 6627366
- * @compile -Xlint:serial -XDfailcomplete=java.io.Serializable Foo.java
+ * @bug 6695838
+ * @summary javac does not detect cyclic inheritance involving static inner classes after import clause
+ * @author Maurizio Cimadamore
+ *
+ * @compile/fail a/FooInterface.java
  */
-
-/**
- * @test
- * @bug 5045412 6627366
- * @compile -Xlint:serial -XDfailcomplete=java.io.Serializable Foo.java Bar.java
- */
-
-class Foo { }
