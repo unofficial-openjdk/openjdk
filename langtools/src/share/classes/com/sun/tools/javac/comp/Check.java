@@ -63,6 +63,7 @@ public class Check {
     private final Target target;
     private final Source source;
     private final Types types;
+    private final JCDiagnostic.Factory diags;
     private final boolean skipAnnotations;
     private final TreeInfo treeinfo;
 
@@ -86,6 +87,7 @@ public class Check {
         syms = Symtab.instance(context);
         infer = Infer.instance(context);
         this.types = Types.instance(context);
+        diags = JCDiagnostic.Factory.instance(context);
         Options options = Options.instance(context);
         target = Target.instance(context);
         source = Source.instance(context);
@@ -343,7 +345,7 @@ public class Check {
         if (types.isAssignable(found, req, convertWarner(pos, found, req)))
             return found;
         if (found.tag <= DOUBLE && req.tag <= DOUBLE)
-            return typeError(pos, JCDiagnostic.fragment("possible.loss.of.precision"), found, req);
+            return typeError(pos, diags.fragment("possible.loss.of.precision"), found, req);
         if (found.isSuperBound()) {
             log.error(pos, "assignment.from.super-bound", found);
             return syms.errType;
@@ -352,7 +354,7 @@ public class Check {
             log.error(pos, "assignment.to.extends-bound", req);
             return syms.errType;
         }
-        return typeError(pos, JCDiagnostic.fragment("incompatible.types"), found, req);
+        return typeError(pos, diags.fragment("incompatible.types"), found, req);
     }
 
     /** Instantiate polymorphic type to some prototype, unless
@@ -380,7 +382,7 @@ public class Check {
                 } else {
                     JCDiagnostic d = ex.getDiagnostic();
                     return typeError(pos,
-                                     JCDiagnostic.fragment("incompatible.types" + (d!=null ? ".1" : ""), d),
+                                     diags.fragment("incompatible.types" + (d!=null ? ".1" : ""), d),
                                      t, pt);
                 }
             }
@@ -401,7 +403,7 @@ public class Check {
             return req;
         } else {
             return typeError(pos,
-                             JCDiagnostic.fragment("inconvertible.types"),
+                             diags.fragment("inconvertible.types"),
                              found, req);
         }
     }
@@ -422,9 +424,34 @@ public class Check {
      *  @param bs            The bound.
      */
     private void checkExtends(DiagnosticPosition pos, Type a, TypeVar bs) {
-        if (a.isUnbound()) {
-            return;
-        } else if (a.tag != WILDCARD) {
+        if (a.tag == TYPEVAR && ((TypeVar)a).isCaptured()) {
+            CapturedType ct = (CapturedType)a;
+            boolean ok;
+            if (ct.bound.isErroneous()) {//capture doesn't exist
+                ok = false;
+            }
+            else {
+                switch (ct.wildcard.kind) {
+                    case EXTENDS:
+                        ok = types.isCastable(bs.getUpperBound(),
+                                types.upperBound(a),
+                                Warner.noWarnings);
+                        break;
+                    case SUPER:
+                        ok = !types.notSoftSubtype(types.lowerBound(a),
+                                bs.getUpperBound());
+                        break;
+                    case UNBOUND:
+                        ok = true;
+                        break;
+                    default:
+                        throw new AssertionError("Invalid bound kind");
+                }
+            }
+            if (!ok)
+                log.error(pos, "not.within.bounds", a);
+        }
+        else {
             a = types.upperBound(a);
             for (List<Type> l = types.getBounds(bs); l.nonEmpty(); l = l.tail) {
                 if (!types.isSubtype(a, l.head)) {
@@ -432,12 +459,6 @@ public class Check {
                     return;
                 }
             }
-        } else if (a.isExtendsBound()) {
-            if (!types.isCastable(bs.getUpperBound(), types.upperBound(a), Warner.noWarnings))
-                log.error(pos, "not.within.bounds", a);
-        } else if (a.isSuperBound()) {
-            if (types.notSoftSubtype(types.lowerBound(a), bs.getUpperBound()))
-                log.error(pos, "not.within.bounds", a);
         }
     }
 
@@ -461,9 +482,9 @@ public class Check {
     Type checkClassType(DiagnosticPosition pos, Type t) {
         if (t.tag != CLASS && t.tag != ERROR)
             return typeTagError(pos,
-                                JCDiagnostic.fragment("type.req.class"),
+                                diags.fragment("type.req.class"),
                                 (t.tag == TYPEVAR)
-                                ? JCDiagnostic.fragment("type.parameter", t)
+                                ? diags.fragment("type.parameter", t)
                                 : t);
         else
             return t;
@@ -496,7 +517,7 @@ public class Check {
     Type checkReifiableReferenceType(DiagnosticPosition pos, Type t) {
         if (t.tag != CLASS && t.tag != ARRAY && t.tag != ERROR) {
             return typeTagError(pos,
-                                JCDiagnostic.fragment("type.req.class.array"),
+                                diags.fragment("type.req.class.array"),
                                 t);
         } else if (!types.isReifiable(t)) {
             log.error(pos, "illegal.generic.type.for.instof");
@@ -521,7 +542,7 @@ public class Check {
             return t;
         default:
             return typeTagError(pos,
-                                JCDiagnostic.fragment("type.req.ref"),
+                                diags.fragment("type.req.ref"),
                                 t);
         }
     }
@@ -541,7 +562,7 @@ public class Check {
             return t;
         default:
             return typeTagError(pos,
-                                JCDiagnostic.fragment("type.req.ref"),
+                                diags.fragment("type.req.ref"),
                                 t);
         }
     }
@@ -557,8 +578,8 @@ public class Check {
         if ((flags & set1) != 0 && (flags & set2) != 0) {
             log.error(pos,
                       "illegal.combination.of.modifiers",
-                      TreeInfo.flagNames(TreeInfo.firstFlag(flags & set1)),
-                      TreeInfo.flagNames(TreeInfo.firstFlag(flags & set2)));
+                      asFlagSet(TreeInfo.firstFlag(flags & set1)),
+                      asFlagSet(TreeInfo.firstFlag(flags & set2)));
             return false;
         } else
             return true;
@@ -651,7 +672,7 @@ public class Check {
             }
             else {
                 log.error(pos,
-                          "mod.not.allowed.here", TreeInfo.flagNames(illegal));
+                          "mod.not.allowed.here", asFlagSet(illegal));
             }
         }
         else if ((sym.kind == TYP ||
@@ -776,7 +797,7 @@ public class Check {
         public void visitTypeApply(JCTypeApply tree) {
             if (tree.type.tag == CLASS) {
                 List<Type> formals = tree.type.tsym.type.getTypeArguments();
-                List<Type> actuals = tree.type.getTypeArguments();
+                List<Type> actuals = types.capture(tree.type).getTypeArguments();
                 List<JCExpression> args = tree.arguments;
                 List<Type> forms = formals;
                 ListBuffer<TypeVar> tvars_buf = new ListBuffer<TypeVar>();
@@ -792,7 +813,7 @@ public class Check {
                     // bounds substed with actuals.
                     tvars_buf.append(types.substBound(((TypeVar)forms.head),
                                                       formals,
-                                                      Type.removeBounds(actuals)));
+                                                      actuals));
 
                     args = args.tail;
                     forms = forms.tail;
@@ -811,10 +832,11 @@ public class Check {
                 tvars = tvars_buf.toList();
                 while (args.nonEmpty() && tvars.nonEmpty()) {
                     checkExtends(args.head.pos(),
-                                 args.head.type,
+                                 actuals.head,
                                  tvars.head);
                     args = args.tail;
                     tvars = tvars.tail;
+                    actuals = actuals.tail;
                 }
 
                 // Check that this type is either fully parameterized, or
@@ -1003,20 +1025,12 @@ public class Check {
         }
     }
 
-    /** A string describing the access permission given by a flag set.
-     *  This always returns a space-separated list of Java Keywords.
-     */
-    private static String protectionString(long flags) {
-        long flags1 = flags & AccessFlags;
-        return (flags1 == 0) ? "package" : TreeInfo.flagNames(flags1);
-    }
-
     /** A customized "cannot override" error message.
      *  @param m      The overriding method.
      *  @param other  The overridden method.
      *  @return       An internationalized string.
      */
-    static Object cannotOverride(MethodSymbol m, MethodSymbol other) {
+    Object cannotOverride(MethodSymbol m, MethodSymbol other) {
         String key;
         if ((other.owner.flags() & INTERFACE) == 0)
             key = "cant.override";
@@ -1024,7 +1038,7 @@ public class Check {
             key = "cant.implement";
         else
             key = "clashes.with";
-        return JCDiagnostic.fragment(key, m, m.location(), other, other.location());
+        return diags.fragment(key, m, m.location(), other, other.location());
     }
 
     /** A customized "override" warning message.
@@ -1032,7 +1046,7 @@ public class Check {
      *  @param other  The overridden method.
      *  @return       An internationalized string.
      */
-    static Object uncheckedOverrides(MethodSymbol m, MethodSymbol other) {
+    Object uncheckedOverrides(MethodSymbol m, MethodSymbol other) {
         String key;
         if ((other.owner.flags() & INTERFACE) == 0)
             key = "unchecked.override";
@@ -1040,7 +1054,7 @@ public class Check {
             key = "unchecked.implement";
         else
             key = "unchecked.clash.with";
-        return JCDiagnostic.fragment(key, m, m.location(), other, other.location());
+        return diags.fragment(key, m, m.location(), other, other.location());
     }
 
     /** A customized "override" warning message.
@@ -1048,7 +1062,7 @@ public class Check {
      *  @param other  The overridden method.
      *  @return       An internationalized string.
      */
-    static Object varargsOverrides(MethodSymbol m, MethodSymbol other) {
+    Object varargsOverrides(MethodSymbol m, MethodSymbol other) {
         String key;
         if ((other.owner.flags() & INTERFACE) == 0)
             key = "varargs.override";
@@ -1056,7 +1070,7 @@ public class Check {
             key = "varargs.implement";
         else
             key = "varargs.clash.with";
-        return JCDiagnostic.fragment(key, m, m.location(), other, other.location());
+        return diags.fragment(key, m, m.location(), other, other.location());
     }
 
     /** Check that this method conforms with overridden method 'other'.
@@ -1104,7 +1118,7 @@ public class Check {
                  (other.flags() & STATIC) != 0) {
             log.error(TreeInfo.diagnosticPositionFor(m, tree), "override.meth",
                       cannotOverride(m, other),
-                      TreeInfo.flagNames(other.flags() & (FINAL | STATIC)));
+                      asFlagSet(other.flags() & (FINAL | STATIC)));
             return;
         }
 
@@ -1118,9 +1132,10 @@ public class Check {
                  protection(m.flags()) > protection(other.flags())) {
             log.error(TreeInfo.diagnosticPositionFor(m, tree), "override.weaker.access",
                       cannotOverride(m, other),
-                      protectionString(other.flags()));
+                      other.flags() == 0 ?
+                          Flag.PACKAGE :
+                          asFlagSet(other.flags() & AccessFlags));
             return;
-
         }
 
         Type mt = types.memberType(origin.type, m);
@@ -1144,7 +1159,7 @@ public class Check {
                 // allow limited interoperability with covariant returns
             } else {
                 typeError(TreeInfo.diagnosticPositionFor(m, tree),
-                          JCDiagnostic.fragment("override.incompatible.ret",
+                          diags.fragment("override.incompatible.ret",
                                          cannotOverride(m, other)),
                           mtres, otres);
                 return;
@@ -1152,7 +1167,7 @@ public class Check {
         } else if (overrideWarner.warned) {
             warnUnchecked(TreeInfo.diagnosticPositionFor(m, tree),
                           "prob.found.req",
-                          JCDiagnostic.fragment("override.unchecked.ret",
+                          diags.fragment("override.unchecked.ret",
                                               uncheckedOverrides(m, other)),
                           mtres, otres);
         }
@@ -2015,7 +2030,7 @@ public class Check {
             log.error(pos,
                       "operator.cant.be.applied",
                       treeinfo.operatorName(tag),
-                      left + "," + right);
+                      List.of(left, right));
         }
         return operator.opcode;
     }
@@ -2157,7 +2172,7 @@ public class Check {
             boolean warned = this.warned;
             super.warnUnchecked();
             if (warned) return; // suppress redundant diagnostics
-            Object problem = JCDiagnostic.fragment(key);
+            Object problem = diags.fragment(key);
             Check.this.warnUnchecked(pos(), "prob.found.req", problem, found, expected);
         }
     }
