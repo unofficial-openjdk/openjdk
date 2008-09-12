@@ -202,7 +202,7 @@ public class X11GraphicsEnvironment
     private static native int checkShmExt();
 
     private static  native String getDisplayString();
-    private static Boolean isDisplayLocal;
+    private Boolean isDisplayLocal;
 
     /**
      * This should only be called from the static initializer, so no need for
@@ -227,7 +227,8 @@ public class X11GraphicsEnvironment
         return getScreenDevices()[getDefaultScreenNum()];
     }
 
-    public static boolean isDisplayLocal() {
+    @Override
+    public boolean isDisplayLocal() {
         if (isDisplayLocal == null) {
             SunToolkit.awtLock();
             try {
