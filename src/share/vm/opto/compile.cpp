@@ -2091,7 +2091,7 @@ static void final_graph_reshaping_impl( Node *n, Final_Reshape_Counts &fpu ) {
         new_in2 = in2->in(1);
       } else if (in2->Opcode() == Op_ConP) {
         const Type* t = in2->bottom_type();
-        if (t == TypePtr::NULL_PTR) {
+        if (t == TypePtr::NULL_PTR && UseImplicitNullCheckForNarrowOop) {
           if (Matcher::clone_shift_expressions) {
             // x86, ARM and friends can handle 2 adds in addressing mode.
             // Decode a narrow oop and do implicit NULL check in address
