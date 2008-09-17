@@ -216,7 +216,7 @@ void LIR_Assembler::emit_block(BlockBegin* block) {
 #endif /* PRODUCT */
 
   assert(block->lir() != NULL, "must have LIR");
-  IA32_ONLY(assert(_masm->rsp_offset() == 0, "frame size should be fixed"));
+  X86_ONLY(assert(_masm->rsp_offset() == 0, "frame size should be fixed"));
 
 #ifndef PRODUCT
   if (CommentedAssembly) {
@@ -228,7 +228,7 @@ void LIR_Assembler::emit_block(BlockBegin* block) {
 
   emit_lir_list(block->lir());
 
-  IA32_ONLY(assert(_masm->rsp_offset() == 0, "frame size should be fixed"));
+  X86_ONLY(assert(_masm->rsp_offset() == 0, "frame size should be fixed"));
 }
 
 
@@ -435,7 +435,7 @@ void LIR_Assembler::emit_call(LIR_OpJavaCall* op) {
     break;
   default: ShouldNotReachHere();
   }
-#if defined(IA32) && defined(TIERED)
+#if defined(X86) && defined(TIERED)
   // C2 leave fpu stack dirty clean it
   if (UseSSE < 2) {
     int i;
@@ -446,7 +446,7 @@ void LIR_Assembler::emit_call(LIR_OpJavaCall* op) {
       ffree(0);
     }
   }
-#endif // IA32 && TIERED
+#endif // X86 && TIERED
 }
 
 

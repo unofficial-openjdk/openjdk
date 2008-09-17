@@ -21,9 +21,9 @@
 // have any questions.
 //  
 
-assembler_<arch_model>.cpp              g1SATBCardTableModRefBS.hpp
-assembler_<arch_model>.cpp              g1CollectedHeap.inline.hpp
-assembler_<arch_model>.cpp              heapRegion.hpp
+assembler_<arch>.cpp                    g1SATBCardTableModRefBS.hpp
+assembler_<arch>.cpp                    g1CollectedHeap.inline.hpp
+assembler_<arch>.cpp                    heapRegion.hpp
 
 collectorPolicy.cpp                     cmsAdaptiveSizePolicy.hpp
 collectorPolicy.cpp                     cmsGCAdaptivePolicyCounters.hpp
