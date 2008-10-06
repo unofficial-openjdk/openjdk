@@ -31,8 +31,6 @@ import com.sun.tools.javac.code.*;
 import com.sun.tools.javac.code.Type.*;
 import com.sun.tools.javac.util.JCDiagnostic;
 
-import static com.sun.tools.javac.code.Flags.*;
-import static com.sun.tools.javac.code.Kinds.*;
 import static com.sun.tools.javac.code.TypeTags.*;
 
 /** Helper class for type parameter inference, used by the attribution phase.
@@ -206,7 +204,7 @@ public class Infer {
             return true;
         }
 
-    /** Instaniate undetermined type variable to the lub of all its lower bounds.
+    /** Instantiate undetermined type variable to the lub of all its lower bounds.
      *  Throw a NoInstanceException if this not possible.
      */
     void minimizeInst(UndetVar that, Warner warn) throws NoInstanceException {
@@ -218,7 +216,7 @@ public class Infer {
             else {
                 that.inst = types.lub(that.lobounds);
             }
-            if (that.inst == null || that.inst == syms.errType)
+            if (that.inst == null || that.inst.tag == ERROR)
                     throw ambiguousNoInstanceException
                         .setMessage("no.unique.minimal.instance.exists",
                                     that.qtype, that.lobounds);
