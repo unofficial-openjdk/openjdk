@@ -1400,6 +1400,12 @@ void SetJavaLauncherPlatformProps() {}
  */
 static FindClassFromBootLoader_t *findBootClass = NULL;
 
+#ifdef _M_AMD64
+#define JVM_BCLOADER "JVM_FindClassFromClassLoader"
+#else
+#define JVM_BCLOADER "_JVM_FindClassFromClassLoader@20"
+#endif /* _M_AMD64 */
+
 jclass FindBootStrapClass(JNIEnv *env, const char *classname)
 {
    HMODULE hJvm;
@@ -1409,13 +1415,12 @@ jclass FindBootStrapClass(JNIEnv *env, const char *classname)
        if (hJvm == NULL) return NULL;
        /* need to use the demangled entry point */
        findBootClass = (FindClassFromBootLoader_t *)GetProcAddress(hJvm,
-            "JVM_FindClassFromBootLoader");
+            JVM_BCLOADER);
        if (findBootClass == NULL) {
-          JLI_ReportErrorMessage(DLL_ERROR4,
-              "JVM_FindClassBootLoader");
+          JLI_ReportErrorMessage(DLL_ERROR4, JVM_BCLOADER);
           return NULL;
        }
    }
-   return findBootClass(env, classname, JNI_FALSE);
+   return findBootClass(env, classname, JNI_FALSE, (jobject)NULL, JNI_FALSE);
 }
 
