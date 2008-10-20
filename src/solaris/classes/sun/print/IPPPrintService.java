@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2008 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,6 +57,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 
 import java.util.Iterator;
+import java.util.HashSet;
 
 
 public class IPPPrintService implements PrintService, SunPrinterJobService {
@@ -486,28 +487,26 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
         /* Test if the flavor is compatible with the category */
         if ((category == Copies.class) ||
             (category == CopiesSupported.class)) {
-            CopiesSupported cs = new CopiesSupported(1, MAXCOPIES);
-            AttributeClass attribClass = (getAttMap != null) ?
-                (AttributeClass)getAttMap.get(cs.getName()) : null;
-            if (attribClass != null) {
-                int[] range = attribClass.getIntRangeValue();
-                cs = new CopiesSupported(range[0], range[1]);
+            if (flavor == null ||
+                !(flavor.equals(DocFlavor.INPUT_STREAM.POSTSCRIPT) ||
+                  flavor.equals(DocFlavor.URL.POSTSCRIPT) ||
+                  flavor.equals(DocFlavor.BYTE_ARRAY.POSTSCRIPT))) {
+                CopiesSupported cs = new CopiesSupported(1, MAXCOPIES);
+                AttributeClass attribClass = (getAttMap != null) ?
+                    (AttributeClass)getAttMap.get(cs.getName()) : null;
+                if (attribClass != null) {
+                    int[] range = attribClass.getIntRangeValue();
+                    cs = new CopiesSupported(range[0], range[1]);
+                }
+                return cs;
+            } else {
+                return null;
             }
-            return cs;
         } else  if (category == Chromaticity.class) {
             if (flavor == null ||
                 flavor.equals(DocFlavor.SERVICE_FORMATTED.PAGEABLE) ||
                 flavor.equals(DocFlavor.SERVICE_FORMATTED.PRINTABLE) ||
-                flavor.equals(DocFlavor.BYTE_ARRAY.GIF) ||
-                flavor.equals(DocFlavor.INPUT_STREAM.GIF) ||
-                flavor.equals(DocFlavor.URL.GIF) ||
-                flavor.equals(DocFlavor.BYTE_ARRAY.JPEG) ||
-                flavor.equals(DocFlavor.INPUT_STREAM.JPEG) ||
-                flavor.equals(DocFlavor.URL.JPEG) ||
-                flavor.equals(DocFlavor.BYTE_ARRAY.PNG) ||
-                flavor.equals(DocFlavor.INPUT_STREAM.PNG) ||
-                flavor.equals(DocFlavor.URL.PNG)) {
-
+                !isIPPSupportedImages(flavor.getMimeType())) {
                 Chromaticity[]arr = new Chromaticity[1];
                 arr[0] = Chromaticity.COLOR;
                 return (arr);
@@ -822,7 +821,7 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
                 boolean psSupported = false;
                 String[] docFlavors = attribClass.getArrayOfStringValues();
                 DocFlavor[] flavors;
-                ArrayList docList = new ArrayList();
+                HashSet docList = new HashSet();
                 int j;
                 String hostEnc = DocFlavor.hostEncoding.
                     toLowerCase(Locale.ENGLISH);
@@ -838,18 +837,6 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
                         if (mimeType.startsWith(docFlavors[i])) {
 
                             docList.addAll(Arrays.asList(flavors));
-
-                            if (isCupsPrinter) {
-                            /*
-                              Always add Pageable and Printable for CUPS
-                              since it uses Filters to convert from Postscript
-                              to device printer language.
-                             */
-                                docList.add(
-                                        DocFlavor.SERVICE_FORMATTED.PAGEABLE);
-                                docList.add(
-                                        DocFlavor.SERVICE_FORMATTED.PRINTABLE);
-                            }
 
                             if (mimeType.equals("text/plain") &&
                                 addHostEncoding) {
@@ -880,16 +867,19 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
                 }
 
                 // check if we need to add image DocFlavors
+                // and Pageable/Printable flavors
                 if (psSupported || isCupsPrinter) {
-                    if (!jpgImagesAdded) {
-                        docList.addAll(Arrays.asList(imageJPG));
-                    }
-                    if (!pngImagesAdded) {
-                        docList.addAll(Arrays.asList(imagePNG));
-                    }
-                    if (!gifImagesAdded) {
-                        docList.addAll(Arrays.asList(imageGIF));
-                    }
+                    /*
+                     Always add Pageable and Printable for CUPS
+                     since it uses Filters to convert from Postscript
+                     to device printer language.
+                    */
+                    docList.add(DocFlavor.SERVICE_FORMATTED.PAGEABLE);
+                    docList.add(DocFlavor.SERVICE_FORMATTED.PRINTABLE);
+
+                    docList.addAll(Arrays.asList(imageJPG));
+                    docList.addAll(Arrays.asList(imagePNG));
+                    docList.addAll(Arrays.asList(imageGIF));
                 }
                 supportedDocFlavors = new DocFlavor[docList.size()];
                 docList.toArray(supportedDocFlavors);
@@ -1228,7 +1218,7 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
     }
 
 
-   public boolean isAttributeValueSupported(Attribute attr,
+    public boolean isAttributeValueSupported(Attribute attr,
                                              DocFlavor flavor,
                                              AttributeSet attributes) {
         if (attr == null) {
@@ -1257,21 +1247,18 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
             if ((flavor == null) ||
                 flavor.equals(DocFlavor.SERVICE_FORMATTED.PAGEABLE) ||
                 flavor.equals(DocFlavor.SERVICE_FORMATTED.PRINTABLE) ||
-                flavor.equals(DocFlavor.BYTE_ARRAY.GIF) ||
-                flavor.equals(DocFlavor.INPUT_STREAM.GIF) ||
-                flavor.equals(DocFlavor.URL.GIF) ||
-                flavor.equals(DocFlavor.BYTE_ARRAY.JPEG) ||
-                flavor.equals(DocFlavor.INPUT_STREAM.JPEG) ||
-                flavor.equals(DocFlavor.URL.JPEG) ||
-                flavor.equals(DocFlavor.BYTE_ARRAY.PNG) ||
-                flavor.equals(DocFlavor.INPUT_STREAM.PNG) ||
-                flavor.equals(DocFlavor.URL.PNG)) {
+                !isIPPSupportedImages(flavor.getMimeType())) {
                 return attr == Chromaticity.COLOR;
             } else {
                 return false;
             }
         } else if (attr.getCategory() == Copies.class) {
-            return isSupportedCopies((Copies)attr);
+            return (flavor == null ||
+                   !(flavor.equals(DocFlavor.INPUT_STREAM.POSTSCRIPT) ||
+                   flavor.equals(DocFlavor.URL.POSTSCRIPT) ||
+                   flavor.equals(DocFlavor.BYTE_ARRAY.POSTSCRIPT))) &&
+                isSupportedCopies((Copies)attr);
+
         } else if (attr.getCategory() == Destination.class) {
             if (flavor == null ||
                 flavor.equals(DocFlavor.SERVICE_FORMATTED.PAGEABLE) ||
@@ -1871,5 +1858,9 @@ public class IPPPrintService implements PrintService, SunPrinterJobService {
         return  (obj == this ||
                  (obj instanceof IPPPrintService &&
                   ((IPPPrintService)obj).getName().equals(getName())));
+    }
+
+    public int hashCode() {
+        return this.getClass().hashCode()+getName().hashCode();
     }
 }
