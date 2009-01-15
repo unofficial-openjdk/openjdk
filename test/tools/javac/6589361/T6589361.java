@@ -40,7 +40,7 @@ public class T6589361 {
                 fm.close();
             }
         }
-        throw new AssertionError("Could not fing java/lang/Object.class while compiling");
+        throw new AssertionError("Could not find java/lang/Object.class while compiling");
     }
 
 }
