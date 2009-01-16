@@ -155,7 +155,7 @@ public class SourceToHTMLConverter {
                 reader.close();
             }
             output = addLineNumbers(output.toString());
-            output.insert(0, getHeader());
+            output.insert(0, getHeader(configuration));
             output.append(getFooter());
             writeToFile(output.toString(), outputdir, cd.name(), configuration);
         } catch (Exception e){
@@ -205,10 +205,11 @@ public class SourceToHTMLConverter {
 
     /**
      * Get the header.
+     * @param configuration the Doclet configuration
      * @return the header to the output file
      */
-    protected static String getHeader() {
-        StringBuffer result = new StringBuffer("<HTML>" + DocletConstants.NL);
+    protected static String getHeader(Configuration configuration) {
+        StringBuffer result = new StringBuffer("<HTML lang=\"" + configuration.getLocale().getLanguage() + "\">" + DocletConstants.NL);
         result.append("<BODY BGCOLOR=\""+ BGCOLOR + "\">" + DocletConstants.NL);
         result.append("<PRE>" + DocletConstants.NL);
         return result.toString();
