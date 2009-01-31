@@ -1,4 +1,3 @@
-README on HAT:
 --------------
 This HAT source originally came from the http://hat.dev.java.net site.
 
