@@ -158,14 +158,20 @@ class Platform {
         if(Printer.trace)Printer.trace(">>Platform.loadLibraries");
 
         try {
-            // load the main libraries
+            // load the main library
             JSSecurityManager.loadLibrary(libNameMain);
-            JSSecurityManager.loadLibrary(libNameMain2);
             // just for the heck of it...
             loadedLibs |= LIB_MAIN;
+            // load "closed" library
+            JSSecurityManager.loadLibrary(libNameMain2);
         } catch (SecurityException e) {
             if(Printer.err)Printer.err("Security exception loading main native library.  JavaSound requires access to these resources.");
             throw(e);
+        } catch (UnsatisfiedLinkError e) {
+            // libNameMain2 may be absent!
+            if ((loadedLibs & LIB_MAIN) != LIB_MAIN) {
+                throw(e);
+            }
         }
 
         // now try to load extra libs. They are defined at compile time in the Makefile

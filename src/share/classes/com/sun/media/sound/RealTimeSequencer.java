@@ -146,7 +146,7 @@ class RealTimeSequencer extends AbstractMidiDevice implements Sequencer, AutoCon
 
 
     /** for RMF media we need the RMF sequencer */
-    private MixerSequencer seqBridge = null;
+    private Sequencer seqBridge = null;
 
     /** automatic connection support */
     private boolean autoConnect = false;
@@ -259,7 +259,12 @@ class RealTimeSequencer extends AbstractMidiDevice implements Sequencer, AutoCon
                 // seems to be RMF
                 if (seqBridge == null) {
                     try {
-                        seqBridge = new MixerSequencer();
+                        try {
+                            Class cls = Class.forName("com.sun.media.sound.MixerSequencer");
+                            seqBridge = (Sequencer)cls.newInstance();
+                        } catch (Exception ex) {
+                            throw new InvalidMidiDataException();
+                        }
                         if (isOpen()) {
                             seqBridge.open();
                         }

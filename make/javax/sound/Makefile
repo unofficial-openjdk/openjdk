@@ -58,10 +58,15 @@ AUTO_FILES_JAVA_DIRS = javax/sound com/sun/media/sound
 #
 ifdef OPENJDK
 
+  # skip closed lib if the flag is set
+  ifeq ($(IMPORT_BINARY_PLUGS),true)
+
 # copy closed .class files
-build: import-binary-plug-sound-classes 
+build: import-binary-plug-sound-classes
 
 include $(BUILDDIR)/common/internal/BinaryPlugs.gmk
+
+  endif # IMPORT_BINARY_PLUGS
 
 endif # OPENJDK
 
@@ -98,7 +103,13 @@ FILES_c += $(FILES_$(PLATFORM))
 #
 # add "closed" library
 #
-SUBDIRS += jsoundhs
+ifdef OPENJDK
+  ifeq ($(IMPORT_BINARY_PLUGS),true)
+    SUBDIRS += jsoundhs
+  endif # IMPORT_BINARY_PLUGS
+else
+  SUBDIRS += jsoundhs
+endif # OPENJDK
 
 #
 # system dependent flags
