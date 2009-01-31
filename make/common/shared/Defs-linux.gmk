@@ -27,6 +27,22 @@
 # Definitions for Linux.
 #
 
+# MOTIF_REQUIRED setting must be true or false
+ifdef MOTIF_REQUIRED
+  ifneq ($(MOTIF_REQUIRED), false)
+    ifneq ($(MOTIF_REQUIRED), true)
+      error:=$(error "ERROR: MOTIF_REQUIRED must be true or false")
+    endif
+  endif
+else
+  # Default setting (Motif libraries not used with OpenJDK)
+  ifdef OPENJDK
+    MOTIF_REQUIRED=false
+  else
+    MOTIF_REQUIRED=true
+  endif
+endif
+
 # Default for COMPILER_WARNINGS_FATAL on Linux (C & C++ compiler warnings)
 ifndef COMPILER_WARNINGS_FATAL
   COMPILER_WARNINGS_FATAL=false
@@ -135,7 +151,7 @@ endif
 # Motif settings, always build headless on Linux
 STATIC_MOTIF=true
 LIBM=-lm
-ifdef MOTIF_REQUIRED
+ifeq ($(MOTIF_REQUIRED), true)
   BUILD_MOTIF21 = true
 endif
 BUILD_HEADLESS = true

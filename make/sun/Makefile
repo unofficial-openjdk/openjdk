@@ -46,7 +46,7 @@ ifneq ($(PLATFORM), windows)
       endif
     endif
   endif
-  ifdef MOTIF_REQUIRED
+  ifeq ($(MOTIF_REQUIRED), true)
     MOTIF_SUBDIRS   = motif12 motif21
   endif
   HEADLESS_SUBDIR = headless

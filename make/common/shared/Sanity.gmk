@@ -782,7 +782,7 @@ sane-cacerts:
 MOTIF_CHECK_FILE=$(MOTIF_INCLUDE)/Xm/AtomMgr.h
 sane-motif:
 ifneq ($(PLATFORM), windows)
-  ifdef MOTIF_REQUIRED
+  ifeq ($(MOTIF_REQUIRED), true)
     ifeq ($(PLATFORM), solaris)
 	@if [ ! -r $(MOTIF_LIB)/libXm.so ]; then \
 	  $(ECHO) "ERROR: You do not have access to a valid Motif 2.1 library. \n" \
