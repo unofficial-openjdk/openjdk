@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,16 +21,11 @@
  * have any questions.
  */
 
-/**
- * @test
- * @bug 5045412 6627366
- * @compile -Xlint:serial -XDfailcomplete=java.io.Serializable Foo.java 
- */
+import com.sun.javadoc.*;
 
-/**
- * @test
- * @bug 5045412 6627366
- * @compile -Xlint:serial -XDfailcomplete=java.io.Serializable Foo.java Bar.java
- */
-
-class Foo { }
+public class X {
+    public static boolean start(RootDoc root) {
+	System.out.println("X.start");
+        return true;
+    }
+}
