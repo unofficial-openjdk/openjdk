@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2001 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ class Reflect {					// package-private
     private Reflect() { }
 
     private static class ReflectionError extends Error {
+        private static final long serialVersionUID = -8659519328078164097L;
 	ReflectionError(Throwable x) {
 	    super(x);
 	}

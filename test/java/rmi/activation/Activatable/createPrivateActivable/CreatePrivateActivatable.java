@@ -29,7 +29,6 @@
  * @library ../../../testlibrary
  * @build TestLibrary RMID
  * @build ActivateMe
- * @build CreatePrivateActivatable$PrivateActivatable_Stub
  * @build CreatePrivateActivatable
  * @run main/othervm/policy=security.policy/timeout=240 CreatePrivateActivatable
  */

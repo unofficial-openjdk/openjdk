@@ -34,6 +34,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.DirectColorModel;
+import java.awt.image.WritableRaster;
 
 public class PrinterGraphicsConfig extends GraphicsConfiguration {
 
@@ -56,6 +57,14 @@ public class PrinterGraphicsConfig extends GraphicsConfiguration {
      */
     public GraphicsDevice getDevice() {
 	return gd;
+    }
+
+    public BufferedImage createCompatibleImage(int width, int height) {
+        ColorModel model = getColorModel();
+        WritableRaster raster =
+            model.createCompatibleWritableRaster(width, height);
+        return new BufferedImage(model, raster,
+                                 model.isAlphaPremultiplied(), null);
     }
 
     /**

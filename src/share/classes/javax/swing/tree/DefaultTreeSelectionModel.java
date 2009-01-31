@@ -27,12 +27,10 @@ package javax.swing.tree;
 
 import java.beans.PropertyChangeListener;
 import java.io.*;
-import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Enumeration;
 import java.util.EventListener;
 import java.util.Hashtable;
-import java.util.List;
 import java.util.Vector;
 import javax.swing.event.*;
 import javax.swing.DefaultListSelectionModel;
@@ -47,6 +45,8 @@ import javax.swing.DefaultListSelectionModel;
  * the selected paths. If you subclass any of these methods to
  * filter what is allowed to be selected, be sure and message
  * <code>resetRowSelection</code> if you do not message super.
+ * 
+ * <p>
  * 
  * <strong>Warning:</strong>
  * Serialized objects of this class will not be compatible with
@@ -190,28 +190,19 @@ public class DefaultTreeSelectionModel extends Object implements Cloneable, Seri
     }
 
     /**
-     * Sets the selection. Whether the supplied paths are taken as the
-     * new selection depends upon the selection mode. If the supplied
-     * array is {@code null}, or empty, the selection is cleared. If
-     * the selection mode is {@code SINGLE_TREE_SELECTION}, only the
-     * first path in {@code pPaths} is used. If the selection
-     * mode is {@code CONTIGUOUS_TREE_SELECTION} and the supplied paths
-     * are not contiguous, then only the first path in {@code pPaths} is
-     * used. If the selection mode is
-     * {@code DISCONTIGUOUS_TREE_SELECTION}, then all paths are used.
-     * <p>
-     * All {@code null} paths in {@code pPaths} are ignored.
-     * <p>
-     * If this represents a change, all registered {@code
-     * TreeSelectionListener}s are notified.
-     * <p>
-     * The lead path is set to the last unique path.
-     * <p>
-     * The paths returned from {@code getSelectionPaths} are in the same
-     * order as those supplied to this method.
-     *
-     * @param pPaths the new selection
-     */
+      * Sets the selection to the paths in paths.  If this represents a
+      * change the TreeSelectionListeners are notified.  Potentially
+      * paths will be held by this object; in other words don't change
+      * any of the objects in the array once passed in.
+      * <p>If <code>paths</code> is
+      * null, this has the same effect as invoking <code>clearSelection</code>.
+      * <p>The lead path is set to the last path in <code>pPaths</code>.
+      * <p>If the selection mode is <code>CONTIGUOUS_TREE_SELECTION</code>,
+      * and adding the new paths would make the selection discontiguous,
+      * the selection is reset to the first TreePath in <code>paths</code>.
+      *
+      * @param pPaths new selection
+      */
     public void setSelectionPaths(TreePath[] pPaths) {
 	int            newCount, newCounter, oldCount, oldCounter;
 	TreePath[]     paths = pPaths;
@@ -245,28 +236,47 @@ public class DefaultTreeSelectionModel extends Object implements Cloneable, Seri
 		}
 	    }
 
+            int              validCount = 0;
 	    TreePath         beginLeadPath = leadPath;
 	    Vector           cPaths = new Vector(newCount + oldCount);
-            List<TreePath> newSelectionAsList = 
-                    new ArrayList<TreePath>(newCount);
 
 	    lastPaths.clear();
 	    leadPath = null;
 	    /* Find the paths that are new. */
 	    for(newCounter = 0; newCounter < newCount; newCounter++) {
-                TreePath path = paths[newCounter];
-                if (path != null && lastPaths.get(path) == null) {
-                    lastPaths.put(path, Boolean.TRUE);
-                    if (uniquePaths.get(path) == null) {
-                        cPaths.addElement(new PathPlaceHolder(path, true));
+                if(paths[newCounter] != null &&
+                   lastPaths.get(paths[newCounter]) == null) {
+                    validCount++;
+                    lastPaths.put(paths[newCounter], Boolean.TRUE);
+                    if (uniquePaths.get(paths[newCounter]) == null) {
+                        cPaths.addElement(new PathPlaceHolder
+                                          (paths[newCounter], true));
 		    }
-                    leadPath = path;
-                    newSelectionAsList.add(path);
+                    leadPath = paths[newCounter];
 		}
 	    }
 
-            TreePath[] newSelection = newSelectionAsList.toArray(
-                    new TreePath[newSelectionAsList.size()]);
+            /* If the validCount isn't equal to newCount it means there
+               are some null in paths, remove them and set selection to
+               the new path. */
+            TreePath[]     newSelection;
+
+            if(validCount == 0) {
+                newSelection = null;
+            }
+            else if (validCount != newCount) {
+                Enumeration keys = lastPaths.keys();
+
+                newSelection = new TreePath[validCount];
+                validCount = 0;
+                while (keys.hasMoreElements()) {
+                    newSelection[validCount++] = (TreePath)keys.nextElement();
+                }
+            }
+            else {
+                newSelection = new TreePath[paths.length];
+                System.arraycopy(paths, 0, newSelection, 0, paths.length);
+            }
 
 	    /* Get the paths that were selected but no longer selected. */
 	    for(oldCounter = 0; oldCounter < oldCount; oldCounter++)
@@ -284,7 +294,8 @@ public class DefaultTreeSelectionModel extends Object implements Cloneable, Seri
 	    lastPaths.clear();
 
 	    // No reason to do this now, but will still call it.
-            insureUniqueness();
+            if(selection != null)
+                insureUniqueness();
 
 	    updateLeadIndex();
 
@@ -512,16 +523,14 @@ public class DefaultTreeSelectionModel extends Object implements Cloneable, Seri
       * if only one item currently selected.
       */
     public TreePath getSelectionPath() {
-        if (selection != null && selection.length > 0) {
+        if(selection != null)
             return selection[0];
-        }
 	return null;
     }
 
     /**
-      * Returns the selection.
-      *
-      * @return the selection
+      * Returns the paths in the selection. This will return null (or an
+      * empty array) if nothing is currently selected.
       */
     public TreePath[] getSelectionPaths() {
 	if(selection != null) {
@@ -531,7 +540,7 @@ public class DefaultTreeSelectionModel extends Object implements Cloneable, Seri
 	    System.arraycopy(selection, 0, result, 0, pathSize);
 	    return result;
 	}
-        return new TreePath[0];
+        return null;
     }
 
     /**
@@ -553,7 +562,7 @@ public class DefaultTreeSelectionModel extends Object implements Cloneable, Seri
       * Returns true if the selection is currently empty.
       */
     public boolean isSelectionEmpty() {
-        return (selection == null || selection.length == 0);
+        return (selection == null);
     }
 
     /**
@@ -561,7 +570,7 @@ public class DefaultTreeSelectionModel extends Object implements Cloneable, Seri
       * current selection, the selection listeners are notified.
       */
     public void clearSelection() {
-        if (selection != null && selection.length > 0) {
+        if(selection != null) {
 	    int                    selSize = selection.length;
 	    boolean[]              newness = new boolean[selSize];
 
@@ -682,23 +691,17 @@ public class DefaultTreeSelectionModel extends Object implements Cloneable, Seri
     }
 
     /**
-     * Returns the selection in terms of rows. There is not
-     * necessarily a one-to-one mapping between the {@code TreePath}s
-     * returned from {@code getSelectionPaths} and this method. In
-     * particular, if a {@code TreePath} is not viewable (the {@code
-     * RowMapper} returns {@code -1} for the row corresponding to the
-     * {@code TreePath}), then the corresponding row is not included
-     * in the returned array. For example, if the selection consists
-     * of two paths, {@code A} and {@code B}, with {@code A} at row
-     * {@code 10}, and {@code B} not currently viewable, then this method
-     * returns an array with the single entry {@code 10}.
-     *
-     * @return the selection in terms of rows
-     */
+      * Returns all of the currently selected rows. This will return
+      * null (or an empty array) if there are no selected TreePaths or
+      * a RowMapper has not been set.
+      * This may return an array of length less that than of the selected
+      * TreePaths if some of the rows are not visible (that is the
+      * RowMapper returned -1 for the row corresponding to the TreePath).
+      */
     public int[] getSelectionRows() {
 	// This is currently rather expensive.  Needs
 	// to be better support from ListSelectionModel to speed this up.
-        if (rowMapper != null && selection != null && selection.length > 0) {
+        if(rowMapper != null && selection != null) {
 	    int[]      rows = rowMapper.getRowsForPaths(selection);
 
 	    if (rows != null) {
@@ -728,7 +731,7 @@ public class DefaultTreeSelectionModel extends Object implements Cloneable, Seri
 	    }
 	    return rows;
 	}
-        return new int[0];
+        return null;
     }
 
     /**

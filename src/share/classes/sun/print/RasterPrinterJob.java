@@ -76,7 +76,6 @@ import javax.print.attribute.Size2DSyntax;
 import javax.print.attribute.standard.Chromaticity;
 import javax.print.attribute.standard.Copies;
 import javax.print.attribute.standard.Destination;
-import javax.print.attribute.standard.DialogTypeSelection;
 import javax.print.attribute.standard.Fidelity;
 import javax.print.attribute.standard.JobName;
 import javax.print.attribute.standard.JobSheets;
@@ -97,6 +96,7 @@ import javax.print.attribute.standard.Sides;
 import sun.print.PageableDoc;
 import sun.print.ServiceDialog;
 import sun.print.SunPrinterJobService;
+import sun.print.DialogTypeSelection;
 import sun.print.SunPageSelection;
 
 /** 

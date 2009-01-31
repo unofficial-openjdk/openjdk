@@ -1,7 +1,7 @@
 #! /bin/sh
 
 #
-# Copyright 2004-2005 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2004-2007 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -36,10 +36,9 @@ SPEC=$1; shift
 DST=$1; shift
 
 eval `$NAWK <$SPEC '
+  /^[ \t]*copyright / { printf "COPYRIGHT_YEARS=%s\n", $2; }
   /^[ \t]*package / { printf "PKG=%s\n", $2; }
   /^[ \t]*class / { printf "CLASS=%s\n", $2; }
-  /^[ \t]*id / { printf "ID=%s\n", $2; }
-  /^[ \t]*date / { printf "DATE=%s\n", $2; }
 '`
 
 OUT=$DST/$CLASS.java
@@ -48,7 +47,10 @@ echo '-->' $OUT
 
 # Header
 #
-cat <<__END__ >$OUT
+
+$SHELL addNotices.sh "$COPYRIGHT_YEARS" > $OUT
+
+cat <<__END__ >>$OUT
 
 // -- This file was mechanically generated: Do not edit! -- //
 
@@ -82,7 +84,7 @@ $NAWK <$SPEC >>$OUT '
 
   /^[ \t]*alias / {
     acsns[m++] = tolower($2);
-    aliasMap[tolower($2)] = lcsn; 
+    aliasMap[tolower($2)] = lcsn;
     printf "        \"%s\",\n", $2;
   }
 

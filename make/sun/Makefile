@@ -56,7 +56,12 @@ endif
 ifndef OPENJDK
   JDBC_SUBDIR = jdbc
 endif
-SUBDIRS = jar security javazic misc net audio dcpr image \
+ifdef OPENJDK
+  RENDER_SUBDIR = pisces
+else
+  RENDER_SUBDIR = dcpr
+endif
+SUBDIRS = jar security javazic misc net audio $(RENDER_SUBDIR) image \
 	  awt splashscreen $(XAWT_SUBDIR) $(MOTIF_SUBDIRS) \
           $(HEADLESS_SUBDIR) $(DGA_SUBDIR) \
 	  font jpeg cmm applet rmi beans $(JDBC_SUBDIR) \

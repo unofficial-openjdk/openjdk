@@ -22,7 +22,7 @@
  */
 /*
  * @test
- * @bug 4290801 4692419 4693631 5101540 5104960 6296410 6336600 6371531
+ * @bug 4290801 4693631 5101540 5104960 6296410 6336600 6371531
  *    6488442
  * @summary Basic tests for Currency class.
  */
@@ -48,7 +48,6 @@ public class CurrencyTest {
         testSymbols();
         testFractionDigits();
         testSerialization();
-	testDisplayNames();
     }
     
     static void testCurrencyCodeValidation() {
@@ -235,32 +234,4 @@ public class CurrencyTest {
         }
     }       
 
-    static void testDisplayNames() {
-        // null argument test
-	try {
-	    testDisplayName("USD", null, "");
-            throw new RuntimeException("getDisplayName(NULL) did not throw an NPE.");
-	} catch (NullPointerException npe) {}
-
-        testDisplayName("USD", Locale.ENGLISH, "US Dollar");
-        testDisplayName("FRF", Locale.FRENCH, "franc fran\u00e7ais");
-        testDisplayName("DEM", Locale.GERMAN, "Deutsche Mark");
-        testDisplayName("ESP", new Locale("es"), "peseta espa\u00f1ola");
-        testDisplayName("ITL", new Locale("it"), "Lira Italiana");
-        testDisplayName("JPY", Locale.JAPANESE, "\u65e5\u672c\u5186");
-        testDisplayName("KRW", Locale.KOREAN, "\ub300\ud55c\ubbfc\uad6d \uc6d0");
-        testDisplayName("SEK", new Locale("sv"), "Svensk krona");
-        testDisplayName("CNY", Locale.SIMPLIFIED_CHINESE, "\u4eba\u6c11\u5e01");
-        testDisplayName("TWD", Locale.TRADITIONAL_CHINESE, "\u65b0\u81fa\u5e63");
-    }
-    
-    static void testDisplayName(String currencyCode, Locale locale, String expectedName) {
-        String name = Currency.getInstance(currencyCode).getDisplayName(locale);
-        if (!name.equals(expectedName)) {
-            throw new RuntimeException("Wrong display name for currency " +
-                    currencyCode +": expected '" + expectedName +
-                    "', got '" + name + "'");
-        }
-    }
-    
 }

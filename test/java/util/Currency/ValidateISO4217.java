@@ -22,7 +22,7 @@
  */
 /*
  * @test
- * @bug 4691089 4819436 4942982 5104960 6544471
+ * @bug 4819436 4942982 5104960 6544471
  * @summary Validate ISO 4217 data for Currency class.
  */
 
@@ -100,7 +100,6 @@ public class ValidateISO4217 {
         CheckDataVersion.check();
 	test1();
 	test2();
-	getAvailableCurrenciesTest();
 
 	if (err) {
 	    throw new RuntimeException("Failed: Validation ISO 4217 data");
@@ -212,12 +211,6 @@ public class ValidateISO4217 {
 	try {
 	    Currency currency = currency = Currency.getInstance(currencyCode);
 
-	    if (currency.getNumericCode() != numericCode) {
-		System.err.println("Error: [" + currencyCode + "] expected: " +
-		    numericCode + "; got: " + currency.getNumericCode());
-		err = true;
-	    }
-
 	    if (currency.getDefaultFractionDigits() != digits) {
 		System.err.println("Error: [" + currencyCode + "] expected: " +
 		    digits + "; got: " + currency.getDefaultFractionDigits());
@@ -270,29 +263,6 @@ public class ValidateISO4217 {
 		    }
 		}
 	    }
-	}
-    }
-
-    /**
-     * This test depends on test1(), where 'testCurrencies' set is constructed
-     */
-    static void getAvailableCurrenciesTest() {
-        Set<Currency> jreCurrencies = Currency.getAvailableCurrencies();
-
-	// add otherCodes
-	StringTokenizer st = new StringTokenizer(otherCodes, "-");
-	while (st.hasMoreTokens()) {
-	    testCurrencies.add(Currency.getInstance(st.nextToken()));
-	}
-
-	if (!testCurrencies.containsAll(jreCurrencies)) {
-	    System.err.print("Error: getAvailableCurrencies() returned extra currencies than expected: ");
-	    jreCurrencies.removeAll(testCurrencies);
-	    for (Currency c : jreCurrencies) {
-	        System.err.print(" "+c);
-	    }
-	    System.err.println();
-	    err = true;
 	}
     }
 }

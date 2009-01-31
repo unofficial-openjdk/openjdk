@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,10 +21,6 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- */
-
-/*
- * %W%	%E%
  */
 
 /*
@@ -176,7 +172,7 @@ public class Main {
 		if (outputFile.exists()) {
 		    // Some win32 platforms can't handle atomic
 		    // rename if source and target file paths are
-		    // identical. To make things simple we just unconditionally 
+		    // identical. To make things simple we just unconditionally
 		    // delete the target file before calling renameTo()
 		    outputFile.delete();
 		}
@@ -213,12 +209,12 @@ public class Main {
 
 	    try {
 		 forwardIn = new FileInputStream(inFile);
-	    } catch (IOException e) { 
+	    } catch (IOException e) {
 	       throw new Exception(formatMsg("err.cannot.read", f.getName()));
 	    }
 	}
 
-	BufferedReader r = (encodingString != null) ? 
+	BufferedReader r = (encodingString != null) ?
 	    new BufferedReader(new InputStreamReader(forwardIn,
 						     encodingString)) :
 	    new BufferedReader(new InputStreamReader(forwardIn));
@@ -256,7 +252,7 @@ public class Main {
 	n2aOut = new BufferedWriter(new N2AFilter(output));
 	return n2aOut;
     }
-	
+
     private BufferedReader getA2NInput(String inFile) throws Exception {
 	Reader in;
 	BufferedReader reader;
@@ -271,7 +267,7 @@ public class Main {
 
 	    try {
 		 in = new FileReader(inFile);
-	    } catch (Exception e) { 
+	    } catch (Exception e) {
 	       throw new Exception(formatMsg("err.cannot.read", f.getName()));
 	    }
 	}
@@ -281,7 +277,7 @@ public class Main {
     }
 
     private Writer getA2NOutput(String outFile) throws Exception {
-	
+
 	OutputStreamWriter w = null;
 	OutputStream output = null;
 
@@ -308,7 +304,7 @@ public class Main {
 	w = (encodingString != null) ?
 	    new OutputStreamWriter(output, encodingString) :
 	    new OutputStreamWriter(output);
-	    
+
 	return (w);
     }
 
@@ -340,7 +336,7 @@ public class Main {
 		null;
 	} catch (IllegalCharsetNameException e) {
             throw new Error(e);
-        } 
+        }
     }
 
     private static ResourceBundle rsrc;
@@ -366,7 +362,7 @@ public class Main {
         String msg = getMsg(key);
         String[] args = new String[1];
         args[0] = arg;
-        return MessageFormat.format(msg, args);
+        return MessageFormat.format(msg, (Object)args);
     }
 
 

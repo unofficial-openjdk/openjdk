@@ -29,7 +29,6 @@ import java.util.*;
 import java.lang.reflect.*;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
-import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 
 /**
@@ -207,11 +206,9 @@ import java.nio.charset.UnsupportedCharsetException;
  */
 public class XMLEncoder extends Encoder {
 
-    private final CharsetEncoder encoder;
-    private final String charset;
-    private final boolean declaration;
+    private static String encoding = "UTF-8";
 
-    private OutputStreamWriter out;
+    private OutputStream out;
     private Object owner;
     private int indentation = 0;
     private boolean internal = false;
@@ -228,66 +225,16 @@ public class XMLEncoder extends Encoder {
     }
 
     /**
-     * Creates a new XML encoder to write out <em>JavaBeans</em>
+     * Creates a new output stream for sending <em>JavaBeans</em>
      * to the stream <code>out</code> using an XML encoding.
      *
-     * @param out  the stream to which the XML representation of
-     *             the objects will be written
-     *
-     * @throws  IllegalArgumentException
-     *          if <code>out</code> is <code>null</code>
+     * @param out The stream to which the XML representation of
+     * the objects will be sent.
      *
      * @see XMLDecoder#XMLDecoder(InputStream)
      */
     public XMLEncoder(OutputStream out) {
-        this(out, "UTF-8", true, 0);
-    }
-
-    /**
-     * Creates a new XML encoder to write out <em>JavaBeans</em>
-     * to the stream <code>out</code> using the given <code>charset</code>
-     * starting from the given <code>indentation</code>.
-     *
-     * @param out          the stream to which the XML representation of
-     *                     the objects will be written
-     * @param charset      the name of the requested charset;
-     *                     may be either a canonical name or an alias
-     * @param declaration  whether the XML declaration should be generated;
-     *                     set this to <code>false</code>
-     *                     when embedding the contents in another XML document
-     * @param indentation  the number of space characters to indent the entire XML document by
-     *
-     * @throws  IllegalArgumentException
-     *          if <code>out</code> or <code>charset</code> is <code>null</code>,
-     *          or if <code>indentation</code> is less than 0
-     *
-     * @throws  IllegalCharsetNameException
-     *          if <code>charset</code> name is illegal
-     *
-     * @throws  UnsupportedCharsetException
-     *          if no support for the named charset is available
-     *          in this instance of the Java virtual machine
-     *
-     * @throws  UnsupportedOperationException
-     *          if loaded charset does not support encoding
-     *
-     * @see Charset#forName(String)
-     *
-     * @since 1.7
-     */
-    public XMLEncoder(OutputStream out, String charset, boolean declaration, int indentation) {
-        if (out == null) {
-            throw new IllegalArgumentException("the output stream cannot be null");
-        }
-        if (indentation < 0) {
-            throw new IllegalArgumentException("the indentation must be >= 0");
-        }
-        Charset cs = Charset.forName(charset);
-        this.encoder = cs.newEncoder();
-        this.charset = charset;
-        this.declaration = declaration;
-        this.indentation = indentation;
-        this.out = new OutputStreamWriter(out, cs.newEncoder());
+        this.out = out;
         valueToExpression = new IdentityHashMap();
         targetToStatementList = new IdentityHashMap();
 	nameGenerator = new NameGenerator();
@@ -455,10 +402,8 @@ public class XMLEncoder extends Encoder {
      */
     public void flush() {
 	if (!preambleWritten) { // Don't do this in constructor - it throws ... pending.
-            if (this.declaration) {
-                writeln("<?xml version=" + quote("1.0") +
-                            " encoding=" + quote(this.charset) + "?>");
-            }
+            writeln("<?xml version=" + quote("1.0") +
+                        " encoding=" + quote(encoding) + "?>");
 	    writeln("<java version=" + quote(System.getProperty("java.version")) +
 	                   " class=" + quote(XMLDecoder.class.getName()) + ">");
 	    preambleWritten = true;
@@ -558,7 +503,7 @@ public class XMLEncoder extends Encoder {
             }
             sb.append(exp);
             sb.append('\n');
-            this.out.write(sb.toString());
+            this.out.write(sb.toString().getBytes(encoding));
         }
         catch (IOException e) {
             getExceptionListener().exceptionThrown(e);
@@ -644,6 +589,8 @@ public class XMLEncoder extends Encoder {
     }
 
     private String createString(String string) {
+        CharsetEncoder encoder = Charset.forName(encoding).newEncoder();
+
         StringBuilder sb = new StringBuilder();
         sb.append("<string>");
         int index = 0;
@@ -651,7 +598,7 @@ public class XMLEncoder extends Encoder {
             int point = string.codePointAt(index);
             int count = Character.charCount(point);
 
-            if (isValidCharCode(point) && this.encoder.canEncode(string.substring(index, index + count))) {
+            if (isValidCharCode(point) && encoder.canEncode(string.substring(index, index + count))) {
                 String value = quoteCharCode(point);
                 if (value != null) {
                     sb.append(value);
@@ -663,6 +610,18 @@ public class XMLEncoder extends Encoder {
                 sb.append(createString(string.charAt(index)));
                 index++;
             }
+/*
+            String value = isValidCharCode(point) && encoder.canEncode(string.substring(index, index + count))
+                    ? quoteCharCode(point)
+                    : createString(point);
+
+            if (value != null) {
+                sb.append(value);
+            } else {
+                sb.appendCodePoint(point);
+            }
+            index += count;
+*/
         }
         sb.append("</string>");
         return sb.toString();

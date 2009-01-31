@@ -2145,6 +2145,48 @@ Java_sun_awt_windows_WToolkit_syncNativeQueue(JNIEnv *env, jobject self, jlong t
     return (newEventNumber - eventNumber) > 2;
 }
 
+/*
+ * Class:     sun_awt_windows_WToolkit
+ * Method:    isProtectedMode
+ * Signature: ()Z
+ */
+JNIEXPORT jboolean JNICALL
+Java_sun_awt_windows_WToolkit_isProtectedMode(JNIEnv *env, jclass cls)
+{
+    TRY;
+
+    if (!IS_WINVISTA) {
+        return JNI_FALSE;
+    }
+
+    BOOL bIEIsProtectedModeProcess = FALSE;
+    HINSTANCE hLibIEFrameDll = ::LoadLibrary(TEXT("IEFRAME.DLL"));
+
+    typedef HRESULT (WINAPI IEIsProtectedModeProcessFunc)(BOOL *);
+
+    if (hLibIEFrameDll != NULL)
+    {
+        IEIsProtectedModeProcessFunc *lpIEIsProtectedModeProcess =
+            (IEIsProtectedModeProcessFunc*)GetProcAddress(hLibIEFrameDll,
+                                                          "IEIsProtectedModeProcess");
+
+        HRESULT hResult = E_FAIL;
+        if (lpIEIsProtectedModeProcess != NULL) {
+            hResult = lpIEIsProtectedModeProcess(&bIEIsProtectedModeProcess);
+        }
+
+        ::FreeLibrary(hLibIEFrameDll);
+
+        if (SUCCEEDED(hResult) && bIEIsProtectedModeProcess) {
+            return JNI_TRUE;
+        }
+    }
+
+    return JNI_FALSE;
+
+    CATCH_BAD_ALLOC_RET(JNI_FALSE);
+}
+
 } /* extern "C" */
 
 /* Convert a Windows desktop color index into an RGB value. */

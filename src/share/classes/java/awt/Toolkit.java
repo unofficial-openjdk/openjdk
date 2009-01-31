@@ -65,16 +65,13 @@ import sun.util.CoreResourceBundleControl;
 /**
  * This class is the abstract superclass of all actual
  * implementations of the Abstract Window Toolkit. Subclasses of
- * the <code>Toolkit</code> class are used to bind the various components
+ * <code>Toolkit</code> are used to bind the various components
  * to particular native toolkit implementations.
  * <p>
- * Many GUI events may be delivered to user 
- * asynchronously, if the opposite is not specified explicitly.
- * As well as 
- * many GUI operations may be performed asynchronously.
- * This fact means that if the state of a component is set, and then 
- * the state immediately queried, the returned value may not yet
- * reflect the requested change.  This behavior includes, but is not
+ * Many GUI operations may be performed asynchronously.  This
+ * means that if you set the state of a component, and then
+ * immediately query the state, the returned value may not yet
+ * reflect the requested change.  This includes, but is not
  * limited to:
  * <ul>
  * <li>Scrolling to a specified position.
@@ -472,9 +469,6 @@ public abstract class Toolkit {
 /**
      * Controls whether the layout of Containers is validated dynamically
      * during resizing, or statically, after resizing is complete.
-     * Use {@code isDynamicLayoutActive()} to detect if this feature enabled
-     * in this program and is supported by this operating system
-     * and/or window manager.
      * Note that this feature is supported not on all platforms, and
      * conversely, that this feature cannot be turned off on some platforms.
      * On these platforms where dynamic layout during resizing is not supported
@@ -534,16 +528,8 @@ public abstract class Toolkit {
     /**
      * Returns whether dynamic layout of Containers on resize is
      * currently active (both set in program
-     *( {@code isDynamicLayoutSet()} )
      *, and supported
      * by the underlying operating system and/or window manager).
-     * If dynamic layout is currently inactive then Containers
-     * re-layout their components when resizing is completed. As a result
-     * the {@code Component.validate()} method will be invoked only
-     * once per resize.
-     * If dynamic layout is currently active then Containers
-     * re-layout their components on every native resize event and
-     * the {@code validate()} method will be invoked each time.
      * The OS/WM support can be queried using
      * the getDesktopProperty("awt.dynamicLayoutSupported") method.
      *

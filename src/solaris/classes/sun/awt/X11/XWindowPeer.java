@@ -523,11 +523,14 @@ class XWindowPeer extends XPanelPeer implements WindowPeer,
     }
 
     boolean isAutoRequestFocus() {
+        /* comment this as a part of 6187066 revertion.
         if (XToolkit.isToolkitThread()) {
             return WindowAccessor.isAutoRequestFocus((Window)target);
         } else {
             return ((Window)target).isAutoRequestFocus();
         }
+        */
+        return true;
     }
 
     /*

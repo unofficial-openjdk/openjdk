@@ -23,7 +23,7 @@
 
 /**
  * @test
- * @bug 4490253 6535542
+ * @bug 4490253
  * @summary Verify that newly allocated direct buffers are initialized.
  */
 

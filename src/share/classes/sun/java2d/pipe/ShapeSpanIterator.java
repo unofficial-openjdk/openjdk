@@ -68,8 +68,6 @@ public final class ShapeSpanIterator
     long pData;
 
     static {
-        java.security.AccessController.doPrivileged(
-              new sun.security.action.LoadLibraryAction("dcpr"));
 	initIDs();
     }
 

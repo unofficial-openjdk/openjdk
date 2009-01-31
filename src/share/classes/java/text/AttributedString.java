@@ -222,7 +222,8 @@ public class AttributedString {
      * @param attributes Specifies attributes to be extracted
      * from the text. If null is specified, all available attributes will
      * be used.
-     * @exception NullPointerException if <code>text</code> is null.
+     * @exception NullPointerException if <code>text</code> or
+     *            <code>attributes</code> is null.
      * @exception IllegalArgumentException if the subrange given by
      * beginIndex and endIndex is out of the text range.
      * @see java.text.Annotation

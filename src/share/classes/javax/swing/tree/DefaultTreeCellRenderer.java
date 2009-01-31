@@ -28,7 +28,6 @@ package javax.swing.tree;
 import javax.swing.*;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.FontUIResource;
-import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicGraphicsUtils;
 import java.awt.*;
 import java.awt.event.*;
@@ -45,28 +44,7 @@ import java.util.*;
  * in <em>The Java Tutorial</em>
  * for examples of customizing node display using this class.
  * <p>                                                                        
- * The set of icons and colors used by {@code DefaultTreeCellRenderer}
- * can be configured using the various setter methods. The value for
- * each property is initialized from the defaults table. When the
- * look and feel changes ({@code updateUI} is invoked), any properties
- * that have a value of type {@code UIResource} are refreshed from the
- * defaults table. The following table lists the mapping between
- * {@code DefaultTreeCellRenderer} property and defaults table key:
- * <table border="1" cellpadding="1" cellspacing="0" 
- *         valign="top" >
- *   <tr valign="top"  align="left">
- *     <th bgcolor="#CCCCFF" align="left">Property:
- *     <th bgcolor="#CCCCFF" align="left">Key:
- *   <tr><td>"leafIcon"<td>"Tree.leafIcon"
- *   <tr><td>"closedIcon"<td>"Tree.closedIcon"
- *   <tr><td>"openIcon"<td>"Tree.openIcon"
- *   <tr><td>"textSelectionColor"<td>"Tree.selectionForeground"
- *   <tr><td>"textNonSelectionColor"<td>"Tree.textForeground"
- *   <tr><td>"backgroundSelectionColor"<td>"Tree.selectionBackground"
- *   <tr><td>"backgroundNonSelectionColor"<td>"Tree.textBackground"
- *   <tr><td>"borderSelectionColor"<td>"Tree.selectionBorderColor"
- * </table>
- * <p>
+ *
  * <strong><a name="override">Implementation Note:</a></strong>
  * This class overrides
  * <code>invalidate</code>,
@@ -151,62 +129,21 @@ public class DefaultTreeCellRenderer extends JLabel implements TreeCellRenderer
     private boolean isDropCell;
 
     /**
-     * Set to true after the constructor has run.
-     */
-    private boolean inited;
-
-    /**
-     * Creates a {@code DefaultTreeCellRenderer}. Icons and text color are
-     * determined from the {@code UIManager}.
+     * Returns a new instance of DefaultTreeCellRenderer.  Alignment is
+     * set to left aligned. Icons and text color are determined from the
+     * UIManager.
      */
     public DefaultTreeCellRenderer() {
-        inited = true;
-    }
 
-    /**
-     * {@inheritDoc}
-     *
-     * @since 1.7
-     */
-    public void updateUI() {
-        super.updateUI();
-        // To avoid invoking new methods from the constructor, the
-        // inited field is first checked. If inited is false, the constructor
-        // has not run and there is no point in checking the value. As
-        // all look and feels have a non-null value for these properties,
-        // a null value means the developer has specifically set it to
-        // null. As such, if the value is null, this does not reset the
-        // value.
-        if (!inited || (getLeafIcon() instanceof UIResource)) {
-            setLeafIcon(UIManager.getIcon("Tree.leafIcon"));
-        }
-        if (!inited || (getClosedIcon() instanceof UIResource)) {
-            setClosedIcon(UIManager.getIcon("Tree.closedIcon"));
-        }
-        if (!inited || (getOpenIcon() instanceof UIManager)) {
-            setOpenIcon(UIManager.getIcon("Tree.openIcon"));
-        }
-        if (!inited || (getTextSelectionColor() instanceof UIResource)) {
-            setTextSelectionColor(
-                    UIManager.getColor("Tree.selectionForeground"));
-        }
-        if (!inited || (getTextNonSelectionColor() instanceof UIResource)) {
-            setTextNonSelectionColor(
-                UIManager.getColor("Tree.textForeground"));
-        }
-        if (!inited || (getBackgroundSelectionColor() instanceof UIResource)) {
-            setBackgroundSelectionColor(
-                UIManager.getColor("Tree.selectionBackground"));
-        }
-        if (!inited || 
-                (getBackgroundNonSelectionColor() instanceof UIResource)) {
-            setBackgroundNonSelectionColor(
-                    UIManager.getColor("Tree.textBackground"));
-        }
-        if (!inited || (getBorderSelectionColor() instanceof UIResource)) {
-            setBorderSelectionColor(
-                UIManager.getColor("Tree.selectionBorderColor"));
-        }
+        setLeafIcon(UIManager.getIcon("Tree.leafIcon"));
+        setClosedIcon(UIManager.getIcon("Tree.closedIcon"));
+        setOpenIcon(UIManager.getIcon("Tree.openIcon"));
+
+        setTextSelectionColor(UIManager.getColor("Tree.selectionForeground"));
+        setTextNonSelectionColor(UIManager.getColor("Tree.textForeground"));
+        setBackgroundSelectionColor(UIManager.getColor("Tree.selectionBackground"));
+        setBackgroundNonSelectionColor(UIManager.getColor("Tree.textBackground"));
+        setBorderSelectionColor(UIManager.getColor("Tree.selectionBorderColor"));
 	Object value = UIManager.get("Tree.drawsFocusBorderAroundIcon");
 	drawsFocusBorderAroundIcon = (value != null && ((Boolean)value).
 				      booleanValue());

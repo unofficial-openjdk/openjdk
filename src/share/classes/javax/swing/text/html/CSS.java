@@ -185,38 +185,20 @@ public class CSS implements Serializable {
 	public static final Attribute BORDER_BOTTOM =
 	    new Attribute("border-bottom", null, false);
 
-        public static final Attribute BORDER_BOTTOM_COLOR =
-            new Attribute("border-bottom-color", null, false);
-
-        public static final Attribute BORDER_BOTTOM_STYLE =
-            new Attribute("border-bottom-style", "none", false);
-
 	public static final Attribute BORDER_BOTTOM_WIDTH =
 	    new Attribute("border-bottom-width", "medium", false);
 
 	public static final Attribute BORDER_COLOR =
-            new Attribute("border-color", null, false);
+	    new Attribute("border-color", "black", false);
 
 	public static final Attribute BORDER_LEFT =
 	    new Attribute("border-left", null, false);
-
-        public static final Attribute BORDER_LEFT_COLOR =
-            new Attribute("border-left-color", null, false);
-
-        public static final Attribute BORDER_LEFT_STYLE =
-            new Attribute("border-left-style", "none", false);
 
 	public static final Attribute BORDER_LEFT_WIDTH =
 	    new Attribute("border-left-width", "medium", false);
 
 	public static final Attribute BORDER_RIGHT =
 	    new Attribute("border-right", null, false);
-
-        public static final Attribute BORDER_RIGHT_COLOR =
-            new Attribute("border-right-color", null, false);
-
-        public static final Attribute BORDER_RIGHT_STYLE =
-            new Attribute("border-right-style", "none", false);
 
 	public static final Attribute BORDER_RIGHT_WIDTH =
 	    new Attribute("border-right-width", "medium", false);
@@ -226,12 +208,6 @@ public class CSS implements Serializable {
 
 	public static final Attribute BORDER_TOP =
 	    new Attribute("border-top", null, false);
-
-        public static final Attribute BORDER_TOP_COLOR =
-            new Attribute("border-top-color", null, false);
-
-        public static final Attribute BORDER_TOP_STYLE =
-            new Attribute("border-top-style", "none", false);
 
 	public static final Attribute BORDER_TOP_WIDTH =
 	    new Attribute("border-top-width", "medium", false);
@@ -379,10 +355,6 @@ public class CSS implements Serializable {
 	    BORDER, BORDER_BOTTOM, BORDER_BOTTOM_WIDTH, BORDER_COLOR,
 	    BORDER_LEFT, BORDER_LEFT_WIDTH, BORDER_RIGHT, BORDER_RIGHT_WIDTH,
 	    BORDER_STYLE, BORDER_TOP, BORDER_TOP_WIDTH, BORDER_WIDTH,
-            BORDER_TOP_STYLE, BORDER_RIGHT_STYLE, BORDER_BOTTOM_STYLE,
-            BORDER_LEFT_STYLE,
-            BORDER_TOP_COLOR, BORDER_RIGHT_COLOR, BORDER_BOTTOM_COLOR,
-            BORDER_LEFT_COLOR,
 	    CLEAR, COLOR, DISPLAY, FLOAT, FONT, FONT_FAMILY, FONT_SIZE,
 	    FONT_STYLE, FONT_VARIANT, FONT_WEIGHT, HEIGHT, LETTER_SPACING,
 	    LINE_HEIGHT, LIST_STYLE, LIST_STYLE_IMAGE, LIST_STYLE_POSITION,
@@ -401,12 +373,6 @@ public class CSS implements Serializable {
 	private static final Attribute[] ALL_BORDER_WIDTHS =
 	        { BORDER_TOP_WIDTH, BORDER_RIGHT_WIDTH, BORDER_BOTTOM_WIDTH,
 		  BORDER_LEFT_WIDTH };
-        private static final Attribute[] ALL_BORDER_STYLES =
-                { BORDER_TOP_STYLE, BORDER_RIGHT_STYLE, BORDER_BOTTOM_STYLE,
-                  BORDER_LEFT_STYLE };
-        private static final Attribute[] ALL_BORDER_COLORS =
-                { BORDER_TOP_COLOR, BORDER_RIGHT_COLOR, BORDER_BOTTOM_COLOR,
-                  BORDER_LEFT_COLOR };
 
     }
 
@@ -427,7 +393,6 @@ public class CSS implements Serializable {
 
 	static final Value INHERITED = new Value("inherited");
 	static final Value NONE = new Value("none");
-        static final Value HIDDEN = new Value("hidden");
 	static final Value DOTTED = new Value("dotted");
 	static final Value DASHED = new Value("dashed");
 	static final Value SOLID = new Value("solid");
@@ -437,6 +402,7 @@ public class CSS implements Serializable {
 	static final Value INSET = new Value("inset");
 	static final Value OUTSET = new Value("outset");
 	// Lists.
+	static final Value BLANK_LIST_ITEM = new Value("none");
 	static final Value DISC = new Value("disc");
 	static final Value CIRCLE = new Value("circle");
 	static final Value SQUARE = new Value("square");
@@ -460,7 +426,7 @@ public class CSS implements Serializable {
 	    INHERITED, NONE, DOTTED, DASHED, SOLID, DOUBLE, GROOVE,
 	    RIDGE, INSET, OUTSET, DISC, CIRCLE, SQUARE, DECIMAL,
 	    LOWER_ROMAN, UPPER_ROMAN, LOWER_ALPHA, UPPER_ALPHA,
-            BACKGROUND_NO_REPEAT, BACKGROUND_REPEAT,
+	    BLANK_LIST_ITEM, BACKGROUND_NO_REPEAT, BACKGROUND_REPEAT,
 	    BACKGROUND_REPEAT_X, BACKGROUND_REPEAT_Y,
 	    BACKGROUND_FIXED, BACKGROUND_FIXED
 	};
@@ -473,18 +439,11 @@ public class CSS implements Serializable {
 	valueConvertor.put(CSS.Attribute.FONT_SIZE, new FontSize());
 	valueConvertor.put(CSS.Attribute.FONT_FAMILY, new FontFamily());
 	valueConvertor.put(CSS.Attribute.FONT_WEIGHT, new FontWeight());
-        Object bs = new BorderStyle();
-        valueConvertor.put(CSS.Attribute.BORDER_TOP_STYLE, bs);
-        valueConvertor.put(CSS.Attribute.BORDER_RIGHT_STYLE, bs);
-        valueConvertor.put(CSS.Attribute.BORDER_BOTTOM_STYLE, bs);
-        valueConvertor.put(CSS.Attribute.BORDER_LEFT_STYLE, bs);
+	valueConvertor.put(CSS.Attribute.BORDER_STYLE, new BorderStyle());
 	Object cv = new ColorValue();
 	valueConvertor.put(CSS.Attribute.COLOR, cv);
 	valueConvertor.put(CSS.Attribute.BACKGROUND_COLOR, cv);
-        valueConvertor.put(CSS.Attribute.BORDER_TOP_COLOR, cv);
-        valueConvertor.put(CSS.Attribute.BORDER_RIGHT_COLOR, cv);
-        valueConvertor.put(CSS.Attribute.BORDER_BOTTOM_COLOR, cv);
-        valueConvertor.put(CSS.Attribute.BORDER_LEFT_COLOR, cv);
+	valueConvertor.put(CSS.Attribute.BORDER_COLOR, cv);
 	Object lv = new LengthValue();
 	valueConvertor.put(CSS.Attribute.MARGIN_TOP, lv);
 	valueConvertor.put(CSS.Attribute.MARGIN_BOTTOM, lv);
@@ -499,6 +458,7 @@ public class CSS implements Serializable {
 	valueConvertor.put(CSS.Attribute.PADDING_LEFT, lv);
 	valueConvertor.put(CSS.Attribute.PADDING_RIGHT, lv);
 	Object bv = new BorderWidthValue(null, 0);
+	valueConvertor.put(CSS.Attribute.BORDER_WIDTH, lv);
 	valueConvertor.put(CSS.Attribute.BORDER_TOP_WIDTH, bv);
 	valueConvertor.put(CSS.Attribute.BORDER_BOTTOM_WIDTH, bv);
 	valueConvertor.put(CSS.Attribute.BORDER_LEFT_WIDTH, bv);
@@ -599,21 +559,6 @@ public class CSS implements Serializable {
 	    ShorthandMarginParser.parseShorthandMargin(this, value, attr,
 					   CSS.Attribute.ALL_BORDER_WIDTHS);
 	}
-        else if (key == CSS.Attribute.BORDER_COLOR) {
-            ShorthandMarginParser.parseShorthandMargin(this, value, attr,
-                                            CSS.Attribute.ALL_BORDER_COLORS);
-        }
-        else if (key == CSS.Attribute.BORDER_STYLE) {
-            ShorthandMarginParser.parseShorthandMargin(this, value, attr,
-                                            CSS.Attribute.ALL_BORDER_STYLES);
-        }
-        else if ((key == CSS.Attribute.BORDER) ||
-                   (key == CSS.Attribute.BORDER_TOP) ||
-                   (key == CSS.Attribute.BORDER_RIGHT) ||
-                   (key == CSS.Attribute.BORDER_BOTTOM) ||
-                   (key == CSS.Attribute.BORDER_LEFT)) {
-            ShorthandBorderParser.parseShorthandBorder(attr, key, value);
-        }
 	else {
 	    Object iValue = getInternalCSSValue(key, value);
 	    if (iValue != null) {
@@ -795,19 +740,10 @@ public class CSS implements Serializable {
 	Element elem = (Element)htmlAttrSet;
 	HTML.Tag tag = getHTMLTag(htmlAttrSet);
 	if ((tag == HTML.Tag.TD) || (tag == HTML.Tag.TH)) {
-            // translate border width into the cells, if it has non-zero value.
+	    // translate border width into the cells
 	    AttributeSet tableAttr = elem.getParentElement().
 		                     getParentElement().getAttributes();
-            int borderWidth;
-            try {
-                borderWidth = Integer.parseInt(
-                    (String) tableAttr.getAttribute(HTML.Attribute.BORDER));
-            } catch (NumberFormatException e) {
-                borderWidth = 0;
-            }
-            if (borderWidth > 0) {
-                translateAttribute(HTML.Attribute.BORDER, tableAttr, cssAttrSet);
-            }
+	    translateAttribute(HTML.Attribute.BORDER, tableAttr, cssAttrSet);
 	    String pad = (String)tableAttr.getAttribute(HTML.Attribute.CELLPADDING);
 	    if (pad != null) {
 		LengthValue v = 
@@ -1162,9 +1098,6 @@ public class CSS implements Serializable {
     static Color stringToColor(String str) {
       Color color = null;
 
-      if (str == null) {
-          return null;
-      }
       if (str.length() == 0)
         color = Color.black;
       else if (str.startsWith("rgb(")) {
@@ -1204,8 +1137,6 @@ public class CSS implements Serializable {
         color = hexToColor("#008080");
       else if(str.equalsIgnoreCase("Aqua"))
         color = hexToColor("#00FFFF");
-      else if(str.equalsIgnoreCase("Orange"))
-        color = hexToColor("#FF8000");
       else
 	  color = hexToColor(str); // sometimes get specified without leading #
       return color;
@@ -3027,53 +2958,6 @@ public class CSS implements Serializable {
 	}
     }
 
-    static class ShorthandBorderParser {
-        static Attribute[] keys = {
-            Attribute.BORDER_TOP, Attribute.BORDER_RIGHT,
-            Attribute.BORDER_BOTTOM, Attribute.BORDER_LEFT,
-        };
-
-        static void parseShorthandBorder(MutableAttributeSet attributes,
-                                            CSS.Attribute key, String value) {            
-            Object[] parts = new Object[CSSBorder.PARSERS.length];
-            String[] strings = parseStrings(value);
-            for (String s : strings) {
-                boolean valid = false;
-                for (int i = 0; i < parts.length; i++) {
-                    Object v = CSSBorder.PARSERS[i].parseCssValue(s);
-                    if (v != null) {
-                        if (parts[i] == null) {
-                            parts[i] = v;
-                            valid = true;
-                        }
-                        break;
-                    }
-                }
-                if (!valid) {
-                    // Part is non-parseable or occured more than once.
-                    return;
-                }
-            }
-
-            // Unspecified parts get default values.
-            for (int i = 0; i < parts.length; i++) {
-                if (parts[i] == null) {
-                    parts[i] = CSSBorder.DEFAULTS[i];
-                }
-            }
-
-            // Dispatch collected values to individual properties.
-            for (int i = 0; i < keys.length; i++) {
-                if ((key == Attribute.BORDER) || (key == keys[i])) {
-                    for (int k = 0; k < parts.length; k++) {
-                        attributes.addAttribute(
-                                        CSSBorder.ATTRIBUTES[k][i], parts[k]);
-                    }
-                }
-            }
-        }
-    }
-    
     /**
      * Calculate the requirements needed to tile the requirements 
      * given by the iterator that would be tiled.  The calculation

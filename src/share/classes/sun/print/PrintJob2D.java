@@ -59,7 +59,6 @@ import javax.print.attribute.Size2DSyntax;
 import javax.print.attribute.standard.Chromaticity;
 import javax.print.attribute.standard.Copies;
 import javax.print.attribute.standard.Destination;
-import javax.print.attribute.standard.DialogTypeSelection;
 import javax.print.attribute.standard.JobName;
 import javax.print.attribute.standard.MediaSize;
 import javax.print.attribute.standard.PrintQuality;
@@ -72,6 +71,7 @@ import javax.print.attribute.standard.MediaSizeName;
 import javax.print.attribute.standard.PageRanges;
 
 import sun.print.SunPageSelection;
+import sun.print.DialogTypeSelection;
 import sun.print.SunMinMaxPage;
 
 /** 

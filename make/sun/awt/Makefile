@@ -47,11 +47,12 @@ OTHER_CFLAGS += -D__MEDIALIB_OLD_NAMES -D__USE_J2D_NAMES
 #
 
 #
-# Include all Java source files in sun/awt and sun/java2d, except for the
-# sun/awt/resources directory, which is handled by java/awt/Makefile.
+# Include all Java source files in sun/awt and sun/java2d, except for:
+# sun/awt/resources       handled by java/awt/Makefile
+# sun/java2d/pisces       handled by sun/pisces/Makefile
 #
 AUTO_FILES_JAVA_DIRS = sun/awt sun/java2d
-AUTO_JAVA_PRUNE = resources
+AUTO_JAVA_PRUNE = resources pisces
 
 ifeq ($(PLATFORM), windows)
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv WINDOWS

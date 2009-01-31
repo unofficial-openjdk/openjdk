@@ -104,8 +104,7 @@ package java.nio;
  * <p> A newly-created buffer always has a position of zero and a mark that is
  * undefined.  The initial limit may be zero, or it may be some other value
  * that depends upon the type of the buffer and the manner in which it is
- * constructed.  Each element of a newly-allocated buffer is initialized
- * to zero.
+ * constructed.  The initial content of a buffer is, in general, undefined.
  *
  *
  * <h4> Clearing, flipping, and rewinding </h4>

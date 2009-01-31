@@ -1,5 +1,5 @@
 #
-# Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ BUILDDIR = ../..
 PACKAGE = sun.nio
 PRODUCT = sun
 
+OTHER_JAVACFLAGS += -Xlint:serial -Werror
 include $(BUILDDIR)/common/Defs.gmk
 
 #
@@ -45,8 +46,7 @@ INSTALL_DOT_LIB = true
 
 include $(BUILDDIR)/common/Classes.gmk
 
-clean:: 
+clean::
 	$(RM) -r $(CLASSHDRDIR)
-clobber:: 
-	$(RM) -r $(CLASSBINDIR)/sun/nio/cs 
-
+clobber::
+	$(RM) -r $(CLASSBINDIR)/sun/nio/cs

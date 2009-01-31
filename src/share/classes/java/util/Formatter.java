@@ -409,19 +409,11 @@ import sun.misc.FormattedFloatingDecimal;
  *
  * <tr><td valign="top"><tt>'z'</tt>
  *     <td> <a href="http://www.ietf.org/rfc/rfc0822.txt">RFC&nbsp;822</a>
- *     style numeric time zone offset from GMT, e.g. <tt>-0800</tt>.  This
- *     value will be adjusted as necessary for Daylight Saving Time.  For
- *     <tt>long</tt>, {@link Long}, and {@link Date} the time zone used is
- *     the {@plainlink TimeZone#getDefault() default time zone} for this 
- *     instance of the Java virtual machine.
+ *     style numeric time zone offset from GMT, e.g. <tt>-0800</tt>.  
  *
  * <tr><td valign="top"><tt>'Z'</tt>
- *     <td> A string representing the abbreviation for the time zone.  This 
- *     value will be adjusted as necessary for Daylight Saving Time.  For
- *     <tt>long</tt>, {@link Long}, and {@link Date} the  time zone used is 
- *     the {@plainlink TimeZone#getDefault() default time zone} for this 
- *     instance of the Java virtual machine.  The Formatter's locale will
- *     supersede the locale of the argument (if any). 
+ *     <td> A string representing the abbreviation for the time zone.  The 
+ *     Formatter's locale will supersede the locale of the argument (if any). 
  *
  * <tr><td valign="top"><tt>'s'</tt>
  *     <td> Seconds since the beginning of the epoch starting at 1 January 1970
@@ -1573,19 +1565,11 @@ import sun.misc.FormattedFloatingDecimal;
  * <tr><td valign="top"><tt>'z'</tt>
  *     <td valign="top"> <tt>'&#92;u007a'</tt>
  *     <td> <a href="http://www.ietf.org/rfc/rfc0822.txt">RFC&nbsp;822</a>
- *     style numeric time zone offset from GMT, e.g. <tt>-0800</tt>.  This
- *     value will be adjusted as necessary for Daylight Saving Time.  For
- *     <tt>long</tt>, {@link Long}, and {@link Date} the time zone used is
- *     the {@plainlink TimeZone#getDefault() default time zone} for this 
- *     instance of the Java virtual machine.
+ *     style numeric time zone offset from GMT, e.g. <tt>-0800</tt>.  
  *
  * <tr><td valign="top"><tt>'Z'</tt>
- *     <td> A string representing the abbreviation for the time zone.  This 
- *     value will be adjusted as necessary for Daylight Saving Time.  For
- *     <tt>long</tt>, {@link Long}, and {@link Date} the time zone used is 
- *     the {@plainlink TimeZone#getDefault() default time zone} for this 
- *     instance of the Java virtual machine.  The Formatter's locale will
- *     supersede the locale of the argument (if any). 
+ *     <td valign="top"> <tt>'&#92;u005a'</tt>
+ *     <td> A string representing the abbreviation for the time zone. 
  *
  * <tr><td valign="top"><tt>'s'</tt>
  *     <td valign="top"> <tt>'&#92;u0073'</tt>

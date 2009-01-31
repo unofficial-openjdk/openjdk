@@ -36,8 +36,6 @@ include $(BUILDDIR)/common/Defs.gmk
 #
 include FILES_c.gmk
 
-ifndef OPENJDK
-
 FILES_java = \
  sun/dc/DuctusRenderingEngine.java \
  sun/dc/path/FastPathProducer.java \
@@ -55,21 +53,6 @@ FILES_export = \
 	sun/dc/pr/PathDasher.java \
 	sun/dc/pr/PathFiller.java \
 	sun/dc/pr/PathStroker.java
-
-else
-
-#
-# Specific to OpenJDK building
-#
-
-# Plug lib will be copied instead of compiling.
-USE_BINARY_PLUG_LIBRARY=true
-
-build: import-binary-plug-dc-classes import-binary-plug-dcpr-library
-
-include $(BUILDDIR)/common/internal/BinaryPlugs.gmk
-
-endif # OPENJDK
 
 #
 # Rules.

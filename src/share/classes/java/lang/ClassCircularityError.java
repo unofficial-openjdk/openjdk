@@ -26,8 +26,7 @@
 package java.lang;
 
 /**
- * Thrown when the Java Virtual Machine detects a circularity in the
- * superclass hierarchy of a class being loaded.
+ * Thrown when a circularity has been detected while initializing a class.
  *
  * @author     unascribed
  * @since      JDK1.0

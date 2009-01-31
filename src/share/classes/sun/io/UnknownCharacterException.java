@@ -1,5 +1,5 @@
 /*
- * Copyright 1996-2004 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1996-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,8 @@ package sun.io;
 public class UnknownCharacterException
     extends java.io.CharConversionException
 {
+    private static final long serialVersionUID = -8563196502398436986L;
+
     /**
      * Constructs a UnknownCharacterException with no detail message.
      * A detail message is a String that describes this particular exception.

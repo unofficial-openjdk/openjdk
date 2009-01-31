@@ -481,6 +481,10 @@ public class WToolkit extends SunToolkit implements Runnable {
     }
 
     public boolean isTraySupported() {
+        // workaround for 6419042
+        if (isProtectedMode()) {
+            return false;
+        }
         return true;
     }
 
@@ -935,4 +939,5 @@ public class WToolkit extends SunToolkit implements Runnable {
         return new WDesktopPeer();
     }
 
+    private static native boolean isProtectedMode();
 }

@@ -51,7 +51,7 @@ public class Transform4 {
 //         double dm11 = m11/65536.0;
 
 //         double invdet = 65536.0/(dm00*dm11 - dm01*dm10);
-
+        
 //         int im00 = (int)( dm11*invdet);
 //         int im01 = (int)(-dm01*invdet);
 //         int im10 = (int)(-dm10*invdet);

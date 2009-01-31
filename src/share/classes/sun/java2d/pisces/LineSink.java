@@ -91,3 +91,4 @@ public abstract class LineSink {
     public abstract void end();
 
 }
+

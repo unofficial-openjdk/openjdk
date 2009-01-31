@@ -326,7 +326,6 @@ public abstract class GraphicsEnvironment {
      * </ul>
      * @return true if the <code>font</code> is successfully
      * registered in this <code>GraphicsEnvironment</code>.
-     * @throws NullPointerException if <code>font</code> is null
      * @since 1.6
      */
     public boolean registerFont(Font font) {

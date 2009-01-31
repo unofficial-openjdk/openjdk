@@ -52,14 +52,14 @@ class FileInputStream extends InputStream
     private FileDescriptor fd;
 
     private FileChannel channel = null;
- 
+
     private Object closeLock = new Object();
     private volatile boolean closed = false;
 
     private static ThreadLocal<Boolean> runningFinalize =
 				new ThreadLocal<Boolean>();
-    
-    private static boolean isRunningFinalize() { 
+
+    private static boolean isRunningFinalize() {
 	Boolean val;
 	if ((val = runningFinalize.get()) != null)
 	    return val.booleanValue();
@@ -150,11 +150,6 @@ class FileInputStream extends InputStream
      * <p>
      * If <code>fdObj</code> is null then a <code>NullPointerException</code>
      * is thrown.
-     * <p>
-     * This constructor does not throw an exception if <code>fdObj</code>
-     * is {link java.io.FileDescriptor#valid() invalid}.
-     * However, if the methods are invoked on the resulting stream to attempt
-     * I/O on the stream, an <code>IOException</code> is thrown.   
      *
      * @param      fdObj   the file descriptor to be opened for reading.
      * @throws     SecurityException      if a security manager exists and its
@@ -233,8 +228,8 @@ class FileInputStream extends InputStream
      *             <code>-1</code> if there is no more data because the end of
      *             the file has been reached.
      * @exception  NullPointerException If <code>b</code> is <code>null</code>.
-     * @exception  IndexOutOfBoundsException If <code>off</code> is negative, 
-     * <code>len</code> is negative, or <code>len</code> is greater than 
+     * @exception  IndexOutOfBoundsException If <code>off</code> is negative,
+     * <code>len</code> is negative, or <code>len</code> is greater than
      * <code>b.length - off</code>
      * @exception  IOException  if an I/O error occurs.
      */
@@ -307,24 +302,24 @@ class FileInputStream extends InputStream
 	    /*
 	     * Decrement the FD use count associated with the channel
 	     * The use count is incremented whenever a new channel
-	     * is obtained from this stream. 
+	     * is obtained from this stream.
 	     */
 	   fd.decrementAndGetUseCount();
 	   channel.close();
 	}
-	   
+
 	/*
 	 * Decrement the FD use count associated with this stream
-	 */ 
+	 */
 	int useCount = fd.decrementAndGetUseCount();
 
 	/*
 	 * If FileDescriptor is still in use by another stream, the finalizer
-	 * will not close it. 
+	 * will not close it.
 	 */
 	if ((useCount <= 0) || !isRunningFinalize()) {
 	    close0();
-        } 
+        }
     }
 
     /**
@@ -363,11 +358,11 @@ class FileInputStream extends InputStream
 	    if (channel == null) {
 		channel = FileChannelImpl.open(fd, true, false, this);
 
-	        /* 
+	        /*
 		 * Increment fd's use count. Invoking the channel's close()
 		 * method will result in decrementing the use count set for
 		 * the channel.
-		 */ 
+		 */
 		fd.incrementAndGetUseCount();
 	    }
 	    return channel;

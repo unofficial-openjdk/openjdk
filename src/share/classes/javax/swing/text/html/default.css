@@ -211,8 +211,8 @@ var {font-weight: bold;
      font-style: italic}
 
 table {
-        border-style: outset;
-        border-width: 0;
+	border-color: Gray;
+	border-style: outset
 }
 
 tr {
@@ -220,7 +220,7 @@ tr {
 }
 
 td {
-        border-width: 0;
+	border-color: Gray;
 	border-style: inset;
 	padding-left: 3;
 	padding-right: 3;
@@ -231,7 +231,7 @@ td {
 th {
 	text-align: center;
 	font-weight: bold;
-        border-width: 0;
+	border-color: Gray;
 	border-style: inset;
 	padding-left: 3;
 	padding-right: 3;

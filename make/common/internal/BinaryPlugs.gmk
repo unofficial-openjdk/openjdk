@@ -29,10 +29,8 @@
 
 # Names of native shared libraries
 
-PLUG_DCPR_LIBRARY=$(LIB_PREFIX)dcpr.$(LIBRARY_SUFFIX)
 PLUG_JSOUND_LIBRARY=$(LIB_PREFIX)jsoundhs.$(LIBRARY_SUFFIX)
 PLUG_LIBRARY_NAMES = \
-    $(PLUG_DCPR_LIBRARY) \
     $(PLUG_JSOUND_LIBRARY)
 
 # Sub-directory where native shared libraries are located (e.g. jre/bin or...)
@@ -162,25 +160,10 @@ java/awt/image/renderable/RenderableImageOp.class \
 java/awt/image/renderable/RenderableImageProducer.class \
 java/awt/image/renderable/RenderedImageFactory.class
 
-PLUG_DC_CLASS_NAMES = \
-sun/dc/DuctusRenderingEngine.class \
-sun/dc/DuctusRenderingEngine\$$FillAdapter.class \
-sun/dc/path/FastPathProducer.class \
-sun/dc/path/PathConsumer.class \
-sun/dc/path/PathError.class \
-sun/dc/path/PathException.class \
-sun/dc/pr/PRError.class \
-sun/dc/pr/PRException.class \
-sun/dc/pr/PathDasher.class \
-sun/dc/pr/PathFiller.class \
-sun/dc/pr/PathStroker.class \
-sun/dc/pr/Rasterizer\$$ConsumerDisposer.class \
-sun/dc/pr/Rasterizer.class
-
 # Class list temp files (used by both import and export of plugs)
 
 PLUG_TEMPDIR=$(ABS_TEMPDIR)/plugs
-PLUG_CLASS_AREAS = jmf sound awt dc
+PLUG_CLASS_AREAS = jmf sound awt
 PLUG_CLISTS = $(PLUG_CLASS_AREAS:%=$(PLUG_TEMPDIR)/%.clist)
 
 # Create jargs file command
@@ -208,11 +191,6 @@ $(PLUG_TEMPDIR)/awt.clist:
 	@for i in $(PLUG_AWT_CLASS_NAMES) ; do \
 	  $(ECHO) "$$i" >> $@ ; \
 	done
-$(PLUG_TEMPDIR)/dc.clist:
-	@$(prep-target)
-	@for i in $(PLUG_DC_CLASS_NAMES) ; do \
-	  $(ECHO) "$$i" >> $@ ; \
-	done
 $(PLUG_TEMPDIR)/all.clist: $(PLUG_CLISTS)
 	@$(prep-target)
 	$(CAT) $(PLUG_CLISTS) > $@
@@ -221,8 +199,6 @@ $(PLUG_TEMPDIR)/jmf.jargs: $(PLUG_TEMPDIR)/jmf.clist
 $(PLUG_TEMPDIR)/sound.jargs: $(PLUG_TEMPDIR)/sound.clist
 	$(plug-create-jargs)
 $(PLUG_TEMPDIR)/awt.jargs: $(PLUG_TEMPDIR)/awt.clist
-	$(plug-create-jargs)
-$(PLUG_TEMPDIR)/dc.jargs: $(PLUG_TEMPDIR)/dc.clist
 	$(plug-create-jargs)
 $(PLUG_TEMPDIR)/all.jargs: $(PLUG_TEMPDIR)/all.clist
 	$(plug-create-jargs)
@@ -261,30 +237,22 @@ import-binary-plug-sound-classes: $(PLUG_IMPORT_JARFILE) $(PLUG_TEMPDIR)/sound.c
 	$(call import-binary-plug-classes,$(PLUG_TEMPDIR)/sound.clist)
 import-binary-plug-awt-classes: $(PLUG_IMPORT_JARFILE) $(PLUG_TEMPDIR)/awt.clist
 	$(call import-binary-plug-classes,$(PLUG_TEMPDIR)/awt.clist)
-import-binary-plug-dc-classes: $(PLUG_IMPORT_JARFILE) $(PLUG_TEMPDIR)/dc.clist
-	$(call import-binary-plug-classes,$(PLUG_TEMPDIR)/dc.clist)
 
 # Import all classes from the jar file
 
 import-binary-plug-jar: \
 	     import-binary-plug-jmf-classes \
 	     import-binary-plug-sound-classes \
-	     import-binary-plug-awt-classes \
-	     import-binary-plug-dc-classes 
+	     import-binary-plug-awt-classes
 
 # Import native libraries
 
-$(LIB_LOCATION)/$(PLUG_DCPR_LIBRARY): \
-    $(PLUG_IMPORT_DIR)/$(PLUG_LOCATION_SUBDIR)/$(PLUG_DCPR_LIBRARY)
-	$(import-binary-plug-file)
 $(LIB_LOCATION)/$(PLUG_JSOUND_LIBRARY): \
     $(PLUG_IMPORT_DIR)/$(PLUG_LOCATION_SUBDIR)/$(PLUG_JSOUND_LIBRARY)
 	$(import-binary-plug-file)
 
 # Rules only used by lower level makefiles
 
-import-binary-plug-dcpr-library: \
-    $(LIB_LOCATION)/$(PLUG_DCPR_LIBRARY)
 import-binary-plug-jsound-library: \
     $(LIB_LOCATION)/$(PLUG_JSOUND_LIBRARY)
 
@@ -319,8 +287,6 @@ import-binary-plugs: \
         import-binary-plug-jmf-classes \
         import-binary-plug-sound-classes \
 	import-binary-plug-awt-classes \
-        import-binary-plug-dc-classes  \
-	import-binary-plug-dcpr-library \
         import-binary-plug-jsound-library
 
 else # !OPENJDK
@@ -359,9 +325,6 @@ export-binary-plugs-jar: $(PLUG_EXPORT_JARFILE)
 
 # Export native libraries
 
-$(PLUG_EXPORT_DIR)/$(PLUG_LOCATION_SUBDIR)/$(PLUG_DCPR_LIBRARY): \
-    $(LIB_LOCATION)/$(PLUG_DCPR_LIBRARY)
-	$(export-binary-plug-file)
 $(PLUG_EXPORT_DIR)/$(PLUG_LOCATION_SUBDIR)/$(PLUG_JSOUND_LIBRARY): \
     $(LIB_LOCATION)/$(PLUG_JSOUND_LIBRARY)
 	$(export-binary-plug-file)

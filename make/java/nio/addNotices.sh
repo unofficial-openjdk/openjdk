@@ -25,7 +25,7 @@
 #
 
 # Parse the first contiguous comment block in this script and generate
-# a java comment block.  If this script is invoked with a copyright 
+# a java comment block.  If this script is invoked with a copyright
 # year/year range, the java comment block will contain a Sun copyright.
 
 COPYRIGHT_YEARS=$1

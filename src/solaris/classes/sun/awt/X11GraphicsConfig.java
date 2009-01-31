@@ -197,6 +197,14 @@ public class X11GraphicsConfig extends GraphicsConfiguration
 	return solidloops;
     }
 
+    public BufferedImage createCompatibleImage(int width, int height) {
+        ColorModel model = getColorModel();
+        WritableRaster raster =
+            model.createCompatibleWritableRaster(width, height);
+        return new BufferedImage(model, raster,
+                                 model.isAlphaPremultiplied(), null);
+    }
+
     /**
      * Returns the color model associated with this configuration.
      */

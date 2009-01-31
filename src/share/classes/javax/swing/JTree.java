@@ -1605,12 +1605,9 @@ public class JTree extends JComponent implements Scrollable, Accessible
     //
 
     /**
-     * Returns the number of viewable nodes. A node is viewable if all of its
-     * parents are expanded. The root is only included in this count if
-     * {@code isRootVisible()} is {@code true}. This returns {@code 0} if
-     * the UI has not been set.
+     * Returns the number of rows that are currently being displayed.
      *
-     * @return the number of viewable nodes
+     * @return the number of rows that are being displayed
      */
     public int getRowCount() {
         TreeUI            tree = getUI();
@@ -1788,13 +1785,12 @@ public class JTree extends JComponent implements Scrollable, Accessible
     }
 
     /**
-     * Returns the last path component of the selected path. This is
-     * a convenience method for
-     * {@code getSelectionModel().getSelectionPath().getLastPathComponent()}.
-     * This is typically only useful if the selection has one path.
+     * Returns the last path component in the first node of the current 
+     * selection.
      *
-     * @return the last path component of the selected path, or
-     *         <code>null</code> if nothing is selected
+     * @return the last <code>Object</code> in the first selected node's
+     *                <code>TreePath</code>,
+     *                or <code>null</code> if nothing is selected
      * @see TreePath#getLastPathComponent
      */
     public Object getLastSelectedPathComponent() {
@@ -1866,20 +1862,20 @@ public class JTree extends JComponent implements Scrollable, Accessible
     }
 
     /**
-     * Returns the smallest selected row. If the selection is empty, or
-     * none of the selected paths are viewable, {@code -1} is returned.
+     * Gets the first selected row.
      *
-     * @return the smallest selected row
+     * @return an integer designating the first selected row, where 0 is the 
+     *         first row in the display
      */
     public int getMinSelectionRow() {
         return getSelectionModel().getMinSelectionRow();
     }
 
     /**
-     * Returns the largest selected row. If the selection is empty, or
-     * none of the selected paths are viewable, {@code -1} is returned.
+     * Returns the last selected row.
      *
-     * @return the largest selected row
+     * @return an integer designating the last selected row, where 0 is the 
+     *         first row in the display
      */
     public int getMaxSelectionRow() {
         return getSelectionModel().getMaxSelectionRow();
@@ -2471,72 +2467,40 @@ public class JTree extends JComponent implements Scrollable, Accessible
     }
 
     /**
-     * Returns the paths (inclusive) between the specified rows. If
-     * the specified indices are within the viewable set of rows, or
-     * bound the viewable set of rows, then the indices are
-     * constrained by the viewable set of rows. If the specified
-     * indices are not within the viewable set of rows, or do not
-     * bound the viewable set of rows, then an empty array is
-     * returned. For example, if the row count is {@code 10}, and this
-     * method is invoked with {@code -1, 20}, then the specified
-     * indices are constrained to the viewable set of rows, and this is
-     * treated as if invoked with {@code 0, 9}. On the other hand, if
-     * this were invoked with {@code -10, -1}, then the specified
-     * indices do not bound the viewable set of rows, and an empty
-     * array is returned.
-     * <p>
-     * The parameters are not order dependent. That is, {@code
-     * getPathBetweenRows(x, y)} is equivalent to
-     * {@code getPathBetweenRows(y, x)}.
-     * <p>
-     * An empty array is returned if the row count is {@code 0}, or
-     * the specified indices do not bound the viewable set of rows.
+     * Returns <code>JTreePath</code> instances representing the path
+     * between index0 and index1 (including index1).
+     * Returns <code>null</code> if there is no tree.
      *
-     * @param index0 the first index in the range
-     * @param index1 the last index in the range
-     * @return the paths (inclusive) between the specified row indices
+     * @param index0  an integer specifying a display row, where 0 is the
+     *                first row in the display
+     * @param index1  an integer specifying a second display row
+     * @return an array of <code>TreePath</code> objects, one for each
+     *                node between index0 and index1, inclusive; or <code>null</code>
+     *                if there is no tree
      */
     protected TreePath[] getPathBetweenRows(int index0, int index1) {
+        int              newMinIndex, newMaxIndex;
         TreeUI           tree = getUI();
-        if (tree != null) {
-            int rowCount = getRowCount();
-            if (rowCount > 0 && !((index0 < 0 && index1 < 0) ||
-                                  (index0 >= rowCount && index1 >= rowCount))){
-                index0 = Math.min(rowCount - 1, Math.max(index0, 0));
-                index1 = Math.min(rowCount - 1, Math.max(index1, 0));
-                int minIndex = Math.min(index0, index1);
-                int maxIndex = Math.max(index0, index1);
-                TreePath[] selection = new TreePath[
-                        maxIndex - minIndex + 1];
-                for(int counter = minIndex; counter <= maxIndex; counter++) {
-                    selection[counter - minIndex] = 
-                            tree.getPathForRow(this, counter);
-                }
-                return selection;
+
+        newMinIndex = Math.min(index0, index1);
+        newMaxIndex = Math.max(index0, index1);
+
+        if(tree != null) {
+            TreePath[] selection = new TreePath[newMaxIndex - newMinIndex + 1];
+            for(int counter = newMinIndex; counter <= newMaxIndex; counter++) {
+                selection[counter - newMinIndex] = tree.getPathForRow(this, counter);
             }
+            return selection;
         }
-        return new TreePath[0];
+        return null;
     }
 
     /**
-     * Selects the rows in the specified interval (inclusive). If
-     * the specified indices are within the viewable set of rows, or bound
-     * the viewable set of rows, then the specified rows are constrained by
-     * the viewable set of rows. If the specified indices are not within the
-     * viewable set of rows, or do not bound the viewable set of rows, then
-     * the selection is cleared. For example, if the row count is {@code
-     * 10}, and this method is invoked with {@code -1, 20}, then the
-     * specified indices bounds the viewable range, and this is treated as
-     * if invoked with {@code 0, 9}. On the other hand, if this were
-     * invoked with {@code -10, -1}, then the specified indices do not
-     * bound the viewable set of rows, and the selection is cleared.
-     * <p>
-     * The parameters are not order dependent. That is, {@code
-     * setSelectionInterval(x, y)} is equivalent to
-     * {@code setSelectionInterval(y, x)}.
+     * Selects the nodes between index0 and index1, inclusive.
      *
-     * @param index0 the first index in the range to select
-     * @param index1 the last index in the range to select
+     * @param index0  an integer specifying a display row, where 0 is the
+     *                first row in the display
+     * @param index1  an integer specifying a second display row
     */
     public void setSelectionInterval(int index0, int index1) {
         TreePath[]         paths = getPathBetweenRows(index0, index1);
@@ -2545,60 +2509,31 @@ public class JTree extends JComponent implements Scrollable, Accessible
     }
 
     /**
-     * Adds the specified rows (inclusive) to the selection. If the
-     * specified indices are within the viewable set of rows, or bound
-     * the viewable set of rows, then the specified indices are
-     * constrained by the viewable set of rows. If the indices are not
-     * within the viewable set of rows, or do not bound the viewable
-     * set of rows, then the selection is unchanged. For example, if
-     * the row count is {@code 10}, and this method is invoked with
-     * {@code -1, 20}, then the specified indices bounds the viewable
-     * range, and this is treated as if invoked with {@code 0, 9}. On
-     * the other hand, if this were invoked with {@code -10, -1}, then
-     * the specified indices do not bound the viewable set of rows,
-     * and the selection is unchanged.
-     * <p>
-     * The parameters are not order dependent. That is, {@code
-     * addSelectionInterval(x, y)} is equivalent to
-     * {@code addSelectionInterval(y, x)}.
+     * Adds the paths between index0 and index1, inclusive, to the 
+     * selection.
      *
-     * @param index0 the first index in the range to add to the selection
-     * @param index1 the last index in the range to add to the selection
+     * @param index0  an integer specifying a display row, where 0 is the
+     *                first row in the display
+     * @param index1  an integer specifying a second display row
      */
     public void addSelectionInterval(int index0, int index1) {
         TreePath[]         paths = getPathBetweenRows(index0, index1);
 
-        if (paths != null && paths.length > 0) {
-            this.getSelectionModel().addSelectionPaths(paths);
-        }
+        this.getSelectionModel().addSelectionPaths(paths);
     }
 
     /**
-     * Removes the specified rows (inclusive) from the selection. If
-     * the specified indices are within the viewable set of rows, or bound
-     * the viewable set of rows, then the specified indices are constrained by
-     * the viewable set of rows. If the specified indices are not within the
-     * viewable set of rows, or do not bound the viewable set of rows, then
-     * the selection is unchanged. For example, if the row count is {@code
-     * 10}, and this method is invoked with {@code -1, 20}, then the
-     * specified range bounds the viewable range, and this is treated as
-     * if invoked with {@code 0, 9}. On the other hand, if this were
-     * invoked with {@code -10, -1}, then the specified range does not
-     * bound the viewable set of rows, and the selection is unchanged.
-     * <p>
-     * The parameters are not order dependent. That is, {@code
-     * removeSelectionInterval(x, y)} is equivalent to
-     * {@code removeSelectionInterval(y, x)}.
+     * Removes the nodes between index0 and index1, inclusive, from the  
+     * selection. 
      *
-     * @param index0 the first row to remove from the selection
-     * @param index1 the last row to remove from the selection
+     * @param index0  an integer specifying a display row, where 0 is the 
+     *                first row in the display 
+     * @param index1  an integer specifying a second display row 
      */
     public void removeSelectionInterval(int index0, int index1) {
         TreePath[]         paths = getPathBetweenRows(index0, index1);
 
-        if (paths != null && paths.length > 0) {
-            this.getSelectionModel().removeSelectionPaths(paths);
-        }
+        this.getSelectionModel().removeSelectionPaths(paths); 
     }
 
     /**

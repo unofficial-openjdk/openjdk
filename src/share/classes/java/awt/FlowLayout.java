@@ -133,6 +133,8 @@ public class FlowLayout implements LayoutManager, java.io.Serializable {
      * <code>LEFT</code>
      * <code>RIGHT</code>
      * <code>CENTER</code>
+     * <code>LEADING</code>
+     * <code>TRAILING</code>
      * </ul>
      *
      * @serial

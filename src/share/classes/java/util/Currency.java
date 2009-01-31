@@ -55,21 +55,6 @@ import sun.util.resources.OpenListResourceBundle;
  * <code>Currency</code> instance for any given currency. Therefore, there's
  * no public constructor. You obtain a <code>Currency</code> instance using
  * the <code>getInstance</code> methods.
- * <p>
- * Users can supersede the Java runtime currency data by creating a properties 
- * file named <code>&lt;JAVA_HOME&gt;/lib/currency.properties</code>.  The contents 
- * of the properties file are key/value pairs of the ISO 3166 country codes 
- * and the ISO 4217 currency data respectively.  The value part consists of 
- * three ISO 4217 values of a currency, i.e., an alphabetic code, a numeric 
- * code, and a minor unit.  Those three ISO 4217 values are separated by commas.  
- * The lines which start with '#'s are considered comment lines.  For example,
- * <p> 
- * <code>
- * #Sample currency properties<br>
- * JP=JPZ,999,0
- * </code>
- * <p>
- * will supersede the currency data for Japan.
  *
  * @since 1.4
  */
@@ -226,6 +211,7 @@ public final class Currency implements Serializable {
 		    throw ie;
                 }
 
+                if (false) {
 		// look for the properties file for overrides
 		try {
 		    File propFile = new File(homeDir + File.separator + 
@@ -245,6 +231,7 @@ public final class Currency implements Serializable {
 		    }
                 } catch (IOException e) {
 	            log(Level.INFO, "currency.properties is ignored because of an IOException", e);
+                }
                 }
                 return null;
             }
@@ -400,7 +387,7 @@ public final class Currency implements Serializable {
      *    available in the runtime, the returned set is empty.
      * @since 1.7
      */
-    public static Set<Currency> getAvailableCurrencies() {
+    private static Set<Currency> getAvailableCurrencies() {
         synchronized(Currency.class) {
 	    if (available == null) {
 	        available = new HashSet<Currency>(256);
@@ -515,7 +502,7 @@ public final class Currency implements Serializable {
      * @return the ISO 4217 numeric code of this currency
      * @since 1.7
      */
-    public int getNumericCode() {
+    private int getNumericCode() {
         return numericCode;
     }
 
@@ -527,7 +514,7 @@ public final class Currency implements Serializable {
      * @return the display name of this currency for the default locale
      * @since 1.7
      */
-    public String getDisplayName() {
+    private String getDisplayName() {
         return getDisplayName(Locale.getDefault());
     }
     
@@ -542,7 +529,7 @@ public final class Currency implements Serializable {
      * @exception NullPointerException if <code>locale</code> is null
      * @since 1.7
      */
-    public String getDisplayName(Locale locale) {
+    private String getDisplayName(Locale locale) {
         try {
             OpenListResourceBundle bundle = LocaleData.getCurrencyNames(locale);
             String result = null;
@@ -630,8 +617,8 @@ public final class Currency implements Serializable {
             switch(type) {
             case SYMBOL:
 	        return currencyNameProvider.getSymbol(key, locale);
-            case DISPLAYNAME:
-		return currencyNameProvider.getDisplayName(key, locale);
+//          case DISPLAYNAME:
+//		return currencyNameProvider.getDisplayName(key, locale);
             default:
                 assert false; // shouldn't happen
             }

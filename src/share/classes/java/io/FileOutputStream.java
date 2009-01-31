@@ -30,7 +30,7 @@ import sun.nio.ch.FileChannelImpl;
 
 
 /**
- * A file output stream is an output stream for writing data to a 
+ * A file output stream is an output stream for writing data to a
  * <code>File</code> or to a <code>FileDescriptor</code>. Whether or not
  * a file is available or may be created depends upon the underlying
  * platform.  Some platforms, in particular, allow a file to be opened
@@ -76,11 +76,11 @@ class FileOutputStream extends OutputStream
     }
 
     /**
-     * Creates an output file stream to write to the file with the 
-     * specified name. A new <code>FileDescriptor</code> object is 
+     * Creates an output file stream to write to the file with the
+     * specified name. A new <code>FileDescriptor</code> object is
      * created to represent this file connection.
      * <p>
-     * First, if there is a security manager, its <code>checkWrite</code> 
+     * First, if there is a security manager, its <code>checkWrite</code>
      * method is called with <code>name</code> as its argument.
      * <p>
      * If the file exists but is a directory rather than a regular file, does
@@ -107,13 +107,13 @@ class FileOutputStream extends OutputStream
      * A new <code>FileDescriptor</code> object is created to represent this
      * file connection.
      * <p>
-     * First, if there is a security manager, its <code>checkWrite</code> 
+     * First, if there is a security manager, its <code>checkWrite</code>
      * method is called with <code>name</code> as its argument.
      * <p>
      * If the file exists but is a directory rather than a regular file, does
      * not exist but cannot be created, or cannot be opened for any other
      * reason then a <code>FileNotFoundException</code> is thrown.
-     * 
+     *
      * @param     name        the system-dependent file name
      * @param     append      if <code>true</code>, then bytes will be written
      *                   to the end of the file rather than the beginning
@@ -133,13 +133,13 @@ class FileOutputStream extends OutputStream
     }
 
     /**
-     * Creates a file output stream to write to the file represented by 
-     * the specified <code>File</code> object. A new 
-     * <code>FileDescriptor</code> object is created to represent this 
+     * Creates a file output stream to write to the file represented by
+     * the specified <code>File</code> object. A new
+     * <code>FileDescriptor</code> object is created to represent this
      * file connection.
      * <p>
-     * First, if there is a security manager, its <code>checkWrite</code> 
-     * method is called with the path represented by the <code>file</code> 
+     * First, if there is a security manager, its <code>checkWrite</code>
+     * method is called with the path represented by the <code>file</code>
      * argument as its argument.
      * <p>
      * If the file exists but is a directory rather than a regular file, does
@@ -162,14 +162,14 @@ class FileOutputStream extends OutputStream
     }
 
     /**
-     * Creates a file output stream to write to the file represented by 
+     * Creates a file output stream to write to the file represented by
      * the specified <code>File</code> object. If the second argument is
      * <code>true</code>, then bytes will be written to the end of the file
      * rather than the beginning. A new <code>FileDescriptor</code> object is
      * created to represent this file connection.
      * <p>
-     * First, if there is a security manager, its <code>checkWrite</code> 
-     * method is called with the path represented by the <code>file</code> 
+     * First, if there is a security manager, its <code>checkWrite</code>
+     * method is called with the path represented by the <code>file</code>
      * argument as its argument.
      * <p>
      * If the file exists but is a directory rather than a regular file, does
@@ -212,21 +212,13 @@ class FileOutputStream extends OutputStream
     }
 
     /**
-     * Creates an output file stream to write to the specified file 
-     * descriptor, which represents an existing connection to an actual 
+     * Creates an output file stream to write to the specified file
+     * descriptor, which represents an existing connection to an actual
      * file in the file system.
      * <p>
-     * First, if there is a security manager, its <code>checkWrite</code> 
-     * method is called with the file descriptor <code>fdObj</code> 
+     * First, if there is a security manager, its <code>checkWrite</code>
+     * method is called with the file descriptor <code>fdObj</code>
      * argument as its argument.
-     * <p>
-     * If <code>fdObj</code> is null then a <code>NullPointerException</code>
-     * is thrown.
-     * <p>
-     * This constructor does not throw an exception if <code>fdObj</code>
-     * is {link java.io.FileDescriptor#valid() invalid}.
-     * However, if the methods are invoked on the resulting stream to attempt
-     * I/O on the stream, an <code>IOException</code> is thrown.   
      *
      * @param      fdObj   the file descriptor to be opened for writing
      * @exception  SecurityException  if a security manager exists and its
@@ -265,7 +257,7 @@ class FileOutputStream extends OutputStream
     private native void openAppend(String name) throws FileNotFoundException;
 
     /**
-     * Writes the specified byte to this file output stream. Implements 
+     * Writes the specified byte to this file output stream. Implements
      * the <code>write</code> method of <code>OutputStream</code>.
      *
      * @param      b   the byte to be written.
@@ -283,8 +275,8 @@ class FileOutputStream extends OutputStream
     private native void writeBytes(byte b[], int off, int len) throws IOException;
 
     /**
-     * Writes <code>b.length</code> bytes from the specified byte array 
-     * to this file output stream. 
+     * Writes <code>b.length</code> bytes from the specified byte array
+     * to this file output stream.
      *
      * @param      b   the data.
      * @exception  IOException  if an I/O error occurs.
@@ -294,8 +286,8 @@ class FileOutputStream extends OutputStream
     }
 
     /**
-     * Writes <code>len</code> bytes from the specified byte array 
-     * starting at offset <code>off</code> to this file output stream. 
+     * Writes <code>len</code> bytes from the specified byte array
+     * starting at offset <code>off</code> to this file output stream.
      *
      * @param      b     the data.
      * @param      off   the start offset in the data.
@@ -307,9 +299,9 @@ class FileOutputStream extends OutputStream
     }
 
     /**
-     * Closes this file output stream and releases any system resources 
-     * associated with this stream. This file output stream may no longer 
-     * be used for writing bytes. 
+     * Closes this file output stream and releases any system resources
+     * associated with this stream. This file output stream may no longer
+     * be used for writing bytes.
      *
      * <p> If this stream has an associated channel then the channel is closed
      * as well.
@@ -354,10 +346,10 @@ class FileOutputStream extends OutputStream
     /**
      * Returns the file descriptor associated with this stream.
      *
-     * @return  the <code>FileDescriptor</code> object that represents 
-     *          the connection to the file in the file system being used 
-     *          by this <code>FileOutputStream</code> object. 
-     * 
+     * @return  the <code>FileDescriptor</code> object that represents
+     *          the connection to the file in the file system being used
+     *          by this <code>FileOutputStream</code> object.
+     *
      * @exception  IOException  if an I/O error occurs.
      * @see        java.io.FileDescriptor
      */
@@ -365,7 +357,7 @@ class FileOutputStream extends OutputStream
 	if (fd != null) return fd;
 	throw new IOException();
      }
-    
+
     /**
      * Returns the unique {@link java.nio.channels.FileChannel FileChannel}
      * object associated with this file output stream. </p>
@@ -392,7 +384,7 @@ class FileOutputStream extends OutputStream
 		 * Increment fd's use count. Invoking the channel's close()
 		 * method will result in decrementing the use count set for
 		 * the channel.
-		 */ 
+		 */
 		fd.incrementAndGetUseCount();
 	    }
 	    return channel;
@@ -400,9 +392,9 @@ class FileOutputStream extends OutputStream
     }
 
     /**
-     * Cleans up the connection to the file, and ensures that the 
+     * Cleans up the connection to the file, and ensures that the
      * <code>close</code> method of this file output stream is
-     * called when there are no more references to this stream. 
+     * called when there are no more references to this stream.
      *
      * @exception  IOException  if an I/O error occurs.
      * @see        java.io.FileInputStream#close()
@@ -426,12 +418,12 @@ class FileOutputStream extends OutputStream
 		}
  	    }
  	}
-    } 
+    }
 
     private native void close0() throws IOException;
 
     private static native void initIDs();
-    
+
     static {
 	initIDs();
     }

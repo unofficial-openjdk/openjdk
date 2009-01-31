@@ -2520,4 +2520,15 @@ public class Font implements java.io.Serializable
      * Initialize JNI field and method IDs
      */
     private static native void initIDs();
+
+    /*
+     * Disposes the native <code>Font</code> object.
+     */
+     protected void finalize() throws Throwable {
+        /* Yes, its empty, yes, that's OK :-)
+         * The 2D disposer thread now releases font resources,
+         * and because this method is empty it does not in fact
+         * trigger object finalization.
+         */
+     }
 }

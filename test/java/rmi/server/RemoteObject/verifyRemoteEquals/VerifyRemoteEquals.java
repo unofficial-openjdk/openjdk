@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -29,8 +29,6 @@
  * @library ../../../testlibrary
  *
  * @build VerifyRemoteEquals
- * @build VerifyRemoteEquals$TestHomeImpl_Stub
- * @build VerifyRemoteEquals$TestImpl_Stub
  * @run main/othervm/timeout=40 VerifyRemoteEquals
  * @author Laird Dornin
  */
@@ -52,181 +50,181 @@ public class VerifyRemoteEquals {
      */
     public interface Test extends Remote {
     }
-    
+
     /**
      * Implementation of Remote interface passing custom socket
      * factories
      */
-    public static final class TestImpl 
-	extends UnicastRemoteObject implements Test 
+    public static final class TestImpl
+        extends UnicastRemoteObject implements Test
     {
-	public TestImpl() throws RemoteException {
-	    super();
-	}
-	
-	public TestImpl(RMIClientSocketFactory clientFactory,
-			RMIServerSocketFactory serverFactory)
-	    throws RemoteException 
-	{
-	    
-	    super(0, clientFactory, serverFactory);
-	}
-	
-	public TestImpl(RMISocketFactory factory)
-	    throws RemoteException 
-	{
-	    super(0, factory, factory);
-	}
+        public TestImpl() throws RemoteException {
+            super();
+        }
+
+        public TestImpl(RMIClientSocketFactory clientFactory,
+                        RMIServerSocketFactory serverFactory)
+            throws RemoteException
+        {
+
+            super(0, clientFactory, serverFactory);
+        }
+
+        public TestImpl(RMISocketFactory factory)
+            throws RemoteException
+        {
+            super(0, factory, factory);
+        }
     }
-    
+
     /**
      * Remote interface for retrieving Test object.
      */
     public interface TestHome extends Remote {
-	public Test get() throws RemoteException;
+        public Test get() throws RemoteException;
     }
 
     /**
      * Implementation of interface TestHome.
      */
-    public static final class TestHomeImpl 
-	extends UnicastRemoteObject implements TestHome 
+    public static final class TestHomeImpl
+        extends UnicastRemoteObject implements TestHome
     {
-	private Test test;
-	
-	public TestHomeImpl(Test test) 
-	    throws RemoteException {
-			
-	    super();
-	    
-	    this.test = test;
-	}
-	
-	public Test get() {
-	    return test;
-	}
+        private Test test;
+
+        public TestHomeImpl(Test test)
+            throws RemoteException {
+
+            super();
+
+            this.test = test;
+        }
+
+        public Test get() {
+            return test;
+        }
     }
 
-    /** 
+    /**
      * Custom server socket factory.
-     */		
-    public static final class ServerSocketAndFactory 
-	extends ServerSocket implements RMIServerSocketFactory, Serializable 
+     */
+    public static final class ServerSocketAndFactory
+        extends ServerSocket implements RMIServerSocketFactory, Serializable
     {
-	ServerSocketAndFactory() throws IOException, java.net.UnknownHostException {
-	    // I am forced to do something useless with the parent
-	    // constructor
-	    super(0);
-	}
-	ServerSocketAndFactory(int port) throws IOException,
-	    java.net.UnknownHostException
-	{
-	    super(port);
-	}
-	
-	public ServerSocket createServerSocket(int port) 
-	    throws IOException
-	{
-	    
-	    return new ServerSocketAndFactory(port);
-	}
+        ServerSocketAndFactory() throws IOException, java.net.UnknownHostException {
+            // I am forced to do something useless with the parent
+            // constructor
+            super(0);
+        }
+        ServerSocketAndFactory(int port) throws IOException,
+            java.net.UnknownHostException
+        {
+            super(port);
+        }
 
-	public int hashCode() {
-	    return getLocalPort();
-	}
+        public ServerSocket createServerSocket(int port)
+            throws IOException
+        {
 
-	public boolean equals(Object obj) {
-	    if (obj instanceof ServerSocketAndFactory) {
-		ServerSocketAndFactory ssf = (ServerSocketAndFactory) obj;
-		if (getLocalPort() == ssf.getLocalPort()) {
-		    return true;
-		}
-	    }
-	    return false;
-	}
+            return new ServerSocketAndFactory(port);
+        }
+
+        public int hashCode() {
+            return getLocalPort();
+        }
+
+        public boolean equals(Object obj) {
+            if (obj instanceof ServerSocketAndFactory) {
+                ServerSocketAndFactory ssf = (ServerSocketAndFactory) obj;
+                if (getLocalPort() == ssf.getLocalPort()) {
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
-    /** 
+    /**
      * Custom socket factory.
-     */		
-    public static final class ClientSocketAndFactory 
-	extends Socket implements RMIClientSocketFactory, Serializable 
+     */
+    public static final class ClientSocketAndFactory
+        extends Socket implements RMIClientSocketFactory, Serializable
     {
-	ClientSocketAndFactory() {
-	}
-	ClientSocketAndFactory(String host, int port) throws IOException {
-	    super(host, port);
-	}
-	
-	public Socket createSocket(String host, int port) 
-	    throws IOException {
-		
-	    return new ClientSocketAndFactory(host, port);
-	}
+        ClientSocketAndFactory() {
+        }
+        ClientSocketAndFactory(String host, int port) throws IOException {
+            super(host, port);
+        }
 
-	public int hashCode() {
-	    return getPort();
-	}
+        public Socket createSocket(String host, int port)
+            throws IOException {
 
-	public boolean equals(Object obj) {
+            return new ClientSocketAndFactory(host, port);
+        }
 
-	    if (obj instanceof ClientSocketAndFactory) {
-		ClientSocketAndFactory csf = (ClientSocketAndFactory) obj;
-		if (getPort() == csf.getPort()) {
-		    return true;
-		}
-	    }
+        public int hashCode() {
+            return getPort();
+        }
 
-	    return false;
-	}
+        public boolean equals(Object obj) {
+
+            if (obj instanceof ClientSocketAndFactory) {
+                ClientSocketAndFactory csf = (ClientSocketAndFactory) obj;
+                if (getPort() == csf.getPort()) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
     }
 
     public static void main(String[] args) {
-	
-	try {
-	    System.out.println("\n\nRegression test for, 4251010\n\n");
-	    
-	    Test test = new TestImpl(new ClientSocketAndFactory(),
-				     new ServerSocketAndFactory());
-	    TestHome home = new TestHomeImpl(test);
 
-	    Test test0 = ((Test) RemoteObject.toStub(test));
-	    Test test1 = ((TestHome) RemoteObject.toStub(home)).get();
-	    Test test2 = ((TestHome) RemoteObject.toStub(home)).get();
-	    Test test3 = ((Test) (new MarshalledObject(test)).get());
+        try {
+            System.out.println("\n\nRegression test for, 4251010\n\n");
 
-	    if (test0.equals(test1)) {
-		System.out.println("test0, test1, stubs equal");
-	    } else {
-		TestLibrary.bomb("test0, test1, stubs not equal");
-	    }
+            Test test = new TestImpl(new ClientSocketAndFactory(),
+                                     new ServerSocketAndFactory());
+            TestHome home = new TestHomeImpl(test);
 
-	    if (test1.equals(test2)) {
-		System.out.println("test1, test2, stubs equal");
-	    } else {
-		TestLibrary.bomb("test1, test2, stubs not equal");
-	    }
+            Test test0 = ((Test) RemoteObject.toStub(test));
+            Test test1 = ((TestHome) RemoteObject.toStub(home)).get();
+            Test test2 = ((TestHome) RemoteObject.toStub(home)).get();
+            Test test3 = ((Test) (new MarshalledObject(test)).get());
 
-	    // explicitly compare an unmarshalled object with toStub
-	    // return
-	    if (test2.equals(test3)) {
-		System.out.println("test2, test3, stubs equal");
-	    } else {
-		TestLibrary.bomb("test2, test3, stubs not equal");
-	    }
+            if (test0.equals(test1)) {
+                System.out.println("test0, test1, stubs equal");
+            } else {
+                TestLibrary.bomb("test0, test1, stubs not equal");
+            }
 
-	    test0 = null;
-	    test1 = null;
-	    test2 = null;
-	    test3 = null;
+            if (test1.equals(test2)) {
+                System.out.println("test1, test2, stubs equal");
+            } else {
+                TestLibrary.bomb("test1, test2, stubs not equal");
+            }
 
-	    TestLibrary.unexport(test);
-	    TestLibrary.unexport(home);
+            // explicitly compare an unmarshalled object with toStub
+            // return
+            if (test2.equals(test3)) {
+                System.out.println("test2, test3, stubs equal");
+            } else {
+                TestLibrary.bomb("test2, test3, stubs not equal");
+            }
 
-	    System.err.println("test passed: stubs were equal");
-	    
-	} catch (Exception e) {
-	    TestLibrary.bomb("test got unexpected exception", e);
-	}
+            test0 = null;
+            test1 = null;
+            test2 = null;
+            test3 = null;
+
+            TestLibrary.unexport(test);
+            TestLibrary.unexport(home);
+
+            System.err.println("test passed: stubs were equal");
+
+        } catch (Exception e) {
+            TestLibrary.bomb("test got unexpected exception", e);
+        }
     }
 }

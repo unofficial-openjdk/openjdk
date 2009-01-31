@@ -1,5 +1,5 @@
 #
-# Copyright 1996-2006 Sun Microsystems, Inc.  All Rights Reserved.
+# Copyright 1996-2007 Sun Microsystems, Inc.  All Rights Reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@ PRODUCT = sun
 # This re-directs all the class files to a separate location
 CLASSDESTDIR = $(TEMPDIR)/classes
 
+OTHER_JAVACFLAGS += -Xlint:serial -Werror
 include $(BUILDDIR)/common/Defs.gmk
 
 #
@@ -52,7 +53,7 @@ ifeq ($(PLATFORM), windows)
 endif # PLATFORM
 
 # For Cygwin, command line arguments that are paths must be converted to
-# windows style paths. These paths cannot be used as targets, however, because 
+# windows style paths. These paths cannot be used as targets, however, because
 # the ":" in them  will interfere with GNU Make rules, generating "multiple
 # target pattern" errors.
 
@@ -86,4 +87,3 @@ $(CHARSETS_JAR): $(FILES_class) $(CLASSDESTDIR)/$(SERVICE_DESCRIPTION_PATH)
 clean::
 	$(RM) -r $(CLASSDESTDIR)
 	$(RM) $(CHARSETS_JAR)
-

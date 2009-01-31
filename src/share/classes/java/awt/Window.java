@@ -281,7 +281,7 @@ public class Window extends Container implements Accessible {
      * @see #isAutoRequestFocus
      * @since 1.7
      */
-    private volatile boolean autoRequestFocus = true;
+    private transient volatile boolean autoRequestFocus = true;
 
     /*
      * Indicates that this window is being shown. This flag is set to true at
@@ -834,21 +834,6 @@ public class Window extends Container implements Accessible {
     /**
      * Shows or hides this {@code Window} depending on the value of parameter
      * {@code b}.
-     * <p>
-     * If the method shows the window then the window is also made
-     * focused under the following conditions:
-     * <ul>
-     * <li> The {@code Window} meets the requirements outlined in the
-     *      {@link #isFocusableWindow} method.
-     * <li> The {@code Window}'s {@code autoRequestFocus} property is of the {@code true} value.
-     * <li> Native windowing system allows the {@code Window} to get focused.
-     * </ul>
-     * There is an exception for the second condition (the value of the
-     * {@code autoRequestFocus} property). The property is not taken into account if the
-     * window is a modal dialog, which blocks the currently focused window.
-     * <p>
-     * Developers must never assume that the window is the focused or active window
-     * until it receives a WINDOW_GAINED_FOCUS or WINDOW_ACTIVATED event.
      * @param b  if {@code true}, makes the {@code Window} visible, 
      * otherwise hides the {@code Window}.
      * If the {@code Window} and/or its owner
@@ -864,8 +849,6 @@ public class Window extends Container implements Accessible {
      * @see java.awt.Component#setVisible
      * @see java.awt.Window#toFront
      * @see java.awt.Window#dispose
-     * @see java.awt.Window#setAutoRequestFocus
-     * @see java.awt.Window#isFocusableWindow
      */
     public void setVisible(boolean b) {
         super.setVisible(b);
@@ -1104,19 +1087,13 @@ public class Window extends Container implements Accessible {
      * however, developers should not assume that this method will move this
      * Window above all other windows in every situation.
      * <p>
-     * Developers must never assume that this Window is the focused or active
-     * Window until this Window receives a WINDOW_GAINED_FOCUS or WINDOW_ACTIVATED
-     * event. On platforms where the top-most window is the focused window, this
-     * method will <b>probably</b> focus this Window (if it is not already focused)
-     * under the following conditions:
-     * <ul>
-     * <li> The window meets the requirements outlined in the
-     *      {@link #isFocusableWindow} method.
-     * <li> The window's property {@code autoRequestFocus} is of the
-     *      {@code true} value.
-     * <li> Native windowing system allows the window to get focused.
-     * </ul>
-     * On platforms where the stacking order does not typically affect the focused
+     * Because of variations in native windowing systems, no guarantees about
+     * changes to the focused and active Windows can be made. Developers must
+     * never assume that this Window is the focused or active Window until this
+     * Window receives a WINDOW_GAINED_FOCUS or WINDOW_ACTIVATED event. On
+     * platforms where the top-most window is the focused window, this method
+     * will <b>probably</b> focus this Window, if it is not already focused. On
+     * platforms where the stacking order does not typically affect the focused
      * window, this method will <b>probably</b> leave the focused and active
      * Windows unchanged.
      * <p>
@@ -1129,8 +1106,6 @@ public class Window extends Container implements Accessible {
      * is brought to the front and remains above the blocked window.
      *
      * @see       #toBack
-     * @see       #setAutoRequestFocus
-     * @see       #isFocusableWindow
      */
     public void toFront() {
         toFront_NoClientCode();
@@ -2421,46 +2396,6 @@ public class Window extends Container implements Accessible {
 	    KeyboardFocusManager.getCurrentKeyboardFocusManager().
 		clearGlobalFocusOwner();
 	}
-    }
-
-    /**
-     * Sets whether this window should receive focus on
-     * subsequently being shown (with a call to {@link #setVisible setVisible(true)}),
-     * or being moved to the front (with a call to {@link #toFront}). 
-     * <p>
-     * Note that {@link #setVisible setVisible(true)} may be called indirectly
-     * (e.g. when showing an owner of the window makes the window to be shown).
-     * {@link #toFront} may also be called indirectly (e.g. when
-     * {@link #setVisible setVisible(true)} is called on already visible window).
-     * In all such cases this property takes effect as well.
-     * <p>
-     * The value of the property is not inherited by owned windows.
-     *
-     * @param autoRequestFocus whether this window should be focused on
-     *        subsequently being shown or being moved to the front
-     * @see #isAutoRequestFocus
-     * @see #isFocusableWindow
-     * @see #setVisible
-     * @see #toFront
-     * @since 1.7
-     */
-    public void setAutoRequestFocus(boolean autoRequestFocus) {
-        this.autoRequestFocus = autoRequestFocus;
-    }
-
-    /**
-     * Returns whether this window should receive focus on subsequently being shown
-     * (with a call to {@link #setVisible setVisible(true)}), or being moved to the front
-     * (with a call to {@link #toFront}).
-     * <p>
-     * By default, the window has {@code autoRequestFocus} value of {@code true}.
-     *
-     * @return {@code autoRequestFocus} value
-     * @see #setAutoRequestFocus
-     * @since 1.7
-     */
-    public boolean isAutoRequestFocus() {
-        return autoRequestFocus;
     }
 
     /**

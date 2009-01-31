@@ -1787,7 +1787,25 @@ public class StyleSheet extends StyleContext {
 	 * moment.
 	 */
 	Border getBorder(AttributeSet a) {
-            return new CSSBorder(a);
+	    Border b = noBorder;
+	    Object o = a.getAttribute(CSS.Attribute.BORDER_STYLE);
+	    if (o != null) {
+		String bstyle = o.toString();
+		int bw = (int) getLength(CSS.Attribute.BORDER_TOP_WIDTH, a);
+		if (bw > 0) {
+		    if (bstyle.equals("inset")) {
+			Color c = getBorderColor(a);
+			b = new BevelBorder(BevelBorder.LOWERED, c.brighter(), c.darker());
+		    } else if (bstyle.equals("outset")) {
+			Color c = getBorderColor(a);
+			b = new BevelBorder(BevelBorder.RAISED, c.brighter(), c.darker());
+		    } else if (bstyle.equals("solid")) {
+			Color c = getBorderColor(a);
+                        b = new LineBorder(c, bw);
+		    }
+		}
+	    }
+	    return b;
 	}
 
 	/**

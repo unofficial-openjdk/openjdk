@@ -91,7 +91,7 @@ public abstract class CurrencyNameProvider extends LocaleServiceProvider {
      *     <code>locale</code> is <code>null</code>
      * @since 1.7
      */
-    public String getDisplayName(String currencyCode, Locale locale) {
+    private String getDisplayName(String currencyCode, Locale locale) {
         if (currencyCode == null || locale == null) {
 	    throw new NullPointerException();
 	}

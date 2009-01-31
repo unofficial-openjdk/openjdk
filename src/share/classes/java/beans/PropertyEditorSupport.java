@@ -157,7 +157,7 @@ public class PropertyEditorSupport implements PropertyEditor {
      *
      * @return The property value as a string suitable for presentation
      *       to a human to edit.
-     * <p>   Returns null if the value can't be expressed as a string.
+     * <p>   Returns "null" is the value can't be expressed as a string.
      * <p>   If a non-null value is returned, then the PropertyEditor should
      *	     be prepared to parse that string back in setAsText().
      */
