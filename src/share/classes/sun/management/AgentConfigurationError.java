@@ -71,6 +71,16 @@ public class AgentConfigurationError extends Error {
         "agent.err.access.file.notfound";
     public static final String PASSWORD_FILE_ACCESS_NOT_RESTRICTED =
         "agent.err.password.file.access.notrestricted";
+    public static final String FILE_ACCESS_NOT_RESTRICTED =
+        "agent.err.file.access.not.restricted";
+    public static final String FILE_NOT_FOUND =
+        "agent.err.file.not.found";
+    public static final String FILE_NOT_READABLE =
+        "agent.err.file.not.readable";
+    public static final String FILE_NOT_SET =
+        "agent.err.file.not.set";
+    public static final String FILE_READ_FAILED =
+        "agent.err.file.read.failed";
     public static final String CONNECTOR_SERVER_IO_ERROR =
         "agent.err.connector.server.io.error";
     public static final String INVALID_OPTION =

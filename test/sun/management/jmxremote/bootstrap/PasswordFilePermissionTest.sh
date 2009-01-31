@@ -34,11 +34,9 @@ createJavaFile()
 {
     cat << EOF > $1/$2.java
     class $2 {
-	public static void main(String[] args) {
-	    try {
-	        Thread.currentThread().sleep(10*1000);
-	    } catch (InterruptedException x) { }
- 	}
+        public static void main(String[] args) {
+            System.out.println("Inside main method...");
+        }
     }
 EOF
 }
@@ -46,7 +44,7 @@ EOF
 createConfigFile() {
     cat << EOF > $1
 # management.properties
-com.sun.management.jmxremote.ssl=false.ssl=false
+com.sun.management.jmxremote.ssl=false
 com.sun.management.jmxremote.password.file=$2
 EOF
 }
@@ -85,7 +83,7 @@ CONFIG=${LIBDIR}/management.properties
 PASSWD=${LIBDIR}/jmxremote.password
 rm -f ${CONFIG}
 rm -f ${PASSWD}
-mkdir ${LIBDIR}
+mkdir ${LIBDIR} 2>&1
 createJavaFile ${TESTCLASSES} Null
 createConfigFile ${CONFIG} ${PASSWD}
 createPasswordFile ${PASSWD}

@@ -119,6 +119,8 @@ class Socket {
             InetSocketAddress epoint = (InetSocketAddress) proxy.address();
             if (security != null) {
                 if (epoint.isUnresolved())
+                    epoint = new InetSocketAddress(epoint.getHostName(), epoint.getPort());
+                if (epoint.isUnresolved())
                     security.checkConnect(epoint.getHostName(),
                                           epoint.getPort());
                 else

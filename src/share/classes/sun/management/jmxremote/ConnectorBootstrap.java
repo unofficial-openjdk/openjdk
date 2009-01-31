@@ -25,8 +25,10 @@
 
 package sun.management.jmxremote;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStream;
 import java.io.IOException;
 
 import java.net.InetAddress;
@@ -41,6 +43,7 @@ import java.rmi.server.RMIClientSocketFactory;
 import java.rmi.server.RMIServerSocketFactory;
 import java.rmi.server.UnicastRemoteObject;
 
+import java.security.KeyStore;
 import java.security.Principal;
 
 import java.util.HashMap;
@@ -52,6 +55,8 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 import java.lang.management.ManagementFactory;
+
+import javax.net.ssl.*;
 
 import javax.management.MBeanServer;
 import javax.management.remote.JMXAuthenticator;
@@ -102,27 +107,29 @@ public final class ConnectorBootstrap {
      **/
     public static interface PropertyNames {
         public static final String PORT =
-            "com.sun.management.jmxremote.port";
+                "com.sun.management.jmxremote.port";
         public static final String CONFIG_FILE_NAME =
-            "com.sun.management.config.file";
+                "com.sun.management.config.file";
         public static final String USE_SSL =
-            "com.sun.management.jmxremote.ssl";
+                "com.sun.management.jmxremote.ssl";
         public static final String USE_REGISTRY_SSL =
-            "com.sun.management.jmxremote.registry.ssl";
+                "com.sun.management.jmxremote.registry.ssl";
         public static final String USE_AUTHENTICATION =
-            "com.sun.management.jmxremote.authenticate";
+                "com.sun.management.jmxremote.authenticate";
         public static final String PASSWORD_FILE_NAME =
-            "com.sun.management.jmxremote.password.file";
+                "com.sun.management.jmxremote.password.file";
         public static final String ACCESS_FILE_NAME =
-            "com.sun.management.jmxremote.access.file";
+                "com.sun.management.jmxremote.access.file";
         public static final String LOGIN_CONFIG_NAME =
-            "com.sun.management.jmxremote.login.config";
+                "com.sun.management.jmxremote.login.config";
         public static final String SSL_ENABLED_CIPHER_SUITES =
-            "com.sun.management.jmxremote.ssl.enabled.cipher.suites";
+                "com.sun.management.jmxremote.ssl.enabled.cipher.suites";
         public static final String SSL_ENABLED_PROTOCOLS =
-            "com.sun.management.jmxremote.ssl.enabled.protocols";
+                "com.sun.management.jmxremote.ssl.enabled.protocols";
         public static final String SSL_NEED_CLIENT_AUTH =
-            "com.sun.management.jmxremote.ssl.need.client.auth";
+                "com.sun.management.jmxremote.ssl.need.client.auth";
+        public static final String SSL_CONFIG_FILE_NAME =
+                "com.sun.management.jmxremote.ssl.config.file";
     }
 
     /**
@@ -145,9 +152,9 @@ public final class ConnectorBootstrap {
      */
     private static class PermanentExporter implements RMIExporter {
         public Remote exportObject(Remote obj,
-                                   int port,
-                                   RMIClientSocketFactory csf,
-                                   RMIServerSocketFactory ssf)
+                int port,
+                RMIClientSocketFactory csf,
+                RMIServerSocketFactory ssf)
                 throws RemoteException {
 
             synchronized (this) {
@@ -165,7 +172,7 @@ public final class ConnectorBootstrap {
 
         // Nothing special to be done for this case
         public boolean unexportObject(Remote obj, boolean force)
-                throws NoSuchObjectException {
+        throws NoSuchObjectException {
             return UnicastRemoteObject.unexportObject(obj, force);
         }
 
@@ -178,7 +185,7 @@ public final class ConnectorBootstrap {
      * Subject is present in the access file.
      */
     private static class AccessFileCheckerAuthenticator
-        implements JMXAuthenticator {
+            implements JMXAuthenticator {
 
         public AccessFileCheckerAuthenticator(Map<String, Object> env) throws IOException {
             environment = env;
@@ -188,7 +195,7 @@ public final class ConnectorBootstrap {
 
         public Subject authenticate(Object credentials) {
             final JMXAuthenticator authenticator =
-                new JMXPluggableAuthenticator(environment);
+                    new JMXPluggableAuthenticator(environment);
             final Subject subject = authenticator.authenticate(credentials);
             checkAccessFileEntries(subject);
             return subject;
@@ -197,9 +204,9 @@ public final class ConnectorBootstrap {
         private void checkAccessFileEntries(Subject subject) {
             if (subject == null)
                 throw new SecurityException(
-                      "Access denied! No matching entries found in " +
-                      "the access file [" + accessFile + "] as the " +
-                      "authenticated Subject is null");
+                        "Access denied! No matching entries found in " +
+                        "the access file [" + accessFile + "] as the " +
+                        "authenticated Subject is null");
             final Set principals = subject.getPrincipals();
             for (Iterator i = principals.iterator(); i.hasNext(); ) {
                 final Principal p = (Principal) i.next();
@@ -212,13 +219,13 @@ public final class ConnectorBootstrap {
                 principalsStr.add(p.getName());
             }
             throw new SecurityException(
-                  "Access denied! No entries found in the access file [" +
-                  accessFile + "] for any of the authenticated identities " +
-                  principalsStr);
+                    "Access denied! No entries found in the access file [" +
+                    accessFile + "] for any of the authenticated identities " +
+                    principalsStr);
         }
 
         private static Properties propertiesFromFile(String fname)
-            throws IOException {
+        throws IOException {
             Properties p = new Properties();
             if (fname == null)
                 return p;
@@ -259,7 +266,7 @@ public final class ConnectorBootstrap {
      * monitoring and management.
      **/
     public static synchronized
-        JMXConnectorServer initialize(String portStr, Properties props) {
+            JMXConnectorServer initialize(String portStr, Properties props) {
 
         // Get port number
         final int port;
@@ -274,27 +281,27 @@ public final class ConnectorBootstrap {
 
         // Do we use authentication?
         final String  useAuthenticationStr =
-            props.getProperty(PropertyNames.USE_AUTHENTICATION,
-                              DefaultValues.USE_AUTHENTICATION);
+                props.getProperty(PropertyNames.USE_AUTHENTICATION,
+                DefaultValues.USE_AUTHENTICATION);
         final boolean useAuthentication =
-            Boolean.valueOf(useAuthenticationStr).booleanValue();
+                Boolean.valueOf(useAuthenticationStr).booleanValue();
 
         // Do we use SSL?
         final String  useSslStr =
-            props.getProperty(PropertyNames.USE_SSL,
-                              DefaultValues.USE_SSL);
+                props.getProperty(PropertyNames.USE_SSL,
+                DefaultValues.USE_SSL);
         final boolean useSsl =
-            Boolean.valueOf(useSslStr).booleanValue();
+                Boolean.valueOf(useSslStr).booleanValue();
 
         // Do we use RMI Registry SSL?
         final String  useRegistrySslStr =
-            props.getProperty(PropertyNames.USE_REGISTRY_SSL,
-                              DefaultValues.USE_REGISTRY_SSL);
+                props.getProperty(PropertyNames.USE_REGISTRY_SSL,
+                DefaultValues.USE_REGISTRY_SSL);
         final boolean useRegistrySsl =
-            Boolean.valueOf(useRegistrySslStr).booleanValue();
+                Boolean.valueOf(useRegistrySslStr).booleanValue();
 
         final String enabledCipherSuites =
-            props.getProperty(PropertyNames.SSL_ENABLED_CIPHER_SUITES);
+                props.getProperty(PropertyNames.SSL_ENABLED_CIPHER_SUITES);
         String enabledCipherSuitesList[] = null;
         if (enabledCipherSuites != null) {
             StringTokenizer st = new StringTokenizer(enabledCipherSuites, ",");
@@ -306,7 +313,7 @@ public final class ConnectorBootstrap {
         }
 
         final String enabledProtocols =
-            props.getProperty(PropertyNames.SSL_ENABLED_PROTOCOLS);
+                props.getProperty(PropertyNames.SSL_ENABLED_PROTOCOLS);
         String enabledProtocolsList[] = null;
         if (enabledProtocols != null) {
             StringTokenizer st = new StringTokenizer(enabledProtocols, ",");
@@ -318,10 +325,14 @@ public final class ConnectorBootstrap {
         }
 
         final String  sslNeedClientAuthStr =
-            props.getProperty(PropertyNames.SSL_NEED_CLIENT_AUTH,
-                              DefaultValues.SSL_NEED_CLIENT_AUTH);
+                props.getProperty(PropertyNames.SSL_NEED_CLIENT_AUTH,
+                DefaultValues.SSL_NEED_CLIENT_AUTH);
         final boolean sslNeedClientAuth =
-            Boolean.valueOf(sslNeedClientAuthStr).booleanValue();
+                Boolean.valueOf(sslNeedClientAuthStr).booleanValue();
+
+        // Read SSL config file name
+        final String sslConfigFileName =
+                props.getProperty(PropertyNames.SSL_CONFIG_FILE_NAME);
 
         String loginConfigName = null;
         String passwordFileName = null;
@@ -332,66 +343,67 @@ public final class ConnectorBootstrap {
 
             // Get non-default login configuration
             loginConfigName =
-                props.getProperty(PropertyNames.LOGIN_CONFIG_NAME);
+                    props.getProperty(PropertyNames.LOGIN_CONFIG_NAME);
 
             if (loginConfigName == null) {
                 // Get password file
                 passwordFileName =
-                    props.getProperty(PropertyNames.PASSWORD_FILE_NAME,
+                        props.getProperty(PropertyNames.PASSWORD_FILE_NAME,
                         getDefaultFileName(DefaultValues.PASSWORD_FILE_NAME));
                 checkPasswordFile(passwordFileName);
             }
 
             // Get access file
             accessFileName = props.getProperty(PropertyNames.ACCESS_FILE_NAME,
-                getDefaultFileName(DefaultValues.ACCESS_FILE_NAME));
+                    getDefaultFileName(DefaultValues.ACCESS_FILE_NAME));
             checkAccessFile(accessFileName);
         }
 
         if (log.isDebugOn()) {
             log.debug("initialize",
-                      Agent.getText("jmxremote.ConnectorBootstrap.initialize") +
-                      "\n\t" + PropertyNames.PORT + "=" + port +
-                      "\n\t" + PropertyNames.USE_SSL + "=" + useSsl +
-                      "\n\t" + PropertyNames.USE_REGISTRY_SSL + "=" + useRegistrySsl +
-                      "\n\t" + PropertyNames.SSL_ENABLED_CIPHER_SUITES + "=" +
-                      enabledCipherSuites +
-                      "\n\t" + PropertyNames.SSL_ENABLED_PROTOCOLS + "=" +
-                      enabledProtocols +
-                      "\n\t" + PropertyNames.SSL_NEED_CLIENT_AUTH + "=" +
-                      sslNeedClientAuth +
-                      "\n\t" + PropertyNames.USE_AUTHENTICATION + "=" +
-                      useAuthentication +
-                      (useAuthentication ?
+                    Agent.getText("jmxremote.ConnectorBootstrap.initialize") +
+                    "\n\t" + PropertyNames.PORT + "=" + port +
+                    "\n\t" + PropertyNames.USE_SSL + "=" + useSsl +
+                    "\n\t" + PropertyNames.USE_REGISTRY_SSL + "=" + useRegistrySsl +
+                    "\n\t" + PropertyNames.SSL_CONFIG_FILE_NAME + "=" + sslConfigFileName +
+                    "\n\t" + PropertyNames.SSL_ENABLED_CIPHER_SUITES + "=" +
+                    enabledCipherSuites +
+                    "\n\t" + PropertyNames.SSL_ENABLED_PROTOCOLS + "=" +
+                    enabledProtocols +
+                    "\n\t" + PropertyNames.SSL_NEED_CLIENT_AUTH + "=" +
+                    sslNeedClientAuth +
+                    "\n\t" + PropertyNames.USE_AUTHENTICATION + "=" +
+                    useAuthentication +
+                    (useAuthentication ?
                         (loginConfigName == null ?
                             ("\n\t" + PropertyNames.PASSWORD_FILE_NAME + "=" +
-                             passwordFileName) :
+                    passwordFileName) :
                             ("\n\t" + PropertyNames.LOGIN_CONFIG_NAME + "=" +
-                             loginConfigName)) : "\n\t" +
-                        Agent.getText("jmxremote.ConnectorBootstrap.initialize.noAuthentication")) +
-                      (useAuthentication ?
-                       ("\n\t" + PropertyNames.ACCESS_FILE_NAME + "=" +
-                        accessFileName) : "") +
-                      "");
+                    loginConfigName)) : "\n\t" +
+                    Agent.getText("jmxremote.ConnectorBootstrap.initialize.noAuthentication")) +
+                    (useAuthentication ?
+                        ("\n\t" + PropertyNames.ACCESS_FILE_NAME + "=" +
+                    accessFileName) : "") +
+                    "");
         }
 
         final MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
         JMXConnectorServer cs = null;
         try {
             cs = exportMBeanServer(mbs, port, useSsl, useRegistrySsl,
-                                   enabledCipherSuitesList,
-                                   enabledProtocolsList, sslNeedClientAuth,
-                                   useAuthentication, loginConfigName,
-                                   passwordFileName, accessFileName);
+                    sslConfigFileName, enabledCipherSuitesList,
+                    enabledProtocolsList, sslNeedClientAuth,
+                    useAuthentication, loginConfigName,
+                    passwordFileName, accessFileName);
 
             final JMXServiceURL url = cs.getAddress();
             log.config("initialize",
-                       Agent.getText("jmxremote.ConnectorBootstrap.initialize.ready",
-                       new JMXServiceURL(url.getProtocol(),
-                                         url.getHost(),
-                                         url.getPort(),
-                                         "/jndi/rmi://"+url.getHost()+":"+port+"/"+
-                                         "jmxrmi").toString()));
+                    Agent.getText("jmxremote.ConnectorBootstrap.initialize.ready",
+                    new JMXServiceURL(url.getProtocol(),
+                    url.getHost(),
+                    url.getPort(),
+                    "/jndi/rmi://"+url.getHost()+":"+port+"/"+
+                    "jmxrmi").toString()));
         } catch (Exception e) {
             throw new AgentConfigurationError(AGENT_EXCEPTION, e, e.toString());
         }
@@ -431,7 +443,7 @@ public final class ConnectorBootstrap {
         try {
             JMXServiceURL url = new JMXServiceURL("rmi", localhost, 0);
             JMXConnectorServer server =
-                JMXConnectorServerFactory.newJMXConnectorServer(url, env, mbs);
+                    JMXConnectorServerFactory.newJMXConnectorServer(url, env, mbs);
             server.start();
             return server;
         } catch (Exception e) {
@@ -457,15 +469,15 @@ public final class ConnectorBootstrap {
             if (fs.supportsFileSecurity(file)) {
                 if (!fs.isAccessUserOnly(file)) {
                     final String msg=Agent.getText("jmxremote.ConnectorBootstrap.initialize.password.readonly",
-                        passwordFileName);
+                            passwordFileName);
                     log.config("initialize",msg);
                     throw new AgentConfigurationError(PASSWORD_FILE_ACCESS_NOT_RESTRICTED,
-                        passwordFileName);
+                            passwordFileName);
                 }
             }
         } catch (IOException e) {
             throw new AgentConfigurationError(PASSWORD_FILE_READ_FAILED,
-                e, passwordFileName);
+                    e, passwordFileName);
         }
     }
 
@@ -483,6 +495,35 @@ public final class ConnectorBootstrap {
         }
     }
 
+    private static void checkRestrictedFile(String restrictedFileName) {
+        if (restrictedFileName == null || restrictedFileName.length() == 0) {
+            throw new AgentConfigurationError(FILE_NOT_SET);
+        }
+        File file = new File(restrictedFileName);
+        if (!file.exists()) {
+            throw new AgentConfigurationError(FILE_NOT_FOUND, restrictedFileName);
+        }
+        if (!file.canRead()) {
+            throw new AgentConfigurationError(FILE_NOT_READABLE, restrictedFileName);
+        }
+        FileSystem fs = FileSystem.open();
+        try {
+            if (fs.supportsFileSecurity(file)) {
+                if (!fs.isAccessUserOnly(file)) {
+                    final String msg = Agent.getText(
+                            "jmxremote.ConnectorBootstrap.initialize.file.readonly",
+                            restrictedFileName);
+                    log.config("initialize", msg);
+                    throw new AgentConfigurationError(
+                            FILE_ACCESS_NOT_RESTRICTED, restrictedFileName);
+                }
+            }
+        } catch (IOException e) {
+            throw new AgentConfigurationError(
+                    FILE_READ_FAILED, e, restrictedFileName);
+        }
+    }
+
     /**
      * Compute the full path name for a default file.
      * @param basename basename (with extension) of the default file.
@@ -491,23 +532,107 @@ public final class ConnectorBootstrap {
     private static String getDefaultFileName(String basename) {
         final String fileSeparator = File.separator;
         return System.getProperty("java.home") + fileSeparator + "lib" +
-            fileSeparator + "management" + fileSeparator +
-            basename;
+                fileSeparator + "management" + fileSeparator +
+                basename;
     }
 
-    private static JMXConnectorServer
-        exportMBeanServer(MBeanServer mbs,
-                          int port,
-                          boolean useSsl,
-                          boolean useRegistrySsl,
-                          String[] enabledCipherSuites,
-                          String[] enabledProtocols,
-                          boolean sslNeedClientAuth,
-                          boolean useAuthentication,
-                          String loginConfigName,
-                          String passwordFileName,
-                          String accessFileName)
-        throws IOException, MalformedURLException {
+    private static SslRMIServerSocketFactory createSslRMIServerSocketFactory(
+            String sslConfigFileName,
+            String[] enabledCipherSuites,
+            String[] enabledProtocols,
+            boolean sslNeedClientAuth) {
+        if (sslConfigFileName == null) {
+            return new SslRMIServerSocketFactory(
+                    enabledCipherSuites,
+                    enabledProtocols,
+                    sslNeedClientAuth);
+        } else {
+            checkRestrictedFile(sslConfigFileName);
+            try {
+                // Load the SSL keystore properties from the config file
+                Properties p = new Properties();
+                InputStream in = new FileInputStream(sslConfigFileName);
+                try {
+                    BufferedInputStream bin = new BufferedInputStream(in);
+                    p.load(bin);
+                } finally {
+                    in.close();
+                }
+                String keyStore =
+                        p.getProperty("javax.net.ssl.keyStore");
+                String keyStorePassword =
+                        p.getProperty("javax.net.ssl.keyStorePassword", "");
+                String trustStore =
+                        p.getProperty("javax.net.ssl.trustStore");
+                String trustStorePassword =
+                        p.getProperty("javax.net.ssl.trustStorePassword", "");
+
+                char[] keyStorePasswd = null;
+                if (keyStorePassword.length() != 0) {
+                    keyStorePasswd = keyStorePassword.toCharArray();
+                }
+
+                char[] trustStorePasswd = null;
+                if (trustStorePassword.length() != 0) {
+                    trustStorePasswd = trustStorePassword.toCharArray();
+                }
+
+                KeyStore ks = null;
+                if (keyStore != null) {
+                    ks = KeyStore.getInstance(KeyStore.getDefaultType());
+                    FileInputStream ksfis = new FileInputStream(keyStore);
+                    try {
+                        ks.load(ksfis, keyStorePasswd);
+                    } finally {
+                        ksfis.close();
+                    }
+                }
+                KeyManagerFactory kmf = KeyManagerFactory.getInstance(
+                        KeyManagerFactory.getDefaultAlgorithm());
+                kmf.init(ks, keyStorePasswd);
+
+                KeyStore ts = null;
+                if (trustStore != null) {
+                    ts = KeyStore.getInstance(KeyStore.getDefaultType());
+                    FileInputStream tsfis = new FileInputStream(trustStore);
+                    try {
+                        ts.load(tsfis, trustStorePasswd);
+                    } finally {
+                        tsfis.close();
+                    }
+                }
+                TrustManagerFactory tmf = TrustManagerFactory.getInstance(
+                        TrustManagerFactory.getDefaultAlgorithm());
+                tmf.init((KeyStore) ts);
+
+                SSLContext ctx = SSLContext.getInstance("SSL");
+                ctx.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
+
+                return new SSLContextRMIServerSocketFactory(
+                        ctx,
+                        enabledCipherSuites,
+                        enabledProtocols,
+                        sslNeedClientAuth);
+            } catch (Exception e) {
+                throw new AgentConfigurationError(AGENT_EXCEPTION, e, e.toString());
+            }
+        }
+    }
+
+    private static JMXConnectorServer exportMBeanServer(
+            MBeanServer mbs,
+            int port,
+            boolean useSsl,
+            boolean useRegistrySsl,
+            String sslConfigFileName,
+            String[] enabledCipherSuites,
+            String[] enabledProtocols,
+            boolean sslNeedClientAuth,
+            boolean useAuthentication,
+            String loginConfigName,
+            String passwordFileName,
+            String accessFileName)
+            throws IOException, MalformedURLException {
 
         /* Make sure we use non-guessable RMI object IDs.  Otherwise
          * attackers could hijack open connections by guessing their
@@ -533,7 +658,7 @@ public final class ConnectorBootstrap {
             env.put("jmx.remote.x.access.file", accessFileName);
 
             if (env.get("jmx.remote.x.password.file") != null ||
-                env.get("jmx.remote.x.login.config") != null) {
+                    env.get("jmx.remote.x.login.config") != null) {
                 env.put(JMXConnectorServer.AUTHENTICATOR,
                         new AccessFileCheckerAuthenticator(env));
             }
@@ -544,9 +669,9 @@ public final class ConnectorBootstrap {
 
         if (useSsl || useRegistrySsl) {
             csf = new SslRMIClientSocketFactory();
-            ssf = new SslRMIServerSocketFactory(enabledCipherSuites,
-                                                enabledProtocols,
-                                                sslNeedClientAuth);
+            ssf = createSslRMIServerSocketFactory(
+                    sslConfigFileName, enabledCipherSuites,
+                    enabledProtocols, sslNeedClientAuth);
         }
 
         if (useSsl) {
@@ -559,27 +684,27 @@ public final class ConnectorBootstrap {
         JMXConnectorServer connServer = null;
         try {
             connServer =
-                JMXConnectorServerFactory.newJMXConnectorServer(url, env, mbs);
+                    JMXConnectorServerFactory.newJMXConnectorServer(url, env, mbs);
             connServer.start();
         } catch (IOException e) {
             if (connServer == null) {
                 throw new AgentConfigurationError(CONNECTOR_SERVER_IO_ERROR,
-                    e, url.toString());
+                        e, url.toString());
             } else {
                 throw new AgentConfigurationError(CONNECTOR_SERVER_IO_ERROR,
-                    e, connServer.getAddress().toString());
+                        e, connServer.getAddress().toString());
             }
         }
 
         final Registry registry;
         if (useRegistrySsl)
             registry =
-                new SingleEntryRegistry(port, csf, ssf,
-                                        "jmxrmi", exporter.firstExported);
+                    new SingleEntryRegistry(port, csf, ssf,
+                    "jmxrmi", exporter.firstExported);
         else
             registry =
-                new SingleEntryRegistry(port,
-                                        "jmxrmi", exporter.firstExported);
+                    new SingleEntryRegistry(port,
+                    "jmxrmi", exporter.firstExported);
 
         /* Our exporter remembers the first object it was asked to
            export, which will be an RMIServerImpl appropriate for
@@ -600,6 +725,6 @@ public final class ConnectorBootstrap {
 
     // XXX Revisit: should probably clone this MibLogger....
     private static final MibLogger log =
-        new MibLogger(ConnectorBootstrap.class);
+            new MibLogger(ConnectorBootstrap.class);
 
 }
