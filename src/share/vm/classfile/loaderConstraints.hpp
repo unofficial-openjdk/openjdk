@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class LoaderConstraintEntry;
@@ -79,7 +82,7 @@ public:
   bool check_or_update(instanceKlassHandle k, Handle loader,
                               symbolHandle name);
 
-
+  
   void purge_loader_constraints(BoolObjectClosure* is_alive);
 
   void verify(Dictionary* dictionary);

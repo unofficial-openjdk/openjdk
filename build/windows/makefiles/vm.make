@@ -55,12 +55,25 @@ CPP_FLAGS=$(CPP_FLAGS) /D "COMPILER2"
 CPP_FLAGS=$(CPP_FLAGS) /D "COMPILER1" /D "COMPILER2"
 !endif
 
-# The following variables are defined in the generated local.make file.
+!if "$(BuildUser)" != ""
+CPP_FLAGS=$(CPP_FLAGS) /D "HOTSPOT_BUILD_USER=\"$(BuildUser)\""
+!endif
+
 CPP_FLAGS=$(CPP_FLAGS) /D "HOTSPOT_RELEASE_VERSION=\"$(HS_BUILD_VER)\""
 CPP_FLAGS=$(CPP_FLAGS) /D "JRE_RELEASE_VERSION=\"$(JRE_RELEASE_VER)\""
 CPP_FLAGS=$(CPP_FLAGS) /D "HOTSPOT_BUILD_TARGET=\"$(BUILD_FLAVOR)\""
-CPP_FLAGS=$(CPP_FLAGS) /D "HOTSPOT_BUILD_USER=\"$(BuildUser)\""
+
+# Define HOTSPOT_VM_DISTRO if HOTSPOT_VM_DISTRO is set,
+# and if it is not see if we have the src/closed directory
+!if "$(HOTSPOT_VM_DISTRO)" != ""
 CPP_FLAGS=$(CPP_FLAGS) /D "HOTSPOT_VM_DISTRO=\"$(HOTSPOT_VM_DISTRO)\""
+!else
+!if exists($(WorkSpace)\src\closed)
+CPP_FLAGS=$(CPP_FLAGS) /D "HOTSPOT_VM_DISTRO=\"Java HotSpot(TM)\""
+!else
+CPP_FLAGS=$(CPP_FLAGS) /D "HOTSPOT_VM_DISTRO=\"OpenJDK\""
+!endif
+!endif
 
 CPP_FLAGS=$(CPP_FLAGS) /D "WIN32" /D "_WINDOWS" $(CPP_INCLUDE_DIRS)
 
@@ -70,13 +83,13 @@ CPP_FLAGS=$(CPP_FLAGS) /D "VM_LITTLE_ENDIAN"
 # Define that so jni.h is on correct side
 CPP_FLAGS=$(CPP_FLAGS) /D "_JNI_IMPLEMENTATION_"
 
-!if "$(BUILDARCH)" == "ia64"
+!if "$(ARCH)" == "ia64"
 STACK_SIZE="/STACK:1048576,262144"
 !else
 STACK_SIZE=
 !endif
 
-!if "$(BUILDARCH)" == "ia64"
+!if "$(ARCH)" == "ia64"
 # AsyncGetCallTrace is not supported on IA64 yet
 AGCT_EXPORT=
 !else
@@ -119,9 +132,9 @@ CPP_INCLUDE_DIRS=\
   /I "$(WorkSpace)\src\share\vm\utilities"   \
   /I "$(WorkSpace)\src\share\vm\libadt"      \
   /I "$(WorkSpace)\src\share\vm\opto"        \
-  /I "$(WorkSpace)\src\os\windows\vm"          \
-  /I "$(WorkSpace)\src\os_cpu\windows_$(Platform_arch)\vm" \
-  /I "$(WorkSpace)\src\cpu\$(Platform_arch)\vm"
+  /I "$(WorkSpace)\src\os\win32\vm"          \
+  /I "$(WorkSpace)\src\os_cpu\win32_$(ARCH)\vm" \
+  /I "$(WorkSpace)\src\cpu\$(ARCH)\vm"
 
 CPP_USE_PCH=/Fp"vm.pch" /Yu"incls/_precompiled.incl"
 
@@ -147,32 +160,32 @@ VM_PATH=$(VM_PATH);$(WorkSpace)/src/share/vm/runtime
 VM_PATH=$(VM_PATH);$(WorkSpace)/src/share/vm/services
 VM_PATH=$(VM_PATH);$(WorkSpace)/src/share/vm/utilities
 VM_PATH=$(VM_PATH);$(WorkSpace)/src/share/vm/libadt
-VM_PATH=$(VM_PATH);$(WorkSpace)/src/os/windows/vm
-VM_PATH=$(VM_PATH);$(WorkSpace)/src/os_cpu/windows_$(Platform_arch)/vm
-VM_PATH=$(VM_PATH);$(WorkSpace)/src/cpu/$(Platform_arch)/vm
+VM_PATH=$(VM_PATH);$(WorkSpace)/src/os/win32/vm
+VM_PATH=$(VM_PATH);$(WorkSpace)/src/os_cpu/win32_$(ARCH)/vm
+VM_PATH=$(VM_PATH);$(WorkSpace)/src/cpu/$(ARCH)/vm
 VM_PATH=$(VM_PATH);$(WorkSpace)/src/share/vm/opto
 
 VM_PATH={$(VM_PATH)}
 
 # Special case files not using precompiled header files.
 
-c1_RInfo_$(Platform_arch).obj: $(WorkSpace)\src\cpu\$(Platform_arch)\vm\c1_RInfo_$(Platform_arch).cpp 
-	 $(CPP) $(CPP_FLAGS) /c $(WorkSpace)\src\cpu\$(Platform_arch)\vm\c1_RInfo_$(Platform_arch).cpp
+c1_RInfo_$(ARCH).obj: $(WorkSpace)\src\cpu\$(ARCH)\vm\c1_RInfo_$(ARCH).cpp 
+	 $(CPP) $(CPP_FLAGS) /c $(WorkSpace)\src\cpu\$(ARCH)\vm\c1_RInfo_$(ARCH).cpp
 
-os_windows.obj: $(WorkSpace)\src\os\windows\vm\os_windows.cpp
-        $(CPP) $(CPP_FLAGS) /c $(WorkSpace)\src\os\windows\vm\os_windows.cpp
+os_win32.obj: $(WorkSpace)\src\os\win32\vm\os_win32.cpp
+        $(CPP) $(CPP_FLAGS) /c $(WorkSpace)\src\os\win32\vm\os_win32.cpp
 
-os_windows_$(Platform_arch).obj: $(WorkSpace)\src\os_cpu\windows_$(Platform_arch)\vm\os_windows_$(Platform_arch).cpp
-        $(CPP) $(CPP_FLAGS) /c $(WorkSpace)\src\os_cpu\windows_$(Platform_arch)\vm\os_windows_$(Platform_arch).cpp
+os_win32_$(ARCH).obj: $(WorkSpace)\src\os_cpu\win32_$(ARCH)\vm\os_win32_$(ARCH).cpp
+        $(CPP) $(CPP_FLAGS) /c $(WorkSpace)\src\os_cpu\win32_$(ARCH)\vm\os_win32_$(ARCH).cpp
 
-osThread_windows.obj: $(WorkSpace)\src\os\windows\vm\osThread_windows.cpp
-        $(CPP) $(CPP_FLAGS) /c $(WorkSpace)\src\os\windows\vm\osThread_windows.cpp
+osThread_win32.obj: $(WorkSpace)\src\os\win32\vm\osThread_win32.cpp
+        $(CPP) $(CPP_FLAGS) /c $(WorkSpace)\src\os\win32\vm\osThread_win32.cpp
 
-conditionVar_windows.obj: $(WorkSpace)\src\os\windows\vm\conditionVar_windows.cpp
-        $(CPP) $(CPP_FLAGS) /c $(WorkSpace)\src\os\windows\vm\conditionVar_windows.cpp
+conditionVar_win32.obj: $(WorkSpace)\src\os\win32\vm\conditionVar_win32.cpp
+        $(CPP) $(CPP_FLAGS) /c $(WorkSpace)\src\os\win32\vm\conditionVar_win32.cpp
 
-getThread_windows_$(Platform_arch).obj: $(WorkSpace)\src\os_cpu\windows_$(Platform_arch)\vm\getThread_windows_$(Platform_arch).cpp
-        $(CPP) $(CPP_FLAGS) /c $(WorkSpace)\src\os_cpu\windows_$(Platform_arch)\vm\getThread_windows_$(Platform_arch).cpp
+getThread_win32_$(ARCH).obj: $(WorkSpace)\src\os_cpu\win32_$(ARCH)\vm\getThread_win32_$(ARCH).cpp
+        $(CPP) $(CPP_FLAGS) /c $(WorkSpace)\src\os_cpu\win32_$(ARCH)\vm\getThread_win32_$(ARCH).cpp
 
 opcodes.obj: $(WorkSpace)\src\share\vm\opto\opcodes.cpp
         $(CPP) $(CPP_FLAGS) /c $(WorkSpace)\src\share\vm\opto\opcodes.cpp
@@ -244,18 +257,18 @@ bytecodeInterpreterWithChecks.obj: ..\generated\jvmtifiles\bytecodeInterpreterWi
 {$(WorkSpace)\src\share\vm\opto}.cpp.obj::
         $(CPP) $(CPP_FLAGS) $(CPP_USE_PCH) /c $<
 
-{$(WorkSpace)\src\os\windows\vm}.cpp.obj::
+{$(WorkSpace)\src\os\win32\vm}.cpp.obj::
         $(CPP) $(CPP_FLAGS) $(CPP_USE_PCH) /c $<
 
 # This guy should remain a single colon rule because
 # otherwise we can't specify the output filename.
-{$(WorkSpace)\src\os\windows\vm}.rc.res:
+{$(WorkSpace)\src\os\win32\vm}.rc.res:
         @$(RC) $(RC_FLAGS) /fo"$@" $<
 
-{$(WorkSpace)\src\cpu\$(Platform_arch)\vm}.cpp.obj::
+{$(WorkSpace)\src\cpu\$(ARCH)\vm}.cpp.obj::
         $(CPP) $(CPP_FLAGS) $(CPP_USE_PCH) /c $<
 
-{$(WorkSpace)\src\os_cpu\windows_$(Platform_arch)\vm}.cpp.obj::
+{$(WorkSpace)\src\os_cpu\win32_$(ARCH)\vm}.cpp.obj::
         $(CPP) $(CPP_FLAGS) $(CPP_USE_PCH) /c $<
 
 {..\generated\incls}.cpp.obj::

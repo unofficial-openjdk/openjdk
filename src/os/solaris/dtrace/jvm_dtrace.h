@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #ifndef _JVM_DTRACE_H_
@@ -42,7 +42,7 @@ struct _jvm_t;
 typedef struct _jvm_t jvm_t;
 
 
-/* Attach to the given JVM process. Returns NULL on failure.
+/* Attach to the given JVM process. Returns NULL on failure. 
    jvm_get_last_error() returns last error message. */
 jvm_t* jvm_attach(pid_t pid);
 
@@ -63,18 +63,18 @@ const char* jvm_get_last_error();
 #define JVM_DTPROBE_OBJECT_ALLOC         "object-alloc"
 #define JVM_DTPROBE_ALL                  "*"
 
-/* Enable the specified DTrace probes of given probe types on
- * the specified JVM. Returns >= 0 on success, -1 on failure.
+/* Enable the specified DTrace probes of given probe types on 
+ * the specified JVM. Returns >= 0 on success, -1 on failure. 
  * On success, this returns number of probe_types enabled.
  * On failure, jvm_get_last_error() returns the last error message.
  */
 int jvm_enable_dtprobes(jvm_t* jvm, int num_probe_types, const char** probe_types);
 
 /* Note: There is no jvm_disable_dtprobes function. Probes are automatically
- * disabled when there are no more clients requiring those probes.
+ * disabled when there are no more clients requiring those probes. 
  */
 
-/* Detach the given JVM. Returns 0 on success, -1 on failure.
+/* Detach the given JVM. Returns 0 on success, -1 on failure. 
  * jvm_get_last_error() returns the last error message.
  */
 int jvm_detach(jvm_t* jvm);

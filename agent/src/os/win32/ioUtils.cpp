@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include <ctype.h>
@@ -48,7 +51,7 @@ scanInt(char** data, int* num) {
     *num *= 10;
     *num += cur - '0';
     ++*data;
-  }
+  }  
 
   return true;
 }
@@ -74,7 +77,7 @@ scanUnsignedLong(char** data, unsigned long* num) {
     *num *= 10;
     *num += cur - '0';
     ++*data;
-  }
+  }  
 
   return true;
 }

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -60,7 +63,7 @@ int find_lowest_bit( uint32 mask ) {
 // Find highest 1, or return 32 if empty
 int find_hihghest_bit( uint32 mask ) {
   int n = 0;
-  if( mask > 0xffff ) {
+  if( mask > 0xffff ) { 
     mask >>= 16;
     n += 16;
   }
@@ -119,7 +122,7 @@ OptoReg::Name RegMask::find_first_pair() const {
     if( _A[i] ) {               // Found some bits
       int bit = _A[i] & -_A[i]; // Extract low bit
       // Convert to bit number, return hi bit in pair
-      return OptoReg::Name((i<<_LogWordBits)+find_lowest_bit(bit)+1);
+      return OptoReg::Name((i<<_LogWordBits)+find_lowest_bit(bit)+1); 
     }
   }
   return OptoReg::Bad;
@@ -225,8 +228,8 @@ bool RegMask::is_UP() const {
 uint RegMask::Size() const {
   extern uint8 bitsInByte[256];
   uint sum = 0;
-  for( int i = 0; i < RM_SIZE; i++ )
-    sum +=
+  for( int i = 0; i < RM_SIZE; i++ ) 
+    sum += 
       bitsInByte[(_A[i]>>24) & 0xff] +
       bitsInByte[(_A[i]>>16) & 0xff] +
       bitsInByte[(_A[i]>> 8) & 0xff] +
@@ -249,9 +252,9 @@ void RegMask::dump( ) const {
     // Now I have printed an initial register.
     // Print adjacent registers as "rX-rZ" instead of "rX,rY,rZ".
     // Begin looping over the remaining registers.
-    while( 1 ) {                //
+    while( 1 ) {                // 
       OptoReg::Name reg = rm.find_first_elem(); // Get a register
-      if( !OptoReg::is_valid(reg) )
+      if( !OptoReg::is_valid(reg) ) 
         break;                  // Empty mask, end loop
       rm.Remove(reg);           // Yank from mask
 
@@ -269,10 +272,10 @@ void RegMask::dump( ) const {
         }
         tty->print(",");        // Seperate start of new run
         start = last = reg;     // Start a new register run
-        OptoReg::dump(start); // Print register
+        OptoReg::dump(start); // Print register      
       } // End of if ending a register run or not
     } // End of while regmask not empty
-
+                                
     if( start == last ) {       // 1-register run; no special printing
     } else if( start+1 == last ) {
       tty->print(",");          // 2-register run; print as "rX,rY"
@@ -286,3 +289,5 @@ void RegMask::dump( ) const {
   tty->print("]");
 }
 #endif
+
+

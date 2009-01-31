@@ -27,8 +27,18 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
                 version="1.0">
 
+  <xsl:variable name="microversionbase" select="100"/>
+
   <xsl:template name="microversion">
-    <xsl:value-of select="//specification/@microversion"/>
+    <xsl:variable name="micro" select="substring-after(//specification/@onedotmicroversion, '1.')"/>
+    <xsl:choose>
+      <xsl:when test="string($micro)=''">
+        <xsl:text>dev</xsl:text>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="$micro - $microversionbase"/>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:template>
 
   <xsl:template name="showbasicversion">
@@ -43,21 +53,32 @@
     <xsl:call-template name="microversion"/>
   </xsl:template>
 
-  <xsl:template name="copyrightComment">
-    <xsl:text>/* </xsl:text>
-    <!-- Copy the Copyright comment from jvmti.xml -->
-    <xsl:value-of select="/comment()[position()=1]"/>
-    <xsl:text> */ &#xA;&#xA;</xsl:text>
-  </xsl:template>
-
   <xsl:template name="includeHeader">
-    <xsl:call-template name="copyrightComment"/>
-    <xsl:text> /* AUTOMATICALLY GENERATED FILE - DO NOT EDIT */ &#xA;</xsl:text>    
+    <xsl:text>#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
+/*
+ * Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
+ * SUN PROPRIETARY/CONFIDENTIAL.  Use is subject to license terms.
+ */
+
+    /* AUTOMATICALLY GENERATED FILE - DO NOT EDIT */
+
+</xsl:text>    
   </xsl:template>
 
   <xsl:template name="sourceHeader">
-    <xsl:call-template name="copyrightComment"/>
-    <xsl:text> // AUTOMATICALLY GENERATED FILE - DO NOT EDIT &#xA;</xsl:text>    
+    <xsl:text>#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
+/*
+ * Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
+ * SUN PROPRIETARY/CONFIDENTIAL.  Use is subject to license terms.
+ */
+
+  // AUTOMATICALLY GENERATED FILE - DO NOT EDIT
+
+</xsl:text>    
   </xsl:template>
 
 

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // DFA.CPP - Method definitions for outputting the matcher DFA from ADLC
@@ -95,7 +98,7 @@ public:
   Expr           *cost_ub(const char *result);
   void    set_cost_bounds(const char *result, const Expr *cost, bool has_state_check, bool has_cost_check);
 
-  // Return the Production associated with the result,
+  // Return the Production associated with the result, 
   // or create a new Production and insert it into the dictionary.
   Production *getProduction(const char *result);
 
@@ -113,9 +116,9 @@ private:
 // 1)      if (STATE__NOT_YET_VALID(EBXREGI) || _cost[EBXREGI] > c) {
 // 2)        DFA_PRODUCTION__SET_VALID(EBXREGI, cmovI_memu_rule, c)
 // 3)      }
-//
-static void cost_check(FILE *fp, const char *spaces,
-                       const char *arrayIdx, const Expr *cost, const char *rule, ProductionState &status) {
+// 
+static void cost_check(FILE *fp, const char *spaces, 
+		       const char *arrayIdx, const Expr *cost, const char *rule, ProductionState &status) {
   bool state_check               = false;  // true if this production needs to check validity
   bool cost_check                = false;  // true if this production needs to check cost
   bool cost_is_above_upper_bound = false;  // true if this production is unnecessary due to high cost
@@ -145,7 +148,7 @@ static void cost_check(FILE *fp, const char *spaces,
     fprintf(fp, "%sif (STATE__NOT_YET_VALID(%s) || _cost[%s] > %s) {\n",  spaces, arrayIdx, arrayIdx, cost->as_string());
     state_check = true;
     cost_check  = true;
-  }
+  } 
   else if( validity_check == knownInvalid ) {
     if( debug_output ) { fprintf(fp, "%s// %s KNOWN_INVALID \n",  spaces, arrayIdx); }
   }
@@ -165,10 +168,10 @@ static void cost_check(FILE *fp, const char *spaces,
   // no need to set State vector if our state is knownValid
   const char *production = (validity_check == knownValid) ? dfa_production : dfa_production_set_valid;
   fprintf(fp, "%s  %s(%s, %s_rule, %s)", spaces, production, arrayIdx, rule, cost->as_string() );
-  if( validity_check == knownValid ) {
-    if( cost_is_below_lower_bound ) { fprintf(fp, "\t  // overwrites higher cost rule"); }
-   }
-   fprintf(fp, "\n");
+  if( validity_check == knownValid ) { 
+    if( cost_is_below_lower_bound ) { fprintf(fp, "\t  // overwrites higher cost rule"); } 
+   } 
+   fprintf(fp, "\n"); 
 
   // line 3)
   if( cost_check || state_check ) {
@@ -191,11 +194,11 @@ static void cost_check(FILE *fp, const char *spaces,
 // Macro equivalent to: _kids[0]->valid(FOO) && _kids[1]->valid(BAR)
 //
 static void child_test(FILE *fp, MatchList &mList) {
-  if( mList._lchild )           // If left child, check it
+  if( mList._lchild )		// If left child, check it
     fprintf(fp, "STATE__VALID_CHILD(_kids[0], %s)", ArchDesc::getMachOperEnum(mList._lchild));
   if( mList._lchild && mList._rchild )      // If both, add the "&&"
     fprintf(fp, " && " );
-  if( mList._rchild )           // If right child, check it
+  if( mList._rchild )		// If right child, check it
     fprintf(fp, "STATE__VALID_CHILD(_kids[1], %s)", ArchDesc::getMachOperEnum(mList._rchild));
 }
 
@@ -277,8 +280,8 @@ void ArchDesc::gen_match(FILE *fp, MatchList &mList, ProductionState &status, Di
 
 //---------------------------expand_opclass------------------------------------
 // Chain from one result_type to all other members of its operand class
-void ArchDesc::expand_opclass(FILE *fp, const char *indent, const Expr *cost,
-                              const char *result_type, ProductionState &status) {
+void ArchDesc::expand_opclass(FILE *fp, const char *indent, const Expr *cost, 
+			      const char *result_type, ProductionState &status) {
   const Form *form = _globalNames[result_type];
   OperandForm *op = form ? form->is_operand() : NULL;
   if( op && op->_classes.count() > 0 ) {
@@ -287,7 +290,7 @@ void ArchDesc::expand_opclass(FILE *fp, const char *indent, const Expr *cost,
     op->_classes.reset();
     const char *oclass;
     // Expr *cCost = new Expr(cost);
-    while( (oclass = op->_classes.iter()) != NULL )
+    while( (oclass = op->_classes.iter()) != NULL ) 
       // Check against other match costs, and update cost & rule vectors
       cost_check(fp, indent, ArchDesc::getMachOperEnum(oclass), cost, result_type, status);
   }
@@ -295,7 +298,7 @@ void ArchDesc::expand_opclass(FILE *fp, const char *indent, const Expr *cost,
 
 //---------------------------chain_rule----------------------------------------
 // Starting at 'operand', check if we know how to automatically generate other results
-void ArchDesc::chain_rule(FILE *fp, const char *indent, const char *operand,
+void ArchDesc::chain_rule(FILE *fp, const char *indent, const char *operand, 
      const Expr *icost, const char *irule, Dict &operands_chained_from,  ProductionState &status) {
 
   // Check if we have already generated chains from this starting point
@@ -332,7 +335,7 @@ void ArchDesc::chain_rule(FILE *fp, const char *indent, const char *operand,
           // printf("   result=%s cost=%s rule=%s\n", result, total_cost, rule);
           // Check against other match costs, and update cost & rule vectors
           cost_check(fp, indent, ArchDesc::getMachOperEnum(result), total_cost, rule, status);
-          chain_rule(fp, indent, result, total_cost, rule, operands_chained_from, status);
+	  chain_rule(fp, indent, result, total_cost, rule, operands_chained_from, status);
         }
 
         // If this is a member of an operand class, update class cost & rule
@@ -372,7 +375,7 @@ void ArchDesc::buildDFA(FILE* fp) {
   ProductionState status(Form::arena);
 
   // Output the start of the DFA method into the output file
-
+  
   fprintf(fp, "\n");
   fprintf(fp, "//------------------------- Source -----------------------------------------\n");
   // Do not put random source code into the DFA.
@@ -386,18 +389,18 @@ void ArchDesc::buildDFA(FILE* fp) {
   // #define DFA_PRODUCTION(result, rule, cost)\
   //   _cost[ (result) ] = cost; _rule[ (result) ] = rule;
   fprintf(fp, "#define %s(result, rule, cost)\\\n", dfa_production);
-  fprintf(fp, "  _cost[ (result) ] = cost; _rule[ (result) ] = rule;\n");
+  fprintf(fp, "  _cost[ (result) ] = cost; _rule[ (result) ] = rule;\n");     
   fprintf(fp, "\n");
 
   // #define DFA_PRODUCTION__SET_VALID(result, rule, cost)\
   //     DFA_PRODUCTION( (result), (rule), (cost) ); STATE__SET_VALID( (result) );
   fprintf(fp, "#define %s(result, rule, cost)\\\n", dfa_production_set_valid);
-  fprintf(fp, "  %s( (result), (rule), (cost) ); STATE__SET_VALID( (result) );\n", dfa_production);
+  fprintf(fp, "  %s( (result), (rule), (cost) ); STATE__SET_VALID( (result) );\n", dfa_production);     
   fprintf(fp, "\n");
 
   fprintf(fp, "//------------------------- DFA --------------------------------------------\n");
-
-  fprintf(fp,
+  
+  fprintf(fp, 
 "// DFA is a large switch with case statements for each ideal opcode encountered\n"
 "// in any match rule in the ad file.  Each case has a series of if's to handle\n"
 "// the match or fail decisions.  The matches test the cost function of that\n"
@@ -419,7 +422,7 @@ void ArchDesc::buildDFA(FILE* fp) {
       gen_dfa_state_body(fp, minimize, status, operands_chained_from, i);
       // End of routine
       fprintf(fp, "}\n");
-    }
+    }      
   }
   fprintf(fp, "bool State::DFA");
   fprintf(fp, "(int opcode, const Node *n) {\n");
@@ -468,7 +471,7 @@ class dfa_shared_preds {
   static void check_index(int index) { assert( 0 <= index && index < count, "Invalid index"); }
 
   // Confirm that this is a separate sub-expression.
-  // Only need to catch common cases like " ... && shared ..."
+  // Only need to catch common cases like " ... && shared ..." 
   // and avoid hazardous ones like "...->shared"
   static bool valid_loc(char *pred, char *shared) {
     // start of predicate is valid
@@ -500,7 +503,7 @@ public:
 
   static bool        found(int index){ check_index(index); return _found[index]; }
   static void    set_found(int index, bool val) { check_index(index); _found[index] = val; }
-  static void  reset_found() {
+  static void  reset_found() { 
     for( int i = 0; i < count; ++i ) { _found[i] = false; }
   };
 
@@ -523,8 +526,8 @@ public:
       }
     }
   }
-
-  // If the Predicate contains a common sub-expression, replace the Predicate's
+  
+  // If the Predicate contains a common sub-expression, replace the Predicate's 
   // string with one that uses the variable name.
   static bool cse_predicate(Predicate* predicate, const char *shared_pred, const char *shared_pred_var) {
     bool result = false;
@@ -543,7 +546,7 @@ public:
         strncpy(shared_pred_loc, shared_pred_var, strlen(shared_pred_var));
       }
       // Install new predicate
-      if( new_pred != pred ) {
+      if( new_pred != pred ) { 
         predicate->_pred = new_pred;
         result = true;
       }
@@ -570,7 +573,7 @@ const char*  dfa_shared_preds::_var [dfa_shared_preds::count]  = { "_n_get_int__
 const char*  dfa_shared_preds::_pred[dfa_shared_preds::count]  = { "n->get_int()", "Compile::current()->select_24_bit_instr()" };
 
 
-void ArchDesc::gen_dfa_state_body(FILE* fp, Dict &minimize, ProductionState &status, Dict &operands_chained_from, int i) {
+void ArchDesc::gen_dfa_state_body(FILE* fp, Dict &minimize, ProductionState &status, Dict &operands_chained_from, int i) {  
   // Start the body of each Op_XXX sub-dfa with a clean state.
   status.initialize();
 
@@ -601,11 +604,11 @@ void ArchDesc::gen_dfa_state_body(FILE* fp, Dict &minimize, ProductionState &sta
   } while(mList != NULL);
   // Fill in any chain rules which add instructions
   // These can generate their own chains as well.
-  operands_chained_from.Clear();  //
+  operands_chained_from.Clear();  // 
   if( debug_output1 ) { fprintf(fp, "// top level chain rules for: %s \n", (char *)NodeClassNames[i]); } // %%%%% Explanation
   const Expr *zeroCost = new Expr("0");
   chain_rule(fp, "   ", (char *)NodeClassNames[i], zeroCost, "Invalid",
-             operands_chained_from, status);
+	     operands_chained_from, status);      
 }
 
 
@@ -814,11 +817,11 @@ ExprDict::~ExprDict() {
 }
 
 // Return # of name-Expr pairs in dict
-int ExprDict::Size(void) const {
-  return _expr.Size();
+int ExprDict::Size(void) const { 
+  return _expr.Size(); 
 }
 
-// define inserts the given key-value pair into the dictionary,
+// define inserts the given key-value pair into the dictionary, 
 // and records the name in order for later output, ...
 const Expr  *ExprDict::define(const char *name, Expr *expr) {
   const Expr *old_expr = (*this)[name];
@@ -836,7 +839,7 @@ const Expr  *ExprDict::Insert(const char *name, Expr *expr) {
   return (Expr*)_expr.Insert((void*)name, (void*)expr);
 }
 
-// Finds the value of a given key; or NULL if not found.
+// Finds the value of a given key; or NULL if not found.  
 // The dictionary is NOT changed.
 const Expr  *ExprDict::operator [](const char *name) const {
   return (Expr*)_expr[name];
@@ -927,7 +930,7 @@ void ProductionState::initialize() {
   const void *x, *y = NULL;
   for( ; iter.test(); ++iter) {
     x = iter._key;
-    y = iter._value;
+    y = iter._value;  
     Production *p = (Production*)y;
     if( p != NULL ) {
       p->initialize();
@@ -1019,3 +1022,4 @@ static void print_production(const void* production) { fflush(stdout); ((Product
 void ProductionState::print() {
   _production.print(print_key, print_production);
 }
+

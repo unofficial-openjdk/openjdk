@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -58,7 +61,7 @@ void VMError::show_message_box(char *buf, int buflen) {
 
 // Space for our "saved" signal flags and handlers
 static int resettedSigflags[2];
-static address resettedSighandler[2];
+static address resettedSighandler[2]; 
 
 static void save_signal(int idx, int sig)
 {
@@ -72,7 +75,7 @@ static void save_signal(int idx, int sig)
 
 int VMError::get_resetted_sigflags(int sig) {
   if(SIGSEGV == sig) {
-    return resettedSigflags[0];
+    return resettedSigflags[0];  
   } else if(SIGBUS == sig) {
     return resettedSigflags[1];
   }
@@ -81,7 +84,7 @@ int VMError::get_resetted_sigflags(int sig) {
 
 address VMError::get_resetted_sighandler(int sig) {
   if(SIGSEGV == sig) {
-    return resettedSighandler[0];
+    return resettedSighandler[0];  
   } else if(SIGBUS == sig) {
     return resettedSighandler[1];
   }
@@ -106,3 +109,4 @@ void VMError::reset_signal_handlers() {
   os::signal(SIGSEGV, CAST_FROM_FN_PTR(void *, crash_handler));
   os::signal(SIGBUS, CAST_FROM_FN_PTR(void *, crash_handler));
 }
+

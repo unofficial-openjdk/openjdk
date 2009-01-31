@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.runtime;
@@ -103,11 +103,11 @@ public class ObjectMonitor extends VMObject {
       // it is different (objectMonitor_win32.inline.hpp)
       long count = count();
       if (VM.getVM().getOS().equals("win32")) {
-          // don't count the owner of the monitor
-          return count > 0? count - 1 : 0;
+	  // don't count the owner of the monitor
+	  return count > 0? count - 1 : 0;
       } else {
-          // Solaris and Linux
-          return count;
+	  // Solaris and Linux
+	  return count;
       }
   }
 

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.code;
@@ -65,7 +65,7 @@ public class StubQueue extends VMObject {
 
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("StubQueue");
-
+    
     stubBufferField    = type.getAddressField("_stub_buffer");
     bufferLimitField   = type.getCIntegerField("_buffer_limit");
     queueBeginField    = type.getCIntegerField("_queue_begin");
@@ -77,13 +77,13 @@ public class StubQueue extends VMObject {
     super(addr);
     this.stubType = stubType;
   }
-
+  
   public boolean contains(Address pc) {
     if (pc == null) return false;
     long offset = pc.minus(getStubBuffer());
     return ((0 <= offset) && (offset < getBufferLimit()));
   }
-
+  
   public Stub getStubContaining(Address pc) {
     if (contains(pc)) {
       int i = 0;

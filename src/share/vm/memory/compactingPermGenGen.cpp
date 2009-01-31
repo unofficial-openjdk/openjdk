@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -230,7 +233,7 @@ CompactingPermGenGen::CompactingPermGenGen(ReservedSpace rs,
           (!mapinfo->map_space(mc, mc_rs, NULL))      ||
           // check the alignment constraints
           (ch == NULL || ch->kind() != CollectedHeap::GenCollectedHeap ||
-           image_alignment !=
+           image_alignment != 
            ((GenCollectedHeap*)ch)->gen_policy()->max_alignment())) {
         // Base addresses didn't match; skip sharing, but continue
         shared_rs.release();
@@ -338,7 +341,7 @@ void CompactingPermGenGen::print_on(outputStream* st) const {
 
 // References from the perm gen to the younger generation objects may
 // occur in static fields in Java classes or in constant pool references
-// to String objects.
+// to String objects. 
 
 void CompactingPermGenGen::younger_refs_iterate(OopsInGenClosure* blk) {
   OneContigSpaceCardGeneration::younger_refs_iterate(blk);
@@ -391,7 +394,7 @@ bool CompactingPermGenGen::grow_by(size_t bytes) {
 void CompactingPermGenGen::grow_to_reserved() {
   // Don't allow _virtual_size to expand into shared spaces.
   if (_virtual_space.uncommitted_size() > _shared_space_size) {
-    size_t remaining_bytes =
+    size_t remaining_bytes = 
       _virtual_space.uncommitted_size() - _shared_space_size;
     bool success = OneContigSpaceCardGeneration::grow_by(remaining_bytes);
     DEBUG_ONLY(if (!success) warning("grow to reserved failed");)

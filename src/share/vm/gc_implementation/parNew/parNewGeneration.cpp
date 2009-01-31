@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -31,9 +34,9 @@
 #endif
 ParScanThreadState::ParScanThreadState(Space* to_space_,
                                        ParNewGeneration* gen_,
-                                       Generation* old_gen_,
-                                       int thread_num_,
-                                       ObjToScanQueueSet* work_queue_set_,
+				       Generation* old_gen_,
+				       int thread_num_,
+				       ObjToScanQueueSet* work_queue_set_,
                                        size_t desired_plab_sz_,
                                        ParallelTaskTerminator& term_) :
   _to_space(to_space_), _old_gen(old_gen_), _thread_num(thread_num_),
@@ -120,7 +123,7 @@ void ParScanThreadState::scan_partial_array_and_push_remainder(oop old) {
 
 void ParScanThreadState::trim_queues(int max_size) {
   ObjToScanQueue* queue = work_queue();
-  while (queue->size() > (juint)max_size) {
+  while (queue->size() > (juint)max_size) { 
     oop obj_to_scan;
     if (queue->pop_local(obj_to_scan)) {
       note_pop();
@@ -151,7 +154,7 @@ HeapWord* ParScanThreadState::alloc_in_to_space_slow(size_t word_sz) {
     ParGCAllocBuffer* const plab = to_space_alloc_buffer();
     Space*            const sp   = to_space();
     if (word_sz * 100 <
-        ParallelGCBufferWastePct * plab->word_sz()) {
+	ParallelGCBufferWastePct * plab->word_sz()) {
       // Is small enough; abandon this buffer and start a new one.
       plab->retire(false, false);
       size_t buf_size = plab->word_sz();
@@ -164,25 +167,25 @@ HeapWord* ParScanThreadState::alloc_in_to_space_slow(size_t word_sz) {
           buf_size = free_bytes >> LogHeapWordSize;
           assert(buf_size == (size_t)align_object_size(buf_size),
                  "Invariant");
-          buf_space  = sp->par_allocate(buf_size);
+	  buf_space  = sp->par_allocate(buf_size);
           free_bytes = sp->free();
         }
       }
       if (buf_space != NULL) {
-        plab->set_word_size(buf_size);
-        plab->set_buf(buf_space);
+	plab->set_word_size(buf_size);
+	plab->set_buf(buf_space);
         record_survivor_plab(buf_space, buf_size);
-        obj = plab->allocate(word_sz);
+	obj = plab->allocate(word_sz);
         // Note that we cannot compare buf_size < word_sz below
         // because of AlignmentReserve (see ParGCAllocBuffer::allocate()).
-        assert(obj != NULL || plab->words_remaining() < word_sz,
+	assert(obj != NULL || plab->words_remaining() < word_sz,
                "Else should have been able to allocate");
         // It's conceivable that we may be able to use the
         // buffer we just grabbed for subsequent small requests
         // even if not for this one.
       } else {
-        // We're used up.
-        _to_space_full = true;
+	// We're used up.
+	_to_space_full = true;
       }
 
     } else {
@@ -195,11 +198,11 @@ HeapWord* ParScanThreadState::alloc_in_to_space_slow(size_t word_sz) {
 
 
 void ParScanThreadState::undo_alloc_in_to_space(HeapWord* obj,
-                                                size_t word_sz) {
+						size_t word_sz) {
   // Is the alloc in the current alloc buffer?
   if (to_space_alloc_buffer()->contains(obj)) {
     assert(to_space_alloc_buffer()->contains(obj + word_sz - 1),
-           "Should contain whole object.");
+	   "Should contain whole object.");
     to_space_alloc_buffer()->undo_allocation(obj, word_sz);
   } else {
     SharedHeap::fill_region_with_object(MemRegion(obj, word_sz));
@@ -209,11 +212,11 @@ void ParScanThreadState::undo_alloc_in_to_space(HeapWord* obj,
 class ParScanThreadStateSet: private ResourceArray {
 public:
   // Initializes states for the specified number of threads;
-  ParScanThreadStateSet(int                     num_threads,
-                        Space&                  to_space,
+  ParScanThreadStateSet(int                     num_threads, 
+                        Space&                  to_space, 
                         ParNewGeneration&       gen,
-                        Generation&             old_gen,
-                        ObjToScanQueueSet&      queue_set,
+                        Generation&             old_gen, 
+                        ObjToScanQueueSet&      queue_set, 
                         size_t                  desired_plab_sz,
                         ParallelTaskTerminator& term);
   inline ParScanThreadState& thread_sate(int i);
@@ -235,7 +238,7 @@ private:
 
 ParScanThreadStateSet::ParScanThreadStateSet(
   int num_threads, Space& to_space, ParNewGeneration& gen,
-  Generation& old_gen, ObjToScanQueueSet& queue_set,
+  Generation& old_gen, ObjToScanQueueSet& queue_set, 
   size_t desired_plab_sz, ParallelTaskTerminator& term)
   : ResourceArray(sizeof(ParScanThreadState), num_threads),
     _gen(gen), _next_gen(old_gen), _term(term),
@@ -244,7 +247,7 @@ ParScanThreadStateSet::ParScanThreadStateSet(
   assert(num_threads > 0, "sanity check!");
   // Initialize states.
   for (int i = 0; i < num_threads; ++i) {
-    new ((ParScanThreadState*)_data + i)
+    new ((ParScanThreadState*)_data + i) 
         ParScanThreadState(&to_space, &gen, &old_gen, i, &queue_set,
                            desired_plab_sz, term);
   }
@@ -266,7 +269,7 @@ void ParScanThreadStateSet::flush()
 {
   for (int i = 0; i < length(); ++i) {
     ParScanThreadState& par_scan_state = thread_sate(i);
-
+  
     // Flush stats related to To-space PLAB activity and
     // retire the last buffer.
     par_scan_state.to_space_alloc_buffer()->
@@ -321,7 +324,7 @@ void ParScanThreadStateSet::flush()
 
 
 ParScanClosure::ParScanClosure(ParNewGeneration* g,
-                               ParScanThreadState* par_scan_state) :
+			       ParScanThreadState* par_scan_state) :
   OopsInGenClosure(g), _par_scan_state(par_scan_state), _g(g)
 {
   assert(_g->level() == 0, "Optimized for youngest generation");
@@ -397,7 +400,7 @@ void ParEvacuateFollowersClosure::do_void() {
 }
 
 ParNewGenTask::ParNewGenTask(ParNewGeneration* gen, Generation* next_gen,
-                HeapWord* young_old_boundary, ParScanThreadStateSet* state_set) :
+		HeapWord* young_old_boundary, ParScanThreadStateSet* state_set) :
     AbstractGangTask("ParNewGeneration collection"),
     _gen(gen), _next_gen(next_gen),
     _young_old_boundary(young_old_boundary),
@@ -418,7 +421,7 @@ void ParNewGenTask::work(int i) {
 
   ParScanThreadState& par_scan_state = _state_set->thread_sate(i);
   par_scan_state.set_young_old_boundary(_young_old_boundary);
-
+  
   par_scan_state.start_strong_roots();
   gch->gen_process_strong_roots(_gen->level(),
                                 true, // Process younger gens, if any,
@@ -517,14 +520,14 @@ void ScanClosureWithParBarrier::do_oop(oop* p) {
       assert(!_g->to()->is_in_reserved(obj), "Scanning field twice?");
       if (obj->is_forwarded()) {
         *p = obj->forwardee();
-      } else {
+      } else {        
         *p = _g->DefNewGeneration::copy_to_survivor_space(obj, p);
       }
     }
     if (_gc_barrier) {
       // If p points to a younger generation, mark the card.
       if ((HeapWord*)obj < _gen_boundary) {
-        _rs->write_ref_field_gc_par(p, obj);
+	_rs->write_ref_field_gc_par(p, obj);
       }
     }
   }
@@ -533,14 +536,14 @@ void ScanClosureWithParBarrier::do_oop(oop* p) {
 class ParNewRefProcTaskProxy: public AbstractGangTask {
   typedef AbstractRefProcTaskExecutor::ProcessTask ProcessTask;
 public:
-  ParNewRefProcTaskProxy(ProcessTask& task, ParNewGeneration& gen,
+  ParNewRefProcTaskProxy(ProcessTask& task, ParNewGeneration& gen,		
                          Generation& next_gen,
                          HeapWord* young_old_boundary,
                          ParScanThreadStateSet& state_set);
 
 private:
   virtual void work(int i);
-
+  
 private:
   ParNewGeneration&      _gen;
   ProcessTask&           _task;
@@ -550,14 +553,14 @@ private:
 };
 
 ParNewRefProcTaskProxy::ParNewRefProcTaskProxy(
-    ProcessTask& task, ParNewGeneration& gen,
-    Generation& next_gen,
+    ProcessTask& task, ParNewGeneration& gen,		
+    Generation& next_gen, 
     HeapWord* young_old_boundary,
     ParScanThreadStateSet& state_set)
   : AbstractGangTask("ParNewGeneration parallel reference processing"),
     _gen(gen),
     _task(task),
-    _next_gen(next_gen),
+    _next_gen(next_gen), 
     _young_old_boundary(young_old_boundary),
     _state_set(state_set)
 {
@@ -569,8 +572,8 @@ void ParNewRefProcTaskProxy::work(int i)
   HandleMark hm;
   ParScanThreadState& par_scan_state = _state_set.thread_sate(i);
   par_scan_state.set_young_old_boundary(_young_old_boundary);
-  _task.work(i, par_scan_state.is_alive_closure(),
-             par_scan_state.keep_alive_closure(),
+  _task.work(i, par_scan_state.is_alive_closure(), 
+             par_scan_state.keep_alive_closure(), 
              par_scan_state.evacuate_followers_closure());
 }
 
@@ -613,9 +616,9 @@ void ParNewRefProcTaskExecutor::execute(EnqueueTask& task)
   workers->run_task(&enq_task);
 }
 
-void ParNewRefProcTaskExecutor::set_single_threaded_mode()
-{
-  _state_set.flush();
+void ParNewRefProcTaskExecutor::set_single_threaded_mode() 
+{ 
+  _state_set.flush(); 
   GenCollectedHeap* gch = GenCollectedHeap::heap();
   gch->set_par_threads(0);  // 0 ==> non-parallel.
   gch->save_marks();
@@ -627,8 +630,8 @@ ScanClosureWithParBarrier(ParNewGeneration* g, bool gc_barrier) :
 
 EvacuateFollowersClosureGeneral::
 EvacuateFollowersClosureGeneral(GenCollectedHeap* gch, int level,
-                                OopsInGenClosure* cur,
-                                OopsInGenClosure* older) :
+				OopsInGenClosure* cur,
+				OopsInGenClosure* older) :
   _gch(gch), _level(level),
   _scan_cur_or_nonheap(cur), _scan_older(older)
 {}
@@ -638,8 +641,8 @@ void EvacuateFollowersClosureGeneral::do_void() {
     // Beware: this call will lead to closure applications via virtual
     // calls.
     _gch->oop_since_save_marks_iterate(_level,
-                                       _scan_cur_or_nonheap,
-                                       _scan_older);
+				       _scan_cur_or_nonheap,
+				       _scan_older);
   } while (!_gch->no_allocs_since_save_marks(_level));
 }
 
@@ -656,7 +659,7 @@ void ParNewGeneration::adjust_desired_tenuring_threshold() {
 
 void ParNewGeneration::collect(bool   full,
                                bool   clear_all_soft_refs,
-                               size_t size,
+			       size_t size,
                                bool   is_tlab) {
   assert(full || size > 0, "otherwise we don't want to collect");
   GenCollectedHeap* gch = GenCollectedHeap::heap();
@@ -665,10 +668,10 @@ void ParNewGeneration::collect(bool   full,
   AdaptiveSizePolicy* size_policy = gch->gen_policy()->size_policy();
   WorkGang* workers = gch->workers();
   _next_gen = gch->next_gen(this);
-  assert(_next_gen != NULL,
+  assert(_next_gen != NULL, 
     "This must be the youngest gen, and not the only gen");
   assert(gch->n_gens() == 2,
-         "Par collection currently only works with single older gen.");
+	 "Par collection currently only works with single older gen.");
   // Do we have to avoid promotion_undo?
   if (gch->collector_policy()->is_concurrent_mark_sweep_policy()) {
     set_avoid_promotion_undo(true);
@@ -703,7 +706,7 @@ void ParNewGeneration::collect(bool   full,
   assert(workers != NULL, "Need parallel worker threads.");
   ParallelTaskTerminator _term(workers->total_workers(), task_queues());
   ParScanThreadStateSet thread_state_set(workers->total_workers(),
-                                         *to(), *this, *_next_gen, *task_queues(),
+                                         *to(), *this, *_next_gen, *task_queues(), 
                                          desired_plab_sz(), _term);
 
   ParNewGenTask tsk(this, _next_gen, reserved().end(), &thread_state_set);
@@ -712,7 +715,7 @@ void ParNewGeneration::collect(bool   full,
   gch->change_strong_roots_parity();
   gch->rem_set()->prepare_for_younger_refs_iterate(true);
   // It turns out that even when we're using 1 thread, doing the work in a
-  // separate thread causes wide variance in run times.  We can't help this
+  // separate thread causes wide variance in run times.  We can't help this 
   // in the multi-threaded case, but we special-case n=1 here to get
   // repeatable measurements of the 1-thread overhead of the parallel code.
   if (n_workers > 1) {
@@ -724,13 +727,13 @@ void ParNewGeneration::collect(bool   full,
 
   if (PAR_STATS_ENABLED && ParallelGCVerbose) {
     gclog_or_tty->print("Thread totals:\n"
-               "  Pushes: %7d    Pops: %7d    Steals %7d (sum = %7d).\n",
-               thread_state_set.pushes(), thread_state_set.pops(),
+	       "  Pushes: %7d    Pops: %7d    Steals %7d (sum = %7d).\n",
+	       thread_state_set.pushes(), thread_state_set.pops(), 
                thread_state_set.steals(),
-               thread_state_set.pops()+thread_state_set.steals());
+	       thread_state_set.pops()+thread_state_set.steals());
   }
   assert(thread_state_set.pushes() == thread_state_set.pops() + thread_state_set.steals(),
-         "Or else the queues are leaky.");
+	 "Or else the queues are leaky.");
 
   // For now, process discovered weak refs sequentially.
 #ifdef COMPILER2
@@ -738,7 +741,7 @@ void ParNewGeneration::collect(bool   full,
 #else
   ReferencePolicy *soft_ref_policy = new LRUCurrentHeapPolicy();
 #endif // COMPILER2
-
+ 
   // Process (weak) reference objects found during scavenge.
   IsAliveClosure is_alive(this);
   ScanWeakRefClosure scan_weak_ref(this);
@@ -746,12 +749,12 @@ void ParNewGeneration::collect(bool   full,
   ScanClosure               scan_without_gc_barrier(this, false);
   ScanClosureWithParBarrier scan_with_gc_barrier(this, true);
   set_promo_failure_scan_stack_closure(&scan_without_gc_barrier);
-  EvacuateFollowersClosureGeneral evacuate_followers(gch, _level,
+  EvacuateFollowersClosureGeneral evacuate_followers(gch, _level, 
     &scan_without_gc_barrier, &scan_with_gc_barrier);
   if (ref_processor()->processing_is_mt()) {
     ParNewRefProcTaskExecutor task_executor(*this, thread_state_set);
     ref_processor()->process_discovered_references(
-        soft_ref_policy, &is_alive, &keep_alive, &evacuate_followers,
+        soft_ref_policy, &is_alive, &keep_alive, &evacuate_followers, 
         &task_executor);
   } else {
     thread_state_set.flush();
@@ -766,10 +769,10 @@ void ParNewGeneration::collect(bool   full,
     eden()->clear();
     from()->clear();
     swap_spaces();
-
+  
     assert(to()->is_empty(), "to space should be empty now");
   } else {
-    assert(HandlePromotionFailure,
+    assert(HandlePromotionFailure, 
       "Should only be here if promotion failure handling is on");
     if (_promo_failure_scan_stack != NULL) {
       // Can be non-null because of reference processing.
@@ -807,7 +810,7 @@ void ParNewGeneration::collect(bool   full,
   update_time_of_last_gc(os::javaTimeMillis());
 
   SpecializationStats::print();
-
+  
   ref_processor()->set_enqueuing_is_done(true);
   if (ref_processor()->processing_is_mt()) {
     ParNewRefProcTaskExecutor task_executor(*this, thread_state_set);
@@ -875,9 +878,9 @@ void ParNewGeneration::preserve_mark_if_necessary(oop obj, markOop m) {
 // to install the forwarding pointer before it copies the object,
 // thus avoiding the need to undo the copy as in
 // copy_to_survivor_space_avoiding_with_undo.
-
+ 
 oop ParNewGeneration::copy_to_survivor_space_avoiding_promotion_undo(
-        ParScanThreadState* par_scan_state, oop old, size_t sz, markOop m) {
+	ParScanThreadState* par_scan_state, oop old, size_t sz, markOop m) {
   // In the sequential version, this assert also says that the object is
   // not forwarded.  That might not be the case here.  It is the case that
   // the caller observed it to be not forwarded at some time in the past.
@@ -890,8 +893,8 @@ oop ParNewGeneration::copy_to_survivor_space_avoiding_promotion_undo(
   oopDesc dummyOld;
   dummyOld.set_mark(m);
   assert(!dummyOld.is_forwarded(),
-         "should not be called with forwarding pointer mark word.");
-
+	 "should not be called with forwarding pointer mark word.");
+  
   oop new_obj = NULL;
   oop forward_ptr;
 
@@ -912,11 +915,11 @@ oop ParNewGeneration::copy_to_survivor_space_avoiding_promotion_undo(
     forward_ptr = old->forward_to_atomic(ClaimedForwardPtr);
     if (forward_ptr != NULL) {
       // someone else beat us to it.
-        return real_forwardee(old);
+	return real_forwardee(old);
     }
 
     new_obj = _next_gen->par_promote(par_scan_state->thread_num(),
-                                       old, m, sz);
+				       old, m, sz);
 
     if (new_obj == NULL) {
       if (!HandlePromotionFailure) {
@@ -967,7 +970,7 @@ oop ParNewGeneration::copy_to_survivor_space_avoiding_promotion_undo(
     par_scan_state->note_push();
 
     return new_obj;
-  }
+  } 
 
   // Oops.  Someone beat us to it.  Undo the allocation.  Where did we
   // allocate it?
@@ -990,7 +993,7 @@ oop ParNewGeneration::copy_to_survivor_space_avoiding_promotion_undo(
 // the forwarding pointer.  The other threads have to undo their copy.
 
 oop ParNewGeneration::copy_to_survivor_space_with_undo(
-        ParScanThreadState* par_scan_state, oop old, size_t sz, markOop m) {
+	ParScanThreadState* par_scan_state, oop old, size_t sz, markOop m) {
 
   // In the sequential version, this assert also says that the object is
   // not forwarded.  That might not be the case here.  It is the case that
@@ -1004,8 +1007,8 @@ oop ParNewGeneration::copy_to_survivor_space_with_undo(
   oopDesc dummyOld;
   dummyOld.set_mark(m);
   assert(!dummyOld.is_forwarded(),
-         "should not be called with forwarding pointer mark word.");
-
+	 "should not be called with forwarding pointer mark word.");
+  
   bool failed_to_promote = false;
   oop new_obj = NULL;
   oop forward_ptr;
@@ -1022,7 +1025,7 @@ oop ParNewGeneration::copy_to_survivor_space_with_undo(
     // Either to-space is full or we decided to promote
     // try allocating obj tenured
     new_obj = _next_gen->par_promote(par_scan_state->thread_num(),
-                                       old, m, sz);
+				       old, m, sz);
 
     if (new_obj == NULL) {
       if (!HandlePromotionFailure) {
@@ -1081,7 +1084,7 @@ oop ParNewGeneration::copy_to_survivor_space_with_undo(
     par_scan_state->note_push();
 
     return new_obj;
-  }
+  } 
 
   // Oops.  Someone beat us to it.  Undo the allocation.  Where did we
   // allocate it?
@@ -1123,7 +1126,7 @@ ParNewGeneration::take_from_overflow_list(ParScanThreadState* par_scan_state) {
   ObjToScanQueue* work_q = par_scan_state->work_queue();
   // How many to take?
   int objsFromOverflow = MIN2(work_q->max_elems()/4,
-                              (juint)ParGCDesiredObjsFromOverflowList);
+			      (juint)ParGCDesiredObjsFromOverflowList);
 
   if (_overflow_list == NULL) return false;
 
@@ -1190,7 +1193,7 @@ void ParNewGeneration::ref_processor_init()
         _reserved,                  // span
         refs_discovery_is_atomic(), // atomic_discovery
         refs_discovery_is_mt(),     // mt_discovery
-        NULL,                       // is_alive_non_header
+        &_is_alive_closure,
         ParallelGCThreads,
         ParallelRefProcEnabled);
   }

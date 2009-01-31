@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -32,13 +35,13 @@ StubQueue* InlineCacheBuffer::_buffer    = NULL;
 ICStub*    InlineCacheBuffer::_next_stub = NULL;
 
 
-void ICStub::finalize() {
+void ICStub::finalize() {  
   if (!is_empty()) {
     ResourceMark rm;
-    CompiledIC *ic = CompiledIC_at(ic_site());
+    CompiledIC *ic = CompiledIC_at(ic_site());  
     assert(CodeCache::find_nmethod(ic->instruction_address()) != NULL, "inline cache in non-nmethod?");
 
-    assert(this == ICStub_from_destination_address(ic->stub_address()), "wrong owner of ic buffer");
+    assert(this == ICStub_from_destination_address(ic->stub_address()), "wrong owner of ic buffer");    
     ic->set_cached_oop(cached_oop());
     ic->set_ic_destination(destination());
   }
@@ -68,11 +71,11 @@ void ICStub::set_stub(CompiledIC *ic, oop cached_value, address dest_addr) {
 
 
 void ICStub::clear() {
-  _ic_site = NULL;
+  _ic_site = NULL;  
 }
 
 
-#ifndef PRODUCT
+#ifndef PRODUCT 
 // anybody calling to this stub will trap
 
 void ICStub::verify() {
@@ -105,8 +108,8 @@ ICStub* InlineCacheBuffer::new_ic_stub() {
     ICStub* ic_stub = (ICStub*)buffer()->request_committed(ic_stub_code_size());
     if (ic_stub != NULL) {
       return ic_stub;
-    }
-    // we ran out of inline cache buffer space; must enter safepoint.
+    } 
+    // we ran out of inline cache buffer space; must enter safepoint. 
     // We do this by forcing a safepoint
     EXCEPTION_MARK;
 
@@ -117,7 +120,7 @@ ICStub* InlineCacheBuffer::new_ic_stub() {
     if (HAS_PENDING_EXCEPTION) {
       oop exception = PENDING_EXCEPTION;
       CLEAR_PENDING_EXCEPTION;
-      Thread::send_async_exception(JavaThread::current()->threadObj(), exception);
+      Thread::send_async_exception(JavaThread::current()->threadObj(), exception);      
     }
   }
   ShouldNotReachHere();
@@ -129,7 +132,7 @@ void InlineCacheBuffer::update_inline_caches() {
   if (buffer()->number_of_stubs() > 1) {
     if (TraceICBuffer) {
       tty->print_cr("[updating inline caches with %d stubs]", buffer()->number_of_stubs());
-    }
+    } 
     buffer()->remove_all();
     init_next_stub();
   }
@@ -164,17 +167,17 @@ void InlineCacheBuffer::create_transition_stub(CompiledIC *ic, oop cached_oop, a
   }
 
   // allocate and initialize new "out-of-line" inline-cache
-  ICStub* ic_stub = get_next_stub();
+  ICStub* ic_stub = get_next_stub();  
   ic_stub->set_stub(ic, cached_oop, entry);
-
+  
   // Update inline cache in nmethod to point to new "out-of-line" allocated inline cache
   ic->set_ic_destination(ic_stub->code_begin());
-
-  set_next_stub(new_ic_stub()); // can cause safepoint synchronization
+  
+  set_next_stub(new_ic_stub()); // can cause safepoint synchronization  
 }
 
 
-address InlineCacheBuffer::ic_destination_for(CompiledIC *ic) {
+address InlineCacheBuffer::ic_destination_for(CompiledIC *ic) {  
   ICStub* stub = ICStub_from_destination_address(ic->stub_address());
   return stub->destination();
 }
@@ -182,5 +185,8 @@ address InlineCacheBuffer::ic_destination_for(CompiledIC *ic) {
 
 oop InlineCacheBuffer::cached_oop_for(CompiledIC *ic) {
   ICStub* stub = ICStub_from_destination_address(ic->stub_address());
-  return stub->cached_oop();
+  return stub->cached_oop();  
 }
+
+
+

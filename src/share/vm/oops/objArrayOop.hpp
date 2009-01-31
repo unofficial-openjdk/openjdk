@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // An objArrayOop is an array containing oops.
@@ -34,7 +37,7 @@ class objArrayOopDesc : public arrayOopDesc {
 
   // Sizing
   static int header_size()              { return arrayOopDesc::header_size(T_OBJECT); }
-  static int object_size(int length)    { return align_object_size(header_size() + length); }
+  static int object_size(int length)    { return align_object_size(header_size() + length); }  
   int object_size()                     { return object_size(length()); }
 
   // Returns the address of the index'th element

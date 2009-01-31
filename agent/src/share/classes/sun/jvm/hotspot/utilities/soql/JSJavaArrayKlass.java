@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.utilities.soql;
@@ -42,7 +42,7 @@ public abstract class JSJavaArrayKlass extends JSJavaKlass {
 
    public Object getMetaClassFieldValue(String name) {
       if (name.equals("dimension")) {
-         return new Long(getArrayKlass().getDimension());
+	 return new Long(getArrayKlass().getDimension());
       } else {
          return super.getMetaClassFieldValue(name);
       }
@@ -50,9 +50,9 @@ public abstract class JSJavaArrayKlass extends JSJavaKlass {
 
    public boolean hasMetaClassField(String name) {
       if (name.equals("dimension")) {
-         return true;
+	 return true;
       } else {
-         return super.hasMetaClassField(name);
+	 return super.hasMetaClassField(name);
       }
    }
 

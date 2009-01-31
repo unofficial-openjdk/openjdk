@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,14 +22,14 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // The OSThread class holds OS-specific thread information.  It is equivalent
 // to the sys_thread_t structure of the classic JVM implementation.
 
 // The thread states represented by the ThreadState values are platform-specific
-// and are likely to be only approximate, because most OSes don't give you access
+// and are likely to be only approximate, because most OSes don't give you access 
 // to precise thread state information.
 
 // Note: the ThreadState is legacy code and is not correctly implemented.
@@ -39,9 +42,9 @@ enum ThreadState {
   MONITOR_WAIT,                 // Waiting on a contended monitor lock
   CONDVAR_WAIT,                 // Waiting on a condition variable
   OBJECT_WAIT,                  // Waiting on an Object.wait() call
-  BREAKPOINTED,                 // Suspended at breakpoint
-  SLEEPING,                     // Thread.sleep()
-  ZOMBIE                        // All done, but not reclaimed yet
+  BREAKPOINTED,                 // Suspended at breakpoint 
+  SLEEPING,                     // Thread.sleep() 
+  ZOMBIE                        // All done, but not reclaimed yet 
 };
 
 // I'd make OSThread a ValueObj embedded in Thread to avoid an indirection, but
@@ -66,7 +69,7 @@ class OSThread: public CHeapObj {
   // Methods
  public:
   void set_state(ThreadState state)                { _state = state; }
-  ThreadState get_state()                          { return _state; }
+  ThreadState get_state()	      		   { return _state; }
 
   // Constructor
   OSThread(OSThreadStartFunc start_proc, void* start_parm);
@@ -85,8 +88,8 @@ class OSThread: public CHeapObj {
 
   // Printing
   void print_on(outputStream* st) const;
-  void print() const                                { print_on(tty); }
-
+  void print() const				    { print_on(tty); }
+ 
   // For java intrinsics:
   static ByteSize interrupted_offset()            { return byte_offset_of(OSThread, _interrupted); }
 

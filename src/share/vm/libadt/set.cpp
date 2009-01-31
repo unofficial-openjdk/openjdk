@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Sets - An Abstract Data Type
@@ -66,42 +69,42 @@ const CoSet *Set::asCoSet() const { assert(0); return NULL; }
 char *Set::setstr() const
 {
   if( !this ) return os::strdup("{no set}");
-  Set &set = clone();           // Virtually copy the basic set.
-  set.Sort();                   // Sort elements for in-order retrieval
+  Set &set = clone();		// Virtually copy the basic set.
+  set.Sort();			// Sort elements for in-order retrieval
 
-  uint len = 128;               // Total string space
+  uint len = 128;		// Total string space
   char *buf = NEW_C_HEAP_ARRAY(char,len);// Some initial string space
 
-  register char *s = buf;       // Current working string pointer
+  register char *s = buf;	// Current working string pointer
   *s++ = '{';
   *s = '\0';
 
   // For all elements of the Set
   uint hi = (uint)-2, lo = (uint)-2;
   for( SetI i(&set); i.test(); ++i ) {
-    if( hi+1 == i.elem ) {        // Moving sequentially thru range?
-      hi = i.elem;                // Yes, just update hi end of range
-    } else {                      // Else range ended
-      if( buf+len-s < 25 ) {      // Generous trailing space for upcoming numbers
-        int offset = (int)(s-buf);// Not enuf space; compute offset into buffer
-        len <<= 1;                // Double string size
-        buf = REALLOC_C_HEAP_ARRAY(char,buf,len); // Reallocate doubled size
-        s = buf+offset;         // Get working pointer into new bigger buffer
+    if( hi+1 == i.elem ) {	  // Moving sequentially thru range?
+      hi = i.elem;		  // Yes, just update hi end of range
+    } else {			  // Else range ended
+      if( buf+len-s < 25 ) {	  // Generous trailing space for upcoming numbers
+	int offset = (int)(s-buf);// Not enuf space; compute offset into buffer
+	len <<= 1;	          // Double string size
+	buf = REALLOC_C_HEAP_ARRAY(char,buf,len); // Reallocate doubled size
+	s = buf+offset; 	// Get working pointer into new bigger buffer
       }
-      if( lo != (uint)-2 ) {    // Startup?  No!  Then print previous range.
-        if( lo != hi ) sprintf(s,"%d-%d,",lo,hi);
-        else sprintf(s,"%d,",lo);
-        s += strlen(s);         // Advance working string
+      if( lo != (uint)-2 ) { 	// Startup?  No!  Then print previous range.
+	if( lo != hi ) sprintf(s,"%d-%d,",lo,hi);
+	else sprintf(s,"%d,",lo);
+	s += strlen(s); 	// Advance working string
       }
       hi = lo = i.elem;
     }
   }
   if( lo != (uint)-2 ) {
-    if( buf+len-s < 25 ) {      // Generous trailing space for upcoming numbers
+    if( buf+len-s < 25 ) {	// Generous trailing space for upcoming numbers
       int offset = (int)(s-buf);// Not enuf space; compute offset into buffer
-      len <<= 1;                // Double string size
+      len <<= 1;		// Double string size
       buf = (char*)ReallocateHeap(buf,len); // Reallocate doubled size
-      s = buf+offset;           // Get working pointer into new bigger buffer
+      s = buf+offset;		// Get working pointer into new bigger buffer
     }
     if( lo != hi ) sprintf(s,"%d-%d}",lo,hi);
     else sprintf(s,"%d}",lo);
@@ -124,43 +127,43 @@ void Set::print() const
 // Set.  Return the amount of text parsed in "len", or zero in "len".
 int Set::parse(const char *s)
 {
-  register char c;              // Parse character
-  register const char *t = s;   // Save the starting position of s.
-  do c = *s++;                  // Skip characters
+  register char c;		// Parse character
+  register const char *t = s;	// Save the starting position of s.
+  do c = *s++;			// Skip characters
   while( c && (c <= ' ') );     // Till no more whitespace or EOS
   if( c != '{' ) return 0;      // Oops, not a Set openner
   if( *s == '}' ) return 2;     // The empty Set
 
   // Sets are filled with values of the form "xx," or "xx-yy," with the comma
   // a "}" at the very end.
-  while( 1 ) {                  // While have elements in the Set
-    char *u;                    // Pointer to character ending parse
-    uint hi, i;                 // Needed for range handling below
+  while( 1 ) {			// While have elements in the Set
+    char *u;			// Pointer to character ending parse
+    uint hi, i;			// Needed for range handling below
     uint elem = (uint)strtoul(s,&u,10);// Get element
-    if( u == s ) return 0;      // Bogus crude
-    s = u;                      // Skip over the number
-    c = *s++;                   // Get the number seperator
-    switch ( c ) {              // Different seperators
+    if( u == s ) return 0;	// Bogus crude
+    s = u;			// Skip over the number
+    c = *s++;			// Get the number seperator
+    switch ( c ) {		// Different seperators
     case '}':                   // Last simple element
     case ',':                   // Simple element
-      (*this) <<= elem;         // Insert the simple element into the Set
-      break;                    // Go get next element
+      (*this) <<= elem; 	// Insert the simple element into the Set
+      break;			// Go get next element
     case '-':                   // Range
       hi = (uint)strtoul(s,&u,10); // Get element
-      if( u == s ) return 0;    // Bogus crude
+      if( u == s ) return 0;	// Bogus crude
       for( i=elem; i<=hi; i++ )
-        (*this) <<= i;          // Insert the entire range into the Set
-      s = u;                    // Skip over the number
-      c = *s++;                 // Get the number seperator
+	(*this) <<= i;		// Insert the entire range into the Set
+      s = u;			// Skip over the number
+      c = *s++; 		// Get the number seperator
       break;
     }
     if( c == '}' ) break;       // End of the Set
     if( c != ',' ) return 0;    // Bogus garbage
   }
-  return (int)(s-t);            // Return length parsed
+  return (int)(s-t);		// Return length parsed
 }
 
 //------------------------------Iterator---------------------------------------
-SetI_::~SetI_()
+SetI_::~SetI_() 
 {
 }

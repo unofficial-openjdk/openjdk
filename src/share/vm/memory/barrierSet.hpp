@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This class provides the interface between a barrier implementation and
@@ -39,7 +42,7 @@ public:
 protected:
   int _max_covered_regions;
   Name _kind;
-
+  
 public:
 
   // To get around prohibition on RTTI.
@@ -73,7 +76,7 @@ public:
   // Invoke the barrier, if any, necessary when writing "new_val" into the
   // ref field at "offset" in "obj".
   // (For efficiency reasons, this operation is specialized for certain
-  // barrier types.  Semantically, it should be thought of as a call to the
+  // barrier types.  Semantically, it should be thought of as a call to the 
   // virtual "_work" function below, which must implement the barrier.)
   inline void write_ref_field(oop* field, oop new_val);
 protected:
@@ -83,7 +86,7 @@ public:
   // Invoke the barrier, if any, necessary when writing the "bytes"-byte
   // value(s) "val1" (and "val2") into the primitive "field".
   virtual void write_prim_field(HeapWord* field, size_t bytes,
-                                juint val1, juint val2) = 0;
+				juint val1, juint val2) = 0;
 
   // Operations on arrays, or general regions (e.g., for "clone") may be
   // optimized by some barriers.
@@ -103,7 +106,7 @@ public:
   // barrier for an array whose elements are all in the given memory region.
   virtual void read_ref_array(MemRegion mr) = 0;
   virtual void read_prim_array(MemRegion mr) = 0;
-
+  
   inline void write_ref_array(MemRegion mr);
 protected:
   virtual void write_ref_array_work(MemRegion mr) = 0;
@@ -113,7 +116,7 @@ public:
   virtual void read_region(MemRegion mr) = 0;
 
   // (For efficiency reasons, this operation is specialized for certain
-  // barrier types.  Semantically, it should be thought of as a call to the
+  // barrier types.  Semantically, it should be thought of as a call to the 
   // virtual "_work" function below, which must implement the barrier.)
   inline void write_region(MemRegion mr);
 protected:

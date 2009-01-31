@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // The system dictionary stores all loaded classes and maps:
@@ -30,7 +33,7 @@
 // represented as NULL.
 
 // The underlying data structure is an open hash table with a fixed number
-// of buckets. During loading the loader object is locked, (for the VM loader
+// of buckets. During loading the loader object is locked, (for the VM loader 
 // a private lock object is used). Class loading can thus be done concurrently,
 // but only by different loaders.
 //
@@ -47,16 +50,16 @@
 // Clients of this class who are interested in finding if a class has
 // been completely loaded -- not classes in the process of being loaded --
 // can read the SystemDictionary unlocked. This is safe because
-//    - entries are only deleted at safepoints
+//    - entries are only deleted at safepoints  
 //    - readers cannot come to a safepoint while actively examining
-//         an entry  (an entry cannot be deleted from under a reader)
+//         an entry  (an entry cannot be deleted from under a reader) 
 //    - entries must be fully formed before they are available to concurrent
 //         readers (we must ensure write ordering)
 //
 // Note that placeholders are deleted at any time, as they are removed
 // when a class is completely loaded. Therefore, readers as well as writers
 // of placeholders must hold the SystemDictionary_lock.
-//
+// 
 
 class Dictionary;
 class PlaceholderTable;
@@ -91,7 +94,7 @@ public:
   // Version with null loader and protection domain
   static klassOop resolve_or_null(symbolHandle class_name, TRAPS);
 
-  // Resolve a superclass or superinterface. Called from ClassFileParser,
+  // Resolve a superclass or superinterface. Called from ClassFileParser, 
   // parse_interfaces, resolve_instance_class_or_null, load_shared_class
   // "child_name" is the class whose super class or interface is being resolved.
   static klassOop resolve_super_or_fail(symbolHandle child_name,
@@ -108,10 +111,10 @@ public:
                                Handle protection_domain,
                                ClassFileStream* st,
                                TRAPS);
-
+                               
   // Resolve from stream (called by jni_DefineClass and JVM_DefineClass)
   static klassOop resolve_from_stream(symbolHandle class_name, Handle class_loader, Handle protection_domain, ClassFileStream* st, TRAPS);
-
+  
   // Lookup an already loaded class. If not found NULL is returned.
   static klassOop find(symbolHandle class_name, Handle class_loader, Handle protection_domain, TRAPS);
 
@@ -119,9 +122,9 @@ public:
   // Do not make any queries to class loaders; consult only the cache.
   // If not found NULL is returned.
   static klassOop find_instance_or_array_klass(symbolHandle class_name,
-                                               Handle class_loader,
-                                               Handle protection_domain,
-                                               TRAPS);
+					       Handle class_loader,
+					       Handle protection_domain,
+					       TRAPS);
 
   // Lookup an instance or array class that has already been loaded
   // either into the given class loader, or else into another class
@@ -147,7 +150,7 @@ public:
   static klassOop find_constrained_instance_or_array_klass(symbolHandle class_name,
                                                            Handle class_loader,
                                                            TRAPS);
-
+  
   // Iterate over all klasses in dictionary
   //   Just the classes from defining class loaders
   static void classes_do(void f(klassOop));
@@ -181,7 +184,7 @@ public:
   static void oops_do(OopClosure* f);
 
   // System loader lock
-  static oop system_loader_lock()           { return _system_loader_lock_obj; }
+  static oop system_loader_lock()	    { return _system_loader_lock_obj; }
 
 private:
   //    Traverses preloaded oops: various system classes.  These are
@@ -231,7 +234,7 @@ public:
 
   // Fast access to commonly used classes (preloaded)
   static klassOop check_klass(klassOop k) {
-    assert(k != NULL, "preloaded klass not initialized");
+    assert(k != NULL, "preloaded klass not initialized"); 
     return k;
   }
 
@@ -266,15 +269,15 @@ public:
   static klassOop final_reference_klass()   { return check_klass(_final_reference_klass); }
   static klassOop phantom_reference_klass() { return check_klass(_phantom_reference_klass); }
   static klassOop finalizer_klass()         { return check_klass(_finalizer_klass); }
-
+  
   static klassOop thread_klass()            { return check_klass(_thread_klass); }
   static klassOop threadGroup_klass()       { return check_klass(_threadGroup_klass); }
-  static klassOop properties_klass()        { return check_klass(_properties_klass); }
+  static klassOop properties_klass()        { return check_klass(_properties_klass); }  
   static klassOop reflect_accessible_object_klass() { return check_klass(_reflect_accessible_object_klass); }
   static klassOop reflect_field_klass()     { return check_klass(_reflect_field_klass); }
   static klassOop reflect_method_klass()    { return check_klass(_reflect_method_klass); }
   static klassOop reflect_constructor_klass() { return check_klass(_reflect_constructor_klass); }
-  static klassOop reflect_method_accessor_klass() {
+  static klassOop reflect_method_accessor_klass() { 
     assert(JDK_Version::is_gte_jdk14x_version() && UseNewReflection, "JDK 1.4 only");
     return check_klass(_reflect_method_accessor_klass);
   }
@@ -313,7 +316,7 @@ public:
   static klassOop byte_klass()              { return check_klass(_byte_klass); }
   static klassOop short_klass()             { return check_klass(_short_klass); }
   static klassOop int_klass()               { return check_klass(_int_klass); }
-  static klassOop long_klass()              { return check_klass(_long_klass); }
+  static klassOop long_klass()              { return check_klass(_long_klass); } 
 
   static klassOop box_klass(BasicType t) {
     assert((uint)t < T_VOID+1, "range check");
@@ -337,7 +340,7 @@ public:
 
   static bool class_klass_loaded()          { return _class_klass != NULL; }
   static bool cloneable_klass_loaded()      { return _cloneable_klass != NULL; }
-
+  
   // Returns default system loader
   static oop java_system_loader();
 
@@ -347,7 +350,7 @@ public:
 private:
   // Mirrors for primitive classes (created eagerly)
   static oop check_mirror(oop m) {
-    assert(m != NULL, "mirror not initialized");
+    assert(m != NULL, "mirror not initialized"); 
     return m;
   }
 
@@ -358,12 +361,12 @@ public:
   static bool add_loader_constraint(symbolHandle name, Handle loader1,
                                     Handle loader2, TRAPS);
   static char* check_signature_loaders(symbolHandle signature, Handle loader1,
-                                       Handle loader2, bool is_method, TRAPS);
+				       Handle loader2, bool is_method, TRAPS);
 
   // Utility for printing loader "name" as part of tracing constraints
   static const char* loader_name(oop loader) {
-    return ((loader) == NULL ? "<bootloader>" :
-            instanceKlass::cast((loader)->klass())->name()->as_C_string() );
+    return ((loader) == NULL ? "<bootloader>" : 
+	    instanceKlass::cast((loader)->klass())->name()->as_C_string() );
   }
 
   // Record the error when the first attempt to resolve a reference from a constant
@@ -375,7 +378,7 @@ public:
 
   enum Constants {
     _loader_constraint_size = 107,                     // number of entries in constraint table
-    _resolution_error_size  = 107,                     // number of entries in resolution error table
+    _resolution_error_size  = 107,		       // number of entries in resolution error table
     _nof_buckets            = 1009                     // number of buckets in hash table
   };
 
@@ -403,7 +406,7 @@ public:
   static LoaderConstraintTable*  _loader_constraints;
 
   // Resolution errors
-  static ResolutionErrorTable*   _resolution_errors;
+  static ResolutionErrorTable*	 _resolution_errors;
 
 public:
   // for VM_CounterDecay iteration support
@@ -427,14 +430,14 @@ private:
   static klassOop resolve_instance_class_or_null(symbolHandle class_name, Handle class_loader, Handle protection_domain, TRAPS);
   static klassOop resolve_array_class_or_null(symbolHandle class_name, Handle class_loader, Handle protection_domain, TRAPS);
   static instanceKlassHandle handle_parallel_super_load(symbolHandle class_name, symbolHandle supername, Handle class_loader, Handle protection_domain, Handle lockObject, TRAPS);
-  // Wait on SystemDictionary_lock; unlocks lockObject before
+  // Wait on SystemDictionary_lock; unlocks lockObject before 
   // waiting; relocks lockObject with correct recursion count
   // after waiting, but before reentering SystemDictionary_lock
   // to preserve lock order semantics.
   static void double_lock_wait(Handle lockObject, TRAPS);
   static void define_instance_class(instanceKlassHandle k, TRAPS);
-  static instanceKlassHandle find_or_define_instance_class(symbolHandle class_name,
-                                                Handle class_loader,
+  static instanceKlassHandle find_or_define_instance_class(symbolHandle class_name, 
+                                                Handle class_loader, 
                                                 instanceKlassHandle k, TRAPS);
   static instanceKlassHandle load_shared_class(symbolHandle class_name,
                                                Handle class_loader, TRAPS);
@@ -447,13 +450,13 @@ private:
   static klassOop find_shared_class(symbolHandle class_name);
 
   // Setup link to hierarchy
-  static void add_to_hierarchy(instanceKlassHandle k, TRAPS);
-
+  static void add_to_hierarchy(instanceKlassHandle k, TRAPS);  
+ 
 private:
   // We pass in the hashtable index so we can calculate it outside of
-  // the SystemDictionary_lock.
+  // the SystemDictionary_lock.   
 
-  // Basic find on loaded classes
+  // Basic find on loaded classes 
   static klassOop find_class(int index, unsigned int hash,
                              symbolHandle name, Handle loader);
 
@@ -467,16 +470,16 @@ private:
                                        Handle class_loader);
 
   // Updating entry in dictionary
-  // Add a completely loaded class
+  // Add a completely loaded class 
   static void add_klass(int index, symbolHandle class_name,
                         Handle class_loader, KlassHandle obj);
 
   // Add a placeholder for a class being loaded
-  static void add_placeholder(int index,
-                              symbolHandle class_name,
+  static void add_placeholder(int index, 
+                              symbolHandle class_name, 
                               Handle class_loader);
   static void remove_placeholder(int index,
-                                 symbolHandle class_name,
+                                 symbolHandle class_name, 
                                  Handle class_loader);
 
   // Performs cleanups after resolve_super_or_fail. This typically needs
@@ -485,13 +488,13 @@ private:
   static void resolution_cleanups(symbolHandle class_name,
                                   Handle class_loader,
                                   TRAPS);
-
+  
   // Initialization
   static void initialize_preloaded_classes(TRAPS);
-
+    
   // Class loader constraints
   static void check_constraints(int index, unsigned int hash,
-                                instanceKlassHandle k, Handle loader,
+                                instanceKlassHandle k, Handle loader, 
                                 bool defining, TRAPS);
   static void update_dictionary(int d_index, unsigned int d_hash,
                                 int p_index, unsigned int p_hash,
@@ -505,7 +508,7 @@ private:
   static klassOop _classloader_klass;
   static klassOop _serializable_klass;
   static klassOop _system_klass;
-
+  
   static klassOop _throwable_klass;
   static klassOop _error_klass;
   static klassOop _threaddeath_klass;
@@ -531,7 +534,7 @@ private:
 
   static klassOop _thread_klass;
   static klassOop _threadGroup_klass;
-  static klassOop _properties_klass;
+  static klassOop _properties_klass;      
   static klassOop _reflect_accessible_object_klass;
   static klassOop _reflect_field_klass;
   static klassOop _reflect_method_klass;

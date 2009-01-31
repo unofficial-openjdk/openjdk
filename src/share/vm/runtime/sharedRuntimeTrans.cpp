@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -87,25 +90,25 @@ double scalbn (double x, int n) {
   int  k,hx,lx;
   hx = __HI(x);
   lx = __LO(x);
-  k = (hx&0x7ff00000)>>20;              /* extract exponent */
-  if (k==0) {                           /* 0 or subnormal x */
+  k = (hx&0x7ff00000)>>20;		/* extract exponent */
+  if (k==0) {				/* 0 or subnormal x */
     if ((lx|(hx&0x7fffffff))==0) return x; /* +-0 */
     x *= two54;
     hx = __HI(x);
     k = ((hx&0x7ff00000)>>20) - 54;
-    if (n< -50000) return tiny*x;       /*underflow*/
+    if (n< -50000) return tiny*x; 	/*underflow*/
   }
-  if (k==0x7ff) return x+x;             /* NaN or Inf */
+  if (k==0x7ff) return x+x;		/* NaN or Inf */
   k = k+n;
   if (k >  0x7fe) return hugeX*copysign(hugeX,x); /* overflow  */
-  if (k > 0)                            /* normal result */
+  if (k > 0) 				/* normal result */
     {__HI(x) = (hx&0x800fffff)|(k<<20); return x;}
   if (k <= -54) {
-    if (n > 50000)      /* in case integer overflow in n+k */
-      return hugeX*copysign(hugeX,x);   /*overflow*/
-    else return tiny*copysign(tiny,x);  /*underflow*/
+    if (n > 50000) 	/* in case integer overflow in n+k */
+      return hugeX*copysign(hugeX,x);	/*overflow*/
+    else return tiny*copysign(tiny,x); 	/*underflow*/
   }
-  k += 54;                              /* subnormal result */
+  k += 54;				/* subnormal result */
   __HI(x) = (hx&0x800fffff)|(k<<20);
   return x*twom54;
 }
@@ -178,10 +181,10 @@ static double __ieee754_log(double x) {
   double hfsq,f,s,z,R,w,t1,t2,dk;
   int k,hx,i,j;
   unsigned lx;
-
+ 
   hx = __HI(x);               /* high word of x */
   lx = __LO(x);               /* low  word of x */
-
+ 
   k=0;
   if (hx < 0x00100000) {                   /* x < 2**-1022  */
     if (((hx&0x7fffffff)|lx)==0)
@@ -199,7 +202,7 @@ static double __ieee754_log(double x) {
   f = x-1.0;
   if((0x000fffff&(2+hx))<3) {  /* |f| < 2**-20 */
     if(f==zero) {
-      if (k==0) return zero;
+      if (k==0) return zero; 
       else {dk=(double)k; return dk*ln2_hi+dk*ln2_lo;}
     }
     R = f*f*(0.5-0.33333333333333333*f);
@@ -225,11 +228,11 @@ static double __ieee754_log(double x) {
       return dk*ln2_hi-((s*(f-R)-dk*ln2_lo)-f);
   }
 }
-
+ 
 JRT_LEAF(jdouble, SharedRuntime::dlog(jdouble x))
-  return __ieee754_log(x);
+  return __ieee754_log(x);  
 JRT_END
-
+ 
 /* __ieee754_log10(x)
  * Return the base 10 logarithm of x
  *
@@ -267,15 +270,15 @@ static const double
 ivln10     =  4.34294481903251816668e-01, /* 0x3FDBCB7B, 0x1526E50E */
   log10_2hi  =  3.01029995663611771306e-01, /* 0x3FD34413, 0x509F6000 */
   log10_2lo  =  3.69423907715893078616e-13; /* 0x3D59FEF3, 0x11F12B36 */
-
+  
 static double __ieee754_log10(double x) {
   double y,z;
   int i,k,hx;
   unsigned lx;
-
+   
   hx = __HI(x);       /* high word of x */
   lx = __LO(x);       /* low word of x */
-
+   
   k=0;
   if (hx < 0x00100000) {                  /* x < 2**-1022  */
     if (((hx&0x7fffffff)|lx)==0)
@@ -293,9 +296,9 @@ static double __ieee754_log10(double x) {
   z  = y*log10_2lo + ivln10*__ieee754_log(x);
   return  z+y*log10_2hi;
 }
-
+ 
 JRT_LEAF(jdouble, SharedRuntime::dlog10(jdouble x))
-  return __ieee754_log10(x);
+  return __ieee754_log10(x);  
 JRT_END
 
 
@@ -305,55 +308,55 @@ JRT_END
  * Method
  *   1. Argument reduction:
  *      Reduce x to an r so that |r| <= 0.5*ln2 ~ 0.34658.
- *      Given x, find r and integer k such that
+ *	Given x, find r and integer k such that
  *
  *               x = k*ln2 + r,  |r| <= 0.5*ln2.
  *
  *      Here r will be represented as r = hi-lo for better
- *      accuracy.
+ *	accuracy.
  *
  *   2. Approximation of exp(r) by a special rational function on
- *      the interval [0,0.34658]:
- *      Write
- *          R(r**2) = r*(exp(r)+1)/(exp(r)-1) = 2 + r*r/6 - r**4/360 + ...
+ *	the interval [0,0.34658]:
+ *	Write
+ *	    R(r**2) = r*(exp(r)+1)/(exp(r)-1) = 2 + r*r/6 - r**4/360 + ...
  *      We use a special Reme algorithm on [0,0.34658] to generate
- *      a polynomial of degree 5 to approximate R. The maximum error
- *      of this polynomial approximation is bounded by 2**-59. In
- *      other words,
- *          R(z) ~ 2.0 + P1*z + P2*z**2 + P3*z**3 + P4*z**4 + P5*z**5
- *      (where z=r*r, and the values of P1 to P5 are listed below)
- *      and
- *          |                  5          |     -59
- *          | 2.0+P1*z+...+P5*z   -  R(z) | <= 2
- *          |                             |
- *      The computation of exp(r) thus becomes
+ * 	a polynomial of degree 5 to approximate R. The maximum error
+ *	of this polynomial approximation is bounded by 2**-59. In
+ *	other words,
+ *	    R(z) ~ 2.0 + P1*z + P2*z**2 + P3*z**3 + P4*z**4 + P5*z**5
+ *  	(where z=r*r, and the values of P1 to P5 are listed below)
+ *	and
+ *	    |                  5          |     -59
+ *	    | 2.0+P1*z+...+P5*z   -  R(z) | <= 2
+ *	    |                             |
+ *	The computation of exp(r) thus becomes
  *                             2*r
- *              exp(r) = 1 + -------
- *                            R - r
+ *		exp(r) = 1 + -------
+ *		              R - r
  *                                 r*R1(r)
- *                     = 1 + r + ----------- (for better accuracy)
- *                                2 - R1(r)
- *      where
- *                               2       4             10
- *              R1(r) = r - (P1*r  + P2*r  + ... + P5*r   ).
+ *		       = 1 + r + ----------- (for better accuracy)
+ *		                  2 - R1(r)
+ *	where
+ *			         2       4             10
+ *		R1(r) = r - (P1*r  + P2*r  + ... + P5*r   ).
  *
  *   3. Scale back to obtain exp(x):
- *      From step 1, we have
- *         exp(x) = 2^k * exp(r)
+ *	From step 1, we have
+ *	   exp(x) = 2^k * exp(r)
  *
  * Special cases:
- *      exp(INF) is INF, exp(NaN) is NaN;
- *      exp(-INF) is 0, and
- *      for finite argument, only exp(0)=1 is exact.
+ *	exp(INF) is INF, exp(NaN) is NaN;
+ *	exp(-INF) is 0, and
+ *	for finite argument, only exp(0)=1 is exact.
  *
  * Accuracy:
- *      according to an error analysis, the error is always less than
- *      1 ulp (unit in the last place).
+ *	according to an error analysis, the error is always less than
+ *	1 ulp (unit in the last place).
  *
  * Misc. info.
- *      For IEEE double
- *          if x >  7.09782712893383973096e+02 then exp(x) overflow
- *          if x < -7.45133219101941108420e+02 then exp(x) underflow
+ *	For IEEE double
+ *	    if x >  7.09782712893383973096e+02 then exp(x) overflow
+ *	    if x < -7.45133219101941108420e+02 then exp(x) underflow
  *
  * Constants:
  * The hexadecimal values are the intended ones for the following
@@ -363,66 +366,66 @@ JRT_END
  */
 
 static const double
-one     = 1.0,
-  halF[2]       = {0.5,-0.5,},
+one	= 1.0,
+  halF[2]	= {0.5,-0.5,},
   twom1000= 9.33263618503218878990e-302,     /* 2**-1000=0x01700000,0*/
     o_threshold=  7.09782712893383973096e+02,  /* 0x40862E42, 0xFEFA39EF */
     u_threshold= -7.45133219101941108420e+02,  /* 0xc0874910, 0xD52D3051 */
     ln2HI[2]   ={ 6.93147180369123816490e-01,  /* 0x3fe62e42, 0xfee00000 */
-                  -6.93147180369123816490e-01,},/* 0xbfe62e42, 0xfee00000 */
+		  -6.93147180369123816490e-01,},/* 0xbfe62e42, 0xfee00000 */
     ln2LO[2]   ={ 1.90821492927058770002e-10,  /* 0x3dea39ef, 0x35793c76 */
-                  -1.90821492927058770002e-10,},/* 0xbdea39ef, 0x35793c76 */
+		  -1.90821492927058770002e-10,},/* 0xbdea39ef, 0x35793c76 */
       invln2 =  1.44269504088896338700e+00, /* 0x3ff71547, 0x652b82fe */
-        P1   =  1.66666666666666019037e-01, /* 0x3FC55555, 0x5555553E */
-        P2   = -2.77777777770155933842e-03, /* 0xBF66C16C, 0x16BEBD93 */
-        P3   =  6.61375632143793436117e-05, /* 0x3F11566A, 0xAF25DE2C */
-        P4   = -1.65339022054652515390e-06, /* 0xBEBBBD41, 0xC5D26BF1 */
-        P5   =  4.13813679705723846039e-08; /* 0x3E663769, 0x72BEA4D0 */
+	P1   =  1.66666666666666019037e-01, /* 0x3FC55555, 0x5555553E */
+	P2   = -2.77777777770155933842e-03, /* 0xBF66C16C, 0x16BEBD93 */
+	P3   =  6.61375632143793436117e-05, /* 0x3F11566A, 0xAF25DE2C */
+	P4   = -1.65339022054652515390e-06, /* 0xBEBBBD41, 0xC5D26BF1 */
+	P5   =  4.13813679705723846039e-08; /* 0x3E663769, 0x72BEA4D0 */
 
 static double __ieee754_exp(double x) {
   double y,hi=0,lo=0,c,t;
   int k=0,xsb;
   unsigned hx;
-
-  hx  = __HI(x);        /* high word of x */
-  xsb = (hx>>31)&1;             /* sign bit of x */
-  hx &= 0x7fffffff;             /* high word of |x| */
-
+  
+  hx  = __HI(x);	/* high word of x */
+  xsb = (hx>>31)&1;		/* sign bit of x */
+  hx &= 0x7fffffff;		/* high word of |x| */
+  
   /* filter out non-finite argument */
-  if(hx >= 0x40862E42) {                        /* if |x|>=709.78... */
+  if(hx >= 0x40862E42) {			/* if |x|>=709.78... */
     if(hx>=0x7ff00000) {
-      if(((hx&0xfffff)|__LO(x))!=0)
-        return x+x;             /* NaN */
-      else return (xsb==0)? x:0.0;      /* exp(+-inf)={inf,0} */
+      if(((hx&0xfffff)|__LO(x))!=0) 
+	return x+x; 		/* NaN */
+      else return (xsb==0)? x:0.0;	/* exp(+-inf)={inf,0} */
     }
     if(x > o_threshold) return hugeX*hugeX; /* overflow */
     if(x < u_threshold) return twom1000*twom1000; /* underflow */
   }
-
+  
   /* argument reduction */
-  if(hx > 0x3fd62e42) {         /* if  |x| > 0.5 ln2 */
-    if(hx < 0x3FF0A2B2) {       /* and |x| < 1.5 ln2 */
+  if(hx > 0x3fd62e42) {		/* if  |x| > 0.5 ln2 */
+    if(hx < 0x3FF0A2B2) {	/* and |x| < 1.5 ln2 */
       hi = x-ln2HI[xsb]; lo=ln2LO[xsb]; k = 1-xsb-xsb;
     } else {
       k  = (int)(invln2*x+halF[xsb]);
       t  = k;
-      hi = x - t*ln2HI[0];      /* t*ln2HI is exact here */
+      hi = x - t*ln2HI[0];	/* t*ln2HI is exact here */
       lo = t*ln2LO[0];
     }
     x  = hi - lo;
   }
-  else if(hx < 0x3e300000)  {   /* when |x|<2**-28 */
+  else if(hx < 0x3e300000)  {	/* when |x|<2**-28 */
     if(hugeX+x>one) return one+x;/* trigger inexact */
   }
   else k = 0;
-
+  
   /* x is now in primary range */
   t  = x*x;
   c  = x - t*(P1+t*(P2+t*(P3+t*(P4+t*P5))));
-  if(k==0)      return one-((x*c)/(c-2.0)-x);
-  else          y = one-((lo-(x*c)/(2.0-c))-hi);
+  if(k==0) 	return one-((x*c)/(c-2.0)-x);
+  else 		y = one-((lo-(x*c)/(2.0-c))-hi);
   if(k >= -1021) {
-    __HI(y) += (k<<20); /* add k to y's exponent */
+    __HI(y) += (k<<20);	/* add k to y's exponent */
     return y;
   } else {
     __HI(y) += ((k+1000)<<20);/* add k to y's exponent */
@@ -436,41 +439,41 @@ JRT_END
 
 /* __ieee754_pow(x,y) return x**y
  *
- *                    n
+ *		      n
  * Method:  Let x =  2   * (1+f)
- *      1. Compute and return log2(x) in two pieces:
- *              log2(x) = w1 + w2,
- *         where w1 has 53-24 = 29 bit trailing zeros.
- *      2. Perform y*log2(x) = n+y' by simulating muti-precision
- *         arithmetic, where |y'|<=0.5.
- *      3. Return x**y = 2**n*exp(y'*log2)
+ *	1. Compute and return log2(x) in two pieces:
+ *		log2(x) = w1 + w2,
+ *	   where w1 has 53-24 = 29 bit trailing zeros.
+ *	2. Perform y*log2(x) = n+y' by simulating muti-precision
+ *	   arithmetic, where |y'|<=0.5.
+ *	3. Return x**y = 2**n*exp(y'*log2)
  *
  * Special cases:
- *      1.  (anything) ** 0  is 1
- *      2.  (anything) ** 1  is itself
- *      3.  (anything) ** NAN is NAN
- *      4.  NAN ** (anything except 0) is NAN
- *      5.  +-(|x| > 1) **  +INF is +INF
- *      6.  +-(|x| > 1) **  -INF is +0
- *      7.  +-(|x| < 1) **  +INF is +0
- *      8.  +-(|x| < 1) **  -INF is +INF
- *      9.  +-1         ** +-INF is NAN
- *      10. +0 ** (+anything except 0, NAN)               is +0
- *      11. -0 ** (+anything except 0, NAN, odd integer)  is +0
- *      12. +0 ** (-anything except 0, NAN)               is +INF
- *      13. -0 ** (-anything except 0, NAN, odd integer)  is +INF
- *      14. -0 ** (odd integer) = -( +0 ** (odd integer) )
- *      15. +INF ** (+anything except 0,NAN) is +INF
- *      16. +INF ** (-anything except 0,NAN) is +0
- *      17. -INF ** (anything)  = -0 ** (-anything)
- *      18. (-anything) ** (integer) is (-1)**(integer)*(+anything**integer)
- *      19. (-anything except 0 and inf) ** (non-integer) is NAN
+ *	1.  (anything) ** 0  is 1
+ *	2.  (anything) ** 1  is itself
+ *	3.  (anything) ** NAN is NAN
+ *	4.  NAN ** (anything except 0) is NAN
+ *	5.  +-(|x| > 1) **  +INF is +INF
+ *	6.  +-(|x| > 1) **  -INF is +0
+ *	7.  +-(|x| < 1) **  +INF is +0
+ *	8.  +-(|x| < 1) **  -INF is +INF
+ *	9.  +-1         ** +-INF is NAN
+ *	10. +0 ** (+anything except 0, NAN)               is +0
+ *	11. -0 ** (+anything except 0, NAN, odd integer)  is +0
+ *	12. +0 ** (-anything except 0, NAN)               is +INF
+ *	13. -0 ** (-anything except 0, NAN, odd integer)  is +INF
+ *	14. -0 ** (odd integer) = -( +0 ** (odd integer) )
+ *	15. +INF ** (+anything except 0,NAN) is +INF
+ *	16. +INF ** (-anything except 0,NAN) is +0
+ *	17. -INF ** (anything)  = -0 ** (-anything)
+ *	18. (-anything) ** (integer) is (-1)**(integer)*(+anything**integer)
+ *	19. (-anything except 0 and inf) ** (non-integer) is NAN
  *
  * Accuracy:
- *      pow(x,y) returns x**y nearly rounded. In particular
- *                      pow(integer,integer)
- *      always returns the correct integer provided it is
- *      representable.
+ *	pow(x,y) returns x**y nearly rounded. In particular
+ *			pow(integer,integer)
+ *	always returns the correct integer provided it is
+ *	representable.
  *
  * Constants :
  * The hexadecimal values are the intended ones for the following
@@ -484,25 +487,25 @@ bp[] = {1.0, 1.5,},
   dp_h[] = { 0.0, 5.84962487220764160156e-01,}, /* 0x3FE2B803, 0x40000000 */
     dp_l[] = { 0.0, 1.35003920212974897128e-08,}, /* 0x3E4CFDEB, 0x43CFD006 */
       zeroX    =  0.0,
-        two     =  2.0,
-        two53   =  9007199254740992.0,  /* 0x43400000, 0x00000000 */
-        /* poly coefs for (3/2)*(log(x)-2s-2/3*s**3 */
-        L1X  =  5.99999999999994648725e-01, /* 0x3FE33333, 0x33333303 */
-        L2X  =  4.28571428578550184252e-01, /* 0x3FDB6DB6, 0xDB6FABFF */
-        L3X  =  3.33333329818377432918e-01, /* 0x3FD55555, 0x518F264D */
-        L4X  =  2.72728123808534006489e-01, /* 0x3FD17460, 0xA91D4101 */
-        L5X  =  2.30660745775561754067e-01, /* 0x3FCD864A, 0x93C9DB65 */
-        L6X  =  2.06975017800338417784e-01, /* 0x3FCA7E28, 0x4A454EEF */
-        lg2  =  6.93147180559945286227e-01, /* 0x3FE62E42, 0xFEFA39EF */
-        lg2_h  =  6.93147182464599609375e-01, /* 0x3FE62E43, 0x00000000 */
-        lg2_l  = -1.90465429995776804525e-09, /* 0xBE205C61, 0x0CA86C39 */
-        ovt =  8.0085662595372944372e-0017, /* -(1024-log2(ovfl+.5ulp)) */
-        cp    =  9.61796693925975554329e-01, /* 0x3FEEC709, 0xDC3A03FD =2/(3ln2) */
-        cp_h  =  9.61796700954437255859e-01, /* 0x3FEEC709, 0xE0000000 =(float)cp */
-        cp_l  = -7.02846165095275826516e-09, /* 0xBE3E2FE0, 0x145B01F5 =tail of cp_h*/
-        ivln2    =  1.44269504088896338700e+00, /* 0x3FF71547, 0x652B82FE =1/ln2 */
-        ivln2_h  =  1.44269502162933349609e+00, /* 0x3FF71547, 0x60000000 =24b 1/ln2*/
-        ivln2_l  =  1.92596299112661746887e-08; /* 0x3E54AE0B, 0xF85DDF44 =1/ln2 tail*/
+	two	=  2.0,
+	two53	=  9007199254740992.0,	/* 0x43400000, 0x00000000 */
+	/* poly coefs for (3/2)*(log(x)-2s-2/3*s**3 */
+	L1X  =  5.99999999999994648725e-01, /* 0x3FE33333, 0x33333303 */
+	L2X  =  4.28571428578550184252e-01, /* 0x3FDB6DB6, 0xDB6FABFF */
+	L3X  =  3.33333329818377432918e-01, /* 0x3FD55555, 0x518F264D */
+	L4X  =  2.72728123808534006489e-01, /* 0x3FD17460, 0xA91D4101 */
+	L5X  =  2.30660745775561754067e-01, /* 0x3FCD864A, 0x93C9DB65 */
+	L6X  =  2.06975017800338417784e-01, /* 0x3FCA7E28, 0x4A454EEF */
+	lg2  =  6.93147180559945286227e-01, /* 0x3FE62E42, 0xFEFA39EF */
+	lg2_h  =  6.93147182464599609375e-01, /* 0x3FE62E43, 0x00000000 */
+	lg2_l  = -1.90465429995776804525e-09, /* 0xBE205C61, 0x0CA86C39 */
+	ovt =  8.0085662595372944372e-0017, /* -(1024-log2(ovfl+.5ulp)) */
+	cp    =  9.61796693925975554329e-01, /* 0x3FEEC709, 0xDC3A03FD =2/(3ln2) */
+	cp_h  =  9.61796700954437255859e-01, /* 0x3FEEC709, 0xE0000000 =(float)cp */
+	cp_l  = -7.02846165095275826516e-09, /* 0xBE3E2FE0, 0x145B01F5 =tail of cp_h*/
+	ivln2    =  1.44269504088896338700e+00, /* 0x3FF71547, 0x652B82FE =1/ln2 */
+	ivln2_h  =  1.44269502162933349609e+00, /* 0x3FF71547, 0x60000000 =24b 1/ln2*/
+	ivln2_l  =  1.92596299112661746887e-08; /* 0x3E54AE0B, 0xF85DDF44 =1/ln2 tail*/
 
 double __ieee754_pow(double x, double y) {
   double z,ax,z_h,z_l,p_h,p_l;
@@ -525,42 +528,42 @@ double __ieee754_pow(double x, double y) {
     return x+y;
 
   /* determine if y is an odd int when x < 0
-   * yisint = 0 ... y is not an integer
-   * yisint = 1 ... y is an odd int
-   * yisint = 2 ... y is an even int
+   * yisint = 0	... y is not an integer
+   * yisint = 1	... y is an odd int
+   * yisint = 2	... y is an even int
    */
   yisint  = 0;
   if(hx<0) {
     if(iy>=0x43400000) yisint = 2; /* even integer y */
     else if(iy>=0x3ff00000) {
-      k = (iy>>20)-0x3ff;          /* exponent */
+      k = (iy>>20)-0x3ff;	   /* exponent */
       if(k>20) {
-        j = ly>>(52-k);
-        if((unsigned)(j<<(52-k))==ly) yisint = 2-(j&1);
+	j = ly>>(52-k);
+	if((unsigned)(j<<(52-k))==ly) yisint = 2-(j&1);
       } else if(ly==0) {
-        j = iy>>(20-k);
-        if((j<<(20-k))==iy) yisint = 2-(j&1);
+	j = iy>>(20-k);
+	if((j<<(20-k))==iy) yisint = 2-(j&1);
       }
     }
   }
 
   /* special value of y */
   if(ly==0) {
-    if (iy==0x7ff00000) {       /* y is +-inf */
+    if (iy==0x7ff00000) {	/* y is +-inf */
       if(((ix-0x3ff00000)|lx)==0)
-        return  y - y;  /* inf**+-1 is NaN */
+	return  y - y;	/* inf**+-1 is NaN */
       else if (ix >= 0x3ff00000)/* (|x|>1)**+-inf = inf,0 */
-        return (hy>=0)? y: zeroX;
-      else                      /* (|x|<1)**-,+inf = inf,0 */
-        return (hy<0)?-y: zeroX;
+	return (hy>=0)? y: zeroX;
+      else			/* (|x|<1)**-,+inf = inf,0 */
+	return (hy<0)?-y: zeroX;
     }
-    if(iy==0x3ff00000) {        /* y is  +-1 */
+    if(iy==0x3ff00000) {	/* y is  +-1 */
       if(hy<0) return one/x; else return x;
     }
     if(hy==0x40000000) return x*x; /* y is  2 */
-    if(hy==0x3fe00000) {        /* y is  0.5 */
-      if(hx>=0) /* x >= +0 */
-        return sqrt(x);
+    if(hy==0x3fe00000) {	/* y is  0.5 */
+      if(hx>=0)	/* x >= +0 */
+	return sqrt(x);
     }
   }
 
@@ -568,13 +571,13 @@ double __ieee754_pow(double x, double y) {
   /* special value of x */
   if(lx==0) {
     if(ix==0x7ff00000||ix==0||ix==0x3ff00000){
-      z = ax;                   /*x is +-0,+-inf,+-1*/
-      if(hy<0) z = one/z;       /* z = (1/|x|) */
+      z = ax;			/*x is +-0,+-inf,+-1*/
+      if(hy<0) z = one/z;	/* z = (1/|x|) */
       if(hx<0) {
-        if(((ix-0x3ff00000)|yisint)==0) {
-          z = (z-z)/(z-z); /* (-1)**non-int is NaN */
-        } else if(yisint==1)
-          z = -1.0*z;           /* (x<0)**odd = -(|x|**odd) */
+	if(((ix-0x3ff00000)|yisint)==0) {
+	  z = (z-z)/(z-z); /* (-1)**non-int is NaN */
+	} else if(yisint==1)
+	  z = -1.0*z;		/* (x<0)**odd = -(|x|**odd) */
       }
       return z;
     }
@@ -590,7 +593,7 @@ double __ieee754_pow(double x, double y) {
 
   /* |y| is huge */
   if(iy>0x41e00000) { /* if |y| > 2**31 */
-    if(iy>0x43f00000){  /* if |y| > 2**64, must o/uflow */
+    if(iy>0x43f00000){	/* if |y| > 2**64, must o/uflow */
       if(ix<=0x3fefffff) return (hy<0)? hugeX*hugeX:tiny*tiny;
       if(ix>=0x3ff00000) return (hy>0)? hugeX*hugeX:tiny*tiny;
     }
@@ -599,9 +602,9 @@ double __ieee754_pow(double x, double y) {
     if(ix>0x3ff00000) return (hy>0)? s*hugeX*hugeX:s*tiny*tiny;
     /* now |1-x| is tiny <= 2**-20, suffice to compute
        log(x) by x-x^2/2+x^3/3-x^4/4 */
-    t = ax-one;         /* t has 20 trailing zeros */
+    t = ax-one;		/* t has 20 trailing zeros */
     w = (t*t)*(0.5-t*(0.3333333333333333333333-t*0.25));
-    u = ivln2_h*t;      /* ivln2_h has 21 sig. bits */
+    u = ivln2_h*t;	/* ivln2_h has 21 sig. bits */
     v = t*ivln2_l-w*ivln2;
     t1 = u+v;
     __LO(t1) = 0;
@@ -615,21 +618,21 @@ double __ieee754_pow(double x, double y) {
     n  += ((ix)>>20)-0x3ff;
     j  = ix&0x000fffff;
     /* determine interval */
-    ix = j|0x3ff00000;          /* normalize ix */
-    if(j<=0x3988E) k=0;         /* |x|<sqrt(3/2) */
-    else if(j<0xBB67A) k=1;     /* |x|<sqrt(3)   */
+    ix = j|0x3ff00000;		/* normalize ix */
+    if(j<=0x3988E) k=0;		/* |x|<sqrt(3/2) */
+    else if(j<0xBB67A) k=1;	/* |x|<sqrt(3)   */
     else {k=0;n+=1;ix -= 0x00100000;}
     __HI(ax) = ix;
 
     /* compute ss = s_h+s_l = (x-1)/(x+1) or (x-1.5)/(x+1.5) */
-    u = ax-bp[k];               /* bp[0]=1.0, bp[1]=1.5 */
+    u = ax-bp[k];		/* bp[0]=1.0, bp[1]=1.5 */
     v = one/(ax+bp[k]);
     ss = u*v;
     s_h = ss;
     __LO(s_h) = 0;
     /* t_h=ax+bp[k] High */
     t_h = zeroX;
-    __HI(t_h)=((ix>>1)|0x20000000)+0x00080000+(k<<18);
+    __HI(t_h)=((ix>>1)|0x20000000)+0x00080000+(k<<18); 
     t_l = ax - (t_h-bp[k]);
     s_l = v*((u-s_h*t_h)-s_h*t_l);
     /* compute log(ax) */
@@ -647,7 +650,7 @@ double __ieee754_pow(double x, double y) {
     p_h = u+v;
     __LO(p_h) = 0;
     p_l = v-(p_h-u);
-    z_h = cp_h*p_h;             /* cp_h+cp_l = 2/(3*log2) */
+    z_h = cp_h*p_h;		/* cp_h+cp_l = 2/(3*log2) */
     z_l = cp_l*p_h+p_l*cp+dp_l[k];
     /* log2(ax) = (ss+..)*2/(3*log2) = n + dp_h + z_h + z_l */
     t = (double)n;
@@ -664,17 +667,17 @@ double __ieee754_pow(double x, double y) {
   z = p_l+p_h;
   j = __HI(z);
   i = __LO(z);
-  if (j>=0x40900000) {                          /* z >= 1024 */
-    if(((j-0x40900000)|i)!=0)                   /* if z > 1024 */
-      return s*hugeX*hugeX;                     /* overflow */
+  if (j>=0x40900000) {				/* z >= 1024 */
+    if(((j-0x40900000)|i)!=0)			/* if z > 1024 */
+      return s*hugeX*hugeX;			/* overflow */
     else {
-      if(p_l+ovt>z-p_h) return s*hugeX*hugeX;   /* overflow */
+      if(p_l+ovt>z-p_h) return s*hugeX*hugeX;	/* overflow */
     }
-  } else if((j&0x7fffffff)>=0x4090cc00 ) {      /* z <= -1075 */
-    if(((j-0xc090cc00)|i)!=0)           /* z < -1075 */
-      return s*tiny*tiny;               /* underflow */
+  } else if((j&0x7fffffff)>=0x4090cc00 ) {	/* z <= -1075 */
+    if(((j-0xc090cc00)|i)!=0) 		/* z < -1075 */
+      return s*tiny*tiny;		/* underflow */
     else {
-      if(p_l<=z-p_h) return s*tiny*tiny;        /* underflow */
+      if(p_l<=z-p_h) return s*tiny*tiny;	/* underflow */
     }
   }
   /*
@@ -683,9 +686,9 @@ double __ieee754_pow(double x, double y) {
   i = j&0x7fffffff;
   k = (i>>20)-0x3ff;
   n = 0;
-  if(i>0x3fe00000) {            /* if |z| > 0.5, set n = [z+0.5] */
+  if(i>0x3fe00000) {		/* if |z| > 0.5, set n = [z+0.5] */
     n = j+(0x00100000>>(k+1));
-    k = ((n&0x7fffffff)>>20)-0x3ff;     /* new k for n */
+    k = ((n&0x7fffffff)>>20)-0x3ff;	/* new k for n */
     t = zeroX;
     __HI(t) = (n&~(0x000fffff>>k));
     n = ((n&0x000fffff)|0x00100000)>>(20-k);
@@ -704,7 +707,7 @@ double __ieee754_pow(double x, double y) {
   z  = one-(r-z);
   j  = __HI(z);
   j += (n<<20);
-  if((j>>20)<=0) z = scalbn(z,n);       /* subnormal output */
+  if((j>>20)<=0) z = scalbn(z,n);	/* subnormal output */
   else __HI(z) += (n<<20);
   return s*z;
 }

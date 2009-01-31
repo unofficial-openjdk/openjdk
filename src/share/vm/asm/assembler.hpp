@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This file contains platform-independant assembler declarations.
@@ -37,18 +40,18 @@ class Label;
  * method.  A Label may be referenced by an instruction before it's bound
  * (i.e., 'forward referenced').  'bind' stores the current code offset
  * in the Label object.
- *
+ * 
  * If an instruction references a bound Label, the offset field(s) within
  * the instruction are immediately filled in based on the Label's code
  * offset.  If an instruction references an unbound label, that
  * instruction is put on a list of instructions that must be patched
  * (i.e., 'resolved') when the Label is bound.
- *
+ * 
  * 'bind' will call the platform-specific 'patch_instruction' method to
  * fill in the offset field(s) for each unresolved instruction (if there
  * are any).  'patch_instruction' lives in one of the
  * cpu/<arch>/vm/assembler_<arch>* files.
- *
+ * 
  * Instead of using a linked list of unresolved instructions, a Label has
  * an array of unresolved instruction code offsets.  _patch_index
  * contains the total number of forward references.  If the Label's array
@@ -61,7 +64,7 @@ class Label;
  */
 class Label VALUE_OBJ_CLASS_SPEC {
  private:
-  enum { PatchCacheSize = 4 };
+  enum { PatchCacheSize = 4 }; 
 
   // _loc encodes both the binding state (via its sign)
   // and the binding locator (via its value) of a label.
@@ -115,7 +118,7 @@ class Label VALUE_OBJ_CLASS_SPEC {
   bool is_unused() const   { return _loc == -1 && _patch_index == 0; }
 
   /**
-   * Adds a reference to an unresolved displacement instruction to
+   * Adds a reference to an unresolved displacement instruction to 
    * this unbound label
    *
    * @param cb         the code buffer being patched
@@ -142,7 +145,7 @@ class Label VALUE_OBJ_CLASS_SPEC {
 
 
 // The Abstract Assembler: Pure assembler doing NO optimizations on the
-// instruction level; i.e., what you write is what you get.
+// instruction level; i.e., what you write is what you get. 
 // The Assembler is generating code into a CodeBuffer.
 class AbstractAssembler : public ResourceObj  {
   friend class Label;
@@ -160,7 +163,7 @@ class AbstractAssembler : public ResourceObj  {
   // This routine is called with a label is used for an address.
   // Labels and displacements truck in offsets, but target must return a PC.
   address target(Label& L);            // return _code_section->target(L)
-
+   
   bool is8bit(int x) const             { return -0x80 <= x && x < 0x80; }
   bool isByte(int x) const             { return 0 <= x && x < 0x100; }
   bool isShiftCount(int x) const       { return 0 <= x && x < 32; }
@@ -206,11 +209,11 @@ class AbstractAssembler : public ResourceObj  {
   void flush();
 
   // Accessors
-  CodeBuffer*   code() const;          // _code_section->outer()
-  CodeSection*  code_section() const   { return _code_section; }
+  CodeBuffer*	code() const;          // _code_section->outer()
+  CodeSection*	code_section() const   { return _code_section; }
   int           sect() const;          // return _code_section->index()
   address       pc() const             { return _code_pos; }
-  int           offset() const         { return _code_pos - _code_begin; }
+  int		offset() const         { return _code_pos - _code_begin; }
   int           locator() const;       // CodeBuffer::locator(offset(), sect())
   OopRecorder*  oop_recorder() const   { return _oop_recorder; }
   void      set_oop_recorder(OopRecorder* r) { _oop_recorder = r; }

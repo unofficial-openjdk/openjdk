@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.jdi;
@@ -31,12 +31,12 @@ import sun.jvm.hotspot.oops.InstanceKlass;
 
 import java.util.List;
 
-/**
+/** 
  * There is no SA class that corresponds to this.  Therefore,
  * all the methods in this class which involve the SA mirror class
  * have to be implemented in the subclasses.
  */
-abstract public class TypeComponentImpl extends MirrorImpl
+abstract public class TypeComponentImpl extends MirrorImpl 
     implements TypeComponent {
 
     protected final ReferenceTypeImpl declaringType;

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -158,10 +161,10 @@ class SlowSignatureHandler: public NativeSignatureIterator {
  private:
   address   _from;
   intptr_t* _to;
-  intptr_t* _RegArgSignature;                   // Signature of first Arguments to be passed in Registers
+  intptr_t* _RegArgSignature;			// Signature of first Arguments to be passed in Registers
   uint      _argcount;
 
-  enum {                                        // We need to differenciate float from non floats in reg args
+  enum {					// We need to differenciate float from non floats in reg args
     non_float  = 0,
     float_sig  = 1,
     double_sig = 2,
@@ -175,14 +178,14 @@ class SlowSignatureHandler: public NativeSignatureIterator {
   }
 #endif // ASSERT
 
-  virtual void pass_int() {
-    *_to++ = *(jint *)(_from+Interpreter::local_offset_in_bytes(0));
+  virtual void pass_int() { 
+    *_to++ = *(jint *)(_from+Interpreter::local_offset_in_bytes(0)); 
     debug_only(verify_tag(frame::TagValue));
     _from -= Interpreter::stackElementSize();
     add_signature( non_float );
   }
 
-  virtual void pass_object() {
+  virtual void pass_object() { 
     // pass address of from
     intptr_t *from_addr = (intptr_t*)(_from + Interpreter::local_offset_in_bytes(0));
     *_to++ = (*from_addr == 0) ? NULL : (intptr_t) from_addr;
@@ -192,52 +195,52 @@ class SlowSignatureHandler: public NativeSignatureIterator {
    }
 
 #ifdef _LP64
-  virtual void pass_float()  {
-    *_to++ = *(jint *)(_from+Interpreter::local_offset_in_bytes(0));
+  virtual void pass_float()  { 
+    *_to++ = *(jint *)(_from+Interpreter::local_offset_in_bytes(0)); 
     debug_only(verify_tag(frame::TagValue));
     _from -= Interpreter::stackElementSize();
     add_signature( float_sig );
    }
 
-  virtual void pass_double() {
-    *_to++ = *(intptr_t*)(_from+Interpreter::local_offset_in_bytes(1));
+  virtual void pass_double() { 
+    *_to++ = *(intptr_t*)(_from+Interpreter::local_offset_in_bytes(1)); 
     debug_only(verify_tag(frame::TagValue));
     _from -= 2*Interpreter::stackElementSize();
    add_signature( double_sig );
    }
 
-  virtual void pass_long() {
+  virtual void pass_long() { 
     _to[0] = *(intptr_t*)(_from+Interpreter::local_offset_in_bytes(1));
     debug_only(verify_tag(frame::TagValue));
-    _to += 1;
+    _to += 1; 
     _from -= 2*Interpreter::stackElementSize();
     add_signature( long_sig );
   }
 #else
    // pass_double() is pass_long() and pass_float() only _LP64
-  virtual void pass_long() {
+  virtual void pass_long() { 
     _to[0] = *(intptr_t*)(_from+Interpreter::local_offset_in_bytes(1));
     _to[1] = *(intptr_t*)(_from+Interpreter::local_offset_in_bytes(0));
     debug_only(verify_tag(frame::TagValue));
-    _to += 2;
+    _to += 2; 
     _from -= 2*Interpreter::stackElementSize();
     add_signature( non_float );
   }
 #endif // _LP64
 
-  virtual void add_signature( intptr_t sig_type ) {
-    if ( _argcount < (sizeof (intptr_t))*4 ) {
+  virtual void add_signature( intptr_t sig_type ) { 
+    if ( _argcount < (sizeof (intptr_t))*4 ) { 
       *_RegArgSignature |= (sig_type << (_argcount*2) );
       _argcount++;
     }
   }
-
-
+						   
+  
  public:
   SlowSignatureHandler(methodHandle method, address from, intptr_t* to, intptr_t *RegArgSig) : NativeSignatureIterator(method) {
     _from = from;
     _to   = to;
-    _RegArgSignature = RegArgSig;
+    _RegArgSignature = RegArgSig;	
     *_RegArgSignature = 0;
     _argcount = method->is_static() ? 2 : 1;
   }

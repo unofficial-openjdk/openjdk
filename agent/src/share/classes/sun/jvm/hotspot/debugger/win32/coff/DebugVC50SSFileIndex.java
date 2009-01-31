@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.win32.coff;
@@ -43,7 +43,7 @@ public interface DebugVC50SSFileIndex extends DebugVC50Subsection {
 
   /** Number of file name references per module. */
   public short[] getRefCount();
-
+  
   /** Array of offsets into the Names table. For each module, the
       offset to first referenced file name is at NameRef[ModStart] and
       continues for cRefCnt entries. FIXME: this probably is useless

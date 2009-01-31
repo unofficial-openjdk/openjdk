@@ -30,7 +30,7 @@
    <!ATTLIST specification label CDATA #REQUIRED 
                            majorversion CDATA #REQUIRED 
                            minorversion CDATA #REQUIRED 
-                           microversion CDATA #REQUIRED>
+                           onedotmicroversion CDATA #REQUIRED>
 
    <!ELEMENT title (#PCDATA|jvmti|tm)*>
    <!ATTLIST title subtitle CDATA #REQUIRED>
@@ -249,6 +249,7 @@
 
    <!ELEMENT changehistory (intro*, change*)>
    <!ATTLIST changehistory update CDATA #REQUIRED
+                           version CDATA #REQUIRED
                            id CDATA #REQUIRED>
 
    <!ELEMENT change ANY>
@@ -360,7 +361,7 @@
 <specification label="JVM(TM) Tool Interface"
         majorversion="1"
         minorversion="1"
-        microversion="109">
+        onedotmicroversion="%I%">
   <title subtitle="Version">
     <tm>JVM</tm> Tool Interface
   </title>
@@ -13383,7 +13384,7 @@ typedef void (JNICALL *jvmtiEventVMInit)
   </intro>
 </issuessection>
 
-<changehistory id="ChangeHistory" update="09/05/07">
+<changehistory id="ChangeHistory" version="%W%" update="%E% %U%">
   <intro>
     The <jvmti/> specification is an evolving document with major, minor, 
     and micro version numbers.

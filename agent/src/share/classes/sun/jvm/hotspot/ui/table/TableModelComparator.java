@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.ui.table;
@@ -40,77 +40,77 @@ public abstract class TableModelComparator implements Comparator {
     private int[] columns;
 
     public TableModelComparator(TableModel model) {
-        this.model = model;
+	this.model = model;
 
-        // XXX - Should actually listen for column changes and resize
-        columns = new int[model.getColumnCount()];
-        columns[0] = -1;
+	// XXX - Should actually listen for column changes and resize
+	columns = new int[model.getColumnCount()];
+	columns[0] = -1;
     }
 
     /**
      * Add the column to the sort criteria
      */
     public void addColumn(int column) {
-        // Shift columns in the array
-        int[] tempArray = new int[model.getColumnCount()];
-        System.arraycopy(columns, 1, tempArray, 0, columns.length - 1);
+	// Shift columns in the array
+	int[] tempArray = new int[model.getColumnCount()];
+	System.arraycopy(columns, 1, tempArray, 0, columns.length - 1);
 
-        columns = tempArray;
-        columns[0] = column;
+	columns = tempArray;
+	columns[0] = column;
     }
-
+    
     /**
      * Get the last column that was sorted
      */
     public int getColumn() {
-        return columns[0];
+	return columns[0];
     }
 
     public void setAscending(boolean ascending) {
-        this.ascending = ascending;
+	this.ascending = ascending;
     }
 
     public boolean isAscending() {
-        return ascending;
+	return ascending;
     }
-
+	
     /**
      * Implementation of the comparator method. A comparison is
      * made for rows.
      */
     public int compare(Object row1, Object row2) {
-        for (int i = 0; i < columns.length; i++) {
+	for (int i = 0; i < columns.length; i++) {
+		
+	    Object o1 = getValueForColumn(row1, columns[i]);
+	    Object o2 = getValueForColumn(row2, columns[i]); 
 
-            Object o1 = getValueForColumn(row1, columns[i]);
-            Object o2 = getValueForColumn(row2, columns[i]);
+	    // If both values are null, return 0.
+	    if (o1 == null && o2 == null) {
+		return 0; 
+	    } else if (o1 == null) { // Define null less than everything. 
+		return -1; 
+	    } else if (o2 == null) { 
+		return 1; 
+	    }
 
-            // If both values are null, return 0.
-            if (o1 == null && o2 == null) {
-                return 0;
-            } else if (o1 == null) { // Define null less than everything.
-                return -1;
-            } else if (o2 == null) {
-                return 1;
-            }
+	    int result = 0;
 
-            int result = 0;
+	    if (o1 instanceof Comparable) {
+		Comparable c1 = (Comparable)o1;
+		Comparable c2 = (Comparable)o2;
+		    
+		result = c1.compareTo(c2);
+	    }
 
-            if (o1 instanceof Comparable) {
-                Comparable c1 = (Comparable)o1;
-                Comparable c2 = (Comparable)o2;
+	    // XXX Should have some sort of provision for determininte
+	    // if there is another way of comparing the objects.
+	    // Perhaps we should add the requirement that all table
+	    // values be Compabable.
 
-                result = c1.compareTo(c2);
-            }
-
-            // XXX Should have some sort of provision for determininte
-            // if there is another way of comparing the objects.
-            // Perhaps we should add the requirement that all table
-            // values be Compabable.
-
-            if (result != 0) {
-                return ascending ? result : -result;
-            }
-        }
+	    if (result != 0) {
+		return ascending ? result : -result;
+	    }
+	}
         return 0;
     }
 

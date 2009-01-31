@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.jdi;
@@ -38,7 +38,7 @@ import java.lang.ref.SoftReference;
 import java.util.Collections;
 
 public class ConcreteMethodImpl extends MethodImpl {
-
+  
     /*
      * A subset of the line number info that is softly cached
      */
@@ -74,7 +74,7 @@ public class ConcreteMethodImpl extends MethodImpl {
     private int lastIndex = -1;
     private Location location;
     private SoftReference bytecodesRef = null;
-
+    
     ConcreteMethodImpl(VirtualMachine vm, ReferenceTypeImpl declaringType,
                sun.jvm.hotspot.oops.Method saMethod ) {
         super(vm, declaringType, saMethod);
@@ -122,7 +122,7 @@ public class ConcreteMethodImpl extends MethodImpl {
             if ((lineNumber != -1) &&
                           (!lineStratum.equals(lastLineStratum))) {
                 lastLineStratum = lineStratum;
-                // Remember the largest/smallest line number
+		// Remember the largest/smallest line number
                 if (lineNumber > highestLine) {
                     highestLine = lineNumber;
                 }
@@ -156,7 +156,7 @@ public class ConcreteMethodImpl extends MethodImpl {
         softOtherLocationXRefsRef = new SoftReference(info);
         return info;
     }
-
+    
     private SoftLocationXRefs getBaseLocations() {
         SoftLocationXRefs info = (softBaseLocationXRefsRef == null) ? null :
                                      (SoftLocationXRefs)softBaseLocationXRefsRef.get();
@@ -164,24 +164,24 @@ public class ConcreteMethodImpl extends MethodImpl {
             return info;
         }
 
-        byte[] codeBuf = bytecodes();
+	byte[] codeBuf = bytecodes();
         firstIndex = 0;
-        lastIndex = codeBuf.length - 1;
+	lastIndex = codeBuf.length - 1;
         // This is odd; what is the Location of a Method?
         // A StackFrame can have a location, but a Method?
         // I guess it must be the Location for bci 0.
         location = new LocationImpl(virtualMachine(), this, 0);
 
-        boolean hasLineInfo = saMethod.hasLineNumberTable();
-        LineNumberTableElement[] lntab = null;
-        int count;
-
-        if (hasLineInfo) {
-            lntab = saMethod.getLineNumberTable();
-            count = lntab.length;
-        } else {
-            count = 0;
-        }
+	boolean hasLineInfo = saMethod.hasLineNumberTable();
+	LineNumberTableElement[] lntab = null;
+	int count;
+ 
+	if (hasLineInfo) {
+	    lntab = saMethod.getLineNumberTable();
+	    count = lntab.length;
+	} else {
+	    count = 0;
+	}
 
         List lineLocations = new ArrayList(count);
         Map lineMapper = new HashMap();
@@ -191,7 +191,7 @@ public class ConcreteMethodImpl extends MethodImpl {
             long bci = lntab[i].getStartBCI();
             int lineNumber = lntab[i].getLineNumber();
 
-            /*
+	    /*
              * Some compilers will point multiple consecutive
              * lines at the same location. We need to choose
              * one of them so that we can consistently map back
@@ -265,7 +265,7 @@ public class ConcreteMethodImpl extends MethodImpl {
           sourceNameFilter(lineLocations, stratum, sourceName));
     }
 
-    public List locationsOfLine(SDE.Stratum stratum, String sourceName,
+    public List locationsOfLine(SDE.Stratum stratum, String sourceName, 
                          int lineNumber) throws AbsentInformationException {
         SoftLocationXRefs info = getLocations(stratum);
 
@@ -330,7 +330,7 @@ public class ConcreteMethodImpl extends MethodImpl {
         return bestMatch.getLineInfo(stratum);
     }
 
-    public Location locationOfCodeIndex(long codeIndex) {
+    public Location locationOfCodeIndex(long codeIndex) { 
         if (firstIndex == -1) {
             getBaseLocations();
         }
@@ -351,7 +351,7 @@ public class ConcreteMethodImpl extends MethodImpl {
 
     public List variablesByName(String name) throws AbsentInformationException {
         List variables = getVariables();
-
+        
         List retList = new ArrayList(2);
         Iterator iter = variables.iterator();
         while(iter.hasNext()) {
@@ -380,12 +380,12 @@ public class ConcreteMethodImpl extends MethodImpl {
     }
 
     public byte[] bytecodes() {
-        byte[] bytecodes = (bytecodesRef == null) ? null :
+	byte[] bytecodes = (bytecodesRef == null) ? null :
                                      (byte[])bytecodesRef.get();
         if (bytecodes == null) {
-            bytecodes = saMethod.getByteCode();
-            bytecodesRef = new SoftReference(bytecodes);
-        }
+	    bytecodes = saMethod.getByteCode();
+	    bytecodesRef = new SoftReference(bytecodes);
+	}
         /*
          * Arrays are always modifiable, so it is a little unsafe
          * to return the cached bytecodes directly; instead, we
@@ -396,7 +396,7 @@ public class ConcreteMethodImpl extends MethodImpl {
 
     public Location location() {
         if (location == null) {
-            getBaseLocations();
+	    getBaseLocations();
         }
         return location;
     }
@@ -445,17 +445,17 @@ public class ConcreteMethodImpl extends MethodImpl {
                 String signature =
                     saMethod.getConstants().getSymbolAt(locals[ii].getDescriptorCPIndex()).asString();
 
-                int genericSigIndex = locals[ii].getSignatureCPIndex();
-                String genericSignature = null;
-                if (genericSigIndex != 0) {
-                    genericSignature = saMethod.getConstants().getSymbolAt(genericSigIndex).asString();
-                }
+		int genericSigIndex = locals[ii].getSignatureCPIndex();
+		String genericSignature = null;
+		if (genericSigIndex != 0) {
+		    genericSignature = saMethod.getConstants().getSymbolAt(genericSigIndex).asString();
+		}
 
                 LocalVariable variable =
                     new LocalVariableImpl(virtualMachine(), this,
                                           slot, scopeStart, scopeEnd,
                                           name, signature, genericSignature);
-                // Add to the variable list
+		// Add to the variable list
                 variables.add(variable);
             }
         }

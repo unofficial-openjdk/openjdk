@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -118,10 +121,10 @@ HeapWord* CollectedHeap::allocate_from_tlab_slow(Thread* thread, size_t size) {
   if (obj == NULL) {
     return NULL;
   }
-  if (ZeroTLAB) {
+  if (ZeroTLAB) {		
     // ..and clear it.
     Copy::zero_to_words(obj, new_tlab_size);
-  } else {
+  } else {			
     // ...and clear just the allocated object.
     Copy::zero_to_words(obj, size);
   }
@@ -156,7 +159,7 @@ void CollectedHeap::fill_all_tlabs(bool retire) {
   // See note in ensure_parsability() below.
   assert(SafepointSynchronize::is_at_safepoint() ||
          !is_init_completed(),
-         "should only fill tlabs at safepoint");
+	 "should only fill tlabs at safepoint");
   // The main thread starts allocating via a TLAB even before it
   // has added itself to the threads list at vm boot-up.
   assert(Threads::first() != NULL,
@@ -177,7 +180,7 @@ void CollectedHeap::ensure_parsability(bool retire_tlabs) {
   // started allocating but are now a full-fledged JavaThread
   // (and have thus made our TLAB's) available for filling.
   assert(SafepointSynchronize::is_at_safepoint() ||
-         !is_init_completed(),
+         !is_init_completed(), 
          "Should only be called at a safepoint or at start-up"
          " otherwise concurrent mutator activity may make heap "
          " unparsable again");
@@ -190,7 +193,7 @@ void CollectedHeap::accumulate_statistics_all_tlabs() {
   if (UseTLAB) {
     assert(SafepointSynchronize::is_at_safepoint() ||
          !is_init_completed(),
-         "should only accumulate statistics on tlabs at safepoint");
+	 "should only accumulate statistics on tlabs at safepoint");
 
     ThreadLocalAllocBuffer::accumulate_statistics_before_gc();
   }
@@ -200,7 +203,7 @@ void CollectedHeap::resize_all_tlabs() {
   if (UseTLAB) {
     assert(SafepointSynchronize::is_at_safepoint() ||
          !is_init_completed(),
-         "should only resize tlabs at safepoint");
+	 "should only resize tlabs at safepoint");
 
     ThreadLocalAllocBuffer::resize_all_tlabs();
   }

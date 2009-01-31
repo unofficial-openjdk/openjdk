@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -61,7 +64,7 @@ void PSMarkSweep::invoke(bool maximum_heap_compaction) {
   // policy object if GCs are, on the whole, taking too long. If so,
   // bail out without attempting a collection.  The exceptions are
   // for explicitly requested GC's.
-  if (!policy->gc_time_limit_exceeded() ||
+  if (!policy->gc_time_limit_exceeded() || 
       GCCause::is_user_requested_gc(gc_cause) ||
       GCCause::is_serviceability_requested_gc(gc_cause)) {
     IsGCActiveMark mark;
@@ -77,7 +80,7 @@ void PSMarkSweep::invoke(bool maximum_heap_compaction) {
 }
 
 // This method contains no policy. You should probably
-// be calling invoke() instead.
+// be calling invoke() instead. 
 void PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at a safepoint");
   assert(ref_processor() != NULL, "Sanity");
@@ -118,7 +121,7 @@ void PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
   }
 
   // Verify object start arrays
-  if (VerifyObjectStartArray &&
+  if (VerifyObjectStartArray && 
       VerifyBeforeGC) {
     old_gen->verify_object_start_array();
     perm_gen->verify_object_start_array();
@@ -145,7 +148,7 @@ void PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
     TraceMemoryManagerStats tms(true /* Full GC */);
 
     if (TraceGen1Time) accumulated_time()->start();
-
+  
     // Let the size policy know we're starting
     size_policy->major_collection_begin();
 
@@ -154,7 +157,7 @@ void PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
     CodeCache::gc_prologue();
     Threads::gc_prologue();
     BiasedLocking::preserve_marks();
-
+    
     // Capture heap size before collection for printing.
     size_t prev_used = heap->used();
 
@@ -164,30 +167,30 @@ void PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
     // For PrintGCDetails
     size_t old_gen_prev_used = old_gen->used_in_bytes();
     size_t young_gen_prev_used = young_gen->used_in_bytes();
-
+    
     allocate_stacks();
-
+    
     NOT_PRODUCT(ref_processor()->verify_no_references_recorded());
     COMPILER2_PRESENT(DerivedPointerTable::clear());
-
+  
     ref_processor()->enable_discovery();
 
     mark_sweep_phase1(clear_all_softrefs);
 
     mark_sweep_phase2();
-
+    
     // Don't add any more derived pointers during phase3
     COMPILER2_PRESENT(assert(DerivedPointerTable::is_active(), "Sanity"));
     COMPILER2_PRESENT(DerivedPointerTable::set_active(false));
-
+    
     mark_sweep_phase3();
-
+    
     mark_sweep_phase4();
-
+    
     restore_marks();
-
+    
     deallocate_stacks();
-
+    
     eden_empty = young_gen->eden_space()->is_empty();
     if (!eden_empty) {
       eden_empty = absorb_live_data_from_eden(size_policy, young_gen, old_gen);
@@ -197,30 +200,30 @@ void PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
     // input to soft ref clearing policy at the next gc.
     Universe::update_heap_info_at_gc();
 
-    survivors_empty = young_gen->from_space()->is_empty() &&
+    survivors_empty = young_gen->from_space()->is_empty() && 
       young_gen->to_space()->is_empty();
     young_gen_empty = eden_empty && survivors_empty;
-
+    
     BarrierSet* bs = heap->barrier_set();
     if (bs->is_a(BarrierSet::ModRef)) {
       ModRefBarrierSet* modBS = (ModRefBarrierSet*)bs;
       MemRegion old_mr = heap->old_gen()->reserved();
       MemRegion perm_mr = heap->perm_gen()->reserved();
       assert(perm_mr.end() <= old_mr.start(), "Generations out of order");
-
+      
       if (young_gen_empty) {
         modBS->clear(MemRegion(perm_mr.start(), old_mr.end()));
       } else {
         modBS->invalidate(MemRegion(perm_mr.start(), old_mr.end()));
       }
     }
-
+    
     BiasedLocking::restore_marks();
     Threads::gc_epilogue();
     CodeCache::gc_epilogue();
-
+    
     COMPILER2_PRESENT(DerivedPointerTable::update_pointers());
-
+  
     ref_processor()->enqueue_discovered_references(NULL);
 
     // Update time of last GC
@@ -236,12 +239,12 @@ void PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
         gclog_or_tty->stamp();
         gclog_or_tty->print_cr(" collection: %d ",
                        heap->total_collections());
-        if (Verbose) {
-          gclog_or_tty->print("old_gen_capacity: %d young_gen_capacity: %d"
-            " perm_gen_capacity: %d ",
-            old_gen->capacity_in_bytes(), young_gen->capacity_in_bytes(),
-            perm_gen->capacity_in_bytes());
-        }
+	if (Verbose) {
+	  gclog_or_tty->print("old_gen_capacity: %d young_gen_capacity: %d"
+	    " perm_gen_capacity: %d ",
+	    old_gen->capacity_in_bytes(), young_gen->capacity_in_bytes(), 
+	    perm_gen->capacity_in_bytes());
+	}
       }
 
       // Don't check if the size_policy is ready here.  Let
@@ -250,22 +253,22 @@ void PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
           ((gc_cause != GCCause::_java_lang_system_gc) ||
             UseAdaptiveSizePolicyWithSystemGC)) {
         // Calculate optimal free space amounts
-        assert(young_gen->max_size() >
-          young_gen->from_space()->capacity_in_bytes() +
-          young_gen->to_space()->capacity_in_bytes(),
-          "Sizes of space in young gen are out-of-bounds");
-        size_t max_eden_size = young_gen->max_size() -
-          young_gen->from_space()->capacity_in_bytes() -
-          young_gen->to_space()->capacity_in_bytes();
+	assert(young_gen->max_size() > 
+	  young_gen->from_space()->capacity_in_bytes() + 
+	  young_gen->to_space()->capacity_in_bytes(), 
+	  "Sizes of space in young gen are out-of-bounds");
+	size_t max_eden_size = young_gen->max_size() - 
+	  young_gen->from_space()->capacity_in_bytes() - 
+	  young_gen->to_space()->capacity_in_bytes();
         size_policy->compute_generation_free_space(young_gen->used_in_bytes(),
-                                 young_gen->eden_space()->used_in_bytes(),
+				 young_gen->eden_space()->used_in_bytes(),
                                  old_gen->used_in_bytes(),
                                  perm_gen->used_in_bytes(),
-                                 young_gen->eden_space()->capacity_in_bytes(),
+				 young_gen->eden_space()->capacity_in_bytes(),
                                  old_gen->max_gen_size(),
                                  max_eden_size,
                                  true /* full gc*/,
-                                 gc_cause);
+				 gc_cause);
 
         heap->resize_old_gen(size_policy->calculated_old_free_size_in_bytes());
 
@@ -294,7 +297,7 @@ void PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
 
     // We collected the perm gen, so we'll resize it here.
     perm_gen->compute_new_size(perm_gen_prev_used);
-
+    
     if (TraceGen1Time) accumulated_time()->stop();
 
     if (PrintGC) {
@@ -320,12 +323,12 @@ void PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
     if (PrintGCDetails) {
       if (size_policy->print_gc_time_limit_would_be_exceeded()) {
         if (size_policy->gc_time_limit_exceeded()) {
-          gclog_or_tty->print_cr("      GC time is exceeding GCTimeLimit "
-            "of %d%%", GCTimeLimit);
+          gclog_or_tty->print_cr("	GC time is exceeding GCTimeLimit "
+	    "of %d%%", GCTimeLimit);
         } else {
-          gclog_or_tty->print_cr("      GC time would exceed GCTimeLimit "
-            "of %d%%", GCTimeLimit);
-        }
+          gclog_or_tty->print_cr("	GC time would exceed GCTimeLimit "
+	    "of %d%%", GCTimeLimit);
+	}
       }
       size_policy->set_print_gc_time_limit_would_be_exceeded(false);
     }
@@ -338,7 +341,7 @@ void PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
   }
 
   // Re-verify object start arrays
-  if (VerifyObjectStartArray &&
+  if (VerifyObjectStartArray && 
       VerifyAfterGC) {
     old_gen->verify_object_start_array();
     perm_gen->verify_object_start_array();
@@ -352,12 +355,12 @@ void PSMarkSweep::invoke_no_policy(bool clear_all_softrefs) {
 }
 
 bool PSMarkSweep::absorb_live_data_from_eden(PSAdaptiveSizePolicy* size_policy,
-                                             PSYoungGen* young_gen,
-                                             PSOldGen* old_gen) {
+					     PSYoungGen* young_gen,
+					     PSOldGen* old_gen) {
   MutableSpace* const eden_space = young_gen->eden_space();
   assert(!eden_space->is_empty(), "eden must be non-empty");
   assert(young_gen->virtual_space()->alignment() ==
-         old_gen->virtual_space()->alignment(), "alignments do not match");
+	 old_gen->virtual_space()->alignment(), "alignments do not match");
 
   if (!(UseAdaptiveSizePolicy && UseAdaptiveGCBoundary)) {
     return false;
@@ -391,14 +394,14 @@ bool PSMarkSweep::absorb_live_data_from_eden(PSAdaptiveSizePolicy* size_policy,
 
   if (TraceAdaptiveGCBoundary && Verbose) {
     gclog_or_tty->print(" absorbing " SIZE_FORMAT "K:  "
-                        "eden " SIZE_FORMAT "K->" SIZE_FORMAT "K "
-                        "from " SIZE_FORMAT "K, to " SIZE_FORMAT "K "
-                        "young_gen " SIZE_FORMAT "K->" SIZE_FORMAT "K ",
-                        absorb_size / K,
-                        eden_capacity / K, (eden_capacity - absorb_size) / K,
-                        young_gen->from_space()->used_in_bytes() / K,
-                        young_gen->to_space()->used_in_bytes() / K,
-                        young_gen->capacity_in_bytes() / K, new_young_size / K);
+			"eden " SIZE_FORMAT "K->" SIZE_FORMAT "K "
+			"from " SIZE_FORMAT "K, to " SIZE_FORMAT "K "
+			"young_gen " SIZE_FORMAT "K->" SIZE_FORMAT "K ",
+			absorb_size / K,
+			eden_capacity / K, (eden_capacity - absorb_size) / K,
+			young_gen->from_space()->used_in_bytes() / K,
+			young_gen->to_space()->used_in_bytes() / K,
+			young_gen->capacity_in_bytes() / K, new_young_size / K);
   }
 
   // Fill the unused part of the old gen.
@@ -420,7 +423,7 @@ bool PSMarkSweep::absorb_live_data_from_eden(PSAdaptiveSizePolicy* size_policy,
   // from end to virtual_space->high() in debug builds).
   HeapWord* const new_top = eden_space->top();
   old_gen->virtual_space()->expand_into(young_gen->virtual_space(),
-                                        absorb_size);
+					absorb_size);
   young_gen->reset_after_change();
   old_space->set_top(new_top);
   old_space->set_end(new_top);
@@ -435,7 +438,7 @@ bool PSMarkSweep::absorb_live_data_from_eden(PSAdaptiveSizePolicy* size_policy,
 
   // Could update the promoted average here, but it is not typically updated at
   // full GCs and the value to use is unclear.  Something like
-  //
+  // 
   // cur_promoted_avg + absorb_size / number_of_scavenges_since_last_full_gc.
 
   size_policy->set_bytes_absorbed_from_eden(absorb_size);
@@ -505,7 +508,7 @@ void PSMarkSweep::mark_sweep_phase1(bool clear_all_softrefs) {
 
   // Process reference objects found during marking
 
-  // Skipping the reference processing for VerifyParallelOldWithMarkSweep
+  // Skipping the reference processing for VerifyParallelOldWithMarkSweep 
   // affects the marking (makes it different).
   {
     ReferencePolicy *soft_ref_policy;
@@ -556,7 +559,7 @@ void PSMarkSweep::mark_sweep_phase2() {
   // array. If perm_gen is not traversed last a klassOop may get
   // overwritten. This is fine since it is dead, but if the class has dead
   // instances we have to skip them, and in order to find their size we
-  // need the klassOop!
+  // need the klassOop! 
   //
   // It is not required that we traverse spaces in the same order in
   // phase2, phase3 and phase4, but the ValidateMarkSweep live oops
@@ -655,8 +658,8 @@ void PSMarkSweep::mark_sweep_phase4() {
   young_gen->compact();
 }
 
-jlong PSMarkSweep::millis_since_last_gc() {
-  jlong ret_val = os::javaTimeMillis() - _time_of_last_gc;
+jlong PSMarkSweep::millis_since_last_gc() { 
+  jlong ret_val = os::javaTimeMillis() - _time_of_last_gc; 
   // XXX See note in genCollectedHeap::millis_since_last_gc().
   if (ret_val < 0) {
     NOT_PRODUCT(warning("time warp: %d", ret_val);)
@@ -665,6 +668,6 @@ jlong PSMarkSweep::millis_since_last_gc() {
   return ret_val;
 }
 
-void PSMarkSweep::reset_millis_since_last_gc() {
-  _time_of_last_gc = os::javaTimeMillis();
+void PSMarkSweep::reset_millis_since_last_gc() { 
+  _time_of_last_gc = os::javaTimeMillis(); 
 }

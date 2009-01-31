@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.jdi;
@@ -42,7 +42,7 @@ abstract class ConnectorImpl implements Connector {
 
     /**  This is not public in VirtualMachineManagerImpl
     ThreadGroup mainGroupForJDI() {
-        return ((VirtualMachineManagerImpl)manager).mainGroupForJDI();
+	return ((VirtualMachineManagerImpl)manager).mainGroupForJDI();
     }
     ***/
 
@@ -52,7 +52,7 @@ abstract class ConnectorImpl implements Connector {
     // debug mode for SA/JDI connectors
     static final protected boolean DEBUG;
     static {
-        myLoader = ConnectorImpl.class.getClassLoader();
+	myLoader = ConnectorImpl.class.getClassLoader();
         freeVMClasses = new ArrayList(0);
         DEBUG = System.getProperty("sun.jvm.hotspot.jdi.ConnectorImpl.DEBUG") != null;
     }
@@ -74,15 +74,15 @@ abstract class ConnectorImpl implements Connector {
                   if (DEBUG) {
                       System.out.println("re-using loaded VirtualMachineImpl");
                   }
-                  return (Class) o;
+                  return (Class) o; 
               }
         }
         return null;
     }
 
-    private static Class getVMImplClassFrom(ClassLoader cl)
+    private static Class getVMImplClassFrom(ClassLoader cl) 
                                throws ClassNotFoundException {
-        return Class.forName("sun.jvm.hotspot.jdi.VirtualMachineImpl", true, cl);
+	return Class.forName("sun.jvm.hotspot.jdi.VirtualMachineImpl", true, cl);
     }
 
     /* SA has not been designed to support multiple debuggee VMs
@@ -93,7 +93,7 @@ abstract class ConnectorImpl implements Connector {
      * thereby resulting in larger footprint), we re-use 'dispose'd
      * VirtualMachineImpl classes.
      */
-    protected static Class loadVirtualMachineImplClass()
+    protected static Class loadVirtualMachineImplClass() 
                                throws ClassNotFoundException {
         Class vmImplClass = getFreeVMImplClass();
         if (vmImplClass == null) {
@@ -107,47 +107,47 @@ abstract class ConnectorImpl implements Connector {
      * This property should have the value of JDK HOME directory for
      * the given <vm version>.
      */
-    private static String getSAClassPathForVM(String vmVersion) {
-        final String prefix = "sun.jvm.hotspot.jdi.";
-        // look for exact match of VM version
-        String jvmHome = System.getProperty(prefix + vmVersion);
-        if (DEBUG) {
-            System.out.println("looking for System property " + prefix + vmVersion);
-        }
+    private static String getSAClassPathForVM(String vmVersion) { 	
+	final String prefix = "sun.jvm.hotspot.jdi.";
+	// look for exact match of VM version
+	String jvmHome = System.getProperty(prefix + vmVersion);
+	if (DEBUG) {
+	    System.out.println("looking for System property " + prefix + vmVersion);
+	}
 
-        if (jvmHome == null) {
-            // omit chars after first '-' in VM version and try
-            // for example, in '1.5.0-b55' we take '1.5.0'
-            int index = vmVersion.indexOf('-');
-            if (index != -1) {
-                vmVersion = vmVersion.substring(0, index);
-                if (DEBUG) {
-                    System.out.println("looking for System property " + prefix + vmVersion);
-                }
-                jvmHome = System.getProperty(prefix + vmVersion);
-            }
+	if (jvmHome == null) {
+	    // omit chars after first '-' in VM version and try
+	    // for example, in '1.5.0-b55' we take '1.5.0'
+	    int index = vmVersion.indexOf('-');
+	    if (index != -1) { 
+		vmVersion = vmVersion.substring(0, index);
+		if (DEBUG) {
+		    System.out.println("looking for System property " + prefix + vmVersion);
+		}
+		jvmHome = System.getProperty(prefix + vmVersion);
+	    }
 
-            if (jvmHome == null) {
-                // System property is not set
-                if (DEBUG) {
-                    System.out.println("can't locate JDK home for " + vmVersion);
-                }
-                return null;
-            }
-        }
+	    if (jvmHome == null) { 
+		// System property is not set
+		if (DEBUG) {
+		    System.out.println("can't locate JDK home for " + vmVersion);
+		}
+		return null;
+	    }
+	}
 
-        if (DEBUG) {
-            System.out.println("JDK home for " + vmVersion + " is " + jvmHome);
-        }
+	if (DEBUG) {
+	    System.out.println("JDK home for " + vmVersion + " is " + jvmHome);
+	}
 
-        // sa-jdi is in $JDK_HOME/lib directory
-        StringBuffer buf = new StringBuffer();
-        buf.append(jvmHome);
-        buf.append(File.separatorChar);
-        buf.append("lib");
-        buf.append(File.separatorChar);
-        buf.append("sa-jdi.jar");
-        return buf.toString();
+	// sa-jdi is in $JDK_HOME/lib directory
+	StringBuffer buf = new StringBuffer();
+	buf.append(jvmHome);
+	buf.append(File.separatorChar);
+	buf.append("lib");
+	buf.append(File.separatorChar);
+	buf.append("sa-jdi.jar");
+	return buf.toString();
     }
 
     /* This method loads VirtualMachineImpl class by a ClassLoader
@@ -155,18 +155,18 @@ abstract class ConnectorImpl implements Connector {
      * used for cross VM version debugging. Refer to comments in
      * SAJDIClassLoader as well.
      */
-    protected static Class loadVirtualMachineImplClass(String vmVersion)
-            throws ClassNotFoundException {
+    protected static Class loadVirtualMachineImplClass(String vmVersion) 
+	    throws ClassNotFoundException {
         if (DEBUG) {
             System.out.println("attemping to load sa-jdi.jar for version " + vmVersion);
         }
         String classPath = getSAClassPathForVM(vmVersion);
-        if (classPath != null) {
-            ClassLoader cl = new SAJDIClassLoader(myLoader, classPath);
-            return getVMImplClassFrom(cl);
-        } else {
-            return null;
-        }
+	if (classPath != null) {
+	    ClassLoader cl = new SAJDIClassLoader(myLoader, classPath);
+	    return getVMImplClassFrom(cl);
+	} else {
+	    return null;
+	}
     }
 
     /* Is the given throwable an instanceof VMVersionMismatchException?
@@ -174,46 +174,46 @@ abstract class ConnectorImpl implements Connector {
      * class might have been loaded by a different class loader.
      */
     private static boolean isVMVersionMismatch(Throwable throwable) {
-        String className = throwable.getClass().getName();
-        return className.equals("sun.jvm.hotspot.runtime.VMVersionMismatchException");
+	String className = throwable.getClass().getName();
+	return className.equals("sun.jvm.hotspot.runtime.VMVersionMismatchException");
     }
 
     /* gets target VM version from the given VMVersionMismatchException.
      * Note that we need to reflectively call the method because of we may
      * have got this from different classloader's namespace */
-    private static String getVMVersion(Throwable throwable)
-        throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        // assert isVMVersionMismatch(throwable), "not a VMVersionMismatch"
-        Class expClass = throwable.getClass();
-        Method targetVersionMethod = expClass.getMethod("getTargetVersion", new Class[0]);
-        return (String) targetVersionMethod.invoke(throwable, null);
+    private static String getVMVersion(Throwable throwable) 
+	throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+	// assert isVMVersionMismatch(throwable), "not a VMVersionMismatch"
+	Class expClass = throwable.getClass();
+	Method targetVersionMethod = expClass.getMethod("getTargetVersion", new Class[0]);
+	return (String) targetVersionMethod.invoke(throwable, null);
     }
 
-    /** If the causal chain has a sun.jvm.hotspot.runtime.VMVersionMismatchException,
-        attempt to load VirtualMachineImpl class for target VM version. */
+    /** If the causal chain has a sun.jvm.hotspot.runtime.VMVersionMismatchException, 
+	attempt to load VirtualMachineImpl class for target VM version. */
     protected static Class handleVMVersionMismatch(InvocationTargetException ite) {
         Throwable cause = ite.getCause();
         if (DEBUG) {
             System.out.println("checking for version mismatch...");
         }
         while (cause != null) {
-            try {
-                if (isVMVersionMismatch(cause)) {
+	    try {
+	        if (isVMVersionMismatch(cause)) {
                     if (DEBUG) {
                         System.out.println("Triggering cross VM version support...");
                     }
-                    return loadVirtualMachineImplClass(getVMVersion(cause));
+	    	    return loadVirtualMachineImplClass(getVMVersion(cause));
                 }
-            } catch (Exception exp) {
+	    } catch (Exception exp) {
                 if (DEBUG) {
                     System.out.println("failed to load VirtualMachineImpl class");
                     exp.printStackTrace();
                 }
-                return null;
-            }
+	        return null;
+	    }
             cause = cause.getCause();
         }
-        return null;
+	return null;
     }
 
     protected void checkNativeLink(SecurityManager sm, String os) {
@@ -267,46 +267,46 @@ abstract class ConnectorImpl implements Connector {
         return defaults;
     }
 
-    void addStringArgument(String name, String label, String description,
+    void addStringArgument(String name, String label, String description, 
                            String defaultValue, boolean mustSpecify) {
-        defaultArguments.put(name,
-                             new StringArgumentImpl(name, label,
-                                                    description,
-                                                    defaultValue,
+        defaultArguments.put(name, 
+                             new StringArgumentImpl(name, label, 
+                                                    description, 
+                                                    defaultValue, 
                                                     mustSpecify));
     }
 
-    void addBooleanArgument(String name, String label, String description,
+    void addBooleanArgument(String name, String label, String description, 
                             boolean defaultValue, boolean mustSpecify) {
-        defaultArguments.put(name,
-                             new BooleanArgumentImpl(name, label,
-                                                     description,
-                                                     defaultValue,
+        defaultArguments.put(name, 
+                             new BooleanArgumentImpl(name, label, 
+                                                     description, 
+                                                     defaultValue, 
                                                      mustSpecify));
     }
 
-    void addIntegerArgument(String name, String label, String description,
+    void addIntegerArgument(String name, String label, String description, 
                             String defaultValue, boolean mustSpecify,
                             int min, int max) {
-        defaultArguments.put(name,
-                             new IntegerArgumentImpl(name, label,
-                                                     description,
-                                                     defaultValue,
-                                                     mustSpecify,
+        defaultArguments.put(name, 
+                             new IntegerArgumentImpl(name, label, 
+                                                     description, 
+                                                     defaultValue, 
+                                                     mustSpecify, 
                                                      min, max));
     }
 
-    void addSelectedArgument(String name, String label, String description,
+    void addSelectedArgument(String name, String label, String description, 
                              String defaultValue, boolean mustSpecify,
                              List list) {
-        defaultArguments.put(name,
-                             new SelectedArgumentImpl(name, label,
-                                                      description,
-                                                      defaultValue,
+        defaultArguments.put(name, 
+                             new SelectedArgumentImpl(name, label, 
+                                                      description, 
+                                                      defaultValue, 
                                                       mustSpecify, list));
     }
 
-    ArgumentImpl argument(String name, Map arguments)
+    ArgumentImpl argument(String name, Map arguments) 
                 throws IllegalConnectorArgumentsException {
 
         ArgumentImpl argument = (ArgumentImpl)arguments.get(name);
@@ -327,7 +327,7 @@ abstract class ConnectorImpl implements Connector {
 
         return argument;
     }
-
+    
     String getString(String key) {
         //fixme jjh; needs i18n
         // this is not public return ((VirtualMachineManagerImpl)manager).getString(key);
@@ -356,7 +356,7 @@ abstract class ConnectorImpl implements Connector {
         private String value;
         private boolean mustSpecify;
 
-        ArgumentImpl(String name, String label, String description,
+        ArgumentImpl(String name, String label, String description, 
                      String value,
                      boolean mustSpecify) {
             this.name = name;
@@ -371,26 +371,26 @@ abstract class ConnectorImpl implements Connector {
         public String name() {
             return name;
         }
-
+    
         public String label() {
             return label;
         }
-
+    
         public String description() {
             return description;
         }
-
+    
         public String value() {
             return value;
         }
-
+    
         public void setValue(String value) {
             if (value == null) {
                 throw new NullPointerException("Can't set null value");
             }
             this.value = value;
         }
-
+    
         public boolean mustSpecify() {
             return mustSpecify;
         }
@@ -406,7 +406,7 @@ abstract class ConnectorImpl implements Connector {
                 return false;
             }
         }
-
+    
         public int hashCode() {
             return description().hashCode();
         }
@@ -416,7 +416,7 @@ abstract class ConnectorImpl implements Connector {
                 return super.clone();
             } catch (CloneNotSupportedException e) {
                 // Object should always support clone
-                throw (InternalException) new InternalException().initCause(e);
+                throw (InternalException) new InternalException().initCause(e); 
             }
         }
 
@@ -425,7 +425,7 @@ abstract class ConnectorImpl implements Connector {
         }
     }
 
-    class BooleanArgumentImpl extends ConnectorImpl.ArgumentImpl
+    class BooleanArgumentImpl extends ConnectorImpl.ArgumentImpl 
                               implements Connector.BooleanArgument {
 
         BooleanArgumentImpl(String name, String label, String description,
@@ -440,7 +440,7 @@ abstract class ConnectorImpl implements Connector {
         }
 
         /**
-         * Sets the value of the argument.
+         * Sets the value of the argument. 
          */
         public void setValue(boolean value) {
             setValue(stringValueOf(value));
@@ -468,12 +468,12 @@ abstract class ConnectorImpl implements Connector {
         }
 
         /**
-         * Return the value of the argument as a boolean.  Since
+         * Return the value of the argument as a boolean.  Since 
          * the argument may not have been set or may have an invalid
          * value {@link #isValid(String)} should be called on
          * {@link #value()} to check its validity.  If it is invalid
          * the boolean returned by this method is undefined.
-         * @return the value of the argument as a boolean.
+         * @return the value of the argument as a boolean.  
          */
         public boolean booleanValue() {
             return value().equals(trueString);
@@ -486,7 +486,7 @@ abstract class ConnectorImpl implements Connector {
         private final int min;
         private final int max;
 
-        IntegerArgumentImpl(String name, String label, String description,
+        IntegerArgumentImpl(String name, String label, String description, 
                             String value,
                             boolean mustSpecify, int min, int max) {
             super(name, label, description, value, mustSpecify);
@@ -495,7 +495,7 @@ abstract class ConnectorImpl implements Connector {
         }
 
         /**
-         * Sets the value of the argument.
+         * Sets the value of the argument. 
          * The value should be checked with {@link #isValid(int)}
          * before setting it; invalid values will throw an exception
          * when the connection is established - for example,
@@ -523,7 +523,7 @@ abstract class ConnectorImpl implements Connector {
 
         /**
          * Performs basic sanity check of argument.
-         * @return <code>true</code> if
+         * @return <code>true</code> if 
          * <code>{@link #min()} &lt;= value  &lt;= {@link #max()}</code>
          */
         public boolean isValid(int value) {
@@ -540,18 +540,18 @@ abstract class ConnectorImpl implements Connector {
         public String stringValueOf(int value) {
             // *** Should this be internationalized????
             // *** Even Brian Beck was unsure if an Arabic programmer
-            // *** would expect port numbers in Arabic numerals,
+            // *** would expect port numbers in Arabic numerals, 
             // *** so punt for now.
             return ""+value;
         }
 
         /**
-         * Return the value of the argument as a int.  Since
+         * Return the value of the argument as a int.  Since 
          * the argument may not have been set or may have an invalid
          * value {@link #isValid(String)} should be called on
          * {@link #value()} to check its validity.  If it is invalid
          * the int returned by this method is undefined.
-         * @return the value of the argument as a int.
+         * @return the value of the argument as a int.  
          */
         public int intValue() {
             if (value() == null) {
@@ -584,7 +584,7 @@ abstract class ConnectorImpl implements Connector {
     class StringArgumentImpl extends ConnectorImpl.ArgumentImpl
                               implements Connector.StringArgument {
 
-        StringArgumentImpl(String name, String label, String description,
+        StringArgumentImpl(String name, String label, String description, 
                            String value,
                            boolean mustSpecify) {
             super(name, label, description, value, mustSpecify);
@@ -599,12 +599,12 @@ abstract class ConnectorImpl implements Connector {
         }
     }
 
-    class SelectedArgumentImpl extends ConnectorImpl.ArgumentImpl
+    class SelectedArgumentImpl extends ConnectorImpl.ArgumentImpl 
                               implements Connector.SelectedArgument {
 
         private final List choices;
 
-        SelectedArgumentImpl(String name, String label, String description,
+        SelectedArgumentImpl(String name, String label, String description, 
                              String value,
                              boolean mustSpecify, List choices) {
             super(name, label, description, value, mustSpecify);

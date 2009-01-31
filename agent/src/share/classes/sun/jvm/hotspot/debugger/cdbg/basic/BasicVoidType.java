@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.cdbg.basic;
@@ -35,7 +35,7 @@ public class BasicVoidType extends BasicType implements VoidType {
   public VoidType asVoid() { return this; }
 
   public void iterateObject(Address a, ObjectVisitor v, FieldIdentifier f) {}
-
+  
   protected Type createCVVariant(int cvAttributes) {
     // FIXME
     System.err.println("WARNING: Should not attempt to create const/volatile variants for void type");

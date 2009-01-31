@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -30,12 +30,13 @@ class AlternateSpaceLdstubDecoder extends LdstubDecoder {
     AlternateSpaceLdstubDecoder(int op3, String name, int dataType) {
         super(op3, name, dataType);
     }
-
+   
     Instruction decodeMemoryInstruction(int instruction,
                                                SPARCRegisterIndirectAddress addr,
-                                               SPARCRegister rd,
+                                               SPARCRegister rd, 
                                                SPARCInstructionFactory factory) {
-        setAddressSpace(instruction, addr);
+        setAddressSpace(instruction, addr);        
         return factory.newLdstubInstruction(name, addr, rd);
     }
 }
+

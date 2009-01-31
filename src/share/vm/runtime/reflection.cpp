@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -104,20 +107,20 @@ void Reflection::widen(jvalue* value, BasicType current_type, BasicType wide_typ
       switch (current_type) {
         case T_BYTE:
           value->s = (jshort) value->b;
-          return;
+	  return;
       }
       break;  // fail
     case T_INT:
       switch (current_type) {
         case T_BYTE:
           value->i = (jint) value->b;
-          return;
+	  return;
         case T_CHAR:
           value->i = (jint) value->c;
-          return;
+	  return;
         case T_SHORT:
           value->i = (jint) value->s;
-          return;
+	  return;
       }
       break;  // fail
     case T_LONG:
@@ -139,38 +142,38 @@ void Reflection::widen(jvalue* value, BasicType current_type, BasicType wide_typ
     case T_FLOAT:
       switch (current_type) {
         case T_BYTE:
-          value->f = (jfloat) value->b;
+          value->f = (jfloat) value->b; 
           return;
         case T_CHAR:
-          value->f = (jfloat) value->c;
+          value->f = (jfloat) value->c; 
           return;
         case T_SHORT:
-          value->f = (jfloat) value->s;
+          value->f = (jfloat) value->s; 
           return;
         case T_INT:
-          value->f = (jfloat) value->i;
+          value->f = (jfloat) value->i; 
           return;
         case T_LONG:
-          value->f = (jfloat) value->j;
+          value->f = (jfloat) value->j; 
           return;
       }
       break;  // fail
     case T_DOUBLE:
       switch (current_type) {
         case T_BYTE:
-          value->d = (jdouble) value->b;
+          value->d = (jdouble) value->b; 
           return;
         case T_CHAR:
-          value->d = (jdouble) value->c;
+          value->d = (jdouble) value->c; 
           return;
         case T_SHORT:
-          value->d = (jdouble) value->s;
+          value->d = (jdouble) value->s; 
           return;
         case T_INT:
-          value->d = (jdouble) value->i;
+          value->d = (jdouble) value->i; 
           return;
         case T_FLOAT:
-          value->d = (jdouble) value->f;
+          value->d = (jdouble) value->f; 
           return;
         case T_LONG:
           value->d = (jdouble) value->j;
@@ -401,19 +404,19 @@ bool Reflection::reflect_check_access(klassOop field_class, AccessFlags acc, kla
   // IllegalAccessException and return false if not.
 
   // The "client" is the class associated with the nearest real frame
-  // getCallerClass already skips Method.invoke frames, so pass 0 in
+  // getCallerClass already skips Method.invoke frames, so pass 0 in 
   // that case (same as classic).
   ResourceMark rm(THREAD);
   assert(THREAD->is_Java_thread(), "sanity check");
   klassOop client_class = ((JavaThread *)THREAD)->security_get_caller_class(is_method_invoke ? 0 : 1);
-
+  
   if (client_class != field_class) {
     if (!verify_class_access(client_class, field_class, false)
-        || !verify_field_access(client_class,
-                                field_class,
-                                field_class,
-                                acc,
-                                false)) {
+        || !verify_field_access(client_class, 
+                                field_class, 
+                                field_class, 
+                                acc, 
+                                false)) {     
       THROW_(vmSymbols::java_lang_IllegalAccessException(), false);
     }
   }
@@ -423,7 +426,7 @@ bool Reflection::reflect_check_access(klassOop field_class, AccessFlags acc, kla
   if (acc.is_protected()) {
     if (target_class != client_class) {
       if (!is_same_class_package(client_class, field_class)) {
-        if (!Klass::cast(target_class)->is_subclass_of(client_class)) {
+        if (!Klass::cast(target_class)->is_subclass_of(client_class)) {          
           THROW_(vmSymbols::java_lang_IllegalAccessException(), false);
         }
       }
@@ -435,7 +438,7 @@ bool Reflection::reflect_check_access(klassOop field_class, AccessFlags acc, kla
 }
 
 
-bool Reflection::verify_class_access(klassOop current_class, klassOop new_class, bool classloader_only) {
+bool Reflection::verify_class_access(klassOop current_class, klassOop new_class, bool classloader_only) {    
   // Verify that current_class can access new_class.  If the classloader_only
   // flag is set, we automatically allow any accesses in which current_class
   // doesn't have a classloader.
@@ -454,14 +457,14 @@ bool Reflection::verify_class_access(klassOop current_class, klassOop new_class,
   }
 
   return can_relax_access_check_for(current_class, new_class, classloader_only);
-}
+}    
 
 bool Reflection::can_relax_access_check_for(
     klassOop accessor, klassOop accessee, bool classloader_only) {
   instanceKlass* accessor_ik = instanceKlass::cast(accessor);
   instanceKlass* accessee_ik  = instanceKlass::cast(accessee);
-  if (RelaxAccessControlCheck ||
-      (accessor_ik->major_version() < JAVA_1_5_VERSION &&
+  if (RelaxAccessControlCheck || 
+      (accessor_ik->major_version() < JAVA_1_5_VERSION && 
        accessee_ik->major_version() < JAVA_1_5_VERSION)) {
     return classloader_only &&
       Verifier::relax_verify_for(accessor_ik->class_loader()) &&
@@ -472,21 +475,21 @@ bool Reflection::can_relax_access_check_for(
   }
 }
 
-bool Reflection::verify_field_access(klassOop current_class,
+bool Reflection::verify_field_access(klassOop current_class, 
                                      klassOop resolved_class,
-                                     klassOop field_class,
-                                     AccessFlags access,
-                                     bool classloader_only,
-                                     bool protected_restriction) {
-  // Verify that current_class can access a field of field_class, where that
-  // field's access bits are "access".  We assume that we've already verified
+                                     klassOop field_class, 
+                                     AccessFlags access, 
+                                     bool classloader_only, 
+                                     bool protected_restriction) {  
+  // Verify that current_class can access a field of field_class, where that  
+  // field's access bits are "access".  We assume that we've already verified 
   // that current_class can access field_class.
   //
   // If the classloader_only flag is set, we automatically allow any accesses
   // in which current_class doesn't have a classloader.
   //
   // "resolved_class" is the runtime type of "field_class". Sometimes we don't
-  // need this distinction (e.g. if all we have is the runtime type, or during
+  // need this distinction (e.g. if all we have is the runtime type, or during 
   // class file parsing when we only care about the static type); in that case
   // callers should ensure that resolved_class == field_class.
   //
@@ -530,7 +533,7 @@ bool Reflection::verify_field_access(klassOop current_class,
 bool Reflection::is_same_class_package(klassOop class1, klassOop class2) {
   return instanceKlass::cast(class1)->is_same_class_package(class2);
 }
-
+ 
 
 // Checks that the 'outer' klass has declared 'inner' as being an inner klass. If not,
 // throw an incompatible class change exception
@@ -542,7 +545,7 @@ void Reflection::check_for_inner_class(instanceKlassHandle outer, instanceKlassH
   constantPoolHandle cp   (THREAD, outer->constants());
   for(int i = 0; i < icls->length(); i += 4) {
      int ioff = icls->ushort_at(i + inner_class_info_index);
-     int ooff = icls->ushort_at(i + outer_class_info_index);
+     int ooff = icls->ushort_at(i + outer_class_info_index);         
 
      if (ioff != 0 && ooff != 0) {
         klassOop o = cp->klass_at(ooff, CHECK);
@@ -559,11 +562,11 @@ void Reflection::check_for_inner_class(instanceKlassHandle outer, instanceKlassH
   ResourceMark rm(THREAD);
   Exceptions::fthrow(
     THREAD_AND_LOCATION,
-    vmSymbolHandles::java_lang_IncompatibleClassChangeError(),
-    "%s and %s disagree on InnerClasses attribute",
-    outer->external_name(),
+    vmSymbolHandles::java_lang_IncompatibleClassChangeError(), 
+    "%s and %s disagree on InnerClasses attribute", 
+    outer->external_name(), 
     inner->external_name()
-  );
+  );      
 }
 
 // Utility method converting a single SignatureStream element into java.lang.Class instance
@@ -580,7 +583,7 @@ oop get_mirror_from_signature(methodHandle method, SignatureStream* ss, TRAPS) {
       oop protection_domain = instanceKlass::cast(method->method_holder())->protection_domain();
       klassOop k = SystemDictionary::resolve_or_fail(
                                        symbolHandle(THREAD, name),
-                                       Handle(THREAD, loader),
+                                       Handle(THREAD, loader), 
                                        Handle(THREAD, protection_domain),
                                        true, CHECK_NULL);
       if (TraceClassResolution) {
@@ -656,13 +659,13 @@ oop Reflection::new_method(methodHandle method, bool intern_name, bool for_const
   oop return_type_oop = NULL;
   objArrayHandle parameter_types = get_parameter_types(method, parameter_count, &return_type_oop, CHECK_NULL);
   if (parameter_types.is_null() || return_type_oop == NULL) return NULL;
-
+  
   Handle return_type(THREAD, return_type_oop);
 
   objArrayHandle exception_types = get_exception_types(method, CHECK_NULL);
 
   if (exception_types.is_null()) return NULL;
-
+  
   symbolHandle method_name(THREAD, method->name());
   Handle name;
   if (intern_name) {
@@ -715,14 +718,14 @@ oop Reflection::new_constructor(methodHandle method, TRAPS) {
   int parameter_count = ArgumentCount(signature).size();
   objArrayHandle parameter_types = get_parameter_types(method, parameter_count, NULL, CHECK_NULL);
   if (parameter_types.is_null()) return NULL;
-
+  
   objArrayHandle exception_types = get_exception_types(method, CHECK_NULL);
   if (exception_types.is_null()) return NULL;
-
+  
   int modifiers = method->access_flags().as_int() & JVM_RECOGNIZED_METHOD_MODIFIERS;
 
   Handle ch = java_lang_reflect_Constructor::create(CHECK_NULL);
-
+  
   java_lang_reflect_Constructor::set_clazz(ch(), holder->java_mirror());
   java_lang_reflect_Constructor::set_slot(ch(), slot);
   java_lang_reflect_Constructor::set_parameter_types(ch(), parameter_types());
@@ -753,12 +756,12 @@ oop Reflection::new_field(fieldDescriptor* fd, bool intern_name, TRAPS) {
     oop name_oop = StringTable::intern(field_name(), CHECK_NULL);
     name = Handle(THREAD, name_oop);
   } else {
-    name = java_lang_String::create_from_symbol(field_name, CHECK_NULL);
+    name = java_lang_String::create_from_symbol(field_name, CHECK_NULL);  
   }
   symbolHandle signature (THREAD, fd->signature());
   KlassHandle  holder    (THREAD, fd->field_holder());
   Handle type = new_type(signature, holder, CHECK_NULL);
-  Handle rh  = java_lang_reflect_Field::create(CHECK_NULL);
+  Handle rh  = java_lang_reflect_Field::create(CHECK_NULL);  
 
   java_lang_reflect_Field::set_clazz(rh(), Klass::cast(fd->field_holder())->java_mirror());
   java_lang_reflect_Field::set_slot(rh(), fd->index());
@@ -790,49 +793,49 @@ oop Reflection::new_field(fieldDescriptor* fd, bool intern_name, TRAPS) {
 
 #ifdef SUPPORT_OLD_REFLECTION
 
-methodHandle Reflection::resolve_interface_call(instanceKlassHandle klass, methodHandle method,
-                                                KlassHandle recv_klass, Handle receiver, TRAPS) {
+methodHandle Reflection::resolve_interface_call(instanceKlassHandle klass, methodHandle method, 
+						KlassHandle recv_klass, Handle receiver, TRAPS) {
   assert(!method.is_null() , "method should not be null");
 
   CallInfo info;
   symbolHandle signature (THREAD, method->signature());
   symbolHandle name      (THREAD, method->name());
-  LinkResolver::resolve_interface_call(info, receiver, recv_klass, klass,
-                                       name, signature,
-                                       KlassHandle(), false, true,
-                                       CHECK_(methodHandle()));
+  LinkResolver::resolve_interface_call(info, receiver, recv_klass, klass, 
+				       name, signature,
+				       KlassHandle(), false, true, 
+				       CHECK_(methodHandle()));
   return info.selected_method();
 }
 
 
-oop Reflection::invoke(instanceKlassHandle klass, methodHandle reflected_method,
-                       Handle receiver, bool override, objArrayHandle ptypes,
-                       BasicType rtype, objArrayHandle args, bool is_method_invoke, TRAPS) {
+oop Reflection::invoke(instanceKlassHandle klass, methodHandle reflected_method, 
+		       Handle receiver, bool override, objArrayHandle ptypes, 
+		       BasicType rtype, objArrayHandle args, bool is_method_invoke, TRAPS) {
   ResourceMark rm(THREAD);
-
+  
   methodHandle method;      // actual method to invoke
   KlassHandle target_klass; // target klass, receiver's klass for non-static
-
+  
   // Ensure klass is initialized
   klass->initialize(CHECK_NULL);
 
   bool is_static = reflected_method->is_static();
   if (is_static) {
     // ignore receiver argument
-    method = reflected_method;
+    method = reflected_method; 
     target_klass = klass;
   } else {
     // check for null receiver
-    if (receiver.is_null()) {
+    if (receiver.is_null()) { 
       THROW_0(vmSymbols::java_lang_NullPointerException());
     }
     // Check class of receiver against class declaring method
-    if (!receiver->is_a(klass())) {
+    if (!receiver->is_a(klass())) { 
       THROW_MSG_0(vmSymbols::java_lang_IllegalArgumentException(), "object is not an instance of declaring class");
     }
     // target klass is receiver's klass
-    target_klass = KlassHandle(THREAD, receiver->klass());
-    // no need to resolve if method is private or <init>
+    target_klass = KlassHandle(THREAD, receiver->klass()); 
+    // no need to resolve if method is private or <init> 
     if (reflected_method->is_private() || reflected_method->name() == vmSymbols::object_initializer_name()) {
       method = reflected_method;
     } else {
@@ -843,7 +846,7 @@ oop Reflection::invoke(instanceKlassHandle klass, methodHandle reflected_method,
           // new default: 6531596
           // Match resolution errors with those thrown due to reflection inlining
           // Linktime resolution & IllegalAccessCheck already done by Class.getMethod()
-          method = resolve_interface_call(klass, reflected_method, target_klass, receiver, THREAD);
+	  method = resolve_interface_call(klass, reflected_method, target_klass, receiver, THREAD); 
           if (HAS_PENDING_EXCEPTION) {
           // Method resolution threw an exception; wrap it in an InvocationTargetException
             oop resolution_exception = PENDING_EXCEPTION;
@@ -854,7 +857,7 @@ oop Reflection::invoke(instanceKlassHandle klass, methodHandle reflected_method,
                 &args);
           }
         } else {
-          method = resolve_interface_call(klass, reflected_method, target_klass, receiver, CHECK_(NULL));
+	  method = resolve_interface_call(klass, reflected_method, target_klass, receiver, CHECK_(NULL));
         }
       }  else {
         // if the method can be overridden, we resolve using the vtable index.
@@ -913,7 +916,7 @@ oop Reflection::invoke(instanceKlassHandle klass, methodHandle reflected_method,
     if (!(klass->is_public() && reflected_method->is_public())) {
       bool access = Reflection::reflect_check_access(klass(), reflected_method->access_flags(), target_klass(), is_method_invoke, CHECK_NULL);
       if (!access) {
-        return NULL; // exception
+	return NULL; // exception
       }
     }
   }
@@ -926,7 +929,7 @@ oop Reflection::invoke(instanceKlassHandle klass, methodHandle reflected_method,
   if (ptypes->length() != args_len) {
     THROW_MSG_0(vmSymbols::java_lang_IllegalArgumentException(), "wrong number of arguments");
   }
-
+  
   // Create object to contain parameters for the JavaCall
   JavaCallArguments java_args(method->size_of_parameters());
 
@@ -946,12 +949,12 @@ oop Reflection::invoke(instanceKlassHandle klass, methodHandle reflected_method,
       }
       switch (ptype) {
         case T_BOOLEAN:     java_args.push_int(value.z);    break;
-        case T_CHAR:        java_args.push_int(value.c);    break;
-        case T_BYTE:        java_args.push_int(value.b);    break;
-        case T_SHORT:       java_args.push_int(value.s);    break;
-        case T_INT:         java_args.push_int(value.i);    break;
+        case T_CHAR:        java_args.push_int(value.c);    break;          
+        case T_BYTE:        java_args.push_int(value.b);    break;          
+        case T_SHORT:       java_args.push_int(value.s);    break;          
+        case T_INT:         java_args.push_int(value.i);    break;                  
         case T_LONG:        java_args.push_long(value.j);   break;
-        case T_FLOAT:       java_args.push_float(value.f);  break;
+        case T_FLOAT:       java_args.push_float(value.f);  break;          
         case T_DOUBLE:      java_args.push_double(value.d); break;
         default:
           THROW_MSG_0(vmSymbols::java_lang_IllegalArgumentException(), "argument type mismatch");
@@ -964,13 +967,13 @@ oop Reflection::invoke(instanceKlassHandle klass, methodHandle reflected_method,
         }
       }
       Handle arg_handle(THREAD, arg);         // Create handle for argument
-      java_args.push_oop(arg_handle); // Push handle
+      java_args.push_oop(arg_handle); // Push handle      
     }
   }
 
   assert(java_args.size_of_parameters() == method->size_of_parameters(), "just checking");
 
-  // All oops (including receiver) is passed in as Handles. An potential oop is returned as an
+  // All oops (including receiver) is passed in as Handles. An potential oop is returned as an 
   // oop (i.e., NOT as an handle)
   JavaValue result(rtype);
   JavaCalls::call(&result, method, &java_args, THREAD);
@@ -1035,7 +1038,7 @@ bool Reflection::match_parameter_types(methodHandle method, objArrayHandle types
 
 oop Reflection::new_field(FieldStream* st, TRAPS) {
   symbolHandle field_name(THREAD, st->name());
-  Handle name = java_lang_String::create_from_symbol(field_name, CHECK_NULL);
+  Handle name = java_lang_String::create_from_symbol(field_name, CHECK_NULL);  
   symbolHandle signature(THREAD, st->signature());
   Handle type = new_type(signature, st->klass(), CHECK_NULL);
   Handle rh  = java_lang_reflect_Field::create(CHECK_NULL);
@@ -1056,12 +1059,12 @@ bool Reflection::resolve_field(Handle field_mirror, Handle& receiver, fieldDescr
   if (field_mirror.is_null()) {
     THROW_(vmSymbols::java_lang_NullPointerException(), false);
   }
-
+    
   instanceKlassHandle klass (THREAD, java_lang_Class::as_klassOop(java_lang_reflect_Field::clazz(field_mirror())));
   int                 slot  = java_lang_reflect_Field::slot(field_mirror());
 
   // Ensure klass is initialized
-  klass->initialize(CHECK_false);
+  klass->initialize(CHECK_false);      
   fd->initialize(klass(), slot);
 
   bool is_static = fd->is_static();
@@ -1075,7 +1078,7 @@ bool Reflection::resolve_field(Handle field_mirror, Handle& receiver, fieldDescr
     if (receiver.is_null()) {
       THROW_(vmSymbols::java_lang_NullPointerException(), false);
     }
-    if (!receiver->is_a(klass())) {
+    if (!receiver->is_a(klass())) {      
       THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(), "object is not an instance of declaring class", false);
     }
     receiver_klass = KlassHandle(THREAD, receiver->klass());
@@ -1094,7 +1097,7 @@ bool Reflection::resolve_field(Handle field_mirror, Handle& receiver, fieldDescr
   if (check_final && fd->is_final()) {
     // In 1.3 we always throw an error when attempting to set a final field.
     // In 1.2.x, this was allowed in the override bit was set by calling Field.setAccessible(true).
-    // We currently maintain backwards compatibility. See bug 4250960.
+    // We currently maintain backwards compatibility. See bug 4250960. 
     bool strict_final_check = !JDK_Version::is_jdk12x_version();
     if (strict_final_check || !java_lang_reflect_Field::override(field_mirror())) {
       THROW_MSG_(vmSymbols::java_lang_IllegalAccessException(), "field is final", false);
@@ -1176,7 +1179,7 @@ void Reflection::field_set(jvalue* value, fieldDescriptor* fd, Handle receiver, 
       receiver->long_field_put(offset, value->j);
       break;
     case T_OBJECT:
-    case T_ARRAY: {
+    case T_ARRAY: {      
       Handle obj(THREAD, (oop) value->l);
       if (obj.not_null()) {
         symbolHandle signature(THREAD, fd->signature());
@@ -1220,7 +1223,7 @@ oop Reflection::reflect_field(oop mirror, symbolOop field_name, jint which, TRAP
 }
 
 
-objArrayOop Reflection::reflect_fields(oop mirror, jint which, TRAPS) {
+objArrayOop Reflection::reflect_fields(oop mirror, jint which, TRAPS) {  
   // Exclude primitive types and array types
   if (java_lang_Class::is_primitive(mirror)
       || Klass::cast(java_lang_Class::as_klassOop(mirror))->oop_is_array()) {
@@ -1251,7 +1254,7 @@ objArrayOop Reflection::reflect_fields(oop mirror, jint which, TRAPS) {
   objArrayHandle result (THREAD, r);
 
   // Fill in results backwards
-  {
+  { 
     for (FieldStream st(k, local_fields_only, false); !st.eos(); st.next()) {
       if (local_fields_only || st.access_flags().is_public()) {
         oop field = new_field(&st, CHECK_NULL);
@@ -1268,8 +1271,8 @@ oop Reflection::reflect_method(oop mirror, symbolHandle method_name, objArrayHan
   if (java_lang_Class::is_primitive(mirror))  return NULL;
   klassOop klass = java_lang_Class::as_klassOop(mirror);
   if (Klass::cast(klass)->oop_is_array() && which == MEMBER_DECLARED)  return NULL;
-
-  if (Klass::cast(java_lang_Class::as_klassOop(mirror))->oop_is_array()) {
+  
+  if (Klass::cast(java_lang_Class::as_klassOop(mirror))->oop_is_array()) {    
     klass = SystemDictionary::object_klass();
   }
   instanceKlassHandle h_k(THREAD, klass);
@@ -1326,7 +1329,7 @@ oop Reflection::reflect_method(oop mirror, symbolHandle method_name, objArrayHan
         }
       }
       break;
-    default:
+    default: 
       break;
   }
   return NULL;
@@ -1336,13 +1339,13 @@ oop Reflection::reflect_method(oop mirror, symbolHandle method_name, objArrayHan
 objArrayOop Reflection::reflect_methods(oop mirror, jint which, TRAPS) {
   // Exclude primitive types
   if (java_lang_Class::is_primitive(mirror) ||
-     (Klass::cast(java_lang_Class::as_klassOop(mirror))->oop_is_array() && (which == MEMBER_DECLARED))) {
+     (Klass::cast(java_lang_Class::as_klassOop(mirror))->oop_is_array() && (which == MEMBER_DECLARED))) {    
     klassOop klass = SystemDictionary::reflect_method_klass();
     return oopFactory::new_objArray(klass, 0, CHECK_NULL);  // Return empty array
   }
 
   klassOop klass = java_lang_Class::as_klassOop(mirror);
-  if (Klass::cast(java_lang_Class::as_klassOop(mirror))->oop_is_array()) {
+  if (Klass::cast(java_lang_Class::as_klassOop(mirror))->oop_is_array()) {    
     klass = SystemDictionary::object_klass();
   }
   instanceKlassHandle h_k(THREAD, klass);
@@ -1364,7 +1367,7 @@ objArrayOop Reflection::reflect_methods(oop mirror, jint which, TRAPS) {
         int count = 0;
         {
           for (MethodStream st(h_k, false, false); !st.eos(); st.next()) {
-            methodOop m = st.method();
+            methodOop m = st.method();               
             // For interfaces include static initializers since classic does that!
             if (include_clinit || (!m->is_initializer() && m->is_public() && !m->is_overridden_in(h_k()))) {
               count++;
@@ -1372,35 +1375,35 @@ objArrayOop Reflection::reflect_methods(oop mirror, jint which, TRAPS) {
           }
         }
 
-        // Allocate result
+        // Allocate result        
         klassOop klass = SystemDictionary::reflect_method_klass();
         objArrayOop r = oopFactory::new_objArray(klass, count, CHECK_NULL);
         objArrayHandle h_result (THREAD, r);
 
         // Fill in results backwards
         {
-          // First the non-static public methods
+          // First the non-static public methods          
           for (MethodStream st(h_k, false, false); !st.eos(); st.next()) {
             methodHandle m (THREAD, st.method());
             if (!m->is_static() && !m->is_initializer() && m->is_public() && !m->is_overridden_in(h_k())) {
               oop method = new_method(m, false, false, CHECK_NULL);
               if (method == NULL) {
                 return NULL;
-              } else {
+              } else {                
                 h_result->obj_at_put(--count, method);
               }
             }
           }
         }
         {
-          // Then the static public methods
+          // Then the static public methods          
           for (MethodStream st(h_k, false, !is_interface); !st.eos(); st.next()) {
             methodHandle m (THREAD, st.method());
             if (m->is_static() && (include_clinit || (!m->is_initializer()) && m->is_public() && !m->is_overridden_in(h_k()))) {
               oop method = new_method(m, false, false, CHECK_NULL);
               if (method == NULL) {
                 return NULL;
-              } else {
+              } else {                
                 h_result->obj_at_put(--count, method);
               }
             }
@@ -1411,9 +1414,9 @@ objArrayOop Reflection::reflect_methods(oop mirror, jint which, TRAPS) {
         return h_result();
       }
 
-    case MEMBER_DECLARED:
+    case MEMBER_DECLARED: 
       {
-        // Count all methods
+        // Count all methods 
         int count = 0;
         {
           for (MethodStream st(h_k, true, !is_interface); !st.eos(); st.next()) {
@@ -1423,7 +1426,7 @@ objArrayOop Reflection::reflect_methods(oop mirror, jint which, TRAPS) {
             }
           }
         }
-        // Allocate result
+        // Allocate result        
         klassOop klass = SystemDictionary::reflect_method_klass();
         objArrayOop r = oopFactory::new_objArray(klass, count, CHECK_NULL);
         objArrayHandle h_result (THREAD, r);
@@ -1459,8 +1462,8 @@ oop Reflection::reflect_constructor(oop mirror, objArrayHandle types, jint which
   if (prim || klass->is_interface() || klass->oop_is_array()) return NULL;
 
   // Must be instance klass
-  instanceKlassHandle h_k(THREAD, java_lang_Class::as_klassOop(mirror));
-
+  instanceKlassHandle h_k(THREAD, java_lang_Class::as_klassOop(mirror));  
+  
   // Ensure klass is linked (need not be initialized)
   h_k->link_class(CHECK_NULL);
 
@@ -1484,16 +1487,16 @@ objArrayOop Reflection::reflect_constructors(oop mirror, jint which, TRAPS) {
   // Exclude primitive, interface and array types
   bool prim  = java_lang_Class::is_primitive(mirror);
   Klass* k = prim ? NULL : Klass::cast(java_lang_Class::as_klassOop(mirror));
-  if (prim || k->is_interface() || k->oop_is_array()) {
+  if (prim || k->is_interface() || k->oop_is_array()) {        
     return oopFactory::new_objArray(SystemDictionary::reflect_constructor_klass(), 0, CHECK_NULL);  // Return empty array
   }
 
   // Must be instanceKlass at this point
-  instanceKlassHandle h_k(THREAD, java_lang_Class::as_klassOop(mirror));
+  instanceKlassHandle h_k(THREAD, java_lang_Class::as_klassOop(mirror));  
 
   // Ensure klass is linked (need not be initialized)
   h_k->link_class(CHECK_NULL);
-
+  
   bool local_only = (which == MEMBER_DECLARED);
   int count = 0;
   {
@@ -1510,7 +1513,7 @@ objArrayOop Reflection::reflect_constructors(oop mirror, jint which, TRAPS) {
   klassOop klass = SystemDictionary::resolve_or_fail(name, true, CHECK_NULL);
   objArrayOop r = oopFactory::new_objArray(klass, count, CHECK_NULL);
   objArrayHandle h_result (THREAD, r);
-
+ 
   // Fill in results backwards
   {
     for (MethodStream st(h_k, true, true); !st.eos(); st.next()) {
@@ -1530,7 +1533,7 @@ objArrayOop Reflection::reflect_constructors(oop mirror, jint which, TRAPS) {
 }
 
 
-// This would be nicer if, say, java.lang.reflect.Method was a subclass
+// This would be nicer if, say, java.lang.reflect.Method was a subclass 
 // of java.lang.reflect.Constructor
 
 oop Reflection::invoke_method(oop method_mirror, Handle receiver, objArrayHandle args, TRAPS) {
@@ -1541,7 +1544,7 @@ oop Reflection::invoke_method(oop method_mirror, Handle receiver, objArrayHandle
 
   oop return_type_mirror = java_lang_reflect_Method::return_type(method_mirror);
   BasicType rtype;
-  if (java_lang_Class::is_primitive(return_type_mirror)) {
+  if (java_lang_Class::is_primitive(return_type_mirror)) { 
     rtype = basic_type_mirror_to_basic_type(return_type_mirror, CHECK_NULL);
   } else {
     rtype = T_OBJECT;
@@ -1563,7 +1566,7 @@ oop Reflection::invoke_constructor(oop constructor_mirror, objArrayHandle args, 
   bool override          = java_lang_reflect_Constructor::override(constructor_mirror) != 0;
   objArrayHandle ptypes(THREAD, objArrayOop(java_lang_reflect_Constructor::parameter_types(constructor_mirror)));
 
-  instanceKlassHandle klass(THREAD, java_lang_Class::as_klassOop(mirror));
+  instanceKlassHandle klass(THREAD, java_lang_Class::as_klassOop(mirror));  
   if (!klass->methods()->is_within_bounds(slot)) {
     THROW_MSG_0(vmSymbols::java_lang_InternalError(), "invoke");
   }
@@ -1571,7 +1574,7 @@ oop Reflection::invoke_constructor(oop constructor_mirror, objArrayHandle args, 
   assert(method->name() == vmSymbols::object_initializer_name(), "invalid constructor");
 
   // Make sure klass gets initialize
-  klass->initialize(CHECK_NULL);
+  klass->initialize(CHECK_NULL);      
 
   // Create new instance (the receiver)
   klass->check_valid_for_instantiation(false, CHECK_NULL);

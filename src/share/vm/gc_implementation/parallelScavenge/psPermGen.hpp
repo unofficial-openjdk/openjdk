@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class AdaptivePaddedAverage;
@@ -33,14 +36,14 @@ class PSPermGen : public PSOldGen {
  public:
   // Initialize the generation.
   PSPermGen(ReservedSpace rs, size_t alignment, size_t initial_byte_size,
-            size_t minimum_byte_size, size_t maximum_byte_size,
+	    size_t minimum_byte_size, size_t maximum_byte_size,
             const char* gen_name, int level);
 
   // Permanent Gen special allocation. Uses the OldGen allocation
   // routines, which should not be directly called on this generation.
   HeapWord* allocate_permanent(size_t word_size);
 
-  // Size calculation.
+  // Size calculation. 
   void compute_new_size(size_t used_before_collection);
 
   // MarkSweep code
@@ -51,3 +54,4 @@ class PSPermGen : public PSOldGen {
 
   virtual const char* name() const { return "PSPermGen"; }
 };
+

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -43,7 +46,7 @@ extern int  methods_seen_old;
 InlineTree::InlineTree( Compile* c, const InlineTree *caller_tree, ciMethod* callee, JVMState* caller_jvms, int caller_bci, float site_invoke_ratio )
 : C(c), _caller_jvms(caller_jvms),
   _caller_tree((InlineTree*)caller_tree),
-  _method(callee), _site_invoke_ratio(site_invoke_ratio),
+  _method(callee), _site_invoke_ratio(site_invoke_ratio), 
   _count_inline_bcs(method()->code_size()) {
   NOT_PRODUCT(_count_inlines = 0;)
   if (_caller_jvms != NULL) {
@@ -79,7 +82,7 @@ static void print_indent(int depth) {
   for (int i = depth; i != 0; --i) tty->print("  ");
 }
 
-// positive filter: should send be inlined?  returns NULL, if yes, or rejection msg
+// positive filter: should send be inlined?  returns NULL, if yes, or rejection msg 
 const char* InlineTree::shouldInline(ciMethod* callee_method, int caller_bci, ciCallProfile& profile, WarmCallInfo* wci_result) const {
   // Allows targeted inlining
   if(callee_method->should_inline()) {
@@ -126,7 +129,7 @@ const char* InlineTree::shouldInline(ciMethod* callee_method, int caller_bci, ci
     }
   } else {
     // Not hot.  Check for medium-sized pre-existing nmethod at cold sites.
-    if (callee_method->has_compiled_code() && callee_method->instructions_size() > InlineSmallCode/4)
+    if (callee_method->has_compiled_code() && callee_method->instructions_size() > InlineSmallCode/4) 
       return "already compiled into a medium method";
   }
   if (size > max_size) {
@@ -138,9 +141,9 @@ const char* InlineTree::shouldInline(ciMethod* callee_method, int caller_bci, ci
 }
 
 
-// negative filter: should send NOT be inlined?  returns NULL, ok to inline, or rejection msg
+// negative filter: should send NOT be inlined?  returns NULL, ok to inline, or rejection msg 
 const char* InlineTree::shouldNotInline(ciMethod *callee_method, WarmCallInfo* wci_result) const {
-  // negative filter: should send NOT be inlined?  returns NULL (--> inline) or rejection msg
+  // negative filter: should send NOT be inlined?  returns NULL (--> inline) or rejection msg 
   if (!UseOldInlining) {
     const char* fail = NULL;
     if (callee_method->is_abstract())               fail = "abstract method";
@@ -168,7 +171,7 @@ const char* InlineTree::shouldNotInline(ciMethod *callee_method, WarmCallInfo* w
 
     if (callee_method->has_compiled_code() && callee_method->instructions_size() > InlineSmallCode) {
       wci_result->set_profit(wci_result->profit() * 0.1);
-      // %%% adjust wci_result->size()?
+      // %%% adjust wci_result->size()? 
     }
 
     return NULL;
@@ -178,17 +181,17 @@ const char* InlineTree::shouldNotInline(ciMethod *callee_method, WarmCallInfo* w
   if (callee_method->is_abstract())               return "abstract method";
   // note: we allow ik->is_abstract()
   if (!callee_method->holder()->is_initialized()) return "method holder not initialized";
-  if (callee_method->is_native())                 return "native method";
+  if (callee_method->is_native())                 return "native method"; 
   if (callee_method->has_unloaded_classes_in_signature()) return "unloaded signature classes";
 
   if (callee_method->should_inline()) {
     // ignore heuristic controls on inlining
     return NULL;
-  }
+  }  
 
   // Now perform checks which are heuristic
 
-  if( callee_method->has_compiled_code() && callee_method->instructions_size() > InlineSmallCode )
+  if( callee_method->has_compiled_code() && callee_method->instructions_size() > InlineSmallCode ) 
     return "already compiled into a big method";
 
   // don't inline exception code unless the top method belongs to an
@@ -203,7 +206,7 @@ const char* InlineTree::shouldNotInline(ciMethod *callee_method, WarmCallInfo* w
   }
 
   // use frequency-based objections only for non-trivial methods
-  if (callee_method->code_size() <= MaxTrivialSize) return NULL;
+  if (callee_method->code_size() <= MaxTrivialSize) return NULL;    
   if (UseInterpreter && !CompileTheWorld) { // don't use counts with -Xcomp or CTW
     if (!callee_method->has_compiled_code() && !callee_method->was_executed_more_than(0)) return "never executed";
     if (!callee_method->was_executed_more_than(MIN2(MinInliningThreshold, CompileThreshold >> 1))) return "executed < MinInliningThreshold times";
@@ -254,8 +257,8 @@ const char* InlineTree::try_to_inline(ciMethod* callee_method, int caller_bci, c
   if (UseOldInlining && ClipInlining
       && (int)count_inline_bcs() + size >= DesiredMethodLimit) {
     return "size > DesiredMethodLimit";
-  }
-
+  } 
+  
   // ok, inline this method
   return NULL;
 }
@@ -485,6 +488,6 @@ static void per_method_stats() {
   methods_seen_old = methods_seen;
   explicit_null_checks_inserted_old = explicit_null_checks_inserted;
   explicit_null_checks_elided_old = explicit_null_checks_elided;
-}
+}  
 
 #endif

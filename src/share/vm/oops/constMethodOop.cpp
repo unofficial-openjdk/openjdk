@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -95,7 +98,7 @@ void constMethodOopDesc::set_inlined_tables_length(
     _flags |= _has_checked_exceptions;
     *(checked_exceptions_length_addr()) = checked_exceptions_len;
   }
-  if (localvariable_table_len > 0) {
+  if (localvariable_table_len > 0) {    
     _flags |= _has_localvariable_table;
     *(localvariable_table_length_addr()) = localvariable_table_len;
   }

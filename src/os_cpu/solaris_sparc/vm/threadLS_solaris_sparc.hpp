@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1998-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,12 +22,12 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 public:
   // Java Thread  - force inlining
-  static inline Thread* thread() ;
+  static inline Thread* thread() ; 
 
 private:
   static Thread* _get_thread_cache[];  // index by [(raw_id>>9)^(raw_id>>20) % _pd_cache_size]
@@ -42,10 +45,10 @@ public:
     _pd_cache_size         =  256*2  // projected typical # of threads * 2
   };
 
-  static void set_thread_in_slot (Thread *) ;
+  static void set_thread_in_slot (Thread *) ; 
 
   static uintptr_t pd_raw_thread_id() {
-    return _raw_thread_id();
+    return _raw_thread_id(); 
   }
 
   static int pd_cache_index(uintptr_t raw_id) {

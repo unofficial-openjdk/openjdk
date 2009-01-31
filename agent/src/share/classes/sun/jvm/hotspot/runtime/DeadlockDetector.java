@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.runtime;
@@ -44,17 +44,17 @@ public class DeadlockDetector {
     public static void print(PrintStream tty, boolean concurrentLocks) {
         tty.println("Deadlock Detection:");
         tty.println();
-
+        
         int globalDfn = 0, thisDfn;
         int numberOfDeadlocks = 0;
         JavaThread currentThread = null, previousThread = null;
         ObjectMonitor waitingToLockMonitor = null;
         Oop waitingToLockBlocker = null;
-
+ 
         threads = VM.getVM().getThreads();
         heap = VM.getVM().getObjectHeap();
         createThreadTable();
-
+        
         Iterator i = threadTable.entrySet().iterator();
         while (i.hasNext()) {
             Entry e = (Entry)i.next();
@@ -62,18 +62,18 @@ public class DeadlockDetector {
                 // this thread was already visited
                 continue;
             }
-
+            
             thisDfn = globalDfn;
             JavaThread thread = (JavaThread)e.getKey();
             previousThread = thread;
-
+            
             // When there is a deadlock, all the monitors involved in the dependency
             // cycle must be contended and heavyweight. So we only care about the
             // heavyweight monitor a thread is waiting to lock.
             try {
                 waitingToLockMonitor = thread.getCurrentPendingMonitor();
             } catch (RuntimeException re) {
-                tty.println("This version of HotSpot VM doesn't support deadlock detection.");
+                tty.println("This version of HotSpot VM doesn't support deadlock detection.");                
                 return;
             }
 
@@ -84,7 +84,7 @@ public class DeadlockDetector {
                 abstractOwnableSyncKlass = sysDict.getAbstractOwnableSynchronizerKlass();
             }
 
-            while (waitingToLockMonitor != null ||
+            while (waitingToLockMonitor != null || 
                    waitingToLockBlocker != null) {
                 if (waitingToLockMonitor != null) {
                     currentThread = threads.owningThreadFromMonitor(waitingToLockMonitor);
@@ -124,7 +124,7 @@ public class DeadlockDetector {
                 }
             }
         }
-
+        
         switch (numberOfDeadlocks) {
             case 0:
                 tty.println("No deadlocks found.");
@@ -132,18 +132,18 @@ public class DeadlockDetector {
             case 1:
                 tty.println("Found a total of 1 deadlock.");
                 break;
-            default:
+            default:                
                 tty.println("Found a total of " + numberOfDeadlocks + " deadlocks.");
                 break;
         }
-        tty.println();
+	tty.println();
     }
-
+    
     //-- Internals only below this point
     private static Threads threads;
     private static ObjectHeap heap;
     private static HashMap threadTable;
-
+    
     private static void createThreadTable() {
         threadTable = new HashMap();
         for (JavaThread cur = threads.first(); cur != null; cur = cur.next()) {
@@ -151,7 +151,7 @@ public class DeadlockDetector {
             threadTable.put(cur, new Integer(-1));
         }
     }
-
+    
     private static int dfn(JavaThread thread) {
         Object obj = threadTable.get(thread);
         if (obj != null) {
@@ -159,11 +159,11 @@ public class DeadlockDetector {
         }
         return -1;
     }
-
+    
     private static int dfn(Entry e) {
         return ((Integer)e.getValue()).intValue();
     }
-
+    
     private static void printOneDeadlock(PrintStream tty, JavaThread thread,
                                          boolean concurrentLocks) {
         tty.println("Found one Java-level deadlock:");

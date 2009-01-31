@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -168,18 +171,18 @@ void ReceiverTypeData::oop_iterate(OopClosure* blk) {
       blk->do_oop(adr_receiver(row));
     }
   }
-}
+}  
 
 void ReceiverTypeData::oop_iterate_m(OopClosure* blk, MemRegion mr) {
   for (uint row = 0; row < row_limit(); row++) {
     if (receiver(row) != NULL) {
       oop* adr = adr_receiver(row);
       if (mr.contains(adr)) {
-        blk->do_oop(adr);
+	blk->do_oop(adr);
       }
     }
   }
-}
+}  
 
 void ReceiverTypeData::adjust_pointers() {
   for (uint row = 0; row < row_limit(); row++) {
@@ -244,7 +247,7 @@ void VirtualCallData::print_data_on(outputStream* st) {
 // been executed, followed by a series of triples of the form
 // (bci, count, di) which count the number of times that some bci was the
 // target of the ret and cache a corresponding displacement.
-
+  
 void RetData::post_initialize(BytecodeStream* stream, methodDataOop mdo) {
   for (uint row = 0; row < row_limit(); row++) {
     set_bci_displacement(row, -1);
@@ -294,7 +297,7 @@ void RetData::print_data_on(outputStream* st) {
     if (bci(row) != no_bci) {
       tab(st);
       st->print_cr("bci(%d: count(%u) displacement(%d))",
-                   bci(row), bci_count(row), bci_displacement(row));
+		   bci(row), bci_count(row), bci_displacement(row));
     }
   }
 }
@@ -320,7 +323,7 @@ void BranchData::post_initialize(BytecodeStream* stream, methodDataOop mdo) {
 void BranchData::print_data_on(outputStream* st) {
   print_shared(st, "BranchData");
   st->print_cr("taken(%u) displacement(%d)",
-               taken(), displacement());
+	       taken(), displacement());
   tab(st);
   st->print_cr("not taken(%u)", not_taken());
 }
@@ -347,7 +350,7 @@ int MultiBranchData::compute_cell_count(BytecodeStream* stream) {
 }
 
 void MultiBranchData::post_initialize(BytecodeStream* stream,
-                                      methodDataOop mdo) {
+				      methodDataOop mdo) {
   assert(stream->bci() == bci(), "wrong pos");
   int target;
   int my_di;
@@ -363,7 +366,7 @@ void MultiBranchData::post_initialize(BytecodeStream* stream,
       target_di = mdo->bci_to_di(target);
       offset = target_di - my_di;
       set_displacement_at(count, offset);
-    }
+    }         
     target = sw->default_offset() + bci();
     my_di = mdo->dp_to_di(dp());
     target_di = mdo->bci_to_di(target);
@@ -394,12 +397,12 @@ void MultiBranchData::post_initialize(BytecodeStream* stream,
 void MultiBranchData::print_data_on(outputStream* st) {
   print_shared(st, "MultiBranchData");
   st->print_cr("default_count(%u) displacement(%d)",
-               default_count(), default_displacement());
+	       default_count(), default_displacement());
   int cases = number_of_cases();
   for (int i = 0; i < cases; i++) {
     tab(st);
     st->print_cr("count(%u) displacement(%d)",
-                 count_at(i), displacement_at(i));
+		 count_at(i), displacement_at(i));
   }
 }
 #endif
@@ -420,15 +423,15 @@ int methodDataOopDesc::bytecode_cell_count(Bytecodes::Code code) {
     } else {
       return BitData::static_cell_count();
     }
-  case Bytecodes::_invokespecial:
+  case Bytecodes::_invokespecial: 
   case Bytecodes::_invokestatic:
     return CounterData::static_cell_count();
-  case Bytecodes::_goto:
-  case Bytecodes::_goto_w:
+  case Bytecodes::_goto: 
+  case Bytecodes::_goto_w: 
   case Bytecodes::_jsr:
   case Bytecodes::_jsr_w:
     return JumpData::static_cell_count();
-  case Bytecodes::_invokevirtual:
+  case Bytecodes::_invokevirtual: 
   case Bytecodes::_invokeinterface:
     return VirtualCallData::static_cell_count();
   case Bytecodes::_ret:
@@ -522,7 +525,7 @@ int methodDataOopDesc::compute_allocation_size_in_words(methodHandle method) {
 // Initialize an individual data segment.  Returns the size of
 // the segment in bytes.
 int methodDataOopDesc::initialize_data(BytecodeStream* stream,
-                                       int data_index) {
+				       int data_index) {
   int cell_count = -1;
   int tag = DataLayout::no_tag;
   DataLayout* data_layout = data_layout_at(data_index);
@@ -604,7 +607,7 @@ ProfileData* methodDataOopDesc::data_at(int data_index) {
     return NULL;
   }
   DataLayout* data_layout = data_layout_at(data_index);
-
+  
   switch (data_layout->tag()) {
   case DataLayout::no_tag:
   default:
@@ -698,14 +701,14 @@ void methodDataOopDesc::initialize(methodHandle method) {
 int methodDataOopDesc::mileage_of(methodOop method) {
   int mileage = 0;
   int iic = method->interpreter_invocation_count();
-  if (mileage < iic)  mileage = iic;
+  if (mileage < iic)  mileage = iic; 
 
   InvocationCounter* ic = method->invocation_counter();
   InvocationCounter* bc = method->backedge_counter();
 
   int icval = ic->count();
   if (ic->carry()) icval += CompileThreshold;
-  if (mileage < icval)  mileage = icval;
+  if (mileage < icval)  mileage = icval; 
   int bcval = bc->count();
   if (bc->carry()) bcval += CompileThreshold;
   if (mileage < bcval)  mileage = bcval;

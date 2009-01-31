@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.proc;
@@ -53,14 +53,14 @@ import sun.jvm.hotspot.utilities.*;
  */
 
 public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
-
-
+    
+    
     protected static final int cacheSize = 16 * 1024 * 1024; // 16 MB
-
+    
     //------------------------------------------------------------------------
     // Implementation of Debugger interface
     //
-
+    
     /** <P> machDesc may be null if it couldn't be determined yet; i.e.,
      * if we're on SPARC, we need to ask the remote process whether
      * we're in 32- or 64-bit mode. </P>
@@ -72,7 +72,7 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
         this.machDesc = machDesc;
         int cacheNumPages;
         int cachePageSize;
-
+        
         final String cpu = PlatformInfo.getCPU();
         if (cpu.equals("sparc")) {
             threadFactory = new ProcSPARCThreadFactory(this);
@@ -98,27 +98,27 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
             // cache divided on SPARC into 2048 8K pages and on x86 into
             // 4096 4K pages; the page size must be adjusted to be the OS's
             // page size.
-
+            
             cachePageSize = getPageSize();
             cacheNumPages = parseCacheNumPagesProperty(cacheSize / cachePageSize);
             initCache(cachePageSize, cacheNumPages);
         }
-
+        
         resetNativePointers();
         clearCacheFields();
     }
-
+    
     /** FIXME: implement this with a Runtime.exec() of ps followed by
      * parsing of its output */
     public boolean hasProcessList() throws DebuggerException {
         return false;
     }
-
+    
     public List getProcessList() throws DebuggerException {
         throw new DebuggerException("Not yet supported");
     }
-
-
+    
+    
     /** From the Debugger interface via JVMDebugger */
     public synchronized void attach(int processID) throws DebuggerException {
         checkAttached();
@@ -127,7 +127,7 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
         attached = true;
         suspended = true;
     }
-
+    
     /** From the Debugger interface via JVMDebugger */
     public synchronized void attach
     (String executableName, String coreFileName) throws DebuggerException {
@@ -138,13 +138,13 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
         attached = true;
         suspended = true;
     }
-
+    
     /** From the Debugger interface via JVMDebugger */
     public synchronized boolean detach() {
         if (! attached) {
             return false;
         }
-
+        
         try {
             if (p_ps_prochandle == 0L) {
                 return false;
@@ -162,7 +162,7 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
             attached = false;
         }
     }
-
+    
     public synchronized void suspend() throws DebuggerException {
         requireAttach();
         if (suspended) {
@@ -173,7 +173,7 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
         enableCache();
         reresolveLoadObjects();
     }
-
+    
     public synchronized void resume() throws DebuggerException {
         requireAttach();
         if (!suspended) {
@@ -183,12 +183,12 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
         disableCache();
         suspended = false;
     }
-
+    
     public synchronized boolean isSuspended() throws DebuggerException {
         requireAttach();
         return suspended;
     }
-
+    
     /** From the Debugger interface via JVMDebugger */
     public Address parseAddress(String addressString) throws NumberFormatException {
         long addr = utils.scanAddress(addressString);
@@ -197,36 +197,36 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
         }
         return new ProcAddress(this, addr);
     }
-
+    
     /** From the Debugger interface via JVMDebugger */
     public String getOS() {
         return PlatformInfo.getOS();
     }
-
+    
     /** From the Debugger interface via JVMDebugger */
     public String getCPU() {
         return PlatformInfo.getCPU();
     }
-
+    
     public boolean hasConsole() throws DebuggerException {
         return false;
     }
-
+    
     public String consoleExecuteCommand(String cmd) throws DebuggerException {
         throw new DebuggerException("Can't execute console commands");
     }
-
+    
     public String getConsolePrompt() throws DebuggerException {
         return "";
     }
-
+    
     public CDebugger getCDebugger() throws DebuggerException {
         if (cdbg == null) {
             cdbg = new ProcCDebugger(this);
         }
         return cdbg;
     }
-
+    
     /** From the SymbolLookup interface via Debugger and JVMDebugger */
     public synchronized Address lookup(String objectName, String symbol) {
         requireAttach();
@@ -236,7 +236,7 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
         }
         return new ProcAddress(this, addr);
     }
-
+    
     /** From the SymbolLookup interface via Debugger and JVMDebugger */
     public synchronized OopHandle lookupOop(String objectName, String symbol) {
         Address addr = lookup(objectName, symbol);
@@ -245,46 +245,46 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
         }
         return addr.addOffsetToAsOopHandle(0);
     }
-
+    
     /** From the ProcDebugger interface */
     public MachineDescription getMachineDescription() {
         return machDesc;
     }
-
+    
     /** Internal routine supporting lazy setting of MachineDescription,
      * since on SPARC we will need to query the remote process to ask
      * it what its data model is (32- or 64-bit).
      */
-
+    
     public void setMachineDescription(MachineDescription machDesc) {
         this.machDesc = machDesc;
         setBigEndian(machDesc.isBigEndian());
         utils = new DebuggerUtilities(machDesc.getAddressSize(), machDesc.isBigEndian());
     }
-
+    
     public synchronized int getRemoteProcessAddressSize()
     throws DebuggerException {
         requireAttach();
         return getRemoteProcessAddressSize0();
     }
-
+    
     //--------------------------------------------------------------------------------
     // Implementation of ThreadAccess interface
     //
-
+    
     /** From the ThreadAccess interface via Debugger and JVMDebugger */
     public ThreadProxy getThreadForIdentifierAddress(Address addr) {
         return threadFactory.createThreadWrapper(addr);
     }
-
+    
     public ThreadProxy getThreadForThreadId(long id) {
         return threadFactory.createThreadWrapper(id);
     }
-
+    
     //----------------------------------------------------------------------
     // Overridden from DebuggerBase because we need to relax alignment
     // constraints on x86
-
+    
     public long readJLong(long address)
     throws UnmappedAddressException, UnalignedAddressException {
         checkJavaConfigured();
@@ -299,17 +299,17 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
         byte[] data = readBytes(address, jlongSize);
         return utils.dataToJLong(data, jlongSize);
     }
-
+    
     //--------------------------------------------------------------------------------
     // Internal routines (for implementation of ProcAddress).
     // These must not be called until the MachineDescription has been set up.
     //
-
+    
     /** From the ProcDebugger interface */
     public String addressValueToString(long address) {
         return utils.addressValueToString(address);
     }
-
+    
     /** Need to override this to relax alignment checks on Solaris/x86. */
     public long readCInteger(long address, long numBytes, boolean isUnsigned)
     throws UnmappedAddressException, UnalignedAddressException {
@@ -329,21 +329,21 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
         byte[] data = readBytes(address, numBytes);
         return utils.dataToCInteger(data, isUnsigned);
     }
-
+    
     /** From the ProcDebugger interface */
     public ProcAddress readAddress(long address)
     throws UnmappedAddressException, UnalignedAddressException {
         long value = readAddressValue(address);
         return (value == 0 ? null : new ProcAddress(this, value));
     }
-
+    
     /** From the ProcDebugger interface */
     public ProcOopHandle readOopHandle(long address)
     throws UnmappedAddressException, UnalignedAddressException, NotInHeapException {
         long value = readAddressValue(address);
         return (value == 0 ? null : new ProcOopHandle(this, value));
     }
-
+    
     public void writeBytesToProcess(long address, long numBytes, byte[] data)
     throws UnmappedAddressException, DebuggerException {
         if (isCore) {
@@ -351,7 +351,7 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
         }
         writeBytesToProcess0(address, numBytes, data);
     }
-
+    
     public synchronized ReadResult readBytesFromProcess(long address, long numBytes)
     throws DebuggerException {
         requireAttach();
@@ -361,7 +361,7 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
         else
             return new ReadResult(address);
     }
-
+    
     protected int getPageSize() {
         int pagesize = getPageSize0();
         if (pagesize == -1) {
@@ -370,33 +370,33 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
         }
         return pagesize;
     }
-
+    
     //--------------------------------------------------------------------------------
     // Thread context access. Can not be package private, but should
     // only be accessed by the architecture-specific subpackages.
-
+    
     /** From the ProcDebugger interface. May have to redefine this later. */
     public synchronized long[] getThreadIntegerRegisterSet(int tid) {
         requireAttach();
         return getThreadIntegerRegisterSet0(tid);
     }
-
+    
     //--------------------------------------------------------------------------------
     // Address access. Can not be package private, but should only be
     // accessed by the architecture-specific subpackages.
-
+    
     /** From the ProcDebugger interface */
     public long getAddressValue(Address addr) {
         if (addr == null) return 0;
         return ((ProcAddress) addr).getValue();
     }
-
+    
     /** From the ProcDebugger interface */
     public Address newAddress(long value) {
         if (value == 0) return null;
         return new ProcAddress(this, value);
     }
-
+    
     /** From the ProcDebugger interface */
     public synchronized List getThreadList() throws DebuggerException {
         requireAttach();
@@ -412,20 +412,20 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
         }
         return res;
     }
-
+    
     /** From the ProcDebugger interface */
     public synchronized List getLoadObjectList() throws DebuggerException {
         requireAttach();
         if (!suspended) {
             throw new DebuggerException("Process not suspended");
         }
-
+        
         if (loadObjectCache == null) {
             updateLoadObjectCache();
         }
         return loadObjectCache;
     }
-
+    
     /** From the ProcDebugger interface */
     public synchronized CFrame topFrameForThread(ThreadProxy thread)
     throws DebuggerException {
@@ -447,29 +447,29 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
             return res;
         }
     }
-
+    
     /** From the ProcDebugger interface */
     public synchronized ClosestSymbol lookup(long address) {
         requireAttach();
         return lookupByAddress0(address);
     }
-
+    
     /** From the ProcDebugger interface */
     public String demangle(String name) {
         return demangle0(name);
     }
-
+    
     //------------- Internals only below this point --------------------
     //
     //
-
+    
     private void updateLoadObjectCache() {
         List res = new ArrayList();
         nameToDsoMap = new HashMap();
         fillLoadObjectList0(res);
         loadObjectCache = sortLoadObjects(res);
     }
-
+    
     // sort load objects by base address
     private static List sortLoadObjects(List in) {
         // sort the list by base address
@@ -477,7 +477,7 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
         Arrays.sort(arr, loadObjectComparator);
         return Arrays.asList(arr);
     }
-
+    
     private long lookupByName(String objectName, String symbolName)
     throws DebuggerException {
         // NOTE: this assumes that process is suspended (which is probably
@@ -497,7 +497,7 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
         }
         return 0;
     }
-
+    
     private SharedObject findDSOByName(String fullPathName) {
         if (loadObjectCache == null)
             return null;
@@ -509,15 +509,15 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
         }
         return null;
     }
-
+    
     private void reresolveLoadObjects() throws DebuggerException {
         if (loadObjectCache == null) {
             return;
         }
         updateLoadObjectCache();
     }
-
-
+    
+    
     private void checkAttached() {
         if (attached) {
             if (isCore) {
@@ -527,23 +527,23 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
             }
         }
     }
-
+    
     private void requireAttach() {
         if (! attached) {
             throw new RuntimeException("not attached to a process or core file!");
         }
     }
-
+    
     private void clearCacheFields() {
         loadObjectCache = null;
         nameToDsoMap    = null;
         threadListCache = null;
         topFrameCache   = null;
     }
-
+    
     private void resetNativePointers() {
         p_ps_prochandle          = 0L;
-
+        
         // reset thread_db pointers
         libthread_db_handle    = 0L;
         p_td_thragent_t        = 0L;
@@ -554,30 +554,30 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
         p_td_thr_get_info      = 0L;
         p_td_ta_map_id2thr     = 0L;
         p_td_thr_getgregs      = 0L;
-
+        
         // part of class sharing workaround
         classes_jsa_fd         = -1;
         p_file_map_header      = 0L;
     }
-
+    
     // native methods and native helpers
-
+    
     // attach, detach
     private native void attach0(String pid) throws DebuggerException;
     private native void attach0(String executableFile, String coreFileName) throws DebuggerException;
     private native void detach0() throws DebuggerException;
-
+    
     // address size, page size
     private native int getRemoteProcessAddressSize0() throws DebuggerException;
     private native int getPageSize0() throws DebuggerException;
-
+    
     // threads, stacks
     private native long[] getThreadIntegerRegisterSet0(long tid) throws DebuggerException;
     private native void   fillThreadList0(List l) throws DebuggerException;
-
+    
     // fills stack frame list given reg set of the top frame and top frame
     private native ProcCFrame fillCFrameList0(long[] regs) throws DebuggerException;
-
+    
     // helper called by fillCFrameList0
     private ProcCFrame createSenderFrame(ProcCFrame f, long pc, long fp) {
         ProcCFrame sender = new ProcCFrame(this, newAddress(pc), newAddress(fp));
@@ -586,10 +586,10 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
         }
         return sender;
     }
-
+    
     // shared objects
     private native void fillLoadObjectList0(List l) throws DebuggerException;
-
+    
     // helper called by fillLoadObjectList0
     private LoadObject createLoadObject(String fileName, long textsize, long base) {
         File f = new File(fileName);
@@ -608,58 +608,58 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
         nameToDsoMap.put(f.getName(), res);
         return res;
     }
-
+    
     // symbol-to-pc
     private native long lookupByName0(String objectName, String symbolName) throws DebuggerException;
     private native ClosestSymbol lookupByAddress0(long address) throws DebuggerException;
-
+    
     // helper called by lookupByAddress0
     private ClosestSymbol createClosestSymbol(String name, long offset) {
         return new ClosestSymbol(name, offset);
     }
-
+    
     // process read/write
     private native byte[] readBytesFromProcess0(long address, long numBytes) throws DebuggerException;
     private native void writeBytesToProcess0(long address, long numBytes, byte[] data) throws DebuggerException;
-
+    
     // process control
     private native void suspend0() throws DebuggerException;
     private native void resume0() throws DebuggerException;
-
+    
     // demangle a C++ name
     private native String demangle0(String name);
-
+    
     // init JNI ids to fields, methods
     private native static void initIDs() throws DebuggerException;
     private static LoadObjectComparator loadObjectComparator;
-
+    
     static {
         System.loadLibrary("saproc");
         initIDs();
         loadObjectComparator = new LoadObjectComparator();
     }
-
+    
     private boolean unalignedAccessesOkay;
     private ProcThreadFactory threadFactory;
-
+    
     // indices of PC and FP registers in gregset
     private int pcRegIndex;
     private int fpRegIndex;
-
+    
     // Symbol lookup support
     // This is a map of library names to DSOs
     private Map nameToDsoMap;  // Map<String, SharedObject>
-
+    
     // C/C++ debugging support
     private List/*<LoadObject>*/ loadObjects;
     private CDebugger cdbg;
-
+    
     // ProcessControl support
     private boolean suspended;
-
+    
     // libproc handle
     private long p_ps_prochandle;
-
+    
     // libthread.so's dlopen handle, thread agent
     // and function pointers
     private long libthread_db_handle;
@@ -671,14 +671,14 @@ public class ProcDebuggerLocal extends DebuggerBase implements ProcDebugger {
     private long p_td_thr_get_info;
     private long p_td_ta_map_id2thr;
     private long p_td_thr_getgregs;
-
+    
     // part of class sharing workaround
     private int classes_jsa_fd;
     private long p_file_map_header;
-
+    
     private boolean attached = false;
     private boolean isCore;
-
+    
     // for core files, we cache load object list, thread list, top frames etc.
     // for processes we cache load object list and sync. it during suspend.
     private List threadListCache;

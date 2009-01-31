@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class StackValue : public ResourceObj {
@@ -81,12 +84,12 @@ class StackValue : public ResourceObj {
 
   bool equal(StackValue *value) {
     if (_type != value->_type) return false;
-    if (_type == T_OBJECT)
+    if (_type == T_OBJECT) 
       return (_o == value->_o);
     else {
       assert(_type == T_INT, "sanity check");
       // [phh] compare only low addressed portions of intptr_t slots
-      return (*(int *)&_i == *(int *)&value->_i);
+      return (*(int *)&_i == *(int *)&value->_i);    
     }
   }
 
@@ -99,3 +102,4 @@ class StackValue : public ResourceObj {
   void print_on(outputStream* st) const;
 #endif
 };
+

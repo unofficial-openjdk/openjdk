@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -287,12 +290,11 @@ static inline uint64_t cast_uint64_t(size_t x)
   nonstatic_field(CardGeneration,              _rs,                                           GenRemSet*)                            \
   nonstatic_field(CardGeneration,              _bts,                                          BlockOffsetSharedArray*)               \
                                                                                                                                      \
-  nonstatic_field(CardTableModRefBS,           _whole_heap,                                   const MemRegion)                       \
-  nonstatic_field(CardTableModRefBS,           _guard_index,                                  const size_t)                          \
-  nonstatic_field(CardTableModRefBS,           _last_valid_index,                             const size_t)                          \
-  nonstatic_field(CardTableModRefBS,           _page_size,                                    const size_t)                          \
-  nonstatic_field(CardTableModRefBS,           _byte_map_size,                                const size_t)                          \
+  nonstatic_field(CardTableModRefBS,           _whole_heap,                                   MemRegion)                             \
   nonstatic_field(CardTableModRefBS,           _byte_map,                                     jbyte*)                                \
+  nonstatic_field(CardTableModRefBS,           _byte_map_size,                                size_t)                                \
+  nonstatic_field(CardTableModRefBS,           _last_valid_index,                             size_t)                                \
+  nonstatic_field(CardTableModRefBS,           _guard_index,                                  size_t)                                \
   nonstatic_field(CardTableModRefBS,           _cur_covered_regions,                          int)                                   \
   nonstatic_field(CardTableModRefBS,           _covered,                                      MemRegion*)                            \
   nonstatic_field(CardTableModRefBS,           _committed,                                    MemRegion*)                            \
@@ -1005,7 +1007,6 @@ static inline uint64_t cast_uint64_t(size_t x)
   declare_toplevel_type(GenerationSpec)                                   \
   declare_toplevel_type(HeapWord)                                         \
   declare_toplevel_type(MemRegion)                                        \
-  declare_toplevel_type(const MemRegion)                                  \
   declare_toplevel_type(PermanentGenerationSpec)                          \
   declare_toplevel_type(ThreadLocalAllocBuffer)                           \
   declare_toplevel_type(VirtualSpace)                                     \
@@ -1270,7 +1271,7 @@ static inline uint64_t cast_uint64_t(size_t x)
    declare_integer_type(ReferenceType)                                    \
   declare_toplevel_type(StubQueue*)                                       \
   declare_toplevel_type(Thread*)                                          \
-  declare_toplevel_type(Universe)
+  declare_toplevel_type(Universe)  
 
   /* NOTE that we do not use the last_entry() macro here; it is used  */
   /* in vmStructs_<os>_<cpu>.hpp's VM_TYPES_OS_CPU macro (and must be */
@@ -1734,15 +1735,15 @@ static inline uint64_t cast_uint64_t(size_t x)
 // This macro checks the type of a VMStructEntry by comparing pointer types
 #define CHECK_NONSTATIC_VM_STRUCT_ENTRY(typeName, fieldName, type)                 \
  {typeName *dummyObj = NULL; type* dummy = &dummyObj->fieldName; }
-
+ 
 // This macro checks the type of a volatile VMStructEntry by comparing pointer types
 #define CHECK_VOLATILE_NONSTATIC_VM_STRUCT_ENTRY(typeName, fieldName, type)        \
  {typedef type dummyvtype; typeName *dummyObj = NULL; volatile dummyvtype* dummy = &dummyObj->fieldName; }
-
+ 
 // This macro checks the type of a VMStructEntry by comparing pointer types
 #define CHECK_STATIC_VM_STRUCT_ENTRY(typeName, fieldName, type)                    \
  {type* dummy = &typeName::fieldName; }
-
+ 
 // This macro ensures the type of a field and its containing type are
 // present in the type table. The assertion string is shorter than
 // preferable because (incredibly) of a bug in Solstice NFS client
@@ -1931,7 +1932,7 @@ static inline uint64_t cast_uint64_t(size_t x)
 
 //
 // Instantiation of VMStructEntries, VMTypeEntries and VMIntConstantEntries
-//
+// 
 
 // These initializers are allowed to access private fields in classes
 // as long as class VMStructs is a friend

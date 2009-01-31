@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "@(#)taskqueue.hpp	1.33 06/08/10 17:56:52 JVM"
+#endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class TaskQueueSuper: public CHeapObj {
@@ -89,12 +92,12 @@ protected:
     // from a state in which _bottom == _top+1.  The pop_local could
     // succeed in decrementing _bottom, and the pop_global in incrementing
     // _top (in which case the pop_global will be awarded the contested
-    // queue element.)  The resulting state must be interpreted as an empty
+    // queue element.)  The resulting state must be interpreted as an empty 
     // queue.  (We only need to worry about one such event: only the queue
     // owner performs pop_local's, and several concurrent threads
     // attempting to perform the pop_global will all perform the same CAS,
     // and only one can succeed.  Any stealing thread that reads after
-    // either the increment or decrement will seen an empty queue, and will
+    // either the increment or decrement will seen an empty queue, and will 
     // not join the competitors.  The "sz == -1 || sz == _n-1" state will
     // not be modified  by concurrent queues, so the owner thread can reset
     // the state to _bottom == top so subsequent pushes will be performed
@@ -102,7 +105,7 @@ protected:
     if (sz == (n()-1)) return 0;
     else return sz;
   }
-
+    
 public:
   TaskQueueSuper() : _bottom(0), _age() {}
 
@@ -189,7 +192,7 @@ pop_local_slow(juint localBot, Age oldAge) {
   // This queue was observed to contain exactly one element; either this
   // thread will claim it, or a competing "pop_global".  In either case,
   // the queue will be logically empty afterwards.  Create a new Age value
-  // that represents the empty queue for the given value of "_bottom".  (We
+  // that represents the empty queue for the given value of "_bottom".  (We 
   // must also increment "tag" because of the case where "bottom == 1",
   // "top == 0".  A pop_global could read the queue element in that case,
   // then have the owner thread do a pop followed by another push.  Without
@@ -198,19 +201,19 @@ pop_local_slow(juint localBot, Age oldAge) {
   Age newAge;
   newAge._top = localBot;
   newAge._tag = oldAge.tag() + 1;
-  // Perhaps a competing pop_global has already incremented "top", in which
+  // Perhaps a competing pop_global has already incremented "top", in which 
   // case it wins the element.
   if (localBot == oldAge.top()) {
     Age tempAge;
     // No competing pop_global has yet incremented "top"; we'll try to
     // install new_age, thus claiming the element.
     assert(sizeof(Age) == sizeof(jint) && sizeof(jint) == sizeof(juint),
-           "Assumption about CAS unit.");
+	   "Assumption about CAS unit.");
     *(jint*)&tempAge = Atomic::cmpxchg(*(jint*)&newAge, (volatile jint*)&_age, *(jint*)&oldAge);
     if (tempAge == oldAge) {
       // We win.
       assert(dirty_size(localBot, get_top()) != n() - 1,
-             "Shouldn't be possible...");
+	     "Shouldn't be possible...");
       return true;
     }
   }
@@ -219,7 +222,7 @@ pop_local_slow(juint localBot, Age oldAge) {
   // the empty queue to become the canonical one.
   set_age(newAge);
   assert(dirty_size(localBot, get_top()) != n() - 1,
-         "Shouldn't be possible...");
+	 "Shouldn't be possible...");
   return false;
 }
 
@@ -241,7 +244,7 @@ bool GenericTaskQueue<E>::pop_global(E& t) {
   // Note that using "_bottom" here might fail, since a pop_local might
   // have decremented it.
   assert(dirty_size(localBot, newAge._top) != n() - 1,
-         "Shouldn't be possible...");
+	 "Shouldn't be possible...");
   return (resAge == oldAge);
 }
 
@@ -282,7 +285,7 @@ public:
 
   GenericTaskQueue<E>* queue(int n);
 
-  // The thread with queue number "queue_num" (and whose random number seed
+  // The thread with queue number "queue_num" (and whose random number seed 
   // is at "seed") is trying to steal a task from some other queue.  (It
   // may try several queues, according to some configuration parameter.)
   // If some steal succeeds, returns "true" and sets "t" the stolen task,
@@ -320,8 +323,8 @@ bool GenericTaskQueueSet<E>::steal_best_of_all(int queue_num, int* seed, E& t) {
       if (k == queue_num) continue;
       jint sz = _queues[k]->size();
       if (sz > best_sz) {
-        best_sz = sz;
-        best_k = k;
+	best_sz = sz;
+	best_k = k;
       }
     }
     return best_sz > 0 && _queues[best_k]->pop_global(t);
@@ -399,7 +402,7 @@ protected:
 
 public:
 
-  // "n_threads" is the number of threads to be terminated.  "queue_set" is a
+  // "n_threads" is the number of threads to be terminated.  "queue_set" is a 
   // queue sets of work queues of other threads.
   ParallelTaskTerminator(int n_threads, TaskQueueSetSuper* queue_set);
 
@@ -435,7 +438,7 @@ template<class E> inline bool GenericTaskQueue<E>::push(E t) {
   jushort top = get_top();
   juint dirty_n_elems = dirty_size(localBot, top);
   assert((dirty_n_elems >= 0) && (dirty_n_elems < n()),
-         "n_elems out of range.");
+	 "n_elems out of range.");
   if (dirty_n_elems < max_elems()) {
     _elems[localBot] = t;
     _bottom = increment_index(localBot);
@@ -471,12 +474,12 @@ template<class E> inline bool GenericTaskQueue<E>::pop_local(E& t) {
   t = _elems[localBot];
   // This is a second read of "age"; the "size()" above is the first.
   // If there's still at least one element in the queue, based on the
-  // "_bottom" and "age" we've read, then there can be no interference with
+  // "_bottom" and "age" we've read, then there can be no interference with 
   // a "pop_global" operation, and we're done.
   juint tp = get_top();
   if (size(localBot, tp) > 0) {
     assert(dirty_size(localBot, tp) != n() - 1,
-           "Shouldn't be possible...");
+	   "Shouldn't be possible...");
     return true;
   } else {
     // Otherwise, the queue contained exactly one element; we take the slow

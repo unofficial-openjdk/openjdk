@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -27,7 +30,7 @@
 
 klassOop typeArrayKlassKlass::create_klass(TRAPS) {
   typeArrayKlassKlass o;
-  KlassHandle h_this_klass(THREAD, Universe::klassKlassObj());
+  KlassHandle h_this_klass(THREAD, Universe::klassKlassObj());  
   KlassHandle k = base_create_klass(h_this_klass, header_size(), o.vtbl_value(), CHECK_NULL);
   assert(k()->size() == align_object_size(header_size()), "wrong size for object");
   java_lang_Class::create_mirror(k, CHECK_NULL); // Allocate mirror
@@ -42,7 +45,7 @@ klassOop typeArrayKlassKlass::create_klass(TRAPS) {
 void typeArrayKlassKlass::oop_print_on(oop obj, outputStream* st) {
   assert(obj->is_klass(), "must be klass");
   oop_print_value_on(obj, st);
-  Klass:: oop_print_on(obj, st);
+  Klass:: oop_print_on(obj, st); 
 }
 
 
@@ -68,3 +71,4 @@ void typeArrayKlassKlass::oop_print_value_on(oop obj, outputStream* st) {
 const char* typeArrayKlassKlass::internal_name() const {
   return "{type array class}";
 }
+

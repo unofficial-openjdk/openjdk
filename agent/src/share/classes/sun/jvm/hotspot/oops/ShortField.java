@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.oops;
@@ -33,7 +33,7 @@ public class ShortField extends Field {
   }
 
   public ShortField(sun.jvm.hotspot.types.JShortField vmField, long startOffset) {
-    super(new NamedFieldIdentifier(vmField.getName()), vmField.getOffset(), true);
+    super(new NamedFieldIdentifier(vmField.getName()), vmField.getOffset(), true); 
   }
 
   public ShortField(InstanceKlass holder, int fieldArrayIndex) {
@@ -45,3 +45,4 @@ public class ShortField extends Field {
     // Fix this: setJFloatAt is missing in Address
   }
 }
+

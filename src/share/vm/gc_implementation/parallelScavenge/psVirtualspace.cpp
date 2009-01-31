@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -49,7 +52,7 @@ PSVirtualSpace::PSVirtualSpace(): _alignment(os::vm_page_size()) {
 
 // Deprecated.
 bool PSVirtualSpace::initialize(ReservedSpace rs,
-                                size_t commit_size) {
+				size_t commit_size) {
   set_reserved(rs);
   set_committed(reserved_low_addr(), reserved_low_addr());
 
@@ -60,7 +63,7 @@ bool PSVirtualSpace::initialize(ReservedSpace rs,
   return result;
 }
 
-PSVirtualSpace::~PSVirtualSpace() {
+PSVirtualSpace::~PSVirtualSpace() { 
   release();
 }
 
@@ -99,13 +102,13 @@ bool PSVirtualSpace::expand_by(size_t bytes, bool pre_touch) {
 
   if (pre_touch || AlwaysPreTouch) {
     for (char* curr = base_addr;
-         curr < _committed_high_addr;
-         curr += os::vm_page_size()) {
+ 	 curr < _committed_high_addr;
+ 	 curr += os::vm_page_size()) {
       char tmp = *curr;
       *curr = 0;
     }
   }
-
+  
   return result;
 }
 
@@ -132,7 +135,7 @@ PSVirtualSpace::expand_into(PSVirtualSpace* other_space, size_t bytes) {
   assert(grows_up(), "this space must grow up");
   assert(other_space->grows_down(), "other space must grow down");
   assert(reserved_high_addr() == other_space->reserved_low_addr(),
-         "spaces not contiguous");
+	 "spaces not contiguous");
   assert(special() == other_space->special(), "one space is special, the other is not");
   DEBUG_ONLY(PSVirtualSpaceVerifier this_verifier(this));
   DEBUG_ONLY(PSVirtualSpaceVerifier other_verifier(other_space));
@@ -157,7 +160,7 @@ PSVirtualSpace::expand_into(PSVirtualSpace* other_space, size_t bytes) {
         os::commit_memory(commit_base, tmp_bytes, alignment())) {
       // Reduce the reserved region in the other space.
       other_space->set_reserved(other_space->reserved_low_addr() + tmp_bytes,
-                                other_space->reserved_high_addr(),
+				other_space->reserved_high_addr(),
                                 other_space->special());
 
       // Grow both reserved and committed in this space.
@@ -174,9 +177,9 @@ PSVirtualSpace::expand_into(PSVirtualSpace* other_space, size_t bytes) {
   if (tmp_bytes > 0) {
     // Reduce both committed and reserved in the other space.
     other_space->set_committed(other_space->committed_low_addr() + tmp_bytes,
-                               other_space->committed_high_addr());
+			       other_space->committed_high_addr());
     other_space->set_reserved(other_space->reserved_low_addr() + tmp_bytes,
-                              other_space->reserved_high_addr(),
+			      other_space->reserved_high_addr(),
                               other_space->special());
 
     // Grow both reserved and committed in this space.
@@ -211,8 +214,8 @@ void PSVirtualSpace::verify() const {
 
   // Reserved region must be non-empty or both addrs must be 0.
   assert(reserved_low_addr() < reserved_high_addr() ||
-         reserved_low_addr() == NULL && reserved_high_addr() == NULL,
-         "bad reserved addrs");
+	 reserved_low_addr() == NULL && reserved_high_addr() == NULL,
+	 "bad reserved addrs");
   assert(committed_low_addr() <= committed_high_addr(), "bad committed addrs");
 
   if (grows_up()) {
@@ -226,27 +229,27 @@ void PSVirtualSpace::verify() const {
 
 void PSVirtualSpace::print() const {
   gclog_or_tty->print_cr("virtual space [" PTR_FORMAT "]:  alignment="
-                         SIZE_FORMAT "K grows %s%s",
-                         this, alignment() / K, grows_up() ? "up" : "down",
+			 SIZE_FORMAT "K grows %s%s",
+			 this, alignment() / K, grows_up() ? "up" : "down",
                          special() ? " (pinned in memory)" : "");
   gclog_or_tty->print_cr("    reserved=" SIZE_FORMAT "K"
-                         " [" PTR_FORMAT "," PTR_FORMAT "]"
-                         " committed=" SIZE_FORMAT "K"
-                         " [" PTR_FORMAT "," PTR_FORMAT "]",
-                         reserved_size() / K,
-                         reserved_low_addr(), reserved_high_addr(),
-                         committed_size() / K,
-                         committed_low_addr(), committed_high_addr());
+			 " [" PTR_FORMAT "," PTR_FORMAT "]"
+			 " committed=" SIZE_FORMAT "K"
+			 " [" PTR_FORMAT "," PTR_FORMAT "]",
+			 reserved_size() / K,
+			 reserved_low_addr(), reserved_high_addr(),
+			 committed_size() / K,
+			 committed_low_addr(), committed_high_addr());
 }
 #endif // #ifndef PRODUCT
 
 void PSVirtualSpace::print_space_boundaries_on(outputStream* st) const {
   st->print_cr(" [" PTR_FORMAT ", " PTR_FORMAT ", " PTR_FORMAT ")",
-               low_boundary(), high(), high_boundary());
+	       low_boundary(), high(), high_boundary());
 }
 
 PSVirtualSpaceHighToLow::PSVirtualSpaceHighToLow(ReservedSpace rs,
-                                                 size_t alignment) :
+						 size_t alignment) :
   PSVirtualSpace(alignment)
 {
   set_reserved(rs);
@@ -276,13 +279,13 @@ bool PSVirtualSpaceHighToLow::expand_by(size_t bytes, bool pre_touch) {
 
   if (pre_touch || AlwaysPreTouch) {
     for (char* curr = base_addr;
-         curr < _committed_high_addr;
-         curr += os::vm_page_size()) {
+ 	 curr < _committed_high_addr;
+ 	 curr += os::vm_page_size()) {
       char tmp = *curr;
       *curr = 0;
     }
   }
-
+  
   return result;
 }
 
@@ -304,12 +307,12 @@ bool PSVirtualSpaceHighToLow::shrink_by(size_t bytes) {
 }
 
 size_t PSVirtualSpaceHighToLow::expand_into(PSVirtualSpace* other_space,
-                                            size_t bytes) {
+					    size_t bytes) {
   assert(is_aligned(bytes), "arg not aligned");
   assert(grows_down(), "this space must grow down");
   assert(other_space->grows_up(), "other space must grow up");
   assert(reserved_low_addr() == other_space->reserved_high_addr(),
-         "spaces not contiguous");
+	 "spaces not contiguous");
   assert(special() == other_space->special(), "one space is special in memory, the other is not");
   DEBUG_ONLY(PSVirtualSpaceVerifier this_verifier(this));
   DEBUG_ONLY(PSVirtualSpaceVerifier other_verifier(other_space));
@@ -334,7 +337,7 @@ size_t PSVirtualSpaceHighToLow::expand_into(PSVirtualSpace* other_space,
         os::commit_memory(commit_base, tmp_bytes, alignment())) {
       // Reduce the reserved region in the other space.
       other_space->set_reserved(other_space->reserved_low_addr(),
-                                other_space->reserved_high_addr() - tmp_bytes,
+				other_space->reserved_high_addr() - tmp_bytes,
                                 other_space->special());
 
       // Grow both reserved and committed in this space.
@@ -351,9 +354,9 @@ size_t PSVirtualSpaceHighToLow::expand_into(PSVirtualSpace* other_space,
   if (tmp_bytes > 0) {
     // Reduce both committed and reserved in the other space.
     other_space->set_committed(other_space->committed_low_addr(),
-                               other_space->committed_high_addr() - tmp_bytes);
+			       other_space->committed_high_addr() - tmp_bytes);
     other_space->set_reserved(other_space->reserved_low_addr(),
-                              other_space->reserved_high_addr() - tmp_bytes,
+			      other_space->reserved_high_addr() - tmp_bytes,
                               other_space->special());
 
     // Grow both reserved and committed in this space.
@@ -367,5 +370,5 @@ size_t PSVirtualSpaceHighToLow::expand_into(PSVirtualSpace* other_space,
 void
 PSVirtualSpaceHighToLow::print_space_boundaries_on(outputStream* st) const {
   st->print_cr(" (" PTR_FORMAT ", " PTR_FORMAT ", " PTR_FORMAT "]",
-               high_boundary(), low(), low_boundary());
+	       high_boundary(), low(), low_boundary());
 }

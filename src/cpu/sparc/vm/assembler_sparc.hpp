@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class BiasedLockingCounters;
@@ -84,7 +87,7 @@ REGISTER_DECLARATION(Register, G4_scratch    , G4);
 REGISTER_DECLARATION(Register, Gtemp  , G5);
 
 // The compiler requires that G5_megamorphic_method is G5_inline_cache_klass,
-// because a single patchable "set" instruction (NativeMovConstReg,
+// because a single patchable "set" instruction (NativeMovConstReg, 
 // or NativeMovConstPatching for compiler1) instruction
 // serves to set up either quantity, depending on whether the compiled
 // call site is an inline cache or is megamorphic.  See the function
@@ -265,14 +268,14 @@ REGISTER_DECLARATION(Register, Oissuing_pc , O1); // where the exception is comi
 
 class Address VALUE_OBJ_CLASS_SPEC {
  private:
-  Register              _base;
+  Register		_base;
 #ifdef _LP64
-  int                   _hi32;          // bits 63::32
-  int                   _low32;         // bits 31::0
+  int			_hi32;		// bits 63::32
+  int			_low32;		// bits 31::0
 #endif
   int                   _hi;
-  int                   _disp;
-  RelocationHolder      _rspec;
+  int			_disp;
+  RelocationHolder	_rspec;
 
   RelocationHolder rspec_from_rtype(relocInfo::relocType rt, address a = NULL) {
     switch (rt) {
@@ -308,7 +311,7 @@ class Address VALUE_OBJ_CLASS_SPEC {
     _hi    = (intptr_t)a & ~0x3ff; // top    22 bits in low word
     _disp  = (intptr_t)a &  0x3ff; // bottom 10 bits
   }
-
+  
   Address(Register b, address a, RelocationHolder const& rspec)
     : _rspec(rspec)
   {
@@ -320,7 +323,7 @@ class Address VALUE_OBJ_CLASS_SPEC {
     _hi    = (intptr_t)a & ~0x3ff; // top    22 bits
     _disp  = (intptr_t)a &  0x3ff; // bottom 10 bits
   }
-
+  
   Address(Register b, intptr_t h, intptr_t d, RelocationHolder const& rspec = RelocationHolder())
     : _rspec(rspec)
   {
@@ -343,7 +346,7 @@ class Address VALUE_OBJ_CLASS_SPEC {
   {
     _base  = G0;
 #ifdef _LP64
-    _hi32  = 0;
+    _hi32  = 0;    		   
     _low32 = 0;
 #endif
     _hi    = 0;
@@ -353,7 +356,7 @@ class Address VALUE_OBJ_CLASS_SPEC {
   // fancier constructors
 
   enum addr_type {
-    extra_in_argument,  // in the In registers
+    extra_in_argument,	// in the In registers
     extra_out_argument  // in the Outs
   };
 
@@ -363,14 +366,14 @@ class Address VALUE_OBJ_CLASS_SPEC {
 
   Register               base() const { return _base; }
 #ifdef _LP64
-  int                   hi32()  const { return _hi32; }
-  int                   low32() const { return _low32; }
+  int			hi32()	const { return _hi32; }
+  int			low32() const { return _low32; }
 #endif
   int                      hi() const { return _hi;  }
   int                    disp() const { return _disp; }
 #ifdef _LP64
-  intptr_t              value() const { return ((intptr_t)_hi32 << 32) |
-                                                (intptr_t)(uint32_t)_low32; }
+  intptr_t              value() const { return ((intptr_t)_hi32 << 32) | 
+						(intptr_t)(uint32_t)_low32; }
 #else
   int                   value() const { return _hi | _disp; }
 #endif
@@ -429,12 +432,12 @@ class Argument VALUE_OBJ_CLASS_SPEC {
  public:
 #ifdef _LP64
   enum {
-    n_register_parameters = 6,          // only 6 registers may contain integer parameters
-    n_float_register_parameters = 16    // Can have up to 16 floating registers
+    n_register_parameters = 6, 		// only 6 registers may contain integer parameters
+    n_float_register_parameters = 16	// Can have up to 16 floating registers
   };
 #else
   enum {
-    n_register_parameters = 6           // only 6 registers may contain integer parameters
+    n_register_parameters = 6 		// only 6 registers may contain integer parameters
   };
 #endif
 
@@ -479,11 +482,11 @@ class Argument VALUE_OBJ_CLASS_SPEC {
 
   // When applied to a register-based argument, give the corresponding address
   // into the 6-word area "into which callee may store register arguments"
-  // (This is a different place than the corresponding register-save area location.)
+  // (This is a different place than the corresponding register-save area location.) 
   Address address_in_frame() const {
-    return Address( is_in()   ? Address::extra_in_argument
-                              : Address::extra_out_argument,
-                    _number );
+    return Address( is_in()   ? Address::extra_in_argument 
+		  	      : Address::extra_out_argument,
+	            _number );
   }
 
   // debugging
@@ -499,7 +502,7 @@ class Argument VALUE_OBJ_CLASS_SPEC {
 
 class Assembler : public AbstractAssembler  {
  protected:
-
+   
   static void print_instruction(int inst);
   static int  patched_branch(int dest_pos, int inst, int inst_pos);
   static int  branch_destination(int inst, int pos);
@@ -516,7 +519,7 @@ class Assembler : public AbstractAssembler  {
  public:
   // op carries format info; see page 62 & 267
 
-  enum ops {
+  enum ops { 
     call_op   = 1, // fmt 1
     branch_op = 0, // also sethi (fmt2)
     arith_op  = 2, // fmt 3, arith & misc
@@ -656,42 +659,42 @@ class Assembler : public AbstractAssembler  {
 
   enum opfs {
     // selected opfs
-    fmovs_opf   = 0x01,
-    fmovd_opf   = 0x02,
+    fmovs_opf	= 0x01,
+    fmovd_opf	= 0x02,
 
     fnegs_opf   = 0x05,
     fnegd_opf   = 0x06,
 
-    fadds_opf   = 0x41,
-    faddd_opf   = 0x42,
-    fsubs_opf   = 0x45,
-    fsubd_opf   = 0x46,
+    fadds_opf	= 0x41,
+    faddd_opf	= 0x42,
+    fsubs_opf	= 0x45,
+    fsubd_opf	= 0x46,
 
-    fmuls_opf   = 0x49,
-    fmuld_opf   = 0x4a,
-    fdivs_opf   = 0x4d,
-    fdivd_opf   = 0x4e,
+    fmuls_opf	= 0x49,
+    fmuld_opf	= 0x4a,
+    fdivs_opf	= 0x4d,
+    fdivd_opf	= 0x4e,
 
-    fcmps_opf   = 0x51,
-    fcmpd_opf   = 0x52,
+    fcmps_opf	= 0x51,
+    fcmpd_opf	= 0x52,
 
-    fstox_opf   = 0x81,
-    fdtox_opf   = 0x82,
-    fxtos_opf   = 0x84,
-    fxtod_opf   = 0x88,
-    fitos_opf   = 0xc4,
+    fstox_opf	= 0x81,
+    fdtox_opf	= 0x82,
+    fxtos_opf	= 0x84,
+    fxtod_opf	= 0x88,
+    fitos_opf	= 0xc4,
     fdtos_opf   = 0xc6,
-    fitod_opf   = 0xc8,
-    fstod_opf   = 0xc9,
-    fstoi_opf   = 0xd1,
-    fdtoi_opf   = 0xd2
+    fitod_opf	= 0xc8,
+    fstod_opf	= 0xc9,
+    fstoi_opf	= 0xd1,
+    fdtoi_opf	= 0xd2
   };
 
   enum RCondition {  rc_z = 1,  rc_lez = 2,  rc_lz = 3, rc_nz = 5, rc_gz = 6, rc_gez = 7  };
-
-  enum Condition {
+   
+  enum Condition { 
      // for FBfcc & FBPfcc instruction
-    f_never                     = 0,
+    f_never                     = 0,  
     f_notEqual                  = 1,
     f_notZero                   = 1,
     f_lessOrGreater             = 2,
@@ -699,8 +702,8 @@ class Assembler : public AbstractAssembler  {
     f_less                      = 4,
     f_unorderedOrGreater        = 5,
     f_greater                   = 6,
-    f_unordered                 = 7,
-    f_always                    = 8,
+    f_unordered                 = 7,   
+    f_always                    = 8,  
     f_equal                     = 9,
     f_zero                      = 9,
     f_unorderedOrEqual          = 10,
@@ -709,9 +712,9 @@ class Assembler : public AbstractAssembler  {
     f_lessOrEqual               = 13,
     f_unorderedOrLessOrEqual    = 14,
     f_ordered                   = 15,
-
+    
     // V8 coproc, pp 123 v8 manual
-
+    
     cp_always  = 8,
     cp_never   = 0,
     cp_3       = 7,
@@ -728,8 +731,8 @@ class Assembler : public AbstractAssembler  {
     cp_0or1    = 13,
     cp_0or1or3 = 14,
     cp_0or1or2 = 15,
-
-
+   
+   
     // for integers
 
     never                 =  0,
@@ -746,21 +749,21 @@ class Assembler : public AbstractAssembler  {
     notEqual              =  9,
     notZero               =  9,
     greater               =  10,
-    greaterEqual          =  11,
+    greaterEqual          =  11, 
     greaterUnsigned       =  12,
     greaterEqualUnsigned  =  13,
     carryClear            =  13,
     positive              =  14,
     overflowClear         =  15
   };
-
-  enum CC {
+  
+  enum CC { 
     icc  = 0,  xcc  = 2,
     // ptr_cc is the correct condition code for a pointer or intptr_t:
     ptr_cc = NOT_LP64(icc) LP64_ONLY(xcc),
     fcc0 = 0,  fcc1 = 1, fcc2 = 2, fcc3 = 3
   };
-
+  
   enum PrefetchFcn {
     severalReads = 0,  oneRead = 1,  severalWritesAndPossiblyReads = 2, oneWrite = 3, page = 4
   };
@@ -804,26 +807,26 @@ class Assembler : public AbstractAssembler  {
         ||  -(1 << nbits-1) <= x  &&  x < ( 1 << nbits-1),
       "value out of range");
   }
-
+  
   static void assert_signed_word_disp_range(intptr_t x, int nbits) {
     assert( (x & 3) == 0, "not word aligned");
     assert_signed_range(x, nbits + 2);
   }
-
+  
   static void assert_unsigned_const(int x, int nbits) {
     assert( juint(x)  <  juint(1 << nbits), "unsigned constant out of range");
   }
 
   // fields: note bits numbered from LSB = 0,
   //  fields known by inclusive bit range
-
+  
   static int fmask(juint hi_bit, juint lo_bit) {
     assert( hi_bit >= lo_bit  &&  0 <= lo_bit  &&  hi_bit < 32, "bad bits");
     return (1 << ( hi_bit-lo_bit + 1 )) - 1;
   }
-
+  
   // inverse of u_field
-
+  
   static int inv_u_field(int x, int hi_bit, int lo_bit) {
     juint r = juint(x) >> lo_bit;
     r &= fmask( hi_bit, lo_bit);
@@ -837,11 +840,11 @@ class Assembler : public AbstractAssembler  {
     int sign_shift = 31 - hi_bit;
     return inv_u_field( ((x << sign_shift) >> sign_shift), hi_bit, lo_bit);
   }
-
+  
   // given a field that ranges from hi_bit to lo_bit (inclusive,
   // LSB = 0), and an unsigned value for the field,
   // shift it into the field
-
+  
 #ifdef ASSERT
   static int u_field(int x, int hi_bit, int lo_bit) {
     assert( ( x & ~fmask(hi_bit, lo_bit))  == 0,
@@ -856,8 +859,8 @@ class Assembler : public AbstractAssembler  {
 #endif
 
   static int inv_op(  int x ) { return inv_u_field(x, 31, 30); }
-  static int inv_op2( int x ) { return inv_u_field(x, 24, 22); }
-  static int inv_op3( int x ) { return inv_u_field(x, 24, 19); }
+  static int inv_op2( int x ) { return inv_u_field(x, 24, 22); } 
+  static int inv_op3( int x ) { return inv_u_field(x, 24, 19); } 
   static int inv_cond( int x ){ return inv_u_field(x, 28, 25); }
 
   static bool inv_immed( int x ) { return (x & Assembler::immed(true)) != 0; }
@@ -887,7 +890,7 @@ class Assembler : public AbstractAssembler  {
   static int trapcc(   CC         cc)  { return  u_field(cc,            12, 11); }
   static int sx(       int         i)  { return  u_field(i,             12, 12); } // shift x=1 means 64-bit
   static int opf(      int         x)  { return  u_field(x,             13,  5); }
-
+   
   static int opf_cc(   CC          c, bool useFloat ) { return u_field((useFloat ? 0 : 4) + c, 13, 11); }
   static int mov_cc(   CC          c, bool useFloat ) { return u_field(useFloat ? 0 : 1,  18, 18) | u_field(c, 12, 11); }
 
@@ -906,7 +909,7 @@ class Assembler : public AbstractAssembler  {
     }
     return op3(r);
   }
-
+   
 
   // compute inverse of simm
   static int inv_simm(int x, int nbits) {
@@ -920,28 +923,28 @@ class Assembler : public AbstractAssembler  {
     assert_signed_range(x, nbits);
     return x  &  (( 1 << nbits ) - 1);
   }
-
+   
   // compute inverse of wdisp16
-  static intptr_t inv_wdisp16(int x, intptr_t pos) {
+  static intptr_t inv_wdisp16(int x, intptr_t pos) { 
     int lo = x & (( 1 << 14 ) - 1);
     int hi = (x >> 20) & 3;
     if (hi >= 2) hi |= ~1;
     return (((hi << 14) | lo) << 2) + pos;
   }
-
+     
   // word offset, 14 bits at LSend, 2 bits at B21, B20
-  static int wdisp16(intptr_t x, intptr_t off) {
+  static int wdisp16(intptr_t x, intptr_t off) { 
     intptr_t xx = x - off;
     assert_signed_word_disp_range(xx, 16);
     int r =  (xx >> 2) & ((1 << 14) - 1)
-           |  (  ( (xx>>(2+14)) & 3 )  <<  20 );
+           |  (  ( (xx>>(2+14)) & 3 )  <<  20 ); 
     assert( inv_wdisp16(r, off) == x,  "inverse is not inverse");
     return r;
   }
 
-
+                               
   // word displacement in low-order nbits bits
-
+   
   static intptr_t inv_wdisp( int x, intptr_t pos, int nbits ) {
     int pre_sign_extend = x & (( 1 << nbits ) - 1);
     int r =  pre_sign_extend >= ( 1 << (nbits-1) )
@@ -949,7 +952,7 @@ class Assembler : public AbstractAssembler  {
        :   pre_sign_extend;
     return (r << 2) + pos;
   }
-
+   
   static int wdisp( intptr_t x, intptr_t off, int nbits ) {
     intptr_t xx = x - off;
     assert_signed_word_disp_range(xx, nbits);
@@ -984,16 +987,16 @@ class Assembler : public AbstractAssembler  {
 
   // instruction only in v9
   static void v9_only() { assert( VM_Version::v9_instructions_work(), "This instruction only works on SPARC V9"); }
-
+   
   // instruction only in v8
   static void v8_only() { assert( VM_Version::v8_instructions_work(), "This instruction only works on SPARC V8"); }
-
+   
   // instruction deprecated in v9
   static void v9_dep()  { } // do nothing for now
-
+         
   // some float instructions only exist for single prec. on v8
   static void v8_s_only(FloatRegisterImpl::Width w)  { if (w != FloatRegisterImpl::S)  v9_only(); }
-
+   
   // v8 has no CC field
   static void v8_no_cc(CC cc)  { if (cc)  v9_only(); }
 
@@ -1041,7 +1044,7 @@ class Assembler : public AbstractAssembler  {
   }
 
   // called when emitting cti with a delay slot, AFTER emitting
-  void has_delay_slot() {
+  void has_delay_slot() { 
 #ifdef CHECK_DELAY
     assert_not_delayed("just checking");
     delay_state = at_delay_slot;
@@ -1071,18 +1074,18 @@ public:
   inline void emit_data(int, relocInfo::relocType rtype);
   // helper for above fcns
   inline void check_delay();
-
+   
 
  public:
   // instructions, refer to page numbers in the SPARC Architecture Manual, V9
-
+   
   // pp 135 (addc was addx in v8)
-
+  
   inline void add(    Register s1, Register s2, Register d );
   inline void add(    Register s1, int simm13a, Register d, relocInfo::relocType rtype = relocInfo::none);
   inline void add(    Register s1, int simm13a, Register d, RelocationHolder const& rspec);
   inline void add(    const Address&  a,              Register d, int offset = 0);
-
+  
   void addcc(  Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(add_op3  | cc_bit_op3) | rs1(s1) | rs2(s2) ); }
   void addcc(  Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(add_op3  | cc_bit_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
   void addc(   Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(addc_op3             ) | rs1(s1) | rs2(s2) ); }
@@ -1091,101 +1094,101 @@ public:
   void addccc( Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(addc_op3 | cc_bit_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
 
   // pp 136
-
+  
   inline void bpr( RCondition c, bool a, Predict p, Register s1, address d, relocInfo::relocType rt = relocInfo::none );
   inline void bpr( RCondition c, bool a, Predict p, Register s1, Label& L);
-
+    
  protected: // use MacroAssembler::br instead
-
+ 
   // pp 138
-
+  
   inline void fb( Condition c, bool a, address d, relocInfo::relocType rt = relocInfo::none );
   inline void fb( Condition c, bool a, Label& L );
-
+  
   // pp 141
-
+  
   inline void fbp( Condition c, bool a, CC cc, Predict p, address d, relocInfo::relocType rt = relocInfo::none );
   inline void fbp( Condition c, bool a, CC cc, Predict p, Label& L );
-
+  
  public:
-
+    
   // pp 144
-
+  
   inline void br( Condition c, bool a, address d, relocInfo::relocType rt = relocInfo::none );
   inline void br( Condition c, bool a, Label& L );
-
+  
   // pp 146
-
+  
   inline void bp( Condition c, bool a, CC cc, Predict p, address d, relocInfo::relocType rt = relocInfo::none );
   inline void bp( Condition c, bool a, CC cc, Predict p, Label& L );
-
+  
   // pp 121 (V8)
-
+  
   inline void cb( Condition c, bool a, address d, relocInfo::relocType rt = relocInfo::none );
   inline void cb( Condition c, bool a, Label& L );
 
   // pp 149
-
+ 
   inline void call( address d,  relocInfo::relocType rt = relocInfo::runtime_call_type );
   inline void call( Label& L,   relocInfo::relocType rt = relocInfo::runtime_call_type );
-
+ 
   // pp 150
-
+  
   // These instructions compare the contents of s2 with the contents of
   // memory at address in s1. If the values are equal, the contents of memory
   // at address s1 is swapped with the data in d. If the values are not equal,
   // the the contents of memory at s1 is loaded into d, without the swap.
-
+ 
   void casa(  Register s1, Register s2, Register d, int ia = -1 ) { v9_only();  emit_long( op(ldst_op) | rd(d) | op3(casa_op3 ) | rs1(s1) | (ia == -1  ? immed(true) : imm_asi(ia)) | rs2(s2)); }
   void casxa( Register s1, Register s2, Register d, int ia = -1 ) { v9_only();  emit_long( op(ldst_op) | rd(d) | op3(casxa_op3) | rs1(s1) | (ia == -1  ? immed(true) : imm_asi(ia)) | rs2(s2)); }
-
+ 
   // pp 152
-
-  void udiv(   Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(udiv_op3             ) | rs1(s1) | rs2(s2)); }
-  void udiv(   Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(udiv_op3             ) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
-  void sdiv(   Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(sdiv_op3             ) | rs1(s1) | rs2(s2)); }
-  void sdiv(   Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(sdiv_op3             ) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
-  void udivcc( Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(udiv_op3 | cc_bit_op3) | rs1(s1) | rs2(s2)); }
-  void udivcc( Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(udiv_op3 | cc_bit_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
-  void sdivcc( Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(sdiv_op3 | cc_bit_op3) | rs1(s1) | rs2(s2)); }
-  void sdivcc( Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(sdiv_op3 | cc_bit_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
+  
+  void udiv(   Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(udiv_op3             ) | rs1(s1) | rs2(s2)); } 
+  void udiv(   Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(udiv_op3             ) | rs1(s1) | immed(true) | simm(simm13a, 13) ); } 
+  void sdiv(   Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(sdiv_op3             ) | rs1(s1) | rs2(s2)); } 
+  void sdiv(   Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(sdiv_op3             ) | rs1(s1) | immed(true) | simm(simm13a, 13) ); } 
+  void udivcc( Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(udiv_op3 | cc_bit_op3) | rs1(s1) | rs2(s2)); } 
+  void udivcc( Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(udiv_op3 | cc_bit_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); } 
+  void sdivcc( Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(sdiv_op3 | cc_bit_op3) | rs1(s1) | rs2(s2)); } 
+  void sdivcc( Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(sdiv_op3 | cc_bit_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); } 
 
   // pp 155
-
+  
   void done()  { v9_only();  cti();  emit_long( op(arith_op) | fcn(0) | op3(done_op3) ); }
   void retry() { v9_only();  cti();  emit_long( op(arith_op) | fcn(1) | op3(retry_op3) ); }
 
   // pp 156
-
+  
   void fadd( FloatRegisterImpl::Width w, FloatRegister s1, FloatRegister s2, FloatRegister d ) { emit_long( op(arith_op) | fd(d, w) | op3(fpop1_op3) | fs1(s1, w) | opf(0x40 + w) | fs2(s2, w)); }
   void fsub( FloatRegisterImpl::Width w, FloatRegister s1, FloatRegister s2, FloatRegister d ) { emit_long( op(arith_op) | fd(d, w) | op3(fpop1_op3) | fs1(s1, w) | opf(0x44 + w) | fs2(s2, w)); }
 
   // pp 157
-
-  void fcmp(  FloatRegisterImpl::Width w, CC cc, FloatRegister s1, FloatRegister s2) { v8_no_cc(cc);  emit_long( op(arith_op) | cmpcc(cc) | op3(fpop2_op3) | fs1(s1, w) | opf(0x50 + w) | fs2(s2, w)); }
-  void fcmpe( FloatRegisterImpl::Width w, CC cc, FloatRegister s1, FloatRegister s2) { v8_no_cc(cc);  emit_long( op(arith_op) | cmpcc(cc) | op3(fpop2_op3) | fs1(s1, w) | opf(0x54 + w) | fs2(s2, w)); }
-
+  
+  void fcmp(  FloatRegisterImpl::Width w, CC cc, FloatRegister s1, FloatRegister s2) { v8_no_cc(cc);  emit_long( op(arith_op) | cmpcc(cc) | op3(fpop2_op3) | fs1(s1, w) | opf(0x50 + w) | fs2(s2, w)); } 
+  void fcmpe( FloatRegisterImpl::Width w, CC cc, FloatRegister s1, FloatRegister s2) { v8_no_cc(cc);  emit_long( op(arith_op) | cmpcc(cc) | op3(fpop2_op3) | fs1(s1, w) | opf(0x54 + w) | fs2(s2, w)); } 
+  
   // pp 159
-
+  
   void ftox( FloatRegisterImpl::Width w, FloatRegister s, FloatRegister d ) { v9_only();  emit_long( op(arith_op) | fd(d, w) | op3(fpop1_op3) | opf(0x80 + w) | fs2(s, w)); }
   void ftoi( FloatRegisterImpl::Width w, FloatRegister s, FloatRegister d ) {             emit_long( op(arith_op) | fd(d, w) | op3(fpop1_op3) | opf(0xd0 + w) | fs2(s, w)); }
-
+  
   // pp 160
-
+  
   void ftof( FloatRegisterImpl::Width sw, FloatRegisterImpl::Width dw, FloatRegister s, FloatRegister d ) { emit_long( op(arith_op) | fd(d, dw) | op3(fpop1_op3) | opf(0xc0 + sw + dw*4) | fs2(s, sw)); }
-
+  
   // pp 161
-
+  
   void fxtof( FloatRegisterImpl::Width w, FloatRegister s, FloatRegister d ) { v9_only();  emit_long( op(arith_op) | fd(d, w) | op3(fpop1_op3) | opf(0x80 + w*4) | fs2(s, w)); }
   void fitof( FloatRegisterImpl::Width w, FloatRegister s, FloatRegister d ) {             emit_long( op(arith_op) | fd(d, w) | op3(fpop1_op3) | opf(0xc0 + w*4) | fs2(s, w)); }
-
+  
   // pp 162
-
+  
   void fmov( FloatRegisterImpl::Width w, FloatRegister s, FloatRegister d ) { v8_s_only(w);  emit_long( op(arith_op) | fd(d, w) | op3(fpop1_op3) | opf(0x00 + w) | fs2(s, w)); }
 
   void fneg( FloatRegisterImpl::Width w, FloatRegister s, FloatRegister d ) { v8_s_only(w);  emit_long( op(arith_op) | fd(d, w) | op3(fpop1_op3) | opf(0x04 + w) | fs2(s, w)); }
 
-  // page 144 sparc v8 architecture (double prec works on v8 if the source and destination registers are the same). fnegs is the only instruction available
+  // page 144 sparc v8 architecture (double prec works on v8 if the source and destination registers are the same). fnegs is the only instruction available 
   // on v8 to do negation of single, double and quad precision floats.
 
   void fneg( FloatRegisterImpl::Width w, FloatRegister sd ) { if (VM_Version::v9_instructions_work()) emit_long( op(arith_op) | fd(sd, w) | op3(fpop1_op3) | opf(0x04 + w) | fs2(sd, w)); else emit_long( op(arith_op) | fd(sd, w) | op3(fpop1_op3) |  opf(0x05) | fs2(sd, w)); }
@@ -1193,46 +1196,46 @@ public:
   void fabs( FloatRegisterImpl::Width w, FloatRegister s, FloatRegister d ) { v8_s_only(w);  emit_long( op(arith_op) | fd(d, w) | op3(fpop1_op3) | opf(0x08 + w) | fs2(s, w)); }
 
   // page 144 sparc v8 architecture (double prec works on v8 if the source and destination registers are the same). fabss is the only instruction available
-  // on v8 to do abs operation on single/double/quad precision floats.
+  // on v8 to do abs operation on single/double/quad precision floats. 
 
   void fabs( FloatRegisterImpl::Width w, FloatRegister sd ) { if (VM_Version::v9_instructions_work()) emit_long( op(arith_op) | fd(sd, w) | op3(fpop1_op3) | opf(0x08 + w) | fs2(sd, w)); else emit_long( op(arith_op) | fd(sd, w) | op3(fpop1_op3) | opf(0x09) | fs2(sd, w)); }
 
   // pp 163
-
+  
   void fmul( FloatRegisterImpl::Width w,                            FloatRegister s1, FloatRegister s2, FloatRegister d ) { emit_long( op(arith_op) | fd(d, w)  | op3(fpop1_op3) | fs1(s1, w)  | opf(0x48 + w)         | fs2(s2, w)); }
   void fmul( FloatRegisterImpl::Width sw, FloatRegisterImpl::Width dw,  FloatRegister s1, FloatRegister s2, FloatRegister d ) { emit_long( op(arith_op) | fd(d, dw) | op3(fpop1_op3) | fs1(s1, sw) | opf(0x60 + sw + dw*4) | fs2(s2, sw)); }
   void fdiv( FloatRegisterImpl::Width w,                            FloatRegister s1, FloatRegister s2, FloatRegister d ) { emit_long( op(arith_op) | fd(d, w)  | op3(fpop1_op3) | fs1(s1, w)  | opf(0x4c + w)         | fs2(s2, w)); }
-
+  
   // pp 164
-
+  
   void fsqrt( FloatRegisterImpl::Width w, FloatRegister s, FloatRegister d ) { emit_long( op(arith_op) | fd(d, w) | op3(fpop1_op3) | opf(0x28 + w) | fs2(s, w)); }
-
+  
   // pp 165
-
+  
   inline void flush( Register s1, Register s2 );
   inline void flush( Register s1, int simm13a);
 
   // pp 167
-
+  
   void flushw() { v9_only();  emit_long( op(arith_op) | op3(flushw_op3) ); }
-
+  
   // pp 168
-
+  
   void illtrap( int const22a) { if (const22a != 0) v9_only();  emit_long( op(branch_op) | u_field(const22a, 21, 0) ); }
   // v8 unimp == illtrap(0)
-
+   
   // pp 169
-
+  
   void impdep1( int id1, int const19a ) { v9_only();  emit_long( op(arith_op) | fcn(id1) | op3(impdep1_op3) | u_field(const19a, 18, 0)); }
   void impdep2( int id1, int const19a ) { v9_only();  emit_long( op(arith_op) | fcn(id1) | op3(impdep2_op3) | u_field(const19a, 18, 0)); }
-
+  
   // pp 149 (v8)
-
+  
   void cpop1( int opc, int cr1, int cr2, int crd ) { v8_only();  emit_long( op(arith_op) | fcn(crd) | op3(impdep1_op3) | u_field(cr1, 18, 14) | opf(opc) | u_field(cr2, 4, 0)); }
   void cpop2( int opc, int cr1, int cr2, int crd ) { v8_only();  emit_long( op(arith_op) | fcn(crd) | op3(impdep2_op3) | u_field(cr1, 18, 14) | opf(opc) | u_field(cr2, 4, 0)); }
 
   // pp 170
-
+  
   void jmpl( Register s1, Register s2, Register d );
   void jmpl( Register s1, int simm13a, Register d, RelocationHolder const& rspec = RelocationHolder() );
 
@@ -1252,22 +1255,22 @@ public:
   inline void ldxfsr( Register s1, int simm13a);
 
   // pp 94 (v8)
-
+  
   inline void ldc(   Register s1, Register s2, int crd );
   inline void ldc(   Register s1, int simm13a, int crd);
   inline void lddc(  Register s1, Register s2, int crd );
   inline void lddc(  Register s1, int simm13a, int crd);
   inline void ldcsr( Register s1, Register s2, int crd );
   inline void ldcsr( Register s1, int simm13a, int crd);
-
-
+  
+  
   // 173
-
+  
   void ldfa(  FloatRegisterImpl::Width w, Register s1, Register s2, int ia, FloatRegister d ) { v9_only();  emit_long( op(ldst_op) | fd(d, w) | alt_op3(ldf_op3 | alt_bit_op3, w) | rs1(s1) | imm_asi(ia) | rs2(s2) ); }
   void ldfa(  FloatRegisterImpl::Width w, Register s1, int simm13a,         FloatRegister d ) { v9_only();  emit_long( op(ldst_op) | fd(d, w) | alt_op3(ldf_op3 | alt_bit_op3, w) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
 
   // pp 175, lduw is ld on v8
-
+  
   inline void ldsb(  Register s1, Register s2, Register d );
   inline void ldsb(  Register s1, int simm13a, Register d);
   inline void ldsh(  Register s1, Register s2, Register d );
@@ -1298,7 +1301,7 @@ public:
   inline void ldd(  const Address& a, Register d, int offset = 0 );
 
   // pp 177
-
+  
   void ldsba(  Register s1, Register s2, int ia, Register d ) {             emit_long( op(ldst_op) | rd(d) | op3(ldsb_op3 | alt_bit_op3) | rs1(s1) | imm_asi(ia) | rs2(s2) ); }
   void ldsba(  Register s1, int simm13a,         Register d ) {             emit_long( op(ldst_op) | rd(d) | op3(ldsb_op3 | alt_bit_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
   void ldsha(  Register s1, Register s2, int ia, Register d ) {             emit_long( op(ldst_op) | rd(d) | op3(ldsh_op3 | alt_bit_op3) | rs1(s1) | imm_asi(ia) | rs2(s2) ); }
@@ -1315,19 +1318,19 @@ public:
   void ldxa(   Register s1, int simm13a,         Register d ) { v9_only();  emit_long( op(ldst_op) | rd(d) | op3(ldx_op3  | alt_bit_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
   void ldda(   Register s1, Register s2, int ia, Register d ) { v9_dep();   emit_long( op(ldst_op) | rd(d) | op3(ldd_op3  | alt_bit_op3) | rs1(s1) | imm_asi(ia) | rs2(s2) ); }
   void ldda(   Register s1, int simm13a,         Register d ) { v9_dep();   emit_long( op(ldst_op) | rd(d) | op3(ldd_op3  | alt_bit_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
-
+  
   // pp 179
-
+  
   inline void ldstub(  Register s1, Register s2, Register d );
   inline void ldstub(  Register s1, int simm13a, Register d);
 
   // pp 180
-
+  
   void ldstuba( Register s1, Register s2, int ia, Register d ) { emit_long( op(ldst_op) | rd(d) | op3(ldstub_op3 | alt_bit_op3) | rs1(s1) | imm_asi(ia) | rs2(s2) ); }
   void ldstuba( Register s1, int simm13a,         Register d ) { emit_long( op(ldst_op) | rd(d) | op3(ldstub_op3 | alt_bit_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
 
   // pp 181
-
+  
   void and3(     Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(and_op3               ) | rs1(s1) | rs2(s2) ); }
   void and3(     Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(and_op3               ) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
   void andcc(   Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(and_op3  | cc_bit_op3) | rs1(s1) | rs2(s2) ); }
@@ -1352,31 +1355,31 @@ public:
   void xnor(    Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(xnor_op3             ) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
   void xnorcc(  Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(xnor_op3 | cc_bit_op3) | rs1(s1) | rs2(s2) ); }
   void xnorcc(  Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(xnor_op3 | cc_bit_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
-
+  
   // pp 183
-
+  
   void membar( Membar_mask_bits const7a ) { v9_only(); emit_long( op(arith_op) | op3(membar_op3) | rs1(O7) | immed(true) | u_field( int(const7a), 6, 0)); }
-
+ 
   // pp 185
-
+  
   void fmov( FloatRegisterImpl::Width w, Condition c,  bool floatCC, CC cca, FloatRegister s2, FloatRegister d ) { v9_only();  emit_long( op(arith_op) | fd(d, w) | op3(fpop2_op3) | cond_mov(c) | opf_cc(cca, floatCC) | opf_low6(w) | fs2(s2, w)); }
-
+  
   // pp 189
-
+  
   void fmov( FloatRegisterImpl::Width w, RCondition c, Register s1,  FloatRegister s2, FloatRegister d ) { v9_only();  emit_long( op(arith_op) | fd(d, w) | op3(fpop2_op3) | rs1(s1) | rcond(c) | opf_low5(4 + w) | fs2(s2, w)); }
-
+ 
   // pp 191
-
-  void movcc( Condition c, bool floatCC, CC cca, Register s2, Register d ) { v9_only();  emit_long( op(arith_op) | rd(d) | op3(movcc_op3) | mov_cc(cca, floatCC) | cond_mov(c) | rs2(s2) ); }
-  void movcc( Condition c, bool floatCC, CC cca, int simm11a, Register d ) { v9_only();  emit_long( op(arith_op) | rd(d) | op3(movcc_op3) | mov_cc(cca, floatCC) | cond_mov(c) | immed(true) | simm(simm11a, 11) ); }
-
+  
+  void movcc( Condition c, bool floatCC, CC cca, Register s2, Register d ) { v9_only();  emit_long( op(arith_op) | rd(d) | op3(movcc_op3) | mov_cc(cca, floatCC) | cond_mov(c) | rs2(s2) ); } 
+  void movcc( Condition c, bool floatCC, CC cca, int simm11a, Register d ) { v9_only();  emit_long( op(arith_op) | rd(d) | op3(movcc_op3) | mov_cc(cca, floatCC) | cond_mov(c) | immed(true) | simm(simm11a, 11) ); } 
+  
   // pp 195
-
-  void movr( RCondition c, Register s1, Register s2,  Register d ) { v9_only();  emit_long( op(arith_op) | rd(d) | op3(movr_op3) | rs1(s1) | rcond(c) | rs2(s2) ); }
-  void movr( RCondition c, Register s1, int simm10a,  Register d ) { v9_only();  emit_long( op(arith_op) | rd(d) | op3(movr_op3) | rs1(s1) | rcond(c) | immed(true) | simm(simm10a, 10) ); }
+  
+  void movr( RCondition c, Register s1, Register s2,  Register d ) { v9_only();  emit_long( op(arith_op) | rd(d) | op3(movr_op3) | rs1(s1) | rcond(c) | rs2(s2) ); } 
+  void movr( RCondition c, Register s1, int simm10a,  Register d ) { v9_only();  emit_long( op(arith_op) | rd(d) | op3(movr_op3) | rs1(s1) | rcond(c) | immed(true) | simm(simm10a, 10) ); } 
 
   // pp 196
-
+  
   void mulx(  Register s1, Register s2, Register d ) { v9_only(); emit_long( op(arith_op) | rd(d) | op3(mulx_op3 ) | rs1(s1) | rs2(s2) ); }
   void mulx(  Register s1, int simm13a, Register d ) { v9_only(); emit_long( op(arith_op) | rd(d) | op3(mulx_op3 ) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
   void sdivx( Register s1, Register s2, Register d ) { v9_only(); emit_long( op(arith_op) | rd(d) | op3(sdivx_op3) | rs1(s1) | rs2(s2) ); }
@@ -1385,7 +1388,7 @@ public:
   void udivx( Register s1, int simm13a, Register d ) { v9_only(); emit_long( op(arith_op) | rd(d) | op3(udivx_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
 
   // pp 197
-
+  
   void umul(   Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(umul_op3             ) | rs1(s1) | rs2(s2) ); }
   void umul(   Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(umul_op3             ) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
   void smul(   Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(smul_op3             ) | rs1(s1) | rs2(s2) ); }
@@ -1396,22 +1399,22 @@ public:
   void smulcc( Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(smul_op3 | cc_bit_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
 
   // pp 199
-
+  
   void mulscc(   Register s1, Register s2, Register d ) { v9_dep();  emit_long( op(arith_op) | rd(d) | op3(mulscc_op3) | rs1(s1) | rs2(s2) ); }
   void mulscc(   Register s1, int simm13a, Register d ) { v9_dep();  emit_long( op(arith_op) | rd(d) | op3(mulscc_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
 
   // pp 201
-
+  
   void nop() { emit_long( op(branch_op) | op2(sethi_op2) ); }
-
-
+  
+  
   // pp 202
-
+  
   void popc( Register s,  Register d) { v9_only();  emit_long( op(arith_op) | rd(d) | op3(popc_op3) | rs2(s)); }
   void popc( int simm13a, Register d) { v9_only();  emit_long( op(arith_op) | rd(d) | op3(popc_op3) | immed(true) | simm(simm13a, 13)); }
-
+  
   // pp 203
-
+  
   void prefetch(   Register s1, Register s2,         PrefetchFcn f);
   void prefetch(   Register s1, int simm13a,         PrefetchFcn f);
   void prefetcha(  Register s1, Register s2, int ia, PrefetchFcn f ) { v9_only();  emit_long( op(ldst_op) | fcn(f) | op3(prefetch_op3 | alt_bit_op3) | rs1(s1) | imm_asi(ia) | rs2(s2) ); }
@@ -1420,7 +1423,7 @@ public:
   inline void prefetch(const Address& a, PrefetchFcn F, int offset = 0);
 
   // pp 208
-
+  
   // not implementing read privileged register
 
   inline void rdy(    Register d) { v9_dep();  emit_long( op(arith_op) | rd(d) | op3(rdreg_op3) | u_field(0, 18, 14)); }
@@ -1429,30 +1432,30 @@ public:
   inline void rdtick( Register d) { v9_only(); emit_long( op(arith_op) | rd(d) | op3(rdreg_op3) | u_field(4, 18, 14)); } // Spoon!
   inline void rdpc(   Register d) { v9_only(); emit_long( op(arith_op) | rd(d) | op3(rdreg_op3) | u_field(5, 18, 14)); }
   inline void rdfprs( Register d) { v9_only(); emit_long( op(arith_op) | rd(d) | op3(rdreg_op3) | u_field(6, 18, 14)); }
-
+  
   // pp 213
-
+  
   inline void rett( Register s1, Register s2);
   inline void rett( Register s1, int simm13a, relocInfo::relocType rt = relocInfo::none);
-
+  
   // pp 214
-
+  
   void save(    Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(save_op3) | rs1(s1) | rs2(s2) ); }
   void save(    Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(save_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
 
   void restore( Register s1 = G0,  Register s2 = G0, Register d = G0 ) { emit_long( op(arith_op) | rd(d) | op3(restore_op3) | rs1(s1) | rs2(s2) ); }
   void restore( Register s1,       int simm13a,      Register d      ) { emit_long( op(arith_op) | rd(d) | op3(restore_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
-
+ 
   // pp 216
-
+  
   void saved()    { v9_only();  emit_long( op(arith_op) | fcn(0) | op3(saved_op3)); }
   void restored() { v9_only();  emit_long( op(arith_op) | fcn(1) | op3(saved_op3)); }
-
+  
   // pp 217
-
+  
   inline void sethi( int imm22a, Register d, RelocationHolder const& rspec = RelocationHolder() );
   // pp 218
-
+  
   void sll(  Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(sll_op3) | rs1(s1) | sx(0) | rs2(s2) ); }
   void sll(  Register s1, int imm5a,   Register d ) { emit_long( op(arith_op) | rd(d) | op3(sll_op3) | rs1(s1) | sx(0) | immed(true) | u_field(imm5a, 4, 0) ); }
   void srl(  Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(srl_op3) | rs1(s1) | sx(0) | rs2(s2) ); }
@@ -1466,17 +1469,17 @@ public:
   void srlx( Register s1, int imm6a,   Register d ) { v9_only();  emit_long( op(arith_op) | rd(d) | op3(srl_op3) | rs1(s1) | sx(1) | immed(true) | u_field(imm6a, 5, 0) ); }
   void srax( Register s1, Register s2, Register d ) { v9_only();  emit_long( op(arith_op) | rd(d) | op3(sra_op3) | rs1(s1) | sx(1) | rs2(s2) ); }
   void srax( Register s1, int imm6a,   Register d ) { v9_only();  emit_long( op(arith_op) | rd(d) | op3(sra_op3) | rs1(s1) | sx(1) | immed(true) | u_field(imm6a, 5, 0) ); }
-
+  
   // pp 220
-
+  
   void sir( int simm13a ) { emit_long( op(arith_op) | fcn(15) | op3(sir_op3) | immed(true) | simm(simm13a, 13)); }
-
+  
   // pp 221
-
+  
   void stbar() { emit_long( op(arith_op) | op3(membar_op3) | u_field(15, 18, 14)); }
-
+  
   // pp 222
-
+  
   inline void stf(    FloatRegisterImpl::Width w, FloatRegister d, Register s1, Register s2 );
   inline void stf(    FloatRegisterImpl::Width w, FloatRegister d, Register s1, int simm13a);
   inline void stf(    FloatRegisterImpl::Width w, FloatRegister d, const Address& a, int offset = 0);
@@ -1487,12 +1490,12 @@ public:
   inline void stxfsr( Register s1, int simm13a);
 
   //  pp 224
-
+ 
   void stfa(  FloatRegisterImpl::Width w, FloatRegister d, Register s1, Register s2, int ia ) { v9_only();  emit_long( op(ldst_op) | fd(d, w) | alt_op3(stf_op3 | alt_bit_op3, w) | rs1(s1) | imm_asi(ia) | rs2(s2) ); }
   void stfa(  FloatRegisterImpl::Width w, FloatRegister d, Register s1, int simm13a         ) { v9_only();  emit_long( op(ldst_op) | fd(d, w) | alt_op3(stf_op3 | alt_bit_op3, w) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
 
   // p 226
-
+  
   inline void stb(  Register d, Register s1, Register s2 );
   inline void stb(  Register d, Register s1, int simm13a);
   inline void sth(  Register d, Register s1, Register s2 );
@@ -1514,7 +1517,7 @@ public:
   inline void std(  Register d, const Address& a, int offset = 0 );
 
   // pp 177
-
+  
   void stba(  Register d, Register s1, Register s2, int ia ) {             emit_long( op(ldst_op) | rd(d) | op3(stb_op3 | alt_bit_op3) | rs1(s1) | imm_asi(ia) | rs2(s2) ); }
   void stba(  Register d, Register s1, int simm13a         ) {             emit_long( op(ldst_op) | rd(d) | op3(stb_op3 | alt_bit_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
   void stha(  Register d, Register s1, Register s2, int ia ) {             emit_long( op(ldst_op) | rd(d) | op3(sth_op3 | alt_bit_op3) | rs1(s1) | imm_asi(ia) | rs2(s2) ); }
@@ -1527,7 +1530,7 @@ public:
   void stda(  Register d, Register s1, int simm13a         ) {             emit_long( op(ldst_op) | rd(d) | op3(std_op3 | alt_bit_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
 
   // pp 97 (v8)
-
+    
   inline void stc(   int crd, Register s1, Register s2 );
   inline void stc(   int crd, Register s1, int simm13a);
   inline void stdc(  int crd, Register s1, Register s2 );
@@ -1538,7 +1541,7 @@ public:
   inline void stdcq( int crd, Register s1, int simm13a);
 
   // pp 230
-
+  
   void sub(    Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(sub_op3              ) | rs1(s1) | rs2(s2) ); }
   void sub(    Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(sub_op3              ) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
   void subcc(  Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(sub_op3 | cc_bit_op3 ) | rs1(s1) | rs2(s2) ); }
@@ -1547,60 +1550,60 @@ public:
   void subc(   Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(subc_op3             ) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
   void subccc( Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(subc_op3 | cc_bit_op3) | rs1(s1) | rs2(s2) ); }
   void subccc( Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(subc_op3 | cc_bit_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
-
+  
   // pp 231
-
+  
   inline void swap( Register s1, Register s2, Register d );
   inline void swap( Register s1, int simm13a, Register d);
   inline void swap( Address& a,               Register d, int offset = 0 );
 
   // pp 232
-
+  
   void swapa(   Register s1, Register s2, int ia, Register d ) { v9_dep();  emit_long( op(ldst_op) | rd(d) | op3(swap_op3 | alt_bit_op3) | rs1(s1) | imm_asi(ia) | rs2(s2) ); }
   void swapa(   Register s1, int simm13a,         Register d ) { v9_dep();  emit_long( op(ldst_op) | rd(d) | op3(swap_op3 | alt_bit_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
 
   // pp 234, note op in book is wrong, see pp 268
-
+  
   void taddcc(    Register s1, Register s2, Register d ) {            emit_long( op(arith_op) | rd(d) | op3(taddcc_op3  ) | rs1(s1) | rs2(s2) ); }
   void taddcc(    Register s1, int simm13a, Register d ) {            emit_long( op(arith_op) | rd(d) | op3(taddcc_op3  ) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
   void taddcctv(  Register s1, Register s2, Register d ) { v9_dep();  emit_long( op(arith_op) | rd(d) | op3(taddcctv_op3) | rs1(s1) | rs2(s2) ); }
   void taddcctv(  Register s1, int simm13a, Register d ) { v9_dep();  emit_long( op(arith_op) | rd(d) | op3(taddcctv_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
 
   // pp 235
-
+  
   void tsubcc(    Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(tsubcc_op3  ) | rs1(s1) | rs2(s2) ); }
   void tsubcc(    Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(tsubcc_op3  ) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
   void tsubcctv(  Register s1, Register s2, Register d ) { emit_long( op(arith_op) | rd(d) | op3(tsubcctv_op3) | rs1(s1) | rs2(s2) ); }
   void tsubcctv(  Register s1, int simm13a, Register d ) { emit_long( op(arith_op) | rd(d) | op3(tsubcctv_op3) | rs1(s1) | immed(true) | simm(simm13a, 13) ); }
 
   // pp 237
-
+  
   void trap( Condition c, CC cc, Register s1, Register s2 ) { v8_no_cc(cc);  emit_long( op(arith_op) | cond(c) | op3(trap_op3) | rs1(s1) | trapcc(cc) | rs2(s2)); }
   void trap( Condition c, CC cc, Register s1, int trapa   ) { v8_no_cc(cc);  emit_long( op(arith_op) | cond(c) | op3(trap_op3) | rs1(s1) | trapcc(cc) | immed(true) | u_field(trapa, 6, 0)); }
   // simple uncond. trap
   void trap( int trapa ) { trap( always, icc, G0, trapa ); }
 
   // pp 239 omit write priv register for now
-
+  
   inline void wry(    Register d) { v9_dep();  emit_long( op(arith_op) | rs1(d) | op3(wrreg_op3) | u_field(0, 29, 25)); }
   inline void wrccr(Register s) { v9_only(); emit_long( op(arith_op) | rs1(s) | op3(wrreg_op3) | u_field(2, 29, 25)); }
-  inline void wrccr(Register s, int simm13a) { v9_only(); emit_long( op(arith_op) |
-                                                                           rs1(s) |
-                                                                           op3(wrreg_op3) |
-                                                                           u_field(2, 29, 25) |
-                                                                           u_field(1, 13, 13) |
-                                                                           simm(simm13a, 13)); }
+  inline void wrccr(Register s, int simm13a) { v9_only(); emit_long( op(arith_op) | 
+									   rs1(s) |
+									   op3(wrreg_op3) |
+									   u_field(2, 29, 25) |
+									   u_field(1, 13, 13) |
+									   simm(simm13a, 13)); }
   inline void wrasi(  Register d) { v9_only(); emit_long( op(arith_op) | rs1(d) | op3(wrreg_op3) | u_field(3, 29, 25)); }
   inline void wrfprs( Register d) { v9_only(); emit_long( op(arith_op) | rs1(d) | op3(wrreg_op3) | u_field(6, 29, 25)); }
-
+  
 
   // Creation
-  Assembler(CodeBuffer* code) : AbstractAssembler(code) {
+  Assembler(CodeBuffer* code) : AbstractAssembler(code) { 
 #ifdef CHECK_DELAY
-    delay_state = no_delay;
+    delay_state = no_delay; 
 #endif
   }
-
+  
   // Testing
 #ifndef PRODUCT
   void test_v9();
@@ -1614,7 +1617,7 @@ class RegistersForDebugging : public StackObj {
   intptr_t i[8], l[8], o[8], g[8];
   float    f[32];
   double   d[32];
-
+  
   void print(outputStream* s);
 
   static int i_offset(int j) { return offset_of(RegistersForDebugging, i[j]); }
@@ -1727,7 +1730,7 @@ class MacroAssembler: public Assembler {
   // Branch that tests xcc in LP64 and icc in !LP64
   inline void brx( Condition c, bool a, Predict p, address d, relocInfo::relocType rt = relocInfo::none );
   inline void brx( Condition c, bool a, Predict p, Label& L );
-
+  
   // unconditional short branch
   inline void ba( bool a, Label& L );
 
@@ -1741,7 +1744,7 @@ class MacroAssembler: public Assembler {
   // Sparc shorthands(pp 85, V8 manual, pp 289 V9 manual)
   inline void cmp(  Register s1, Register s2 ) { subcc( s1, s2, G0 ); }
   inline void cmp(  Register s1, int simm13a ) { subcc( s1, simm13a, G0 ); }
-
+  
   inline void jmp( Register s1, Register s2 );
   inline void jmp( Register s1, int simm13a, RelocationHolder const& rspec = RelocationHolder() );
 
@@ -1758,15 +1761,15 @@ class MacroAssembler: public Assembler {
 
 #ifdef PRODUCT
   inline void ret(  bool trace = TraceJumps )   { if (trace) {
-                                                    mov(I7, O7); // traceable register
-                                                    JMP(O7, 2 * BytesPerInstWord);
-                                                  } else {
-                                                    jmpl( I7, 2 * BytesPerInstWord, G0 );
-                                                  }
-                                                }
+						    mov(I7, O7); // traceable register
+						    JMP(O7, 2 * BytesPerInstWord);
+						  } else {
+						    jmpl( I7, 2 * BytesPerInstWord, G0 );
+						  }
+						}
 
   inline void retl( bool trace = TraceJumps )  { if (trace) JMP(O7, 2 * BytesPerInstWord);
-                                                 else jmpl( O7, 2 * BytesPerInstWord, G0 ); }
+						 else jmpl( O7, 2 * BytesPerInstWord, G0 ); }
 #else
   void ret(  bool trace = TraceJumps );
   void retl( bool trace = TraceJumps );
@@ -1779,14 +1782,14 @@ class MacroAssembler: public Assembler {
   static void pd_print_patched_instruction(address branch);
 #endif
 
-  // sethi Macro handles optimizations and relocations
+  // sethi Macro handles optimizations and relocations 
   void sethi( Address& a, bool ForceRelocatable = false );
   void sethi( intptr_t imm22a, Register d, bool ForceRelocatable = false, RelocationHolder const& rspec = RelocationHolder());
 
   // compute the size of a sethi/set
   static int  size_of_sethi( address a, bool worst_case = false );
   static int  worst_case_size_of_set();
-
+  
   // set may be either setsw or setuw (high 32 bits may be zero or sign)
   void set(    intptr_t value, Register d, RelocationHolder const& rspec = RelocationHolder() );
   void setsw(  int value, Register d, RelocationHolder const& rspec = RelocationHolder() );
@@ -1795,10 +1798,10 @@ class MacroAssembler: public Assembler {
   // sign-extend 32 to 64
   inline void signx( Register s, Register d ) { sra( s, G0, d); }
   inline void signx( Register d )             { sra( d, G0, d); }
-
+  
   inline void not1( Register s, Register d ) { xnor( s, G0, d ); }
   inline void not1( Register d )             { xnor( d, G0, d ); }
-
+  
   inline void neg( Register s, Register d ) { sub( G0, s, d ); }
   inline void neg( Register d )             { sub( G0, d, d ); }
 
@@ -1806,7 +1809,7 @@ class MacroAssembler: public Assembler {
   inline void casx( Register s1, Register s2, Register d) { casxa(s1, s2, d, ASI_PRIMARY); }
   // Functions for isolating 64 bit atomic swaps for LP64
   // cas_ptr will perform cas for 32 bit VM's and casx for 64 bit VM's
-  inline void cas_ptr(  Register s1, Register s2, Register d) {
+  inline void cas_ptr(  Register s1, Register s2, Register d) { 
 #ifdef _LP64
     casx( s1, s2, d );
 #else
@@ -1823,32 +1826,32 @@ class MacroAssembler: public Assembler {
   // little-endian
   inline void casl(  Register s1, Register s2, Register d) { casa( s1, s2, d, ASI_PRIMARY_LITTLE); }
   inline void casxl( Register s1, Register s2, Register d) { casxa(s1, s2, d, ASI_PRIMARY_LITTLE); }
-
+     
   inline void inc(   Register d,  int const13 = 1 ) { add(   d, const13, d); }
   inline void inccc( Register d,  int const13 = 1 ) { addcc( d, const13, d); }
-
+  
   inline void dec(   Register d,  int const13 = 1 ) { sub(   d, const13, d); }
   inline void deccc( Register d,  int const13 = 1 ) { subcc( d, const13, d); }
-
+  
   inline void btst( Register s1,  Register s2 ) { andcc( s1, s2, G0 ); }
   inline void btst( int simm13a,  Register s )  { andcc( s,  simm13a, G0 ); }
-
+  
   inline void bset( Register s1,  Register s2 ) { or3( s1, s2, s2 ); }
   inline void bset( int simm13a,  Register s )  { or3( s,  simm13a, s ); }
-
+  
   inline void bclr( Register s1,  Register s2 ) { andn( s1, s2, s2 ); }
   inline void bclr( int simm13a,  Register s )  { andn( s,  simm13a, s ); }
-
+  
   inline void btog( Register s1,  Register s2 ) { xor3( s1, s2, s2 ); }
   inline void btog( int simm13a,  Register s )  { xor3( s,  simm13a, s ); }
-
+  
   inline void clr( Register d ) { or3( G0, G0, d ); }
-
+  
   inline void clrb( Register s1, Register s2);
   inline void clrh( Register s1, Register s2);
   inline void clr(  Register s1, Register s2);
   inline void clrx( Register s1, Register s2);
-
+  
   inline void clrb( Register s1, int simm13a);
   inline void clrh( Register s1, int simm13a);
   inline void clr(  Register s1, int simm13a);
@@ -1866,13 +1869,13 @@ class MacroAssembler: public Assembler {
   inline bool membar_has_effect( Assembler::Membar_mask_bits const7a );
 
   // mov pseudo instructions
-  inline void mov( Register s,  Register d) {
-    if ( s != d )    or3( G0, s, d);
+  inline void mov( Register s,  Register d) { 
+    if ( s != d )    or3( G0, s, d); 
     else             assert_not_delayed();  // Put something useful in the delay slot!
   }
 
-  inline void mov_or_nop( Register s,  Register d) {
-    if ( s != d )    or3( G0, s, d);
+  inline void mov_or_nop( Register s,  Register d) { 
+    if ( s != d )    or3( G0, s, d); 
     else             nop();
   }
 
@@ -1951,7 +1954,7 @@ class MacroAssembler: public Assembler {
   // V8/V9 flush_windows
   void flush_windows();
 
-  // Support for serializing memory accesses between threads
+  // Support for serializing memory accesses between threads 
   void serialize_memory(Register thread, Register tmp1, Register tmp2);
 
   // Stack frame creation/removal
@@ -2016,7 +2019,7 @@ class MacroAssembler: public Assembler {
   void check_and_forward_exception(Register scratch_reg);
 
  private:
-  // For V8
+  // For V8 
   void read_ccr_trap(Register ccr_save);
   void write_ccr_trap(Register ccr_save1, Register scratch1, Register scratch2);
 
@@ -2036,7 +2039,7 @@ class MacroAssembler: public Assembler {
   // pushes double TOS element of FPU stack on CPU stack; pops from FPU stack
   void push_fTOS();
 
-  // pops double TOS element from CPU stack and pushes on FPU stack
+  // pops double TOS element from CPU stack and pushes on FPU stack 
   void pop_fTOS();
 
   void empty_FPU_stack();
@@ -2057,9 +2060,9 @@ class MacroAssembler: public Assembler {
 #define verify_oop(reg) _verify_oop(reg, "broken oop " #reg, __FILE__, __LINE__)
 #define verify_oop_addr(addr) _verify_oop_addr(addr, "broken oop addr ", __FILE__, __LINE__)
 
-        // only if +VerifyOops
+	// only if +VerifyOops
   void verify_FPU(int stack_depth, const char* s = "illegal FPU state");
-        // only if +VerifyFPU
+	// only if +VerifyFPU
   void stop(const char* msg);                          // prints msg, dumps registers and stops execution
   void warn(const char* msg);                          // prints msg, but don't stop
   void untested(const char* what = "");
@@ -2096,7 +2099,7 @@ class MacroAssembler: public Assembler {
   void set_varargs( Argument a, Register d );
 
   int total_frame_size_in_bytes(int extraWords);
-
+  
   // used when extraWords known statically
   void save_frame(int extraWords);
   void save_frame_c1(int size_in_bytes);
@@ -2118,28 +2121,28 @@ class MacroAssembler: public Assembler {
 
   // implementations of bytecodes used by both interpreter and compiler
 
-  void lcmp( Register Ra_hi, Register Ra_low,
+  void lcmp( Register Ra_hi, Register Ra_low, 
              Register Rb_hi, Register Rb_low,
-             Register Rresult);
+	     Register Rresult);
 
   void lneg( Register Rhi, Register Rlow );
 
   void lshl(  Register Rin_high,  Register Rin_low,  Register Rcount,
-              Register Rout_high, Register Rout_low, Register Rtemp );
+	      Register Rout_high, Register Rout_low, Register Rtemp );
 
   void lshr(  Register Rin_high,  Register Rin_low,  Register Rcount,
-              Register Rout_high, Register Rout_low, Register Rtemp );
+	      Register Rout_high, Register Rout_low, Register Rtemp );
 
   void lushr( Register Rin_high,  Register Rin_low,  Register Rcount,
-              Register Rout_high, Register Rout_low, Register Rtemp );
+	      Register Rout_high, Register Rout_low, Register Rtemp );
 
 #ifdef _LP64
   void lcmp( Register Ra, Register Rb, Register Rresult);
 #endif
 
-  void float_cmp( bool is_float, int unordered_result,
-                  FloatRegister Fa, FloatRegister Fb,
-                  Register Rresult);
+  void float_cmp( bool is_float, int unordered_result, 
+   	          FloatRegister Fa, FloatRegister Fb,
+		  Register Rresult);
 
   void fneg( FloatRegisterImpl::Width w, FloatRegister s, FloatRegister d);
   void fneg( FloatRegisterImpl::Width w, FloatRegister sd ) { Assembler::fneg(w, sd); }
@@ -2153,7 +2156,7 @@ class MacroAssembler: public Assembler {
     address lock_addr=0, bool use_call_vm=false);
   void cas_under_lock(Register top_ptr_reg, Register top_reg, Register ptr_reg,
     address lock_addr=0, bool use_call_vm=false);
-  void casn (Register addr_reg, Register cmp_reg, Register set_reg) ;
+  void casn (Register addr_reg, Register cmp_reg, Register set_reg) ; 
 
   // These set the icc condition code to equal if the lock succeeded
   // and notEqual if it failed and requires a slow case
@@ -2243,7 +2246,7 @@ class SkipIfEqual : public StackObj {
 
  public:
    // 'temp' is a temp register that this object can use (and trash)
-   SkipIfEqual(MacroAssembler*, Register temp,
+   SkipIfEqual(MacroAssembler*, Register temp, 
                const bool* flag_addr, Assembler::Condition condition);
    ~SkipIfEqual();
 };

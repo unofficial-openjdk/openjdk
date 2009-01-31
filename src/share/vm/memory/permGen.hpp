@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // All heaps contains a "permanent generation," containing permanent
@@ -30,20 +33,20 @@ class Generation;
 class GenRemSet;
 class CSpaceCounters;
 
-// PermGen models the part of the heap
+// PermGen models the part of the heap 
 
 class PermGen : public CHeapObj {
   friend class VMStructs;
  protected:
   size_t _capacity_expansion_limit;  // maximum expansion allowed without a
-                                     // full gc occuring
+				     // full gc occuring
 
  public:
   enum Name {
     MarkSweepCompact, MarkSweep, ConcurrentMarkSweep
   };
 
-  // Permanent allocation (initialized)
+  // Permanent allocation (initialized)  
   virtual HeapWord* mem_allocate(size_t size) = 0;
 
   // Mark sweep support
@@ -71,3 +74,4 @@ class PermGen : public CHeapObj {
     g->update_counters();
   }
 };
+

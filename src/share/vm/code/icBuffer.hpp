@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //
@@ -51,14 +54,14 @@ class ICStub: public Stub {
  public:
   // Creation
   void set_stub(CompiledIC *ic, oop cached_value, address dest_addr);
-
+   
   // Code info
   address code_begin() const                     { return (address)this + round_to(sizeof(ICStub), CodeEntryAlignment); }
   address code_end() const                       { return (address)this + size(); }
 
   // Call site info
   address ic_site() const                        { return _ic_site; }
-  void    clear();
+  void    clear(); 
   bool    is_empty() const                       { return _ic_site == NULL; }
 
   // stub info
@@ -66,8 +69,8 @@ class ICStub: public Stub {
   oop     cached_oop() const;   // cached_oop for stub
 
   // Debugging
-  void    verify()            PRODUCT_RETURN;
-  void    print()             PRODUCT_RETURN;
+  void    verify()            PRODUCT_RETURN;  
+  void    print()             PRODUCT_RETURN; 
 
   // Creation
   friend ICStub* ICStub_from_destination_address(address destination_address);
@@ -84,7 +87,7 @@ inline ICStub* ICStub_from_destination_address(address destination_address) {
 
 class InlineCacheBuffer: public AllStatic {
  private:
-  // friends
+  // friends  
   friend class ICStub;
 
   static int ic_stub_code_size();
@@ -99,15 +102,15 @@ class InlineCacheBuffer: public AllStatic {
   static void       init_next_stub();
 
   static ICStub* new_ic_stub();
-
+ 
 
   // Machine-dependent implementation of ICBuffer
   static void    assemble_ic_buffer_code(address code_begin, oop cached_oop, address entry_point);
-  static address ic_buffer_entry_point  (address code_begin);
+  static address ic_buffer_entry_point  (address code_begin); 
   static oop     ic_buffer_cached_oop   (address code_begin);
 
  public:
-
+ 
     // Initialization; must be called before first usage
   static void initialize();
 

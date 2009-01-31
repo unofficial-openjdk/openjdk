@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,34 +22,34 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 enum {
   // As specifed in the JVM spec
-  ITEM_Top = 0,
-  ITEM_Integer = 1,
-  ITEM_Float = 2,
-  ITEM_Double = 3,
-  ITEM_Long = 4,
-  ITEM_Null = 5,
+  ITEM_Top = 0, 
+  ITEM_Integer = 1, 
+  ITEM_Float = 2, 
+  ITEM_Double = 3, 
+  ITEM_Long = 4, 
+  ITEM_Null = 5, 
   ITEM_UninitializedThis = 6,
   ITEM_Object = 7,
   ITEM_Uninitialized = 8,
-  ITEM_Bogus = (uint)-1
+  ITEM_Bogus = (uint)-1  
 };
 
 class VerificationType VALUE_OBJ_CLASS_SPEC {
   private:
-    // Least significant bits of _handle are always 0, so we use these as
+    // Least significant bits of _handle are always 0, so we use these as 
     // the indicator that the _handle is valid.  Otherwise, the _data field
-    // contains encoded data (as specified below).  Should the VM change
+    // contains encoded data (as specified below).  Should the VM change 
     // and the lower bits on oops aren't 0, the assert in the constructor
-    // will catch this and we'll have to add a descriminator tag to this
+    // will catch this and we'll have to add a descriminator tag to this 
     // structure.
     union {
       symbolOop* _handle;
-      uintptr_t _data;
+      uintptr_t _data; 
     } _u;
 
     enum {
@@ -56,10 +59,10 @@ class VerificationType VALUE_OBJ_CLASS_SPEC {
     };
 
     // Enum for the _data field
-    enum {
-      // Bottom two bits determine if the type is a reference, primitive,
+    enum { 
+      // Bottom two bits determine if the type is a reference, primitive, 
       // uninitialized or a query-type.
-      TypeMask           = 0x00000003,
+      TypeMask           = 0x00000003, 
 
       // Topmost types encoding
       Reference          = 0x0,        // _handle contains the name
@@ -67,7 +70,7 @@ class VerificationType VALUE_OBJ_CLASS_SPEC {
       Uninitialized      = 0x2,        // 0x00ffff00 contains bci
       TypeQuery          = 0x3,        // Meta-types used for category testing
 
-      // Utility flags
+      // Utility flags 
       ReferenceFlag      = 0x00,       // For reference query types
       Category1Flag      = 0x01,       // One-word values
       Category2Flag      = 0x02,       // First word of a two-word value
@@ -125,36 +128,36 @@ class VerificationType VALUE_OBJ_CLASS_SPEC {
   static VerificationType byte_type() { return VerificationType(Byte); }
   static VerificationType char_type() { return VerificationType(Char); }
   static VerificationType short_type() { return VerificationType(Short); }
-  static VerificationType double2_type()
+  static VerificationType double2_type() 
     { return VerificationType(Double_2nd); }
 
   // "check" types are used for queries.  A "check" type is not assignable
-  // to anything, but the specified types are assignable to a "check".  For
-  // example, any category1 primitive is assignable to category1_check and
+  // to anything, but the specified types are assignable to a "check".  For 
+  // example, any category1 primitive is assignable to category1_check and 
   // any reference is assignable to reference_check.
-  static VerificationType reference_check()
+  static VerificationType reference_check() 
     { return VerificationType(ReferenceQuery); }
-  static VerificationType category1_check()
+  static VerificationType category1_check() 
     { return VerificationType(Category1Query); }
-  static VerificationType category2_check()
+  static VerificationType category2_check() 
     { return VerificationType(Category2Query); }
-  static VerificationType category2_2nd_check()
+  static VerificationType category2_2nd_check() 
     { return VerificationType(Category2_2ndQuery); }
 
-  // For reference types, store the actual oop* handle
-  static VerificationType reference_type(symbolHandle sh) {
+  // For reference types, store the actual oop* handle 
+  static VerificationType reference_type(symbolHandle sh) { 
       assert(((uintptr_t)sh.raw_value() & 0x3) == 0, "Oops must be aligned");
-      // If the above assert fails in the future because oop* isn't aligned,
+      // If the above assert fails in the future because oop* isn't aligned, 
       // then this type encoding system will have to change to have a tag value
       // to descriminate between oops and primitives.
-      return VerificationType((uintptr_t)((symbolOop*)sh.raw_value()));
+      return VerificationType((uintptr_t)((symbolOop*)sh.raw_value())); 
   }
-  static VerificationType reference_type(symbolOop s, TRAPS)
+  static VerificationType reference_type(symbolOop s, TRAPS) 
     { return reference_type(symbolHandle(THREAD, s)); }
 
-  static VerificationType uninitialized_type(u2 bci)
+  static VerificationType uninitialized_type(u2 bci) 
     { return VerificationType(bci << 1 * BitsPerByte | Uninitialized); }
-  static VerificationType uninitialized_this_type()
+  static VerificationType uninitialized_this_type() 
     { return uninitialized_type(BciForThis); }
 
   // Create based on u1 read from classfile
@@ -173,10 +176,10 @@ class VerificationType VALUE_OBJ_CLASS_SPEC {
   bool is_long2() const     { return (_u._data == Long_2nd); }
   bool is_double2() const   { return (_u._data == Double_2nd); }
   bool is_reference() const { return ((_u._data & TypeMask) == Reference); }
-  bool is_category1() const {
-    // This should return true for all one-word types, which are category1
-    // primitives, and references (including uninitialized refs).  Though
-    // the 'query' types should technically return 'false' here, if we
+  bool is_category1() const { 
+    // This should return true for all one-word types, which are category1 
+    // primitives, and references (including uninitialized refs).  Though 
+    // the 'query' types should technically return 'false' here, if we 
     // allow this to return true, we can perform the test using only
     // 2 operations rather than 8 (3 masks, 3 compares and 2 logical 'ands').
     // Since noone should call this on a query type anyway, this is ok.
@@ -186,8 +189,8 @@ class VerificationType VALUE_OBJ_CLASS_SPEC {
     // is not set.
   }
   bool is_category2() const { return ((_u._data & Category2) == Category2); }
-  bool is_category2_2nd() const {
-    return ((_u._data & Category2_2nd) == Category2_2nd);
+  bool is_category2_2nd() const { 
+    return ((_u._data & Category2_2nd) == Category2_2nd); 
   }
   bool is_reference_check() const { return _u._data == ReferenceQuery; }
   bool is_category1_check() const { return _u._data == Category1Query; }
@@ -195,7 +198,7 @@ class VerificationType VALUE_OBJ_CLASS_SPEC {
   bool is_category2_2nd_check() const { return _u._data == Category2_2ndQuery; }
   bool is_check() const { return (_u._data & TypeQuery) == TypeQuery; }
 
-  bool is_x_array(char sig) const {
+  bool is_x_array(char sig) const { 
     return is_null() || (is_array() && (name()->byte_at(1) == sig));
   }
   bool is_int_array() const { return is_x_array('I'); }
@@ -208,17 +211,17 @@ class VerificationType VALUE_OBJ_CLASS_SPEC {
   bool is_double_array() const { return is_x_array('D'); }
   bool is_object_array() const { return is_x_array('L'); }
   bool is_array_array() const { return is_x_array('['); }
-  bool is_reference_array() const
+  bool is_reference_array() const 
     { return is_object_array() || is_array_array(); }
-  bool is_object() const
-    { return (is_reference() && !is_null() && name()->utf8_length() >= 1 &&
+  bool is_object() const 
+    { return (is_reference() && !is_null() && name()->utf8_length() >= 1 && 
               name()->byte_at(0) != '['); }
-  bool is_array() const
-    { return (is_reference() && !is_null() && name()->utf8_length() >= 2 &&
+  bool is_array() const 
+    { return (is_reference() && !is_null() && name()->utf8_length() >= 2 && 
               name()->byte_at(0) == '['); }
-  bool is_uninitialized() const
+  bool is_uninitialized() const 
     { return ((_u._data & Uninitialized) == Uninitialized); }
-  bool is_uninitialized_this() const
+  bool is_uninitialized_this() const 
     { return is_uninitialized() && bci() == BciForThis; }
 
   VerificationType to_category2_2nd() const {
@@ -231,18 +234,18 @@ class VerificationType VALUE_OBJ_CLASS_SPEC {
     return ((_u._data & BciMask) >> 1 * BitsPerByte);
   }
 
-  symbolHandle name_handle() const {
+  symbolHandle name_handle() const { 
     assert(is_reference() && !is_null(), "Must be a non-null reference");
-    return symbolHandle(_u._handle, true);
+    return symbolHandle(_u._handle, true); 
   }
-  symbolOop name() const {
+  symbolOop name() const { 
     assert(is_reference() && !is_null(), "Must be a non-null reference");
-    return *(_u._handle);
+    return *(_u._handle); 
   }
 
   bool equals(const VerificationType& t) const {
     return (_u._data == t._u._data ||
-      (is_reference() && t.is_reference() && !is_null() && !t.is_null() &&
+      (is_reference() && t.is_reference() && !is_null() && !t.is_null() && 
        name() == t.name()));
   }
 
@@ -255,7 +258,7 @@ class VerificationType VALUE_OBJ_CLASS_SPEC {
   }
 
   // The whole point of this type system - check to see if one type
-  // is assignable to another.  Returns true if one can assign 'from' to
+  // is assignable to another.  Returns true if one can assign 'from' to 
   // this.
   bool is_assignable_from(
       const VerificationType& from, instanceKlassHandle context, TRAPS) const {
@@ -276,8 +279,8 @@ class VerificationType VALUE_OBJ_CLASS_SPEC {
         case Char:
         case Short:
           // An int can be assigned to boolean, byte, char or short values.
-          return from.is_integer();
-        default:
+          return from.is_integer(); 
+        default: 
           if (is_reference() && from.is_reference()) {
             return is_reference_assignable_from(from, context, CHECK_false);
           } else {

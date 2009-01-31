@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -40,6 +43,7 @@
 // Compiled code entry points
 address OptoRuntime::_new_instance_Java                           = NULL;
 address OptoRuntime::_new_array_Java                              = NULL;
+address OptoRuntime::_multianewarray1_Java                        = NULL;
 address OptoRuntime::_multianewarray2_Java                        = NULL;
 address OptoRuntime::_multianewarray3_Java                        = NULL;
 address OptoRuntime::_multianewarray4_Java                        = NULL;
@@ -60,12 +64,12 @@ address OptoRuntime::_zap_dead_native_locals_Java                 = NULL;
 // This should be called in an assertion at the start of OptoRuntime routines
 // which are entered from compiled code (all of them)
 #ifndef PRODUCT
-static bool check_compiled_frame(JavaThread* thread) {
+static bool check_compiled_frame(JavaThread* thread) {  
   assert(thread->last_frame().is_runtime_frame(), "cannot call runtime directly from compiled code");
 #ifdef ASSERT
   RegisterMap map(thread, false);
   frame caller = thread->last_frame().sender(&map);
-  assert(caller.is_compiled_frame(), "not being called from compiled like code");
+  assert(caller.is_compiled_frame(), "not being called from compiled like code");  
 #endif  /* ASSERT */
   return true;
 }
@@ -76,7 +80,7 @@ static bool check_compiled_frame(JavaThread* thread) {
   var = generate_stub(env, type_func_gen, CAST_FROM_FN_PTR(address, c_func), #var, fancy_jump, pass_tls, save_arg_regs, return_pc)
 
 void OptoRuntime::generate(ciEnv* env) {
-
+  
   generate_exception_blob();
 
   // Note: tls: Means fetching the return oop out of the thread-local storage
@@ -85,6 +89,7 @@ void OptoRuntime::generate(ciEnv* env) {
   // -------------------------------------------------------------------------------------------------------------------------------
   gen(env, _new_instance_Java              , new_instance_Type            , new_instance_C                  ,    0 , true , false, false);
   gen(env, _new_array_Java                 , new_array_Type               , new_array_C                     ,    0 , true , false, false);
+  gen(env, _multianewarray1_Java           , multianewarray1_Type         , multianewarray1_C               ,    0 , true , false, false);  
   gen(env, _multianewarray2_Java           , multianewarray2_Type         , multianewarray2_C               ,    0 , true , false, false);
   gen(env, _multianewarray3_Java           , multianewarray3_Type         , multianewarray3_C               ,    0 , true , false, false);
   gen(env, _multianewarray4_Java           , multianewarray4_Type         , multianewarray4_C               ,    0 , true , false, false);
@@ -93,22 +98,22 @@ void OptoRuntime::generate(ciEnv* env) {
   gen(env, _rethrow_Java                   , rethrow_Type                 , rethrow_C                       ,    2 , true , false, true );
 
   gen(env, _slow_arraycopy_Java            , slow_arraycopy_Type          , SharedRuntime::slow_arraycopy_C ,    0 , false, false, false);
-  gen(env, _register_finalizer_Java        , register_finalizer_Type      , register_finalizer              ,    0 , false, false, false);
+  gen(env, _register_finalizer_Java        , register_finalizer_Type      , register_finalizer              ,    0 , false, false, false);  
 
-# ifdef ENABLE_ZAP_DEAD_LOCALS
+# ifdef ENABLE_ZAP_DEAD_LOCALS                                                                                              
   gen(env, _zap_dead_Java_locals_Java      , zap_dead_locals_Type         , zap_dead_Java_locals_C          ,    0 , false, true , false );
   gen(env, _zap_dead_native_locals_Java    , zap_dead_locals_Type         , zap_dead_native_locals_C        ,    0 , false, true , false );
 # endif
-
-}
+  
+} 
 
 #undef gen
 
 
 // Helper method to do generation of RunTimeStub's
 address OptoRuntime::generate_stub( ciEnv* env,
-                                    TypeFunc_generator gen, address C_function,
-                                    const char *name, int is_fancy_jump,
+                                    TypeFunc_generator gen, address C_function, 
+                                    const char *name, int is_fancy_jump, 
                                     bool pass_tls,
                                     bool save_argument_registers,
                                     bool return_pc ) {
@@ -117,10 +122,10 @@ address OptoRuntime::generate_stub( ciEnv* env,
   return  C.stub_entry_point();
 }
 
-const char* OptoRuntime::stub_name(address entry) {
-#ifndef PRODUCT
+const char* OptoRuntime::stub_name(address entry) { 
+#ifndef PRODUCT  
   CodeBlob* cb = CodeCache::find_blob(entry);
-  RuntimeStub* rs =(RuntimeStub *)cb;
+  RuntimeStub* rs =(RuntimeStub *)cb;  
   assert(rs != NULL && rs->is_runtime_stub(), "not a runtime stub");
   return rs->name();
 #else
@@ -183,7 +188,7 @@ JRT_BLOCK_ENTRY(void, OptoRuntime::new_instance_C(klassOopDesc* klass, JavaThrea
     oop result = instanceKlass::cast(klass)->allocate_instance(THREAD);
     thread->set_vm_result(result);
 
-    // Pass oops back through thread local storage.  Our apparent type to Java
+    // Pass oops back through thread local storage.  Our apparent type to Java 
     // is that we return an oop, but we can block on exit from this routine and
     // a GC can trash the oop in C's return register.  The generated stub will
     // fetch the oop from TLS after any possible GC.
@@ -223,7 +228,7 @@ JRT_BLOCK_ENTRY(void, OptoRuntime::new_array_C(klassOopDesc* array_type, int len
     result = oopFactory::new_objArray(elem_type, len, THREAD);
   }
 
-  // Pass oops back through thread local storage.  Our apparent type to Java
+  // Pass oops back through thread local storage.  Our apparent type to Java 
   // is that we return an oop, but we can block on exit from this routine and
   // a GC can trash the oop in C's return register.  The generated stub will
   // fetch the oop from TLS after any possible GC.
@@ -237,7 +242,19 @@ JRT_BLOCK_ENTRY(void, OptoRuntime::new_array_C(klassOopDesc* array_type, int len
   }
 JRT_END
 
-// Note: multianewarray for one dimension is handled inline by GraphKit::new_array.
+// multianewarray for one dimension
+JRT_ENTRY(void, OptoRuntime::multianewarray1_C(klassOopDesc* elem_type, int len1, JavaThread *thread))
+#ifndef PRODUCT
+  SharedRuntime::_multi1_ctr++;                // multianewarray for 1 dimension
+#endif
+  assert(check_compiled_frame(thread), "incorrect caller");
+  assert(oop(elem_type)->is_klass(), "not a class");
+  jint dims[1];
+  dims[0] = len1;
+  oop obj = arrayKlass::cast(elem_type)->multi_allocate(1, dims, THREAD);
+  deoptimize_caller_frame(thread, HAS_PENDING_EXCEPTION);
+  thread->set_vm_result(obj);
+JRT_END
 
 // multianewarray for 2 dimensions
 JRT_ENTRY(void, OptoRuntime::multianewarray2_C(klassOopDesc* elem_type, int len1, int len2, JavaThread *thread))
@@ -369,6 +386,10 @@ const TypeFunc *OptoRuntime::multianewarray_Type(int ndim) {
   return TypeFunc::make(domain, range);
 }
 
+const TypeFunc *OptoRuntime::multianewarray1_Type() {
+  return multianewarray_Type(1);
+}
+
 const TypeFunc *OptoRuntime::multianewarray2_Type() {
   return multianewarray_Type(2);
 }
@@ -389,7 +410,7 @@ const TypeFunc *OptoRuntime::uncommon_trap_Type() {
   // create input type (domain)
   const Type **fields = TypeTuple::fields(1);
   // symbolOop name of class to be loaded
-  fields[TypeFunc::Parms+0] = TypeInt::INT;
+  fields[TypeFunc::Parms+0] = TypeInt::INT; 
   const TypeTuple *domain = TypeTuple::make(TypeFunc::Parms+1, fields);
 
   // create result type (range)
@@ -453,12 +474,12 @@ const TypeFunc *OptoRuntime::complete_monitor_exit_Type() {
 const TypeFunc* OptoRuntime::flush_windows_Type() {
   // create input type (domain)
   const Type** fields = TypeTuple::fields(1);
-  fields[TypeFunc::Parms+0] = NULL; // void
+  fields[TypeFunc::Parms+0] = NULL; // void 
   const TypeTuple *domain = TypeTuple::make(TypeFunc::Parms, fields);
 
   // create result type
   fields = TypeTuple::fields(1);
-  fields[TypeFunc::Parms+0] = NULL; // void
+  fields[TypeFunc::Parms+0] = NULL; // void 
   const TypeTuple *range = TypeTuple::make(TypeFunc::Parms, fields);
 
   return TypeFunc::make(domain, range);
@@ -498,8 +519,8 @@ const TypeFunc *OptoRuntime::Math_D_D_Type() {
   // create input type (domain)
   const Type **fields = TypeTuple::fields(2);
   // symbolOop name of class to be loaded
-  fields[TypeFunc::Parms+0] = Type::DOUBLE;
-  fields[TypeFunc::Parms+1] = Type::HALF;
+  fields[TypeFunc::Parms+0] = Type::DOUBLE; 
+  fields[TypeFunc::Parms+1] = Type::HALF; 
   const TypeTuple *domain = TypeTuple::make(TypeFunc::Parms+2, fields);
 
   // create result type (range)
@@ -622,9 +643,9 @@ const TypeFunc* OptoRuntime::osr_end_Type() {
   // create result type
   fields = TypeTuple::fields(1);
   // fields[TypeFunc::Parms+0] = TypeInstPtr::NOTNULL; // locked oop
-  fields[TypeFunc::Parms+0] = NULL; // void
+  fields[TypeFunc::Parms+0] = NULL; // void 
   const TypeTuple *range = TypeTuple::make(TypeFunc::Parms, fields);
-  return TypeFunc::make(domain, range);
+  return TypeFunc::make(domain, range);  
 }
 
 //-------------- methodData update helpers
@@ -638,7 +659,7 @@ const TypeFunc* OptoRuntime::profile_receiver_type_Type() {
 
   // create result type
   fields = TypeTuple::fields(1);
-  fields[TypeFunc::Parms+0] = NULL; // void
+  fields[TypeFunc::Parms+0] = NULL; // void 
   const TypeTuple *range = TypeTuple::make(TypeFunc::Parms, fields);
   return TypeFunc::make(domain,range);
 }
@@ -677,7 +698,7 @@ JRT_LEAF(void, OptoRuntime::profile_receiver_type_C(DataLayout* data, oopDesc* r
 JRT_END
 
 //-----------------------------------------------------------------------------
-// implicit exception support.
+// implicit exception support. 
 
 static void report_null_exception_in_code_cache(address exception_pc) {
   ResourceMark rm;
@@ -692,7 +713,7 @@ static void report_null_exception_in_code_cache(address exception_pc) {
       methodOop method = ((nmethod*)n)->method();
       tty->print_cr("# Method where it happened %s.%s ", Klass::cast(method->method_holder())->name()->as_C_string(), method->name()->as_C_string());
       tty->print_cr("#");
-      if (ShowMessageBoxOnError && UpdateHotSpotCompilerFileOnError) {
+      if (ShowMessageBoxOnError && UpdateHotSpotCompilerFileOnError) { 
         const char* title    = "HotSpot Runtime Error";
         const char* question = "Do you want to exclude compilation of this method in future runs?";
         if (os::message_box(title, question)) {
@@ -707,7 +728,7 @@ static void report_null_exception_in_code_cache(address exception_pc) {
       }
       fatal("Implicit null exception happened in compiled method");
     } else {
-      n->print();
+      n->print(); 
       fatal("Implicit null exception happened in generated stub");
     }
   }
@@ -732,7 +753,7 @@ bool OptoRuntime::is_callee_saved_register(MachRegisterNumbers reg) {
 
 //-----------------------------------------------------------------------
 // Exceptions
-//
+// 
 
 static void trace_exception(oop exception_oop, address exception_pc, const char* msg) PRODUCT_RETURN;
 
@@ -745,16 +766,16 @@ JRT_ENTRY_NO_ASYNC(address, OptoRuntime::handle_exception_C_helper(JavaThread* t
   // is only used to pass arguments into the method. Not for general
   // exception handling.  DO NOT CHANGE IT to use pending_exception, since
   // the runtime stubs checks this on exit.
-  assert(thread->exception_oop() != NULL, "exception oop is found");
+  assert(thread->exception_oop() != NULL, "exception oop is found");  
   address handler_address = NULL;
 
   Handle exception(thread, thread->exception_oop());
 
   if (TraceExceptions) {
-    trace_exception(exception(), thread->exception_pc(), "");
+    trace_exception(exception(), thread->exception_pc(), ""); 
   }
   // for AbortVMOnException flag
-  NOT_PRODUCT(Exceptions::debug_check_abort(exception));
+  NOT_PRODUCT(Exceptions::debug_check_abort(exception));  
 
   #ifdef ASSERT
     if (!(exception->is_a(SystemDictionary::throwable_klass()))) {
@@ -840,10 +861,10 @@ JRT_END
 // will do the normal VM entry. We do it this way so that we can see if the nmethod
 // we looked up the handler for has been deoptimized in the meantime. If it has been
 // we must not use the handler and instread return the deopt blob.
-address OptoRuntime::handle_exception_C(JavaThread* thread) {
+address OptoRuntime::handle_exception_C(JavaThread* thread) { 
 //
 // We are in Java not VM and in debug mode we have a NoHandleMark
-//
+// 
 #ifndef PRODUCT
   SharedRuntime::_find_handler_ctr++;          // find exception handler
 #endif
@@ -851,7 +872,7 @@ address OptoRuntime::handle_exception_C(JavaThread* thread) {
   nmethod* nm = NULL;
   address handler_address = NULL;
   {
-    // Enter the VM
+    // Enter the VM 
 
     ResetNoHandleMark rnhm;
     handler_address = handle_exception_C_helper(thread, nm);
@@ -876,16 +897,16 @@ address OptoRuntime::handle_exception_C(JavaThread* thread) {
 }
 
 //------------------------------rethrow----------------------------------------
-// We get here after compiled code has executed a 'RethrowNode'.  The callee
+// We get here after compiled code has executed a 'RethrowNode'.  The callee 
 // is either throwing or rethrowing an exception.  The callee-save registers
 // have been restored, synchronized objects have been unlocked and the callee
 // stack frame has been removed.  The return address was passed in.
-// Exception oop is passed as the 1st argument.  This routine is then called
-// from the stub.  On exit, we know where to jump in the caller's code.
-// After this C code exits, the stub will pop his frame and end in a jump
+// Exception oop is passed as the 1st argument.  This routine is then called 
+// from the stub.  On exit, we know where to jump in the caller's code.  
+// After this C code exits, the stub will pop his frame and end in a jump 
 // (instead of a return).  We enter the caller's default handler.
 //
-// This must be JRT_LEAF:
+// This must be JRT_LEAF: 
 //     - caller will not change its state as we cannot block on exit,
 //       therefore raw_exception_handler_for_return_address is all it takes
 //       to handle deoptimized blobs
@@ -893,10 +914,10 @@ address OptoRuntime::handle_exception_C(JavaThread* thread) {
 // However, there needs to be a safepoint check in the middle!  So compiled
 // safepoints are completely watertight.
 //
-// Thus, it cannot be a leaf since it contains the No_GC_Verifier.
-//
+// Thus, it cannot be a leaf since it contains the No_GC_Verifier. 
+//  
 // *THIS IS NOT RECOMMENDED PROGRAMMING STYLE*
-//
+// 
 address OptoRuntime::rethrow_C(oopDesc* exception, JavaThread* thread, address ret_pc) {
 #ifndef PRODUCT
   SharedRuntime::_rethrow_ctr++;               // count rethrows
@@ -917,7 +938,7 @@ address OptoRuntime::rethrow_C(oopDesc* exception, JavaThread* thread, address r
 
 const TypeFunc *OptoRuntime::rethrow_Type() {
   // create input type (domain)
-  const Type **fields = TypeTuple::fields(1);
+  const Type **fields = TypeTuple::fields(1);  
   fields[TypeFunc::Parms+0] = TypeInstPtr::NOTNULL; // Exception oop
   const TypeTuple *domain = TypeTuple::make(TypeFunc::Parms+1,fields);
 
@@ -937,7 +958,7 @@ void OptoRuntime::deoptimize_caller_frame(JavaThread *thread, bool doit) {
     RegisterMap reg_map(thread);
     frame stub_frame = thread->last_frame();
     assert(stub_frame.is_runtime_frame() || exception_blob()->contains(stub_frame.pc()), "sanity check");
-    frame caller_frame = stub_frame.sender(&reg_map);
+    frame caller_frame = stub_frame.sender(&reg_map); 
 
     VM_DeoptimizeFrame deopt(thread, caller_frame.id());
     VMThread::execute(&deopt);
@@ -1052,7 +1073,7 @@ void OptoRuntime::print_named_counters() {
 
 NamedCounter* OptoRuntime::new_named_counter(JVMState* youngest_jvms, NamedCounter::CounterTag tag) {
   int max_depth = youngest_jvms->depth();
-
+  
   // Visit scopes from youngest to oldest.
   bool first = true;
   stringStream st;
@@ -1116,7 +1137,7 @@ static void trace_exception(oop exception_oop, address exception_pc, const char*
 // Called from call sites in compiled code with oop maps (actually safepoints)
 // Zaps dead locals in first java frame.
 // Is entry because may need to lock to generate oop maps
-// Currently, only used for compiler frames, but someday may be used
+// Currently, only used for compiler frames, but someday may be used 
 // for interpreter frames, too.
 
 int OptoRuntime::ZapDeadCompiledLocals_count = 0;
@@ -1126,10 +1147,10 @@ static bool is_java_frame(  frame* f) { return f->is_java_frame();   }
 static bool is_native_frame(frame* f) { return f->is_native_frame(); }
 
 
-void OptoRuntime::zap_dead_java_or_native_locals(JavaThread* thread,
+void OptoRuntime::zap_dead_java_or_native_locals(JavaThread* thread, 
                                                 bool (*is_this_the_right_frame_to_zap)(frame*)) {
   assert(JavaThread::current() == thread, "is this needed?");
-
+ 
   if ( !ZapDeadCompiledLocals )  return;
 
   bool skip = false;

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Portions of code courtesy of Clifford Click
@@ -45,7 +48,7 @@ public:
   };
 protected:
   MemNode( Node *c0, Node *c1, Node *c2, const TypePtr* at )
-    : Node(c0,c1,c2   ) {
+    : Node(c0,c1,c2   ) { 
     init_class_id(Class_Mem);
     debug_only(_adr_type=at; adr_type();)
   }
@@ -74,7 +77,7 @@ public:
   virtual Node *Ideal_DU_postCCP( PhaseCCP *ccp );
 
   virtual const class TypePtr *adr_type() const;  // returns bottom_type of address
-
+  
   // Shared code for Ideal methods:
   Node *Ideal_common(PhaseGVN *phase, bool can_reshape);  // Return -1 for short-circuit NULL.
 
@@ -83,7 +86,7 @@ public:
 
   // Raw access function, to allow copying of adr_type efficiently in
   // product builds and retain the debug info for debug builds.
-  const TypePtr *raw_adr_type() const {
+  const TypePtr *raw_adr_type() const { 
 #ifdef ASSERT
     return _adr_type;
 #else
@@ -109,8 +112,8 @@ public:
   Node* can_see_stored_value(Node* st, PhaseTransform* phase) const;
 
 #ifndef PRODUCT
-  static void dump_adr_type(const Node* mem, const TypePtr* adr_type, outputStream *st);
-  virtual void dump_spec(outputStream *st) const;
+  static void dump_adr_type(const Node* mem, const TypePtr* adr_type);
+  virtual void dump_spec() const;
 #endif
 };
 
@@ -122,7 +125,7 @@ protected:
   virtual uint size_of() const; // Size is bigger
   const Type* const _type;      // What kind of value is loaded?
 public:
-
+         
   LoadNode( Node *c, Node *mem, Node *adr, const TypePtr* at, const Type *rt )
     : MemNode(c,mem,adr,at), _type(rt) {
     init_class_id(Class_Load);
@@ -164,7 +167,7 @@ public:
   virtual int store_Opcode() const = 0;
 
 #ifndef PRODUCT
-  virtual void dump_spec(outputStream *st) const;
+  virtual void dump_spec() const;
 #endif
 protected:
   const Type* load_array_final_field(const TypeKlassPtr *tkls,
@@ -188,7 +191,7 @@ public:
 // Load a char (16bits unsigned) from memory
 class LoadCNode : public LoadNode {
 public:
-  LoadCNode( Node *c, Node *mem, Node *adr, const TypePtr* at, const TypeInt *ti = TypeInt::CHAR )
+  LoadCNode( Node *c, Node *mem, Node *adr, const TypePtr* at, const TypeInt *ti = TypeInt::CHAR ) 
     : LoadNode(c,mem,adr,at,ti) {}
   virtual int Opcode() const;
   virtual uint ideal_reg() const { return Op_RegI; }
@@ -201,7 +204,7 @@ public:
 // Load an integer from memory
 class LoadINode : public LoadNode {
 public:
-  LoadINode( Node *c, Node *mem, Node *adr, const TypePtr* at, const TypeInt *ti = TypeInt::INT )
+  LoadINode( Node *c, Node *mem, Node *adr, const TypePtr* at, const TypeInt *ti = TypeInt::INT ) 
     : LoadNode(c,mem,adr,at,ti) {}
   virtual int Opcode() const;
   virtual uint ideal_reg() const { return Op_RegI; }
@@ -245,9 +248,9 @@ public:
   bool require_atomic_access() { return _require_atomic_access; }
   static LoadLNode* make_atomic(Compile *C, Node* ctl, Node* mem, Node* adr, const TypePtr* adr_type, const Type* rt);
 #ifndef PRODUCT
-  virtual void dump_spec(outputStream *st) const {
-    LoadNode::dump_spec(st);
-    if (_require_atomic_access)  st->print(" Atomic!");
+  virtual void dump_spec() const {
+    LoadNode::dump_spec();
+    if (_require_atomic_access)  tty->print(" Atomic!");
   }
 #endif
 };
@@ -256,7 +259,7 @@ public:
 // Load a long from unaligned memory
 class LoadL_unalignedNode : public LoadLNode {
 public:
-  LoadL_unalignedNode( Node *c, Node *mem, Node *adr, const TypePtr* at )
+  LoadL_unalignedNode( Node *c, Node *mem, Node *adr, const TypePtr* at ) 
     : LoadLNode(c,mem,adr,at) {}
   virtual int Opcode() const;
 };
@@ -265,7 +268,7 @@ public:
 // Load a float (64 bits) from memory
 class LoadFNode : public LoadNode {
 public:
-  LoadFNode( Node *c, Node *mem, Node *adr, const TypePtr* at, const Type *t = Type::FLOAT )
+  LoadFNode( Node *c, Node *mem, Node *adr, const TypePtr* at, const Type *t = Type::FLOAT ) 
     : LoadNode(c,mem,adr,at,t) {}
   virtual int Opcode() const;
   virtual uint ideal_reg() const { return Op_RegF; }
@@ -277,7 +280,7 @@ public:
 // Load a double (64 bits) from memory
 class LoadDNode : public LoadNode {
 public:
-  LoadDNode( Node *c, Node *mem, Node *adr, const TypePtr* at, const Type *t = Type::DOUBLE )
+  LoadDNode( Node *c, Node *mem, Node *adr, const TypePtr* at, const Type *t = Type::DOUBLE ) 
     : LoadNode(c,mem,adr,at,t) {}
   virtual int Opcode() const;
   virtual uint ideal_reg() const { return Op_RegD; }
@@ -289,7 +292,7 @@ public:
 // Load a double from unaligned memory
 class LoadD_unalignedNode : public LoadDNode {
 public:
-  LoadD_unalignedNode( Node *c, Node *mem, Node *adr, const TypePtr* at )
+  LoadD_unalignedNode( Node *c, Node *mem, Node *adr, const TypePtr* at ) 
     : LoadDNode(c,mem,adr,at) {}
   virtual int Opcode() const;
 };
@@ -298,7 +301,7 @@ public:
 // Load a pointer from memory (either object or array)
 class LoadPNode : public LoadNode {
 public:
-  LoadPNode( Node *c, Node *mem, Node *adr, const TypePtr *at, const TypePtr* t )
+  LoadPNode( Node *c, Node *mem, Node *adr, const TypePtr *at, const TypePtr* t ) 
     : LoadNode(c,mem,adr,at,t) {}
   virtual int Opcode() const;
   virtual uint ideal_reg() const { return Op_RegP; }
@@ -313,7 +316,7 @@ public:
   // results (new raw memory state) inside of loops preventing all manner of
   // other optimizations).  Basically, it's ugly but so is the alternative.
   // See comment in macro.cpp, around line 125 expand_allocate_common().
-  virtual bool depends_only_on_test() const { return adr_type() != TypeRawPtr::BOTTOM; }
+  virtual bool depends_only_on_test() const { return adr_type() != TypeRawPtr::BOTTOM; } 
 };
 
 //------------------------------LoadKlassNode----------------------------------
@@ -325,14 +328,14 @@ public:
   virtual int Opcode() const;
   virtual const Type *Value( PhaseTransform *phase ) const;
   virtual Node *Identity( PhaseTransform *phase );
-  virtual bool depends_only_on_test() const { return true; }
+  virtual bool depends_only_on_test() const { return true; } 
 };
 
 //------------------------------LoadSNode--------------------------------------
 // Load a short (16bits signed) from memory
 class LoadSNode : public LoadNode {
 public:
-  LoadSNode( Node *c, Node *mem, Node *adr, const TypePtr* at, const TypeInt *ti = TypeInt::SHORT )
+  LoadSNode( Node *c, Node *mem, Node *adr, const TypePtr* at, const TypeInt *ti = TypeInt::SHORT ) 
     : LoadNode(c,mem,adr,at,ti) {}
   virtual int Opcode() const;
   virtual uint ideal_reg() const { return Op_RegI; }
@@ -440,9 +443,9 @@ public:
   bool require_atomic_access() { return _require_atomic_access; }
   static StoreLNode* make_atomic(Compile *C, Node* ctl, Node* mem, Node* adr, const TypePtr* adr_type, Node* val);
 #ifndef PRODUCT
-  virtual void dump_spec(outputStream *st) const {
-    StoreNode::dump_spec(st);
-    if (_require_atomic_access)  st->print(" Atomic!");
+  virtual void dump_spec() const {
+    StoreNode::dump_spec();
+    if (_require_atomic_access)  tty->print(" Atomic!");
   }
 #endif
 };
@@ -497,7 +500,7 @@ public:
     : LoadPNode(c,mem,adr,TypeRawPtr::BOTTOM, TypeRawPtr::BOTTOM) {}
   virtual int Opcode() const;
   virtual int store_Opcode() const { return Op_StorePConditional; }
-  virtual bool depends_only_on_test() const { return true; }
+  virtual bool depends_only_on_test() const { return true; } 
 };
 
 //------------------------------LoadLLockedNode---------------------------------
@@ -525,7 +528,7 @@ public:
   virtual uint ideal_reg() const { return 0;} // memory projections don't have a register
   virtual const Type *Value( PhaseTransform *phase ) const;
 #ifndef PRODUCT
-  virtual void dump_spec(outputStream *st) const {};
+  virtual void dump_spec() const {};
 #endif
 };
 
@@ -845,7 +848,7 @@ public:
   void grow_to_match(const MergeMemNode* other);
   bool verify_sparse() const PRODUCT_RETURN0;
 #ifndef PRODUCT
-  virtual void dump_spec(outputStream *st) const;
+  virtual void dump_spec() const;
 #endif
 };
 
@@ -1060,3 +1063,4 @@ public:
   virtual uint match_edge(uint idx) const { return idx==2; }
   virtual const Type *bottom_type() const { return Type::ABIO; }
 };
+

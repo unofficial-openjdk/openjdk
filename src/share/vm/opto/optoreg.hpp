@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2006-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //------------------------------OptoReg----------------------------------------
@@ -42,17 +45,17 @@
 // if the value is outside the enumeration's valid range. OptoReg::Name is
 // typedef'ed as int, because it needs to be able to represent spill-slots.
 //
-class OptoReg VALUE_OBJ_CLASS_SPEC {
+class OptoReg VALUE_OBJ_CLASS_SPEC { 
 
  friend class C2Compiler;
  public:
   typedef int Name;
   enum {
     // Chunk 0
-    Physical = AdlcVMDeps::Physical, // Start of physical regs
+    Physical = AdlcVMDeps::Physical, // Start of physical regs 
     // A few oddballs at the edge of the world
-    Special = -2,               // All special (not allocated) values
-    Bad = -1                    // Not a register
+    Special = -2,		// All special (not allocated) values
+    Bad = -1			// Not a register
   };
 
  private:

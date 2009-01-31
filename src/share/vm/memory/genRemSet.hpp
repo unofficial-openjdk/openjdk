@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A GenRemSet provides ways of iterating over pointers accross generations.
@@ -34,7 +37,7 @@ class GenRemSet: public CHeapObj {
   friend class Generation;
 
   BarrierSet* _bs;
-
+  
 public:
   enum Name {
     CardTable,
@@ -64,7 +67,7 @@ public:
   virtual void younger_refs_iterate(Generation* g, OopsInGenClosure* blk) = 0;
 
   virtual void younger_refs_in_space_iterate(Space* sp,
-                                             OopsInGenClosure* cl) = 0;
+					     OopsInGenClosure* cl) = 0;
 
   // This method is used to notify the remembered set that "new_val" has
   // been written into "field" by the garbage collector.
@@ -93,7 +96,7 @@ public:
   // Verify that the remembered set has no entries for
   // the heap interval denoted by mr.
   virtual void verify_empty(MemRegion mr) = 0;
-
+  
   // If appropriate, print some information about the remset on "tty".
   virtual void print() {}
 
@@ -110,7 +113,7 @@ public:
   // Informs the RS that refs in the given "mr" may have changed
   // arbitrarily, and therefore may contain old-to-young pointers.
   virtual void invalidate(MemRegion mr) = 0;
-
+  
   // Informs the RS that refs in this generation
   // may have changed arbitrarily, and therefore may contain
   // old-to-young pointers in arbitrary locations. The parameter

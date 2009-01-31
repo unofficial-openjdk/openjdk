@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //
@@ -27,7 +30,7 @@
 //
 #define RUNTIME_OS_FLAGS(develop, develop_pd, product, product_pd, diagnostic, notproduct) \
   product(bool, UseOprofile, false,                                 \
-        "enable support for Oprofile profiler")                     \
+	"enable support for Oprofile profiler")                     \
                                                                     \
   product(bool, UseLinuxPosixThreadCPUClocks, false,                \
           "enable fast Linux Posix clocks where available")         \

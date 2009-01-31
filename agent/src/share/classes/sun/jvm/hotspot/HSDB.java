@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot;
@@ -108,7 +108,7 @@ public class HSDB implements ObjectHistogramPanel.Listener, SAListener {
         coreFilename = "core";
       }
       break;
-
+        
     case (2):
       execPath = args[0];
       coreFilename = args[1];
@@ -188,7 +188,7 @@ public class HSDB implements ObjectHistogramPanel.Listener, SAListener {
     item.setMnemonic(KeyEvent.VK_S);
     menu.add(item);
     detachMenuItems.add(item);
-
+    
     // Disable detach menu items at first
     setMenuItemsEnabled(detachMenuItems, false);
 
@@ -390,7 +390,7 @@ public class HSDB implements ObjectHistogramPanel.Listener, SAListener {
     showDbgConsoleMenuItem.setEnabled(false);
 
     menuBar.add(windowsMenu);
-
+    
 
     frame.setJMenuBar(menuBar);
 
@@ -556,7 +556,7 @@ public class HSDB implements ObjectHistogramPanel.Listener, SAListener {
       };
     corePathField.addActionListener(attacher);
     execPathField.addActionListener(attacher);
-
+    
     vbox = Box.createVerticalBox();
     panel = new JPanel();
     panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
@@ -697,7 +697,7 @@ public class HSDB implements ObjectHistogramPanel.Listener, SAListener {
     ta.setLineWrap(true);
     ta.setWrapStyleWord(true);
     ta.setEditable(false);
-
+    
     JPanel panel = new JPanel();
     panel.setLayout(new BorderLayout());
 
@@ -705,7 +705,7 @@ public class HSDB implements ObjectHistogramPanel.Listener, SAListener {
     scroller.getViewport().add(ta);
 
     panel.add(scroller, BorderLayout.CENTER);
-
+    
     bos = new ByteArrayOutputStream();
     tty = new PrintStream(bos);
     tty.print("Liveness result for ");
@@ -804,20 +804,20 @@ public class HSDB implements ObjectHistogramPanel.Listener, SAListener {
     Address minSP = starting;
     RegisterMap tmpMap = thread.newRegisterMap(false);
     while ((tmpFrame != null) && (!tmpFrame.isFirstFrame())) {
-        tmpFrame = tmpFrame.sender(tmpMap);
-        if (tmpFrame != null) {
-          sp = tmpFrame.getSP();
-          if (sp != null) {
-            maxSP = AddressOps.max(maxSP, sp);
-            minSP = AddressOps.min(minSP, sp);
-          }
-        }
+	tmpFrame = tmpFrame.sender(tmpMap);
+	if (tmpFrame != null) {
+	  sp = tmpFrame.getSP();
+	  if (sp != null) {
+	    maxSP = AddressOps.max(maxSP, sp);
+	    minSP = AddressOps.min(minSP, sp);
+	  }
+	}
 
     }
     // It is useful to be able to see say +/- 8K on the current stack range
-    AnnotatedMemoryPanel annoMemPanel = new AnnotatedMemoryPanel(agent.getDebugger(), is64Bit, starting,
-                                                                 minSP.addOffsetTo(-8192),
-                                                                 maxSP.addOffsetTo( 8192));
+    AnnotatedMemoryPanel annoMemPanel = new AnnotatedMemoryPanel(agent.getDebugger(), is64Bit, starting, 
+								 minSP.addOffsetTo(-8192),
+								 maxSP.addOffsetTo( 8192));
 
     stackFrame.getContentPane().add(annoMemPanel, BorderLayout.CENTER);
     desktop.add(stackFrame);
@@ -830,7 +830,7 @@ public class HSDB implements ObjectHistogramPanel.Listener, SAListener {
     workerThread.invokeLater(new StackWalker(vframe, annoMemPanel) {
         public void run() {
           Address startAddr = null;
-
+    
           // As this is a debugger, we want to provide potential crash
           // information to the user, i.e., by marking signal handler frames
           // on the stack. Since this system is currently targeted at
@@ -895,7 +895,7 @@ public class HSDB implements ObjectHistogramPanel.Listener, SAListener {
             }
 
             if (startAddr == null) {
-              startAddr = curFrame.getSP();
+	      startAddr = curFrame.getSP();
             }
 
             // FIXME: some compiled frames with empty oop map sets have been
@@ -965,19 +965,19 @@ public class HSDB implements ObjectHistogramPanel.Listener, SAListener {
                                                      curFrame.getFP(),
                                                      anno));
             } else {
-              if (VM.getVM().getCPU().equals("x86") || VM.getVM().getCPU().equals("amd64")) {
-                // For C2, which has null frame pointers on x86/amd64
-                CodeBlob cb = VM.getVM().getCodeCache().findBlob(curFrame.getPC());
-                Address sp = curFrame.getSP();
-                if (Assert.ASSERTS_ENABLED) {
-                  Assert.that(cb.getFrameSize() > 0, "CodeBlob must have non-zero frame size");
-                }
-                annoPanel.addAnnotation(new Annotation(sp,
-                                                       sp.addOffsetTo(cb.getFrameSize()),
-                                                       anno));
-              } else {
-                Assert.that(VM.getVM().getCPU().equals("ia64"), "only ia64 should reach here");
-              }
+	      if (VM.getVM().getCPU().equals("x86") || VM.getVM().getCPU().equals("amd64")) {
+		// For C2, which has null frame pointers on x86/amd64
+		CodeBlob cb = VM.getVM().getCodeCache().findBlob(curFrame.getPC());
+		Address sp = curFrame.getSP();
+		if (Assert.ASSERTS_ENABLED) {
+		  Assert.that(cb.getFrameSize() > 0, "CodeBlob must have non-zero frame size");
+		}
+		annoPanel.addAnnotation(new Annotation(sp,
+						       sp.addOffsetTo(cb.getFrameSize()),
+						       anno));
+	      } else {
+		Assert.that(VM.getVM().getCPU().equals("ia64"), "only ia64 should reach here");
+	      }
             }
 
             // Add interpreter frame annotations
@@ -1019,7 +1019,7 @@ public class HSDB implements ObjectHistogramPanel.Listener, SAListener {
                         CollectedHeap collHeap = VM.getVM().getUniverse().heap();
                         boolean bad = true;
                         anno = "BAD OOP";
-                        if (collHeap instanceof GenCollectedHeap) {
+                        if (collHeap instanceof GenCollectedHeap) { 
                           GenCollectedHeap heap = (GenCollectedHeap) collHeap;
                           for (int i = 0; i < heap.nGens(); i++) {
                             if (heap.getGen(i).isIn(handle)) {
@@ -1080,7 +1080,7 @@ public class HSDB implements ObjectHistogramPanel.Listener, SAListener {
                           }
                         }
                       }
-
+                
                       annoPanel.addAnnotation(new Annotation(addr, addr.addOffsetTo(addressSize), anno));
                     }
                   }, rm);
@@ -1093,13 +1093,13 @@ public class HSDB implements ObjectHistogramPanel.Listener, SAListener {
             vf = nextVFrame;
           }
 
-          // This used to paint as we walked the frames. This caused the display to be refreshed
-          // enough to be annoying on remote displays. It also would cause the annotations to
-          // be displayed in varying order which caused some annotations to overwrite others
-          // depending on the races between painting and adding annotations. This latter problem
-          // still exists to some degree but moving this code here definitely seems to reduce it
-          annoPanel.makeVisible(startAddr);
-          annoPanel.repaint();
+	  // This used to paint as we walked the frames. This caused the display to be refreshed
+	  // enough to be annoying on remote displays. It also would cause the annotations to
+	  // be displayed in varying order which caused some annotations to overwrite others
+	  // depending on the races between painting and adding annotations. This latter problem
+	  // still exists to some degree but moving this code here definitely seems to reduce it
+	  annoPanel.makeVisible(startAddr);
+	  annoPanel.repaint();
         }
       });
   }
@@ -1380,7 +1380,7 @@ public class HSDB implements ObjectHistogramPanel.Listener, SAListener {
   }
 
   class FindObjectByTypeCleanupThunk implements CleanupThunk {
-    FindObjectByType finder;
+    FindObjectByType finder;    
 
     FindObjectByTypeCleanupThunk(FindObjectByType finder) {
       this.finder = finder;
@@ -1453,7 +1453,7 @@ public class HSDB implements ObjectHistogramPanel.Listener, SAListener {
                   }
               }
           };
-
+      
       showPanel("Command Line", new CommandProcessorPanel(new CommandProcessor(di, null, null, null)));
   }
 
@@ -1523,10 +1523,10 @@ public class HSDB implements ObjectHistogramPanel.Listener, SAListener {
                                          cbFrame.setIconifiable(true);
                                          ClassBrowserPanel cbPanel = new ClassBrowserPanel();
                                          cbFrame.getContentPane().add(cbPanel, BorderLayout.CENTER);
-                                         desktop.remove(progressFrame);
+                                         desktop.remove(progressFrame); 
                                          desktop.repaint();
                                          desktop.add(cbFrame);
-                                         GraphicsUtilities.reshapeToAspectRatio(cbFrame, 1.25f, 0.85f,
+                                         GraphicsUtilities.reshapeToAspectRatio(cbFrame, 1.25f, 0.85f, 
                                                                       cbFrame.getParent().getSize());
                                          cbFrame.show();
                                          cbPanel.setClassesText(htmlText);
@@ -1548,7 +1548,7 @@ public class HSDB implements ObjectHistogramPanel.Listener, SAListener {
           panel.viewAddress(address);
         }
       });
-
+    
   }
 
   public void showMemoryViewer() {
@@ -1684,7 +1684,7 @@ public class HSDB implements ObjectHistogramPanel.Listener, SAListener {
     HeapVisitor progVisitor = new ProgressiveHeapVisitor(visitor, progress);
     workerThread.invokeLater(new VisitHeap(progVisitor));
   }
-
+                              
   //--------------------------------------------------------------------------------
   // Stack trace helper
   //
@@ -1728,7 +1728,7 @@ public class HSDB implements ObjectHistogramPanel.Listener, SAListener {
         tty.print(" (SIGNAL HANDLER)");
       }
       tty.println();
-
+      
       if (!f.isFirstFrame()) {
         f = f.sender(regMap);
       } else {

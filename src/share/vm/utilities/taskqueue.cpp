@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)taskqueue.cpp	1.21 06/08/10 17:56:51 JVM"
+#endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -50,7 +53,7 @@ int TaskQueueSetSuper::randomParkAndMiller(int *seed0) {
 ParallelTaskTerminator::
 ParallelTaskTerminator(int n_threads, TaskQueueSetSuper* queue_set) :
   _n_threads(n_threads),
-  _queue_set(queue_set),
+  _queue_set(queue_set), 
   _offered_termination(0) {}
 
 bool ParallelTaskTerminator::peek_in_queue_set() {
@@ -109,7 +112,7 @@ void ParallelTaskTerminator::reset_for_reuse() {
 
 bool ChunkTaskQueueWithOverflow::is_empty() {
   return (_chunk_queue.size() == 0) &&
-         (_overflow_stack->length() == 0);
+	 (_overflow_stack->length() == 0);
 }
 
 bool ChunkTaskQueueWithOverflow::stealable_is_empty() {
@@ -123,7 +126,7 @@ bool ChunkTaskQueueWithOverflow::overflow_is_empty() {
 void ChunkTaskQueueWithOverflow::initialize() {
   _chunk_queue.initialize();
   assert(_overflow_stack == 0, "Creating memory leak");
-  _overflow_stack =
+  _overflow_stack = 
     new (ResourceObj::C_HEAP) GrowableArray<ChunkTask>(10, true);
 }
 
@@ -153,7 +156,7 @@ bool ChunkTaskQueueWithOverflow::retrieve(ChunkTask& chunk_task) {
 }
 
 bool ChunkTaskQueueWithOverflow::retrieve_from_stealable_queue(
-                                   ChunkTask& chunk_task) {
+				   ChunkTask& chunk_task) {
   bool result = _chunk_queue.pop_local(chunk_task);
   if (TraceChunkTasksQueuing && Verbose) {
     gclog_or_tty->print_cr("CTQ: retrieve_stealable " PTR_FORMAT, chunk_task);
@@ -162,7 +165,7 @@ bool ChunkTaskQueueWithOverflow::retrieve_from_stealable_queue(
 }
 
 bool ChunkTaskQueueWithOverflow::retrieve_from_overflow(
-                                        ChunkTask& chunk_task) {
+					ChunkTask& chunk_task) {
   bool result;
   if (!_overflow_stack->is_empty()) {
     chunk_task = _overflow_stack->pop();

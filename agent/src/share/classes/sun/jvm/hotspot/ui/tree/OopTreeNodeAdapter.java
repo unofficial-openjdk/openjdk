@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.ui.tree;
@@ -119,7 +119,7 @@ public class OopTreeNodeAdapter extends FieldTreeNodeAdapter {
     public int getNumFields() {
       return numFields;
     }
-
+    
     public void prologue() {
       numFields = 0;
     }
@@ -142,7 +142,7 @@ public class OopTreeNodeAdapter extends FieldTreeNodeAdapter {
     private int index;
     private int curField;
     private SimpleTreeNode child;
-
+    
     public Fetcher(int index) {
       this.index = index;
     }
@@ -150,7 +150,7 @@ public class OopTreeNodeAdapter extends FieldTreeNodeAdapter {
     public SimpleTreeNode getChild() {
       return child;
     }
-
+    
     public void prologue() {
       curField = 0;
     }
@@ -244,7 +244,7 @@ public class OopTreeNodeAdapter extends FieldTreeNodeAdapter {
     public int getIndex() {
       return index;
     }
-
+    
     public void prologue() {
       curField = 0;
       index = -1;

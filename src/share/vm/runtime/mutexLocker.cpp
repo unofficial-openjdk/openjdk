@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -30,7 +33,7 @@
 // Note that the following pointers are effectively final -- after having been
 // set at JVM startup-time, they should never be subsequently mutated.
 // Instead of using pointers to malloc()ed monitors and mutexes we should consider
-// eliminating the indirection and using instances instead.
+// eliminating the indirection and using instances instead.  
 // Consider using GCC's __read_mostly.
 
 Mutex*   Patching_lock                = NULL;
@@ -46,7 +49,7 @@ Mutex*   JmethodIdCreation_lock       = NULL;
 Mutex*   JfieldIdCreation_lock        = NULL;
 Monitor* JNICritical_lock             = NULL;
 Mutex*   JvmtiThreadState_lock        = NULL;
-Monitor* JvmtiPendingEvent_lock       = NULL;
+Monitor* JvmtiPendingEvent_lock	      = NULL;
 Mutex*   Heap_lock                    = NULL;
 Mutex*   ExpandHeap_lock              = NULL;
 Mutex*   AdapterHandlerLibrary_lock   = NULL;
@@ -68,7 +71,7 @@ Monitor* SLT_lock                     = NULL;
 Monitor* iCMS_lock                    = NULL;
 Monitor* FullGCCount_lock             = NULL;
 Mutex*   ParGCRareEvent_lock          = NULL;
-Mutex*   DerivedPointerTableGC_lock   = NULL;
+Mutex*	 DerivedPointerTableGC_lock   = NULL;
 Mutex*   Compile_lock                 = NULL;
 Monitor* MethodCompileQueue_lock      = NULL;
 #ifdef TIERED
@@ -141,7 +144,7 @@ void assert_lock_strong(const Monitor * lock) {
   _mutex_array[_num_mutex++] = var;                               \
 }
 
-void mutex_init() {
+void mutex_init() {  
   def(tty_lock                     , Mutex  , event,       true ); // allow to lock in VM
 
   def(CGC_lock                   , Monitor, special,     true ); // coordinate between fore- and background GC
@@ -154,7 +157,7 @@ void mutex_init() {
   def(DerivedPointerTableGC_lock   , Mutex,   leaf,        true );
   def(CodeCache_lock               , Mutex  , special,     true );
   def(Interrupt_lock               , Monitor, special,     true ); // used for interrupt processing
-  def(RawMonitor_lock              , Mutex,   special,     true );
+  def(RawMonitor_lock              , Mutex,   special,     true ); 
   def(OopMapCacheAlloc_lock        , Mutex,   leaf,        true ); // used for oop_map_cache allocation.
 
   def(Patching_lock                , Mutex  , special,     true ); // used for safepointing and code patching.
@@ -192,14 +195,14 @@ void mutex_init() {
     def(SerializePage_lock         , Monitor, leaf,        true );
   }
 
-  def(Threads_lock                 , Monitor, barrier,     true );
+  def(Threads_lock                 , Monitor, barrier,     true ); 
 
-  def(VMOperationQueue_lock        , Monitor, nonleaf,     true ); // VM_thread allowed to block on these
-  def(VMOperationRequest_lock      , Monitor, nonleaf,     true );
+  def(VMOperationQueue_lock        , Monitor, nonleaf,     true ); // VM_thread allowed to block on these     
+  def(VMOperationRequest_lock      , Monitor, nonleaf,     true ); 
   def(RetData_lock                 , Mutex  , nonleaf,     false);
   def(Terminator_lock              , Monitor, nonleaf,     true );
   def(VtableStubs_lock             , Mutex  , nonleaf,     true );
-  def(Notify_lock                  , Monitor, nonleaf,     true );
+  def(Notify_lock                  , Monitor, nonleaf,     true ); 
   def(JNIGlobalHandle_lock         , Mutex  , nonleaf,     true ); // locks JNIHandleBlockFreeList_lock
   def(JNICritical_lock             , Monitor, nonleaf,     true ); // used for JNI critical regions
   def(AdapterHandlerLibrary_lock   , Mutex  , nonleaf,     true);
@@ -212,24 +215,24 @@ void mutex_init() {
   def(JNICachedItableIndex_lock    , Mutex  , nonleaf+1,   false); // Used to cache an itable index during JNI invoke
 
   def(CompiledIC_lock              , Mutex  , nonleaf+2,   false); // locks VtableStubs_lock, InlineCacheBuffer_lock
-  def(CompileTaskAlloc_lock        , Mutex  , nonleaf+2,   true );
-  def(CompileStatistics_lock       , Mutex  , nonleaf+2,   false);
+  def(CompileTaskAlloc_lock        , Mutex  , nonleaf+2,   true ); 
+  def(CompileStatistics_lock       , Mutex  , nonleaf+2,   false); 
   def(MultiArray_lock              , Mutex  , nonleaf+2,   false); // locks SymbolTable_lock
 
   def(JvmtiThreadState_lock        , Mutex  , nonleaf+2,   false); // Used by JvmtiThreadState/JvmtiEventController
-  def(JvmtiPendingEvent_lock       , Monitor, nonleaf,     false); // Used by JvmtiCodeBlobEvents
+  def(JvmtiPendingEvent_lock	   , Monitor, nonleaf,     false); // Used by JvmtiCodeBlobEvents
   def(Management_lock              , Mutex  , nonleaf+2,   false); // used for JVM management
 
-  def(Compile_lock                 , Mutex  , nonleaf+3,   true );
+  def(Compile_lock                 , Mutex  , nonleaf+3,   true ); 
   def(MethodData_lock              , Mutex  , nonleaf+3,   false);
 
-  def(MethodCompileQueue_lock      , Monitor, nonleaf+4,   true );
+  def(MethodCompileQueue_lock      , Monitor, nonleaf+4,   true ); 
   def(Debug2_lock                  , Mutex  , nonleaf+4,   true );
   def(Debug3_lock                  , Mutex  , nonleaf+4,   true );
   def(ProfileVM_lock               , Monitor, nonleaf+4,   false); // used for profiling of the VMThread
-  def(CompileThread_lock           , Monitor, nonleaf+5,   false );
+  def(CompileThread_lock           , Monitor, nonleaf+5,   false ); 
 #ifdef TIERED
-  def(C1_lock                      , Monitor, nonleaf+5,   false );
+  def(C1_lock                      , Monitor, nonleaf+5,   false ); 
 #endif // TIERED
 
 
@@ -264,3 +267,4 @@ void print_owned_locks_on_error(outputStream* st) {
   }
   if (none) st->print_cr("None");
 }
+

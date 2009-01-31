@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.runtime.amd64;
@@ -51,7 +51,7 @@ public class AMD64CurrentFrameGuess {
   private Address          spFound;
   private Address          fpFound;
   private Address          pcFound;
-
+  
   private static final boolean DEBUG = System.getProperty("sun.jvm.hotspot.runtime.amd64.AMD64Frame.DEBUG")
                                        != null;
 
@@ -117,7 +117,7 @@ public class AMD64CurrentFrameGuess {
         // FIXME: there is something wrong with stackwalking across
         // adapter frames...this is likely to be the root cause of the
         // failure with the simpler algorithm below.
-
+        
         for (long offset = 0;
              offset < regionInBytesToSearch;
              offset += vm.getAddressSize()) {
@@ -145,7 +145,7 @@ public class AMD64CurrentFrameGuess {
             // Bad SP. Try another.
           }
         }
-
+        
         // Were not able to find a plausible SP to go with this PC.
         // Bail out.
         return false;
@@ -158,7 +158,7 @@ public class AMD64CurrentFrameGuess {
         // for compiled code. We see whether the PC is in the
         // interpreter and take care of that, otherwise we run code
         // (unfortunately) duplicated from AMD64Frame.senderForCompiledFrame.
-
+        
         CodeCache cc = vm.getCodeCache();
         if (cc.contains(pc)) {
           CodeBlob cb = cc.findBlob(pc);
@@ -167,8 +167,8 @@ public class AMD64CurrentFrameGuess {
           // NOTE: This is the code duplicated from AMD64Frame
           Address saved_fp = null;
           int llink_offset = cb.getLinkOffset();
-          if (llink_offset >= 0) {
-            // Restore base-pointer, since next frame might be an interpreter frame.
+          if (llink_offset >= 0) {    
+            // Restore base-pointer, since next frame might be an interpreter frame.    
             Address fp_addr = sp.addOffsetTo(VM.getVM().getAddressSize() * llink_offset);
             saved_fp = fp_addr.getAddressAt(0);
           }
@@ -187,7 +187,7 @@ public class AMD64CurrentFrameGuess {
       // didn't have enough insight into the target VM to understand
       // that) then we are going to lose the entire stack trace for
       // the thread, which is sub-optimal. FIXME.
-
+      
       if (DEBUG) {
         System.out.println("CurrentFrameGuess: choosing last Java frame: sp = " +
                            thread.getLastJavaSP() + ", fp = " + thread.getLastJavaFP());

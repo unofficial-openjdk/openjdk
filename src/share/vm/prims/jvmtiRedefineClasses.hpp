@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Introduction:
@@ -198,7 +201,7 @@
 // to merge_cp. Two of the CP entry types are special in that they are
 // lazily resolved. Before explaining the copying complication, we need
 // to digress into CP entry resolution.
-//
+// 
 // JVM_CONSTANT_Class and JVM_CONSTANT_String entries are present in
 // the class file, but are not stored in memory as such until they are
 // resolved. The entries are not resolved unless they are used because
@@ -336,12 +339,12 @@ class VM_RedefineClasses: public VM_Operation {
   // These static fields are needed by SystemDictionary::classes_do()
   // facility and the adjust_cpool_cache_and_vtable() helper:
   static objArrayOop     _old_methods;
-  static objArrayOop     _new_methods;
+  static objArrayOop     _new_methods;  
   static methodOop*      _matching_old_methods;
-  static methodOop*      _matching_new_methods;
+  static methodOop*      _matching_new_methods;  
   static methodOop*      _deleted_methods;
-  static methodOop*      _added_methods;
-  static int             _matching_methods_length;
+  static methodOop*      _added_methods;  
+  static int             _matching_methods_length;  
   static int             _deleted_methods_length;
   static int             _added_methods_length;
   static klassOop        _the_class_oop;
@@ -412,9 +415,9 @@ class VM_RedefineClasses: public VM_Operation {
   // to fix up these pointers.
   static void adjust_cpool_cache_and_vtable(klassOop k_oop, oop loader, TRAPS);
 
-  // Install the redefinition of a class
+  // Install the redefinition of a class 
   void redefine_single_class(jclass the_jclass,
-    instanceKlassHandle scratch_class, TRAPS);
+    instanceKlassHandle scratch_class, TRAPS); 
 
   // Increment the classRedefinedCount field in the specific instanceKlass
   // and in all direct and indirect subclasses.
@@ -472,7 +475,7 @@ class VM_RedefineClasses: public VM_Operation {
   static void dump_methods()   PRODUCT_RETURN;
 
  public:
-  VM_RedefineClasses(jint class_count,
+  VM_RedefineClasses(jint class_count, 
                      const jvmtiClassDefinition *class_defs,
                      JvmtiClassLoadKind class_load_kind);
   VMOp_Type type() const { return VMOp_RedefineClasses; }

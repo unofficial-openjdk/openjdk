@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,10 +22,10 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
-// Low Memory Detection Support
+// Low Memory Detection Support 
 // Two memory alarms in the JDK (we called them sensors).
 //   - Heap memory sensor
 //   - Non-heap memory sensor
@@ -60,7 +63,7 @@ class ThresholdSupport : public CHeapObj {
  private:
   bool            _support_high_threshold;
   bool            _support_low_threshold;
-  size_t          _high_threshold;
+  size_t          _high_threshold; 
   size_t          _low_threshold;
  public:
   ThresholdSupport(bool support_high, bool support_low) {
@@ -78,13 +81,13 @@ class ThresholdSupport : public CHeapObj {
   bool        is_high_threshold_crossed(MemoryUsage usage) {
     if (_support_high_threshold && _high_threshold > 0) {
       return (usage.used() >= _high_threshold);
-    }
+    }  
     return false;
   }
   bool        is_low_threshold_crossed(MemoryUsage usage) {
     if (_support_low_threshold && _low_threshold > 0) {
       return (usage.used() < _low_threshold);
-    }
+    }  
     return false;
   }
 
@@ -93,7 +96,7 @@ class ThresholdSupport : public CHeapObj {
     assert(new_threshold >= _low_threshold, "new_threshold must be >= _low_threshold");
     size_t prev = _high_threshold;
     _high_threshold = new_threshold;
-    return prev;
+    return prev; 
   }
 
   size_t      set_low_threshold(size_t new_threshold) {
@@ -101,14 +104,14 @@ class ThresholdSupport : public CHeapObj {
     assert(new_threshold <= _high_threshold, "new_threshold must be <= _high_threshold");
     size_t prev = _low_threshold;
     _low_threshold = new_threshold;
-    return prev;
+    return prev; 
   }
 };
 
 class SensorInfo : public CHeapObj {
 private:
   instanceOop     _sensor_obj;
-  bool            _sensor_on;
+  bool            _sensor_on;  
   size_t          _sensor_count;
 
   // before the actual sensor on flag and sensor count are set
@@ -119,14 +122,14 @@ private:
   int             _pending_trigger_count;
 
   // _pending_clear_count takes precedence if it's > 0 which
-  // indicates the resulting sensor will be off
+  // indicates the resulting sensor will be off 
   // Sensor trigger requests will reset this clear count to
   // indicate the resulting flag should be on.
 
   int             _pending_clear_count;
 
   MemoryUsage     _usage;
-
+    
   void clear(int count, TRAPS);
   void trigger(int count, TRAPS);
 public:
@@ -144,11 +147,11 @@ public:
   int pending_clear_count()        { return _pending_clear_count; }
 
   // When this method is used, the memory usage is monitored
-  // as a gauge attribute.  High and low thresholds are designed
+  // as a gauge attribute.  High and low thresholds are designed 
   // to provide a hysteresis mechanism to avoid repeated triggering
-  // of notifications when the attribute value makes small oscillations
+  // of notifications when the attribute value makes small oscillations 
   // around the high or low threshold value.
-  //
+  // 
   // The sensor will be triggered if:
   //  (1) the usage is crossing above the high threshold and
   //      the sensor is currently off and no pending
@@ -165,7 +168,7 @@ public:
   //      the sensor is currently on and no pending
   //      clear requests; or
   //  (2) the usage is crossing below the low threshold and
-  //      the sensor will be on (i.e. sensor is currently off
+  //      the sensor will be on (i.e. sensor is currently off 
   //      and has pending trigger requests).
   //
   // Subsequent crossings of the low threshold value do not cause
@@ -173,10 +176,10 @@ public:
   // to the high threshold.
   //
   // If the current level is between high and low threhsold, no change.
-  //
+  // 
   void set_gauge_sensor_level(MemoryUsage usage, ThresholdSupport* high_low_threshold);
 
-  // When this method is used, the memory usage is monitored as a
+  // When this method is used, the memory usage is monitored as a 
   // simple counter attribute.  The sensor will be triggered
   // whenever the usage is crossing the threshold to keep track
   // of the number of times the VM detects such a condition occurs.
@@ -184,12 +187,12 @@ public:
   // The sensor will be triggered if:
   //   - the usage is crossing above the high threshold regardless
   //     of the current sensor state.
-  //
+  //   
   // The sensor will be cleared if:
   //  (1) the usage is crossing below the low threshold and
   //      the sensor is currently on; or
   //  (2) the usage is crossing below the low threshold and
-  //      the sensor will be on (i.e. sensor is currently off
+  //      the sensor will be on (i.e. sensor is currently off 
   //      and has pending trigger requests).
   //
   void set_counter_sensor_level(MemoryUsage usage, ThresholdSupport* counter_threshold);
@@ -205,7 +208,7 @@ public:
 
 class LowMemoryDetector : public AllStatic {
 friend class LowMemoryDetectorDisabler;
-private:
+private:  
   // true if any collected heap has low memory detection enabled
   static volatile bool _enabled_for_collected_pools;
   // > 0 if temporary disabed
@@ -218,7 +221,7 @@ private:
   static bool temporary_disabled() { return _disabled_count > 0; }
   static void disable() { Atomic::inc(&_disabled_count); }
   static void enable() { Atomic::dec(&_disabled_count); }
-
+  
 public:
   static void initialize();
   static void detect_low_memory();
@@ -227,18 +230,18 @@ public:
 
   static bool is_enabled(MemoryPool* pool) {
     // low memory detection is enabled for collected memory pools
-    // iff one of the collected memory pool has a sensor and the
+    // iff one of the collected memory pool has a sensor and the 
     // threshold set non-zero
     if (pool->usage_sensor() == NULL) {
       return false;
     } else {
       ThresholdSupport* threshold_support = pool->usage_threshold();
-      return (threshold_support->is_high_threshold_supported() ?
+      return (threshold_support->is_high_threshold_supported() ? 
                (threshold_support->high_threshold() > 0) : false);
     }
   }
 
-  // indicates if low memory detection is enabled for any collected
+  // indicates if low memory detection is enabled for any collected 
   // memory pools
   static inline bool is_enabled_for_collected_pools() {
     return !temporary_disabled() && _enabled_for_collected_pools;
@@ -257,14 +260,14 @@ public:
     for (int i=0; i<num_memory_pools; i++) {
       MemoryPool* pool = MemoryService::get_memory_pool(i);
 
-      // if low memory detection is enabled then check if the
+      // if low memory detection is enabled then check if the 
       // current used exceeds the high threshold
       if (pool->is_collected_pool() && is_enabled(pool)) {
-        size_t used = pool->used_in_bytes();
-        size_t high = pool->usage_threshold()->high_threshold();
-        if (used > high) {
-          detect_low_memory(pool);
-        }
+	size_t used = pool->used_in_bytes();
+	size_t high = pool->usage_threshold()->high_threshold();
+	if (used > high) {
+          detect_low_memory(pool);      
+	}
       }
     }
   }
@@ -273,11 +276,11 @@ public:
 
 class LowMemoryDetectorDisabler: public StackObj {
 public:
-  LowMemoryDetectorDisabler()
+  LowMemoryDetectorDisabler() 
   {
     LowMemoryDetector::disable();
   }
-  ~LowMemoryDetectorDisabler()
+  ~LowMemoryDetectorDisabler() 
   {
     assert(LowMemoryDetector::temporary_disabled(), "should be disabled!");
     LowMemoryDetector::enable();

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // InvocationCounters are used to trigger actions when a limit (threshold) is reached.
@@ -68,7 +71,7 @@ class InvocationCounter VALUE_OBJ_CLASS_SPEC {
 
   enum State {
     wait_for_nothing,                            // do nothing when count() > limit()
-    wait_for_compile,                            // introduce nmethod when count() > limit()
+    wait_for_compile,                            // introduce nmethod when count() > limit()   
     number_of_states                             // must be <= state_limit
   };
 
@@ -79,7 +82,7 @@ class InvocationCounter VALUE_OBJ_CLASS_SPEC {
   inline void set(State state, int count);       // sets state and counter
   inline void decay();                           // decay counter (divide by two)
   void set_carry();                              // set the sticky carry bit
-
+  
   // Accessors
   State  state() const                           { return (State)(_counter & state_mask); }
   bool   carry() const                           { return (_counter & carry_mask) != 0; }
@@ -112,7 +115,7 @@ class InvocationCounter VALUE_OBJ_CLASS_SPEC {
   // Miscellaneous
   static ByteSize counter_offset()               { return byte_offset_of(InvocationCounter, _counter); }
   static void reinitialize(bool delay_overflow);
-
+  
  private:
   static int         _init  [number_of_states];  // the counter limits
   static Action      _action[number_of_states];  // the actions
@@ -132,6 +135,8 @@ inline void InvocationCounter::decay() {
   int c = count();
   int new_count = c >> 1;
   // prevent from going to zero, to distinguish from never-executed methods
-  if (c > 0 && new_count == 0) new_count = 1;
+  if (c > 0 && new_count == 0) new_count = 1; 
   set(state(), new_count);
 }
+
+

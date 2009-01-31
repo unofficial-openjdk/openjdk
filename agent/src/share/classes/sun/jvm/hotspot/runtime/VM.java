@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.runtime;
@@ -117,7 +117,7 @@ public class VM {
   private static Type uintxType;
   private static CIntegerType boolType;
   private Boolean sharingEnabled;
-
+ 
   // command line flags supplied to VM - see struct Flag in globals.hpp
   public static final class Flag {
      private String type;
@@ -174,7 +174,7 @@ public class VM {
      public boolean isUIntx() {
         return type.equals("uintx");
      }
-
+ 
      public long getUIntx() {
         if (Assert.ASSERTS_ENABLED) {
            Assert.that(isUIntx(), "not a uintx flag!");
@@ -197,11 +197,11 @@ public class VM {
 
   private static void checkVMVersion(String vmRelease) {
      if (System.getProperty("sun.jvm.hotspot.runtime.VM.disableVersionCheck") == null) {
-        // read sa build version.
-        String versionProp = "sun.jvm.hotspot.runtime.VM.saBuildVersion";
-        String saVersion = saProps.getProperty(versionProp);
-        if (saVersion == null)
-           throw new RuntimeException("Missing property " + versionProp);
+	// read sa build version.
+	String versionProp = "sun.jvm.hotspot.runtime.VM.saBuildVersion";
+	String saVersion = saProps.getProperty(versionProp);
+	if (saVersion == null)
+	   throw new RuntimeException("Missing property " + versionProp);
 
         // Strip nonproduct VM version substring (note: saVersion doesn't have it).
         String vmVersion = vmRelease.replaceAll("(-fastdebug)|(-debug)|(-jvmg)|(-optimized)|(-profiled)","");
@@ -218,8 +218,8 @@ public class VM {
         } else {
            // Otherwise print warning to allow mismatch not release versions
            // during development.
-           System.err.println("WARNING: Hotspot VM version " + vmRelease +
-                              " does not match with SA version " + saVersion +
+           System.err.println("WARNING: Hotspot VM version " + vmRelease + 
+                              " does not match with SA version " + saVersion + 
                               "." + " You may see unexpected results. ");
         }
      } else {
@@ -240,8 +240,8 @@ public class VM {
        saProps.load(new BufferedInputStream(url.openStream()));
      } catch (Exception e) {
        throw new RuntimeException("Unable to load properties  " +
-                                  (url == null ? "null" : url.toString()) +
-                                  ": " + e.getMessage());
+				  (url == null ? "null" : url.toString()) +
+				  ": " + e.getMessage());
      }
 
      disableDerivedPrinterTableCheck = System.getProperty("sun.jvm.hotspot.runtime.VM.disableDerivedPointerTableCheck") != null;
@@ -608,7 +608,7 @@ public class VM {
 
   /** Returns true if C2 derived pointer table should be used, false otherwise */
   public boolean useDerivedPointerTable() {
-    return !disableDerivedPrinterTableCheck;
+    return !disableDerivedPrinterTableCheck; 
   }
 
   /** Returns the code cache; should not be used if is core build */
@@ -695,7 +695,7 @@ public class VM {
   public boolean isSharingEnabled() {
     if (sharingEnabled == null) {
       Flag flag = getCommandLineFlag("UseSharedSpaces");
-      sharingEnabled = (flag == null)? Boolean.FALSE :
+      sharingEnabled = (flag == null)? Boolean.FALSE : 
           (flag.getBool()? Boolean.TRUE: Boolean.FALSE);
     }
     return sharingEnabled.booleanValue();

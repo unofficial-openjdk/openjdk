@@ -19,30 +19,30 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 import java.util.*;
 
-// Copyright 1996, Animorphic Systems
+// Copyright 1996, Animorphic Systems 
 // gri 28 Aug 92 / 15 Jan 93 / 8 Dec 95
 
-class Queens {
-
+class Queens { 
+  
   static void try_i(boolean a[], boolean b[], boolean c[], int x[], int i) {
     int adj = 7;
 
     for (int j = 1; j <= 8; j++) {
       if (b[j] && a[i+j] && c[adj+i-j]) {
         x[i] = j;
-        b[j] = false;
-        a[i+j] = false;
-        c[adj+i-j] = false;
-        if (i < 8) try_i(a, b, c, x, i+1);
-        else print(x);
-        b[j] = true;
-        a[i+j] = true;
-        c[adj+i-j] = true;
+	b[j] = false;
+	a[i+j] = false;
+	c[adj+i-j] = false;
+	if (i < 8) try_i(a, b, c, x, i+1);
+	else print(x);
+	b[j] = true;
+	a[i+j] = true;
+	c[adj+i-j] = true;
       }
     }
   }
@@ -72,11 +72,11 @@ class Queens {
     char CR = (char)0xD;
 
     x[0]++;
-    if (x[0] < 10)
-        System.out.print(" ");
+    if (x[0] < 10) 
+	System.out.print(" ");
     System.out.print(x[0] + ". ");
     for (int i = 1; i <= 8; i++) {
-      char p = (char)('A' + i - 1);
+      char p = (char)('A' + i - 1); 
       System.out.print(p);
       System.out.print (x[i] + " ");
     }

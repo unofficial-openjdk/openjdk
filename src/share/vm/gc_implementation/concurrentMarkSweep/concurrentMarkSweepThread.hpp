@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class ConcurrentMarkSweepGeneration;
@@ -69,9 +72,9 @@ class ConcurrentMarkSweepThread: public ConcurrentGCThread {
   // Tracing messages, enabled by CMSTraceThreadState.
   static inline void trace_state(const char* desc);
 
-  static volatile bool _icms_enabled;   // iCMS enabled?
-  static volatile bool _should_run;     // iCMS may run
-  static volatile bool _should_stop;    // iCMS should stop
+  static volatile bool _icms_enabled;	// iCMS enabled?
+  static volatile bool _should_run;	// iCMS may run
+  static volatile bool _should_stop;	// iCMS should stop
 
   // debugging
   void verify_ok_to_terminate() const PRODUCT_RETURN;
@@ -90,9 +93,9 @@ class ConcurrentMarkSweepThread: public ConcurrentGCThread {
 
   // Printing
   void print_on(outputStream* st) const;
-  void print() const                                  { print_on(tty); }
+  void print() const 				      { print_on(tty); }
   static void print_all_on(outputStream* st);
-  static void print_all()                             { print_all_on(tty); }
+  static void print_all() 			      { print_all_on(tty); }
 
   // Returns the CMS Thread
   static ConcurrentMarkSweepThread* cmst()    { return _cmst; }
@@ -119,7 +122,7 @@ class ConcurrentMarkSweepThread: public ConcurrentGCThread {
     return CMS_flag_is_set(CMS_cms_wants_token);
   }
 
-  // Wait on CMS lock until the next synchronous GC
+  // Wait on CMS lock until the next synchronous GC 
   // or given timeout, whichever is earlier.
   void    wait_on_cms_lock(long t); // milliseconds
 
@@ -171,14 +174,14 @@ class ConcurrentMarkSweepThread: public ConcurrentGCThread {
   // CMS incremental mode.
   static void start_icms(); // notify thread to start a quantum of work
   static void stop_icms();  // request thread to stop working
-  void icms_wait();         // if asked to stop, wait until notified to start
+  void icms_wait();	    // if asked to stop, wait until notified to start
 
   // Incremental mode is enabled globally by the flag CMSIncrementalMode.  It
   // must also be enabled/disabled dynamically to allow foreground collections.
   static inline void enable_icms()              { _icms_enabled = true; }
   static inline void disable_icms()             { _icms_enabled = false; }
   static inline void set_icms_enabled(bool val) { _icms_enabled = val; }
-  static inline bool icms_enabled()             { return _icms_enabled; }
+  static inline bool icms_enabled()             { return _icms_enabled; } 
 };
 
 inline void ConcurrentMarkSweepThread::trace_state(const char* desc) {
@@ -189,7 +192,7 @@ inline void ConcurrentMarkSweepThread::trace_state(const char* desc) {
       ts.update();
     }
     jio_snprintf(buf, sizeof(buf), " [%.3f:  CMSThread %s] ",
-                 ts.seconds(), desc);
+		 ts.seconds(), desc);
     buf[sizeof(buf) - 1] = '\0';
     gclog_or_tty->print(buf);
   }

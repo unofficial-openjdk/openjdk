@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This file provides the basic support for exception handling in the VM.
@@ -95,7 +98,7 @@ class Exceptions {
   static bool special_exception(Thread *thread, const char* file, int line, Handle exception);
   static bool special_exception(Thread* thread, const char* file, int line, symbolHandle name, const char* message);
  public:
-  // this enum is defined to indicate whether it is safe to
+  // this enum is defined to indicate whether it is safe to 
   // ignore the encoding scheme of the original message string.
   typedef enum {
     safe_to_utf8 = 0,
@@ -104,18 +107,18 @@ class Exceptions {
   // Throw exceptions: w/o message, w/ message & with formatted message.
   static void _throw_oop(Thread* thread, const char* file, int line, oop exception);
   static void _throw(Thread* thread, const char* file, int line, Handle exception);
-  static void _throw_msg(Thread* thread, const char* file, int line,
-                         symbolHandle name, const char* message, Handle loader,
-                         Handle protection_domain);
-  static void _throw_msg(Thread* thread, const char* file, int line,
-                         symbolOop name, const char* message);
-  static void _throw_msg(Thread* thread, const char* file, int line,
-                         symbolHandle name, const char* message);
-  static void _throw_args(Thread* thread, const char* file, int line,
-                          symbolHandle name, symbolHandle signature,
-                          JavaCallArguments* args);
-  static void _throw_msg_cause(Thread* thread, const char* file,
-                         int line, symbolHandle h_name, const char* message,
+  static void _throw_msg(Thread* thread, const char* file, int line, 
+			 symbolHandle name, const char* message, Handle loader, 
+			 Handle protection_domain);
+  static void _throw_msg(Thread* thread, const char* file, int line, 
+			 symbolOop name, const char* message);
+  static void _throw_msg(Thread* thread, const char* file, int line, 
+			 symbolHandle name, const char* message);
+  static void _throw_args(Thread* thread, const char* file, int line, 
+			  symbolHandle name, symbolHandle signature, 
+			  JavaCallArguments* args);
+  static void _throw_msg_cause(Thread* thread, const char* file, 
+                         int line, symbolHandle h_name, const char* message, 
                          Handle h_cause, Handle h_loader, Handle h_protection_domain);
   static void _throw_msg_cause(Thread* thread, const char* file, int line,
                             symbolHandle name, const char* message, Handle cause);
@@ -123,21 +126,21 @@ class Exceptions {
   // There is no THROW... macro for this method. Caller should remember
   // to do a return after calling it.
   static void fthrow(Thread* thread, const char* file, int line, symbolHandle name,
-                     const char* format, ...);
+		     const char* format, ...);
 
   // Create and initialize a new exception
-  static Handle new_exception(Thread* thread, symbolHandle name,
-                              symbolHandle signature, JavaCallArguments* args,
-                              Handle cause, Handle loader,
+  static Handle new_exception(Thread* thread, symbolHandle name, 
+			      symbolHandle signature, JavaCallArguments* args, 
+			      Handle cause, Handle loader, 
                               Handle protection_domain);
 
-  static Handle new_exception(Thread* thread, symbolHandle name,
-                              const char* message, Handle cause, Handle loader,
-                              Handle protection_domain,
-                              ExceptionMsgToUtf8Mode to_utf8_safe = safe_to_utf8);
+  static Handle new_exception(Thread* thread, symbolHandle name,  
+			      const char* message, Handle cause, Handle loader, 
+			      Handle protection_domain, 
+		              ExceptionMsgToUtf8Mode to_utf8_safe = safe_to_utf8);
 
  static Handle new_exception(Thread* thread, symbolOop name,
-                             const char* message,
+                             const char* message, 
                              ExceptionMsgToUtf8Mode to_utf8_safe = safe_to_utf8);
 
   static void throw_stack_overflow_exception(Thread* thread, const char* file, int line);
@@ -268,8 +271,10 @@ class ExceptionMark {
 // pending exception exists upon entering its scope and tests that no pending exception
 // exists when leaving the scope.
 
-// See also preserveException.hpp for PRESERVE_EXCEPTION_MARK macro,
+// See also preserveException.hpp for PRESERVE_EXCEPTION_MARK macro, 
 // which preserves pre-existing exceptions and does not allow new
 // exceptions.
 
 #define EXCEPTION_MARK                           Thread* THREAD; ExceptionMark __em(THREAD);
+
+

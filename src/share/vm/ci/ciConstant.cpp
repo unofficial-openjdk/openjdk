@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -33,7 +36,7 @@
 // ciConstant::print
 void ciConstant::print() {
   tty->print("<ciConstant type=%s value=",
-             basictype_to_str(basic_type()));
+	     basictype_to_str(basic_type()));
   switch (basic_type()) {
   case T_BOOLEAN:
     tty->print("%s", bool_to_str(_value._int == 0));

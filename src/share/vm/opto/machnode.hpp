@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class BufferBlob;
@@ -51,13 +54,13 @@ public:
   // Allocate right next to the MachNodes in the same arena
   void *operator new( size_t x, Compile* C ) { return C->node_arena()->Amalloc_D(x); }
 
-  // Opcode
+  // Opcode 
   virtual uint opcode() const = 0;
 
   // Number of input edges.
   // Generally at least 1
   virtual uint num_edges() const { return 1; }
-  // Array of Register masks
+  // Array of Register masks 
   virtual const RegMask *in_RegMask(int index) const;
 
   // Methods to output the encoding of the operand
@@ -115,7 +118,7 @@ public:
   virtual int  index_position() const;  // index edge position, or -1
 
   // Access the TypeKlassPtr of operands with a base==RegI and disp==RegP
-  // Only returns non-null value for i486.ad's indOffset32X
+  // Only returns non-null value for i486.ad's indOffset32X 
   virtual const TypePtr *disp_as_type() const { return NULL; }
 
   // Return the label
@@ -142,10 +145,10 @@ public:
   virtual const char    *Name() const { return "???";}
 
   // Methods to output the text version of the operand
-  virtual void int_format(PhaseRegAlloc *,const MachNode *node, outputStream *st) const = 0;
-  virtual void ext_format(PhaseRegAlloc *,const MachNode *node,int idx, outputStream *st) const=0;
+  virtual void int_format(PhaseRegAlloc *,const MachNode *node) const = 0;
+  virtual void ext_format(PhaseRegAlloc *,const MachNode *node,int idx) const=0;
 
-  virtual void dump_spec(outputStream *st) const; // Print per-operand info
+  virtual void dump_spec() const; // Print per-operand info
 #endif
 };
 
@@ -167,7 +170,7 @@ public:
 
   // Copy inputs and operands to new node of instruction.
   // Called from cisc_version() and short_branch_version().
-  // !!!! The method's body is defined in ad_<arch>.cpp file.
+  // !!!! The method's body is defined in ad_<arch>.cpp file. 
   void fill_new_machnode(MachNode *n, Compile* C) const;
 
   // Return an equivalent instruction using memory for cisc_operand position
@@ -189,7 +192,7 @@ public:
   virtual const RegMask *cisc_RegMask() const { return NULL; }
 
   // If this instruction is a 2-address instruction, then return the
-  // index of the input which must match the output.  Not nessecary
+  // index of the input which must match the output.  Not nessecary 
   // for instructions which bind the input and output register to the
   // same singleton regiser (e.g., Intel IDIV which binds AX to be
   // both an input and an output).  It is nessecary when the input and
@@ -240,7 +243,7 @@ public:
 
   // If this is a memory op, return the base pointer and fixed offset.
   // If there are no such, return NULL.  If there are multiple addresses
-  // or the address is indeterminate (rare cases) then return (Node*)-1,
+  // or the address is indeterminate (rare cases) then return (Node*)-1, 
   // which serves as node bottom.
   // If the offset is not statically determined, set it to Type::OffsetBot.
   // This method is free to ignore stack slots if that helps.
@@ -249,7 +252,7 @@ public:
   const Node* get_base_and_disp(intptr_t &offset, const TypePtr* &adr_type) const;
 
   // Helper for get_base_and_disp: find the base and index input nodes.
-  // Returns the MachOper as determined by memory_operand(), for use, if
+  // Returns the MachOper as determined by memory_operand(), for use, if 
   // needed by the caller. If (MachOper *)-1 is returned, base and index
   // are set to NodeSentinel. If (MachOper *) NULL is returned, base and
   // index are set to NULL.
@@ -277,11 +280,11 @@ public:
 
   // Set the branch inside jump MachNodes.  Error for non-branch Nodes.
   virtual void label_set( Label& label, uint block_num );
-
+  
   // Adds the label for the case
   virtual void add_case_label( int switch_val, Label* blockLabel);
 
-  // Set the absolute address for methods
+  // Set the absolute address for methods 
   virtual void method_set( intptr_t addr );
 
   // Should we clone rather than spill this instruction?
@@ -293,8 +296,8 @@ public:
 
 #ifndef PRODUCT
   virtual const char *Name() const = 0; // Machine-specific name
-  virtual void dump_spec(outputStream *st) const; // Print per-node info
-  void         dump_format(PhaseRegAlloc *ra, outputStream *st) const; // access to virtual
+  virtual void dump_spec() const; // Print per-node info
+  void         dump_format(PhaseRegAlloc *ra) const; // access to virtual
 #endif
 };
 
@@ -321,7 +324,7 @@ public:
 
   virtual const class Type *bottom_type() const { return _bottom_type; }
 #ifndef PRODUCT
-  virtual void dump_spec(outputStream *st) const;
+  virtual void dump_spec() const;
 #endif
 };
 
@@ -335,7 +338,7 @@ public:
 
 #ifndef PRODUCT
   virtual const char *Name() const { return "Breakpoint"; }
-  virtual void format( PhaseRegAlloc *, outputStream *st ) const;
+  virtual void format( PhaseRegAlloc * ) const;
 #endif
 };
 
@@ -349,7 +352,7 @@ public:
 
 #ifndef PRODUCT
   virtual const char *Name() const { return "Unvalidated-Entry-Point"; }
-  virtual void format( PhaseRegAlloc *, outputStream *st ) const;
+  virtual void format( PhaseRegAlloc * ) const;
 #endif
 };
 
@@ -361,10 +364,11 @@ public:
   virtual void emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const;
   virtual uint size(PhaseRegAlloc *ra_) const;
   virtual int reloc() const;
+  uint implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bool do_size ) const;
 
 #ifndef PRODUCT
   virtual const char *Name() const { return "Prolog"; }
-  virtual void format( PhaseRegAlloc *, outputStream *st ) const;
+  virtual void format( PhaseRegAlloc * ) const;
 #endif
 };
 
@@ -389,7 +393,7 @@ public:
 
 #ifndef PRODUCT
   virtual const char *Name() const { return "Epilog"; }
-  virtual void format( PhaseRegAlloc *, outputStream *st ) const;
+  virtual void format( PhaseRegAlloc * ) const;
 #endif
 };
 
@@ -410,8 +414,8 @@ public:
   virtual const Pipeline *pipeline() const;
 #ifndef PRODUCT
   virtual const char *Name() const { return "Nop"; }
-  virtual void format( PhaseRegAlloc *, outputStream *st ) const;
-  virtual void dump_spec(outputStream *st) const { } // No per-operand info
+  virtual void format( PhaseRegAlloc * ) const;
+  virtual void dump_spec() const { } // No per-operand info
 #endif
 };
 
@@ -423,14 +427,14 @@ class MachSpillCopyNode : public MachIdealNode {
   const RegMask *_out;          // RegMask for output
   const Type *_type;
 public:
-  MachSpillCopyNode( Node *n, const RegMask &in, const RegMask &out ) :
+  MachSpillCopyNode( Node *n, const RegMask &in, const RegMask &out ) : 
     MachIdealNode(), _in(&in), _out(&out), _type(n->bottom_type()) {
     init_class_id(Class_MachSpillCopy);
     init_flags(Flag_is_Copy);
     add_req(NULL);
     add_req(n);
   }
-  virtual uint size_of() const { return sizeof(*this); }
+  virtual uint size_of() const { return sizeof(*this); } 
   void set_out_RegMask(const RegMask &out) { _out = &out; }
   void set_in_RegMask(const RegMask &in) { _in = &in; }
   virtual const RegMask &out_RegMask() const { return *_out; }
@@ -438,14 +442,14 @@ public:
   virtual const class Type *bottom_type() const { return _type; }
   virtual uint ideal_reg() const { return Matcher::base2reg[_type->base()]; }
   virtual uint oper_input_base() const { return 1; }
-  uint implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bool do_size, outputStream* st ) const;
+  uint implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bool do_size ) const;
 
   virtual void emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const;
   virtual uint size(PhaseRegAlloc *ra_) const;
 
 #ifndef PRODUCT
   virtual const char *Name() const { return "MachSpillCopy"; }
-  virtual void format( PhaseRegAlloc *, outputStream *st ) const;
+  virtual void format( PhaseRegAlloc * ) const;
 #endif
 };
 
@@ -453,7 +457,7 @@ public:
 // Machine-dependent null-pointer-check Node.  Points a real MachNode that is
 // also some kind of memory op.  Turns the indicated MachNode into a
 // conditional branch with good latency on the ptr-not-null path and awful
-// latency on the pointer-is-null path.
+// latency on the pointer-is-null path.  
 
 class MachNullCheckNode : public MachIdealNode {
 public:
@@ -474,7 +478,7 @@ public:
   virtual const RegMask &out_RegMask() const { return RegMask::Empty; }
 #ifndef PRODUCT
   virtual const char *Name() const { return "NullCheck"; }
-  virtual void format( PhaseRegAlloc *, outputStream *st ) const;
+  virtual void format( PhaseRegAlloc * ) const;
 #endif
 };
 
@@ -501,10 +505,10 @@ public:
   virtual const RegMask &in_RegMask(uint) const { return RegMask::Empty; }
   virtual const RegMask &out_RegMask() const { return _rout; }
   virtual uint  ideal_reg() const { return _ideal_reg; }
-  // Need size_of() for virtual ProjNode::clone()
+  // Need size_of() for virtual ProjNode::clone() 
   virtual uint  size_of() const { return sizeof(MachProjNode); }
 #ifndef PRODUCT
-  virtual void dump_spec(outputStream *st) const;
+  virtual void dump_spec() const;
 #endif
 };
 
@@ -519,7 +523,7 @@ public:
     init_class_id(Class_MachIf);
   }
 #ifndef PRODUCT
-  virtual void dump_spec(outputStream *st) const;
+  virtual void dump_spec() const;
 #endif
 };
 
@@ -648,7 +652,7 @@ public:
   bool returns_long() const { return tf()->return_type() == T_LONG; }
   bool return_value_is_used() const;
 #ifndef PRODUCT
-  virtual void dump_spec(outputStream *st) const;
+  virtual void dump_spec() const;
 #endif
 };
 
@@ -666,7 +670,7 @@ public:
     init_class_id(Class_MachCallJava);
   }
 #ifndef PRODUCT
-  virtual void dump_spec(outputStream *st) const;
+  virtual void dump_spec() const;
 #endif
 };
 
@@ -686,8 +690,8 @@ public:
 
   virtual int ret_addr_offset();
 #ifndef PRODUCT
-  virtual void dump_spec(outputStream *st) const;
-  void dump_trap_args(outputStream *st) const;
+  virtual void dump_spec() const;
+  void dump_trap_args() const;
 #endif
 };
 
@@ -702,7 +706,7 @@ public:
   }
   virtual int ret_addr_offset();
 #ifndef PRODUCT
-  virtual void dump_spec(outputStream *st) const;
+  virtual void dump_spec() const;
 #endif
 };
 
@@ -718,7 +722,7 @@ public:
   }
   virtual int ret_addr_offset();
 #ifndef PRODUCT
-  virtual void dump_spec(outputStream *st) const;
+  virtual void dump_spec() const;
 #endif
 };
 
@@ -739,7 +743,7 @@ public:
 
 //------------------------------MachTempNode-----------------------------------
 // Node used by the adlc to construct inputs to represent temporary registers
-class MachTempNode : public MachNode {
+class MachTempNode : public MachNode { 
 private:
   MachOper *_opnd_array[1];
 
@@ -758,7 +762,7 @@ public:
   virtual uint size_of() const { return sizeof(MachTempNode); }
 
 #ifndef PRODUCT
-  virtual void format(PhaseRegAlloc *, outputStream *st ) const {}
+  virtual void format(PhaseRegAlloc *ra) const {}
   virtual const char *Name() const { return "MachTemp";}
 #endif
 };
@@ -767,7 +771,7 @@ public:
 
 //------------------------------labelOper--------------------------------------
 // Machine-independent version of label operand
-class labelOper : public MachOper {
+class labelOper : public MachOper { 
 private:
   virtual uint           num_edges() const { return 0; }
 public:
@@ -793,15 +797,15 @@ public:
 #ifndef PRODUCT
   virtual const char    *Name()   const { return "Label";}
 
-  virtual void int_format(PhaseRegAlloc *ra, const MachNode *node, outputStream *st) const;
-  virtual void ext_format(PhaseRegAlloc *ra, const MachNode *node, int idx, outputStream *st) const { int_format( ra, node, st ); }
+  virtual void int_format(PhaseRegAlloc *ra, const MachNode *node) const;
+  virtual void ext_format(PhaseRegAlloc *ra, const MachNode *node, int idx) const { int_format( ra, node ); }
 #endif
 };
 
 
 //------------------------------methodOper--------------------------------------
 // Machine-independent version of method operand
-class methodOper : public MachOper {
+class methodOper : public MachOper { 
 private:
   virtual uint           num_edges() const { return 0; }
 public:
@@ -820,7 +824,7 @@ public:
 #ifndef PRODUCT
   virtual const char    *Name()   const { return "Method";}
 
-  virtual void int_format(PhaseRegAlloc *ra, const MachNode *node, outputStream *st) const;
-  virtual void ext_format(PhaseRegAlloc *ra, const MachNode *node, int idx, outputStream *st) const { int_format( ra, node, st ); }
+  virtual void int_format(PhaseRegAlloc *ra, const MachNode *node) const;
+  virtual void ext_format(PhaseRegAlloc *ra, const MachNode *node, int idx) const { int_format( ra, node ); }
 #endif
 };

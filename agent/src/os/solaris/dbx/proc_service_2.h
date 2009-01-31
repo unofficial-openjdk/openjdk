@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #ifndef _PROC_SERVICE_2_H
@@ -31,7 +34,7 @@
  * BAT/prex, NEO debugger etc.
  */
 
-/*
+/* 
  CCR info
 
  Version history:
@@ -39,8 +42,8 @@
         1.0       - Initial CCR release
 
         1.1       - Changes for GLUE/neo.
-                    New entry points ps_svnt_generic() and ps_svc_generic()
-                  - New entry point ps_getpid()
+		    New entry points ps_svnt_generic() and ps_svc_generic()
+		  - New entry point ps_getpid()
 
  Release information for automatic CCR updates:
  BEGIN RELEASE NOTES: (signifies what gets put into CCR release notes)
@@ -63,23 +66,23 @@ extern "C" {
 #endif
 
 struct ps_loadobj {
-        int     objfd;          /* fd of the load object or executable
-                                 * -1 implies its not available.
-                                 * This file decriptor is live only during the
-                                 * particular call to ps_iter_f().  If you
-                                 * need it beyond that you need to dup() it.
-                                 */
-        psaddr_t
-                text_base;      /* address where text of loadobj was mapped */
-        psaddr_t
-                data_base;      /* address where data of loadobj was mapped */
-        const char *objname;    /* loadobj name */
+	int	objfd;		/* fd of the load object or executable 
+				 * -1 implies its not available. 
+				 * This file decriptor is live only during the 
+				 * particular call to ps_iter_f().  If you
+				 * need it beyond that you need to dup() it.
+				 */
+	psaddr_t
+		text_base;	/* address where text of loadobj was mapped */
+	psaddr_t
+		data_base;	/* address where data of loadobj was mapped */
+	const char *objname;	/* loadobj name */
 };
 
 typedef int ps_iter_f(const struct ps_prochandle *, const struct ps_loadobj *,
-                        void *cd);
+			void *cd);
 
-/*
+/* 
  * Returns the ps_prochandle for the current process under focus.  Returns
  * NULL if there is none.
  */
@@ -87,7 +90,7 @@ typedef int ps_iter_f(const struct ps_prochandle *, const struct ps_loadobj *,
 const struct ps_prochandle *
 ps_get_prochandle(void);
 
-/*
+/* 
  * Returns the ps_prochandle for the current process(allows core files to
  * be specified) under focus.  Returns NULL if there is none.
  */
@@ -96,7 +99,7 @@ ps_get_prochandle2(int cores_too);
 
 /*
  * Returns the pid of the process referred to by the ps_prochandle.
- *
+ * 
  * 0 is returned in case the ps_prochandle is not valid or refers to dead
  * process.
  *
@@ -106,18 +109,18 @@ ps_getpid(const struct ps_prochandle *);
 
 /*
  * Iteration function that iterates over all load objects *and the
- *      executable*
+ *	executable*
  *
- *      If the callback routine returns:
- *      0 - continue processing link objects
- *      non zero - stop calling the callback function
+ *	If the callback routine returns:
+ *	0 - continue processing link objects
+ *	non zero - stop calling the callback function
  *
  */
 
 ps_err_e
 ps_loadobj_iter(const struct ps_prochandle *, ps_iter_f *, void *clnt_data);
 
-/*
+/* 
  * Address => function name mapping
  *
  * Given an address, returns a pointer to the function's
@@ -126,15 +129,15 @@ ps_loadobj_iter(const struct ps_prochandle *, ps_iter_f *, void *clnt_data);
 
 ps_err_e
 ps_find_fun_name(const struct ps_prochandle *, psaddr_t addr,
-                        const char **name);
+			const char **name);
 
 /*
- * Interface to LD_PRELOAD.  LD_PRELOAD given library across the
+ * Interface to LD_PRELOAD.  LD_PRELOAD given library across the 
  * program 'exec'.
  *
  */
 
-/*
+/* 
  * Append/Prepend the 'lib' (has to be library name as understood by LD_PRELOAD)
  * to the LD_PRELOAD variable setting to be used by the debugee
  * Returns a cookie (in id).

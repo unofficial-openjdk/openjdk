@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class  AllocateNode;
@@ -85,9 +88,9 @@ private:
   int replace_input(Node *use, Node *oldref, Node *newref);
   void copy_call_debug_info(CallNode *oldcall, CallNode * newcall);
   Node* opt_iff(Node* region, Node* iff);
-  void copy_predefined_input_for_runtime_call(Node * ctrl, CallNode* oldcall, CallNode* call);
+  void copy_predefined_input_for_runtime_call(Node * ctrl, CallNode* oldcall, CallNode* call); 
   CallNode* make_slow_call(CallNode *oldcall, const TypeFunc* slow_call_type, address slow_call,
-                       const char* leaf_name, Node* slow_path, Node* parm0, Node* parm1);
+                       const char* leaf_name, Node* slow_path, Node* parm0, Node* parm1); 
   void extract_call_projections(CallNode *call);
 
   Node* initialize_object(AllocateNode* alloc,
@@ -96,7 +99,7 @@ private:
                           Node* size_in_bytes);
 
   Node* prefetch_allocation(Node* i_o,
-                            Node*& needgc_false, Node*& contended_phi_rawmem,
+                            Node*& needgc_false, Node*& contended_phi_rawmem, 
                             Node* old_eden_top, Node* new_eden_top,
                             Node* length);
 

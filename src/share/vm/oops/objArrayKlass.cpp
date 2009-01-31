@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -30,7 +33,7 @@ int objArrayKlass::oop_size(oop obj) const {
   return objArrayOop(obj)->object_size();
 }
 
-objArrayOop objArrayKlass::allocate(int length, TRAPS) {
+objArrayOop objArrayKlass::allocate(int length, TRAPS) {  
   if (length >= 0) {
     if (length <= arrayOopDesc::max_array_length(T_OBJECT)) {
       int size = objArrayOopDesc::object_size(length);
@@ -48,7 +51,7 @@ objArrayOop objArrayKlass::allocate(int length, TRAPS) {
 
 static int multi_alloc_counter = 0;
 
-oop objArrayKlass::multi_allocate(int rank, jint* sizes, TRAPS) {
+oop objArrayKlass::multi_allocate(int rank, jint* sizes, TRAPS) { 
   int length = *sizes;
   // Call to lower_dimension uses this pointer, so most be called before a
   // possible GC
@@ -59,7 +62,7 @@ oop objArrayKlass::multi_allocate(int rank, jint* sizes, TRAPS) {
   objArrayHandle h_array (THREAD, array);
   if (rank > 1) {
     if (length != 0) {
-      for (int index = 0; index < length; index++) {
+      for (int index = 0; index < length; index++) {  
         arrayKlass* ak = arrayKlass::cast(h_lower_dimension());
         oop sub_array = ak->multi_allocate(rank-1, &sizes[1], CHECK_NULL);
         assert(sub_array->is_parsable(), "Don't publish until parsable");
@@ -116,7 +119,7 @@ void objArrayKlass::copy_array(arrayOop s, int src_pos, arrayOop d,
   assert(bs->has_write_ref_array_opt(), "Barrier set must have ref array opt");
 
   if (s == d) {
-    // since source and destination are equal we do not need conversion checks.
+    // since source and destination are equal we do not need conversion checks. 
     assert(length > 0, "sanity check");
     Copy::conjoint_oops_atomic(src, dst, length);
   } else {
@@ -136,7 +139,7 @@ void objArrayKlass::copy_array(arrayOop s, int src_pos, arrayOop d,
         if (element == NULL || Klass::cast(element->klass())->is_subtype_of(bound)) {
           *p = element;
         } else {
-          // We must do a barrier to cover the partial copy.
+	  // We must do a barrier to cover the partial copy.
           const size_t done_word_len = pointer_delta(p, dst, oopSize) *
                                        HeapWordsPerOop;
           bs->write_ref_array(MemRegion((HeapWord*)dst, done_word_len));
@@ -156,15 +159,15 @@ klassOop objArrayKlass::array_klass_impl(bool or_null, int n, TRAPS) {
 }
 
 
-klassOop objArrayKlass::array_klass_impl(objArrayKlassHandle this_oop, bool or_null, int n, TRAPS) {
-
+klassOop objArrayKlass::array_klass_impl(objArrayKlassHandle this_oop, bool or_null, int n, TRAPS) {  
+  
   assert(this_oop->dimension() <= n, "check order of chain");
   int dimension = this_oop->dimension();
-  if (dimension == n)
+  if (dimension == n) 
     return this_oop();
 
   objArrayKlassHandle ak (THREAD, this_oop->higher_dimension());
-  if (ak.is_null()) {
+  if (ak.is_null()) {    
     if (or_null)  return NULL;
 
     ResourceMark rm;
@@ -179,11 +182,11 @@ klassOop objArrayKlass::array_klass_impl(objArrayKlassHandle this_oop, bool or_n
       if( ak.is_null() ) {
 
         // Create multi-dim klass object and link them together
-        klassOop new_klass =
+        klassOop new_klass = 
           objArrayKlassKlass::cast(Universe::objArrayKlassKlassObj())->
           allocate_objArray_klass(dimension + 1, this_oop, CHECK_NULL);
         ak = objArrayKlassHandle(THREAD, new_klass);
-        this_oop->set_higher_dimension(ak());
+        this_oop->set_higher_dimension(ak());    
         ak->set_lower_dimension(this_oop());
         assert(ak->oop_is_objArray(), "incorrect initialization of objArrayKlass");
       }
@@ -255,27 +258,27 @@ void objArrayKlass::oop_follow_contents(oop obj) {
   oop* base      = (oop*)a->base(T_OBJECT);
   oop* const end = base + a->length();
   while (base < end) {
-    if (*base != NULL)
+    if (*base != NULL) 
       // we call mark_and_follow here to avoid excessive marking stack usage
-      MarkSweep::mark_and_follow(base);
+      MarkSweep::mark_and_follow(base); 
     base++;
-  }
+  }  
 }
 
 #ifndef SERIALGC
 void objArrayKlass::oop_follow_contents(ParCompactionManager* cm,
-                                        oop obj) {
+					oop obj) {
   assert (obj->is_array(), "obj must be array");
   arrayOop a = arrayOop(obj);
   a->follow_header(cm);
   oop* base      = (oop*)a->base(T_OBJECT);
   oop* const end = base + a->length();
   while (base < end) {
-    if (*base != NULL)
+    if (*base != NULL) 
       // we call mark_and_follow here to avoid excessive marking stack usage
-      PSParallelCompact::mark_and_follow(cm, base);
+      PSParallelCompact::mark_and_follow(cm, base); 
     base++;
-  }
+  }  
 }
 #endif // SERIALGC
 
@@ -373,7 +376,7 @@ int objArrayKlass::oop_adjust_pointers(oop obj) {
   while (base < end) {
     MarkSweep::adjust_pointer(base);
     base++;
-  }
+  }  
   return size;
 }
 
@@ -386,7 +389,7 @@ void objArrayKlass::oop_copy_contents(PSPromotionManager* pm, oop obj) {
   oop* end = curr + objArrayOop(obj)->length();
   //  assert(align_object_size(end - (oop*)obj) == oop_size(obj), "checking size");
   assert(align_object_size(pointer_delta(end, obj, sizeof(oop*)))
-                                  == oop_size(obj), "checking size");
+	                          == oop_size(obj), "checking size");
 
   // Iterate over oops
   while (curr < end) {
@@ -405,7 +408,7 @@ void objArrayKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
   oop* end = curr + objArrayOop(obj)->length();
   //  assert(align_object_size(end - (oop*)obj) == oop_size(obj), "checking size");
   assert(align_object_size(pointer_delta(end, obj, sizeof(oop*)))
-                                  == oop_size(obj), "checking size");
+	                          == oop_size(obj), "checking size");
 
   // Iterate over oops
   while (curr < end) {
@@ -430,7 +433,7 @@ int objArrayKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
 }
 
 int objArrayKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
-                                       HeapWord* beg_addr, HeapWord* end_addr) {
+				       HeapWord* beg_addr, HeapWord* end_addr) {
   assert (obj->is_objArray(), "obj must be obj array");
   objArrayOop a = objArrayOop(obj);
 
@@ -453,7 +456,7 @@ jint objArrayKlass::compute_modifier_flags(TRAPS) const {
     return JVM_ACC_ABSTRACT | JVM_ACC_FINAL | JVM_ACC_PUBLIC;
   }
   // Recurse down the element list
-  jint element_flags = Klass::cast(element_klass())->compute_modifier_flags(CHECK_0);
+  jint element_flags = Klass::cast(element_klass())->compute_modifier_flags(CHECK_0);  
 
   return (element_flags & (JVM_ACC_PUBLIC | JVM_ACC_PRIVATE | JVM_ACC_PROTECTED))
                         | (JVM_ACC_ABSTRACT | JVM_ACC_FINAL);

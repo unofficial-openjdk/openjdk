@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -30,19 +33,19 @@
 // the old behavior otherwise (with PSYoungGen and PSOldGen).
 
 AdjoiningGenerations::AdjoiningGenerations(ReservedSpace old_young_rs,
-                                           size_t init_low_byte_size,
-                                           size_t min_low_byte_size,
-                                           size_t max_low_byte_size,
-                                           size_t init_high_byte_size,
-                                           size_t min_high_byte_size,
-                                           size_t max_high_byte_size,
-                                           size_t alignment) :
+					   size_t init_low_byte_size,
+					   size_t min_low_byte_size,
+					   size_t max_low_byte_size,
+					   size_t init_high_byte_size,
+					   size_t min_high_byte_size,
+					   size_t max_high_byte_size,
+					   size_t alignment) :
   _virtual_spaces(old_young_rs, min_low_byte_size,
-                  min_high_byte_size, alignment) {
+		  min_high_byte_size, alignment) {
   assert(min_low_byte_size <= init_low_byte_size &&
-         init_low_byte_size <= max_low_byte_size, "Parameter check");
+	 init_low_byte_size <= max_low_byte_size, "Parameter check");
   assert(min_high_byte_size <= init_high_byte_size &&
-         init_high_byte_size <= max_high_byte_size, "Parameter check");
+	 init_high_byte_size <= max_high_byte_size, "Parameter check");
   // Create the generations differently based on the option to
   // move the boundary.
   if (UseAdaptiveGCBoundary) {
@@ -52,22 +55,22 @@ AdjoiningGenerations::AdjoiningGenerations(ReservedSpace old_young_rs,
 
     // Does the actual creation of the virtual spaces
     _virtual_spaces.initialize(max_low_byte_size,
-                               init_low_byte_size,
-                               init_high_byte_size);
+			       init_low_byte_size,
+			       init_high_byte_size);
 
     // Place the young gen at the high end.  Passes in the virtual space.
     _young_gen = new ASPSYoungGen(_virtual_spaces.high(),
-                                  _virtual_spaces.high()->committed_size(),
-                                  min_high_byte_size,
-                                  _virtual_spaces.high_byte_size_limit());
+				  _virtual_spaces.high()->committed_size(),
+				  min_high_byte_size,
+				  _virtual_spaces.high_byte_size_limit());
 
     // Place the old gen at the low end. Passes in the virtual space.
     _old_gen = new ASPSOldGen(_virtual_spaces.low(),
-                              _virtual_spaces.low()->committed_size(),
+			      _virtual_spaces.low()->committed_size(),
                               min_low_byte_size,
-                              _virtual_spaces.low_byte_size_limit(),
+			      _virtual_spaces.low_byte_size_limit(),
                               "old", 1);
-
+    
     young_gen()->initialize_work();
     assert(young_gen()->reserved().byte_size() <= young_gen()->gen_size_limit(),
      "Consistency check");
@@ -75,39 +78,39 @@ AdjoiningGenerations::AdjoiningGenerations(ReservedSpace old_young_rs,
      "Consistency check");
 
     old_gen()->initialize_work("old", 1);
-    assert(old_gen()->reserved().byte_size() <= old_gen()->gen_size_limit(),
+    assert(old_gen()->reserved().byte_size() <= old_gen()->gen_size_limit(), 
      "Consistency check");
-    assert(old_young_rs.size() >= old_gen()->gen_size_limit(),
+    assert(old_young_rs.size() >= old_gen()->gen_size_limit(), 
      "Consistency check");
   } else {
 
     // Layout the reserved space for the generations.
-    ReservedSpace old_rs   =
+    ReservedSpace old_rs   = 
       virtual_spaces()->reserved_space().first_part(max_low_byte_size);
-    ReservedSpace heap_rs  =
+    ReservedSpace heap_rs  = 
       virtual_spaces()->reserved_space().last_part(max_low_byte_size);
     ReservedSpace young_rs = heap_rs.first_part(max_high_byte_size);
     assert(young_rs.size() == heap_rs.size(), "Didn't reserve all of the heap");
 
     // Create the generations.  Virtual spaces are not passed in.
     _young_gen = new PSYoungGen(init_high_byte_size,
-                                min_high_byte_size,
-                                max_high_byte_size);
+				min_high_byte_size,
+				max_high_byte_size);
     _old_gen = new PSOldGen(init_low_byte_size,
                             min_low_byte_size,
-                            max_low_byte_size,
+			    max_low_byte_size,
                             "old", 1);
 
     // The virtual spaces are created by the initialization of the gens.
     _young_gen->initialize(young_rs, alignment);
-    assert(young_gen()->gen_size_limit() == young_rs.size(),
+    assert(young_gen()->gen_size_limit() == young_rs.size(), 
       "Consistency check");
     _old_gen->initialize(old_rs, alignment, "old", 1);
     assert(old_gen()->gen_size_limit() == old_rs.size(), "Consistency check");
   }
 }
 
-size_t AdjoiningGenerations::reserved_byte_size() {
+size_t AdjoiningGenerations::reserved_byte_size() { 
   return virtual_spaces()->reserved_space().size();
 }
 
@@ -129,8 +132,8 @@ void AdjoiningGenerations::request_old_gen_expansion(size_t expand_in_bytes) {
   const size_t old_gen_available = old_gen()->available_for_expansion();
   const size_t alignment = virtual_spaces()->alignment();
   size_t change_in_bytes = MIN3(young_gen_available,
-                                old_gen_available,
-                                align_size_up_(expand_in_bytes, alignment));
+				old_gen_available,
+				align_size_up_(expand_in_bytes, alignment));
 
   if (change_in_bytes == 0) {
     return;
@@ -143,7 +146,7 @@ void AdjoiningGenerations::request_old_gen_expansion(size_t expand_in_bytes) {
     if (!PrintHeapAtGC) {
       Universe::print_on(gclog_or_tty);
     }
-    gclog_or_tty->print_cr("  PSOldGen max size: " SIZE_FORMAT "K",
+    gclog_or_tty->print_cr("  PSOldGen max size: " SIZE_FORMAT "K", 
       old_gen()->max_gen_size()/K);
   }
 
@@ -156,8 +159,8 @@ void AdjoiningGenerations::request_old_gen_expansion(size_t expand_in_bytes) {
   // The total reserved for the generations should match the sum
   // of the two even if the boundary is moving.
   assert(reserved_byte_size() ==
-         old_gen()->max_gen_size() + young_gen()->max_size(),
-         "Space is missing");
+	 old_gen()->max_gen_size() + young_gen()->max_size(),
+	 "Space is missing");
   young_gen()->space_invariants();
   old_gen()->space_invariants();
 
@@ -166,7 +169,7 @@ void AdjoiningGenerations::request_old_gen_expansion(size_t expand_in_bytes) {
     if (!PrintHeapAtGC) {
       Universe::print_on(gclog_or_tty);
     }
-    gclog_or_tty->print_cr("  PSOldGen max size: " SIZE_FORMAT "K",
+    gclog_or_tty->print_cr("  PSOldGen max size: " SIZE_FORMAT "K", 
       old_gen()->max_gen_size()/K);
   }
 }
@@ -187,8 +190,8 @@ bool AdjoiningGenerations::request_young_gen_expansion(size_t expand_in_bytes) {
   const size_t old_gen_available = old_gen()->available_for_contraction();
   const size_t alignment = virtual_spaces()->alignment();
   size_t change_in_bytes = MIN3(young_gen_available,
-                                old_gen_available,
-                                align_size_up_(expand_in_bytes, alignment));
+				old_gen_available,
+				align_size_up_(expand_in_bytes, alignment));
 
   if (change_in_bytes == 0) {
     return false;
@@ -201,7 +204,7 @@ bool AdjoiningGenerations::request_young_gen_expansion(size_t expand_in_bytes) {
     if (!PrintHeapAtGC) {
       Universe::print_on(gclog_or_tty);
     }
-    gclog_or_tty->print_cr("  PSYoungGen max size: " SIZE_FORMAT "K",
+    gclog_or_tty->print_cr("  PSYoungGen max size: " SIZE_FORMAT "K", 
       young_gen()->max_size()/K);
   }
 
@@ -216,8 +219,8 @@ bool AdjoiningGenerations::request_young_gen_expansion(size_t expand_in_bytes) {
   // The total reserved for the generations should match the sum
   // of the two even if the boundary is moving.
   assert(reserved_byte_size() ==
-         old_gen()->max_gen_size() + young_gen()->max_size(),
-         "Space is missing");
+	 old_gen()->max_gen_size() + young_gen()->max_size(),
+	 "Space is missing");
   young_gen()->space_invariants();
   old_gen()->space_invariants();
 
@@ -226,7 +229,7 @@ bool AdjoiningGenerations::request_young_gen_expansion(size_t expand_in_bytes) {
     if (!PrintHeapAtGC) {
       Universe::print_on(gclog_or_tty);
     }
-    gclog_or_tty->print_cr("  PSYoungGen max size: " SIZE_FORMAT "K",
+    gclog_or_tty->print_cr("  PSYoungGen max size: " SIZE_FORMAT "K", 
       young_gen()->max_size()/K);
   }
 
@@ -276,3 +279,4 @@ void AdjoiningGenerations::adjust_boundary_for_young_gen_needs(size_t eden_size,
     }
   }
 }
+

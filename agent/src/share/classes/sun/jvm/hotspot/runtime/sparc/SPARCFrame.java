@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.runtime.sparc;
@@ -49,7 +49,7 @@ public class SPARCFrame extends Frame {
   // register (or window save area) while the target VM was executing.
   // The caller of the constructor will alwasy know if has a biased or
   // unbiased version of the stack pointer and can convert real (unbiased)
-  // value via a helper routine we supply.
+  // value via a helper routine we supply. 
   // Whenever we return sp or youngerSP values we do not return the internal
   // value but the real (unbiased) pointers since these are the true, usable
   // memory addresses. The outlier case is that of the null pointer. The current
@@ -59,12 +59,12 @@ public class SPARCFrame extends Frame {
   // to be able to take an Address that represents null and add an offset to it.
   // This doesn't seem worth the bother and the impact on the rest of the code
   // when the biasSP and unbiasSP can make this invisible.
-  //
+  // 
   // The general rule in this code is that when we have a variable like FP, youngerSP, SP
   // that these are real (i.e. unbiased) addresses. The instance variables in a Frame are
   // always raw values. The other rule is that it except for the frame constructors and
   // the unBiasSP helper all methods accept parameters that are real addresses.
-  //
+  // 
 
   /** Optional next-younger SP (used to locate O7, the PC) */
   private Address raw_youngerSP;
@@ -92,7 +92,7 @@ public class SPARCFrame extends Frame {
   // offset of each block, in order of increasing address:
   public static final int REGISTER_SAVE_WORDS_SP_OFFSET             = 0;
   public static final int CALLEE_AGGREGATE_RETURN_POINTER_SP_OFFSET = REGISTER_SAVE_WORDS_SP_OFFSET + REGISTER_SAVE_WORDS;
-  public static final int CALLEE_REGISTER_ARGUMENT_SAVE_AREA_SP_OFFSET = (CALLEE_AGGREGATE_RETURN_POINTER_SP_OFFSET +
+  public static final int CALLEE_REGISTER_ARGUMENT_SAVE_AREA_SP_OFFSET = (CALLEE_AGGREGATE_RETURN_POINTER_SP_OFFSET + 
                                                                           CALLEE_AGGREGATE_RETURN_POINTER_WORDS);
   public static final int MEMORY_PARAMETER_WORD_SP_OFFSET              = (CALLEE_REGISTER_ARGUMENT_SAVE_AREA_SP_OFFSET +
                                                                           CALLEE_REGISTER_ARGUMENT_SAVE_AREA_WORDS);
@@ -100,23 +100,23 @@ public class SPARCFrame extends Frame {
 
   private static final boolean DEBUG = System.getProperty("sun.jvm.hotspot.runtime.sparc.SPARCFrame.DEBUG") != null;
 
-  public static Address unBiasSP(Address raw_sp) {
+  public static Address unBiasSP(Address raw_sp) { 
     if (raw_sp != null) {
-      return raw_sp.addOffsetTo(VM.getVM().getStackBias());
+      return raw_sp.addOffsetTo(VM.getVM().getStackBias()); 
     } else {
       return null;
     }
   }
 
-  public static Address biasSP(Address real_sp) {
+  public static Address biasSP(Address real_sp) { 
     if (real_sp != null) {
       if (DEBUG) {
-        System.out.println("biasing realsp: " + real_sp + " biased: " + real_sp.addOffsetTo(-VM.getVM().getStackBias()) );
+	System.out.println("biasing realsp: " + real_sp + " biased: " + real_sp.addOffsetTo(-VM.getVM().getStackBias()) );
       }
-      return real_sp.addOffsetTo(-VM.getVM().getStackBias());
+      return real_sp.addOffsetTo(-VM.getVM().getStackBias()); 
     } else {
       if (DEBUG) {
-        System.out.println("biasing null realsp");
+	System.out.println("biasing null realsp");
       }
       return null;
     }
@@ -148,10 +148,10 @@ public class SPARCFrame extends Frame {
       next = search.getAddressAt(SPARCRegisters.I6.spOffsetInSavedWindow());
       pc = search.getAddressAt(SPARCRegisters.I7.spOffsetInSavedWindow());
       if (DEBUG) {
-        System.out.println("findYoungerSP next: " + next + " pc: " + pc);
+	System.out.println("findYoungerSP next: " + next + " pc: " + pc);
       }
       if (next.equals(findRaw)) {
-        return search;
+	return search;
       }
       search = unBiasSP(next);
     }
@@ -161,18 +161,18 @@ public class SPARCFrame extends Frame {
     return null;
   }
 
-  public Address getSP()              {
+  public Address getSP()              { 
     if (DEBUG) {
       System.out.println("getSP raw: " + raw_sp + " unbiased: " + unBiasSP(raw_sp));
     }
     return  unBiasSP(raw_sp);
   }
 
-  public Address getID()              {
+  public Address getID()              { 
     return getSP();
   }
 
-  public Address getYoungerSP()       {
+  public Address getYoungerSP()       { 
     if (DEBUG) {
       System.out.println("getYoungerSP: " + raw_youngerSP + " unbiased: " + unBiasSP(raw_youngerSP));
     }
@@ -193,11 +193,11 @@ public class SPARCFrame extends Frame {
       System.out.println("Constructing frame(1) raw_sp: " + raw_sp + " raw_youngerSP: " + raw_youngerSP);
     }
     if (Assert.ASSERTS_ENABLED) {
-      Assert.that((unBiasSP(raw_sp).andWithMask(VM.getVM().getAddressSize() - 1) == null),
-                   "Expected raw sp likely got real sp, value was " + raw_sp);
+      Assert.that((unBiasSP(raw_sp).andWithMask(VM.getVM().getAddressSize() - 1) == null), 
+		   "Expected raw sp likely got real sp, value was " + raw_sp);
       if (raw_youngerSP != null) {
-        Assert.that((unBiasSP(raw_youngerSP).andWithMask(VM.getVM().getAddressSize() - 1) == null),
-                    "Expected raw youngerSP likely got real youngerSP, value was " + raw_youngerSP);
+	Assert.that((unBiasSP(raw_youngerSP).andWithMask(VM.getVM().getAddressSize() - 1) == null), 
+		    "Expected raw youngerSP likely got real youngerSP, value was " + raw_youngerSP);
       }
     }
     this.raw_sp = raw_sp;
@@ -222,9 +222,9 @@ public class SPARCFrame extends Frame {
       interpreterSPAdjustmentOffset = 0;
       Address savedSP = unBiasSP(getYoungerSP().getAddressAt(IsavedSP));
       if (savedSP == null) {
-        if ( DEBUG) {
+	if ( DEBUG) {
           System.out.println("WARNING: IsavedSP was null for frame " + this);
-        }
+	}
       } else {
         interpreterSPAdjustmentOffset = savedSP.minus(getSP());
       }
@@ -254,8 +254,8 @@ public class SPARCFrame extends Frame {
     }
     this.raw_sp = raw_sp;
     if (Assert.ASSERTS_ENABLED) {
-      Assert.that((unBiasSP(raw_sp).andWithMask(VM.getVM().getAddressSize() - 1) == null),
-                   "Expected raw sp likely got real sp, value was " + raw_sp);
+      Assert.that((unBiasSP(raw_sp).andWithMask(VM.getVM().getAddressSize() - 1) == null), 
+		   "Expected raw sp likely got real sp, value was " + raw_sp);
     }
     raw_youngerSP = null;
     this.pc = pc;
@@ -286,7 +286,7 @@ public class SPARCFrame extends Frame {
     }
 
     SPARCFrame other = (SPARCFrame) arg;
-
+    
     return (AddressOps.equal(getSP(), other.getSP()) &&
             AddressOps.equal(getFP(), other.getFP()) &&
             AddressOps.equal(getPC(), other.getPC()));
@@ -337,7 +337,7 @@ public class SPARCFrame extends Frame {
 
       <P> If the underlying Debugger supports CDebugger interface, we
       take the approach of __sighnldr symbol. This approach is more robust
-      compared to the original hueristic approach. Of course, if there
+      compared to the original hueristic approach. Of course, if there 
       is no CDebugger support, we fallback to the hueristic approach. </P>
 
       <P> The current implementation seems to work with Solaris 2.8.
@@ -378,8 +378,8 @@ public class SPARCFrame extends Frame {
       // available via the proc_service APIs in dbx). The current code
       // appears to work, but is probably not robust.
       int MAJOR_HACK_OFFSET = 8;  // Difference between expected location of the ucontext and reality
-      // System.err.println("  SPARCFrame.isSignalHandlerFrameDbg: I2 = " + i2 +
-      //                          ", fp = " + fp + ", raw_youngerSP = " + getYoungerSP());
+      // System.err.println("  SPARCFrame.isSignalHandlerFrameDbg: I2 = " + i2 + 
+      //			  ", fp = " + fp + ", raw_youngerSP = " + getYoungerSP());
       boolean res = i2.equals(fp.addOffsetTo(VM.getVM().getAddressSize() * (REGISTER_SAVE_WORDS + MAJOR_HACK_OFFSET)));
       if (res) {
         // Qualify this with another test (FIXME: this is a gross heuristic found while testing)
@@ -466,11 +466,11 @@ public class SPARCFrame extends Frame {
     if (Assert.ASSERTS_ENABLED) {
       Assert.that(map != null, "map must be set");
     }
-
+    
     // Default is we don't have to follow them. The sender_for_xxx
     // will update it accordingly
     map.setIncludeArgumentOops(false);
-
+    
     if (cb == null && isEntryFrame()) {
       return senderForEntryFrame(map);
     }
@@ -557,9 +557,9 @@ public class SPARCFrame extends Frame {
       //        registers callee-saved, then we will have to copy over
       //        the RegisterMap update logic from the Intel code.
 
-
+      
       // The constructor of the sender must know whether this frame is interpreted so it can set the
-      // sender's _interpreter_sp_adjustment field.
+      // sender's _interpreter_sp_adjustment field.  
       if (VM.getVM().getInterpreter().contains(pc)) {
         isInterpreted = true;
         if (VM.getVM().isClientCompiler()) {
@@ -656,7 +656,7 @@ public class SPARCFrame extends Frame {
       return null;
     }
   }
-
+  
   private Address addressOfFPSlot(int index) {
     return getFP().addOffsetTo(index * VM.getVM().getAddressSize());
   }
@@ -721,13 +721,13 @@ public class SPARCFrame extends Frame {
       param area for class and jnienv arguments for native stubs (see
       nativeStubGen_sparc.cpp) */
   public static final int INTERPRETER_FRAME_EXTRA_OUTGOING_ARGUMENT_WORDS = 2;
-
+  
   // FIXME: elided for now
   //
   //  // the compiler frame has many of the same fields as the interpreter frame
   //  // %%%%% factor out declarations of the shared fields
   //  enum compiler_frame_fixed_locals {
-  //       compiler_frame_d_scratch_fp_offset          = -2,
+  //       compiler_frame_d_scratch_fp_offset          = -2, 
   //       compiler_frame_vm_locals_fp_offset          = -2, // should be same as above
   //
   //       compiler_frame_vm_local_words = -compiler_frame_vm_locals_fp_offset
@@ -736,25 +736,25 @@ public class SPARCFrame extends Frame {
   // private:
   //
   //  // where LcpoolCache is saved:
-  //  constantPoolCacheOop* interpreter_frame_cpoolcache_addr() const {
+  //  constantPoolCacheOop* interpreter_frame_cpoolcache_addr() const { 
   //    return (constantPoolCacheOop*)sp_addr_at( LcpoolCache.sp_offset_in_saved_window());
   //  }
   //
   //  // where Lmonitors is saved:
-  //  BasicObjectLock**  interpreter_frame_monitors_addr() const {
+  //  BasicObjectLock**  interpreter_frame_monitors_addr() const { 
   //    return (BasicObjectLock**) sp_addr_at( Lmonitors.sp_offset_in_saved_window());
   //  }
-  //  intptr_t** interpreter_frame_esp_addr() const {
+  //  intptr_t** interpreter_frame_esp_addr() const { 
   //    return (intptr_t**)sp_addr_at( Lesp.sp_offset_in_saved_window());
   //  }
   //
   //  inline void interpreter_frame_set_tos_address(intptr_t* x);
   //
-  //  // next two fns read and write Lmonitors value,
+  //  // next two fns read and write Lmonitors value, 
   // private:
   //  BasicObjectLock* interpreter_frame_monitors()           const  { return *interpreter_frame_monitors_addr(); }
   //  void interpreter_frame_set_monitors(BasicObjectLock* monitors) {        *interpreter_frame_monitors_addr() = monitors; }
-  //
+  // 
   //#ifndef CORE
   //inline oop *frame::pd_compiled_argument_to_location(VMReg::Name reg, RegisterMap reg_map, int arg_size) const {
   //  COMPILER1_ONLY(return (oop *) (arg_size - 1 - reg + sp() + memory_parameter_word_sp_offset);   )
@@ -810,8 +810,8 @@ public class SPARCFrame extends Frame {
   }
 
   // FIXME: elided for now
-  //inline void frame::interpreter_frame_set_tos_address( intptr_t* x ) {
-  //  *interpreter_frame_esp_addr() = x - 1;
+  //inline void frame::interpreter_frame_set_tos_address( intptr_t* x ) { 
+  //  *interpreter_frame_esp_addr() = x - 1; 
   //}
 
   //--------------------------------------------------------------------------------
@@ -838,26 +838,26 @@ public class SPARCFrame extends Frame {
 
   // FIXME: elided for now
   // // monitor elements
-  //
+  // 
   // // in keeping with Intel side: end is lower in memory than begin;
   // // and beginning element is oldest element
   // // Also begin is one past last monitor.
-  //
-  // inline BasicObjectLock* frame::interpreter_frame_monitor_begin()       const  {
+  // 
+  // inline BasicObjectLock* frame::interpreter_frame_monitor_begin()       const  { 
   //   int rounded_vm_local_words = round_to(frame::interpreter_frame_vm_local_words, WordsPerLong);
   //   return (BasicObjectLock *)fp_addr_at(-rounded_vm_local_words);
   // }
-  //
-  // inline BasicObjectLock* frame::interpreter_frame_monitor_end()         const  {
+  // 
+  // inline BasicObjectLock* frame::interpreter_frame_monitor_end()         const  { 
   //   return interpreter_frame_monitors();
   // }
-  //
-  //
+  // 
+  // 
   // inline void frame::interpreter_frame_set_monitor_end(BasicObjectLock* value) {
   //   interpreter_frame_set_monitors(value);
   // }
-  //
-  //
+  // 
+  // 
   // inline int frame::interpreter_frame_monitor_size() {
   //   return round_to(BasicObjectLock::size(), WordsPerLong);
   // }
@@ -865,7 +865,7 @@ public class SPARCFrame extends Frame {
   public Address addressOfInterpreterFrameMethod() {
     return getSP().addOffsetTo(SPARCRegisters.Lmethod.spOffsetInSavedWindow());
   }
-
+  
   public Address addressOfInterpreterFrameCPCache() {
     return getSP().addOffsetTo(SPARCRegisters.LcpoolCache.spOffsetInSavedWindow());
   }
@@ -881,8 +881,8 @@ public class SPARCFrame extends Frame {
                                                        getSP().getAddressAt(link.asIn().asRegister().spOffsetInSavedWindow()));
   }
 
-  //
-  //
+  // 
+  // 
   // inline JavaCallWrapper* frame::entry_frame_call_wrapper() const {
   //   // note: adjust this code if the link argument in StubGenerator::call_stub() changes!
   //   const Argument link = Argument(0, false);
@@ -994,8 +994,8 @@ public class SPARCFrame extends Frame {
 
     while(!sp.equals(oldSP) && spIsValid(oldSP, youngSP, sp)) {
       if (maxFrames-- <= 0) {
-        // too many frames have gone by; invalid parameters given to this function
-        break;
+        // too many frames have gone by; invalid parameters given to this function 
+        break; 
       }
       previousSP = sp;
       sp = unBiasSP(sp.getAddressAt(SPARCRegisters.FP.spOffsetInSavedWindow()));
@@ -1027,7 +1027,7 @@ public class SPARCFrame extends Frame {
     //  * struct sigframe is declaredf in the kernel sources in
     //  * .../uts/sun4c/os/machdep.c/sendsig()
     //  * unfortunately we only get a pointer to the 'uc' passed
-    //  * to the sighandler so we need to do this stuff to get
+    //  * to the sighandler so we need to do this stuff to get 
     //  * to 'rwin'.
     //  * Have to do it like this to take account of alignment.
     //  */
@@ -1038,20 +1038,20 @@ public class SPARCFrame extends Frame {
 
     // From /usr/include/sys/ucontext.h:
     // #if !defined(_XPG4_2) || defined(__EXTENSIONS__)
-    // struct   ucontext {
+    // struct	ucontext {
     // #else
-    // struct   __ucontext {
+    // struct	__ucontext {
     // #endif
-    //  uint_t          uc_flags;
-    //  ucontext_t      *uc_link;
-    //  sigset_t        uc_sigmask;
-    //  stack_t         uc_stack;
-    //  mcontext_t      uc_mcontext;
-    // #ifdef   __sparcv9
-    //  long            uc_filler[4];
-    // #else    /* __sparcv9 */
-    //  long            uc_filler[23];
-    // #endif   /* __sparcv9 */
+    // 	uint_t		uc_flags;
+    // 	ucontext_t	*uc_link;
+    // 	sigset_t   	uc_sigmask;
+    // 	stack_t 	uc_stack;
+    // 	mcontext_t	uc_mcontext;
+    // #ifdef	__sparcv9
+    // 	long		uc_filler[4];
+    // #else	/* __sparcv9 */
+    // 	long		uc_filler[23];
+    // #endif	/* __sparcv9 */
     // };
 
     // This walks to the start of the gregs in the mcontext_t

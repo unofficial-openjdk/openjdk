@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class AdjoiningGenerations;
@@ -39,17 +42,23 @@ class ParallelScavengeHeap : public CollectedHeap {
 
   static ParallelScavengeHeap* _psh;
 
-  size_t _perm_gen_alignment;
-  size_t _young_gen_alignment;
-  size_t _old_gen_alignment;
+  // Byte size of the reserved space for the heap
+  size_t _reserved_byte_size;
 
-  inline size_t set_alignment(size_t& var, size_t val);
+  size_t _generation_alignment;
+  inline void set_generation_alignment(size_t val);
+
+  // Adjust alignment for page size (may be large page size)
+  void adjust_generation_alignment_for_page_size(size_t page_size);
 
   // Collection of generations that are adjacent in the
   // space reserved for the heap.
   AdjoiningGenerations* _gens;
 
   static GCTaskManager*          _gc_task_manager;      // The task manager.
+
+  // Private accessors
+  size_t reserved_byte_size() const { return _reserved_byte_size; }
 
  protected:
   static inline size_t total_invocations();
@@ -58,9 +67,7 @@ class ParallelScavengeHeap : public CollectedHeap {
 
  public:
   ParallelScavengeHeap() : CollectedHeap() {
-    set_alignment(_perm_gen_alignment, intra_generation_alignment());
-    set_alignment(_young_gen_alignment, intra_generation_alignment());
-    set_alignment(_old_gen_alignment, intra_generation_alignment());
+    set_generation_alignment(intra_generation_alignment());
   }
 
   // For use by VM operations
@@ -93,10 +100,8 @@ class ParallelScavengeHeap : public CollectedHeap {
   void post_initialize();
   void update_counters();
 
-  // The alignment used for the various generations.
-  size_t perm_gen_alignment()  const { return _perm_gen_alignment; }
-  size_t young_gen_alignment() const { return _young_gen_alignment; }
-  size_t old_gen_alignment()  const { return _old_gen_alignment; }
+  // The alignment used for generations.
+  size_t generation_alignment() const { return _generation_alignment; }
 
   // The alignment used for eden and survivors within the young gen.
   size_t intra_generation_alignment() const { return 64 * K; }
@@ -138,10 +143,10 @@ class ParallelScavengeHeap : public CollectedHeap {
   // and caused a NULL to be returned.  If a NULL is not returned,
   // "gc_time_limit_was_exceeded" has an undefined meaning.
 
-  HeapWord* mem_allocate(size_t size,
-                         bool is_noref,
-                         bool is_tlab,
-                         bool* gc_overhead_limit_was_exceeded);
+  HeapWord* mem_allocate(size_t size, 
+			 bool is_noref, 
+			 bool is_tlab,
+			 bool* gc_overhead_limit_was_exceeded);
   HeapWord* failed_mem_allocate(size_t size, bool is_tlab);
 
   HeapWord* permanent_mem_allocate(size_t size);
@@ -158,7 +163,7 @@ class ParallelScavengeHeap : public CollectedHeap {
 
   // These also should be called by the vm thread at a safepoint (e.g., from a
   // VM operation).
-  //
+  // 
   // The first collects the young generation only, unless the scavenge fails; it
   // will then attempt a full gc.  The second collects the entire heap; if
   // maximum_compaction is true, it will compact everything and clear all soft
@@ -214,9 +219,8 @@ class ParallelScavengeHeap : public CollectedHeap {
   void resize_old_gen(size_t desired_free_space);
 };
 
-inline size_t ParallelScavengeHeap::set_alignment(size_t& var, size_t val)
-{
-  assert(is_power_of_2((intptr_t)val), "must be a power of 2");
-  var = round_to(val, intra_generation_alignment());
-  return var;
+inline void ParallelScavengeHeap::set_generation_alignment(size_t val) {
+  assert(align_size_up_(val, os::vm_page_size()) == val, "not aligned");
+  assert(val >= intra_generation_alignment(), "alignment size is too small");
+  _generation_alignment = val;
 }

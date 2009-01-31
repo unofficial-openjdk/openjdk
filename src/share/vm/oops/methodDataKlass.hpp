@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // a methodDataKlass is the klass of a methodDataOop
@@ -31,7 +34,7 @@ class methodDataKlass : public Klass {
  public:
   // Testing
   bool oop_is_methodData() const { return true; }
-
+  
   // Allocation
   DEFINE_ALLOCATE_PERMANENT(methodDataKlass);
   methodDataOop allocate(methodHandle method, TRAPS);
@@ -40,7 +43,7 @@ class methodDataKlass : public Klass {
   // Sizing
   int oop_size(oop obj) const;
   int klass_oop_size() const { return object_size(); }
-
+  
   // Casting from klassOop
   static methodDataKlass* cast(klassOop k) {
     assert(k->klass_part()->oop_is_methodData(), "cast to methodDataKlass");
@@ -66,11 +69,11 @@ class methodDataKlass : public Klass {
   // Allocation profiling support
   juint alloc_size() const { return _alloc_size; }
   void  set_alloc_size(juint n) { _alloc_size = n; }
-
+  
   // Iterators
   int oop_oop_iterate(oop obj, OopClosure* blk);
   int oop_oop_iterate_m(oop obj, OopClosure* blk, MemRegion mr);
-
+  
 #ifndef PRODUCT
  public:
   // Printing

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // The direct lock/unlock calls do not force a collection if an unlock
@@ -34,38 +37,38 @@ class GC_locker: public AllStatic {
   static volatile bool _doing_gc;        // unlock_critical() is doing a GC
 
   // Accessors
-  static bool is_jni_active() {
-    return _jni_lock_count > 0;
+  static bool is_jni_active() { 
+    return _jni_lock_count > 0; 
   }
 
-  static void set_needs_gc() {
+  static void set_needs_gc() { 
     assert(SafepointSynchronize::is_at_safepoint(),
       "needs_gc is only set at a safepoint");
     _needs_gc = true;
   }
 
-  static void clear_needs_gc() {
+  static void clear_needs_gc() { 
     assert_lock_strong(JNICritical_lock);
     _needs_gc = false;
   }
 
-  static void jni_lock() {
+  static void jni_lock() { 
     Atomic::inc(&_jni_lock_count);
     CHECK_UNHANDLED_OOPS_ONLY(
       if (CheckUnhandledOops) { Thread::current()->_gc_locked_out_count++; })
-    assert(Universe::heap() == NULL || !Universe::heap()->is_gc_active(),
-           "locking failed");
+    assert(Universe::heap() == NULL || !Universe::heap()->is_gc_active(), 
+           "locking failed");                
   }
 
-  static void jni_unlock() {
-    Atomic::dec(&_jni_lock_count);
+  static void jni_unlock() { 
+    Atomic::dec(&_jni_lock_count);           
     CHECK_UNHANDLED_OOPS_ONLY(
       if (CheckUnhandledOops) { Thread::current()->_gc_locked_out_count--; })
   }
 
   static void jni_lock_slow();
   static void jni_unlock_slow();
-
+    
  public:
   // Accessors
   static bool is_active();
@@ -87,7 +90,7 @@ class GC_locker: public AllStatic {
   // Non-structured GC locking: currently needed for JNI. Use with care!
   static void lock();
   static void unlock();
-
+  
   // The following two methods are used for JNI critical regions.
   // If we find that we failed to perform a GC because the GC_locker
   // was active, arrange for one as soon as possible by allowing
@@ -136,13 +139,13 @@ class No_GC_Verifier: public StackObj {
  friend class Pause_No_GC_Verifier;
 
  protected:
-  bool _verifygc;
+  bool _verifygc;  
   unsigned int _old_invocations;
 
  public:
 #ifdef ASSERT
   No_GC_Verifier(bool verifygc = true);
-  ~No_GC_Verifier();
+  ~No_GC_Verifier();   
 #else
   No_GC_Verifier(bool verifygc = true) {}
   ~No_GC_Verifier() {}
@@ -161,7 +164,7 @@ class Pause_No_GC_Verifier: public StackObj {
  public:
 #ifdef ASSERT
   Pause_No_GC_Verifier(No_GC_Verifier * ngcv);
-  ~Pause_No_GC_Verifier();
+  ~Pause_No_GC_Verifier();   
 #else
   Pause_No_GC_Verifier(No_GC_Verifier * ngcv) {}
   ~Pause_No_GC_Verifier() {}
@@ -179,12 +182,12 @@ class Pause_No_GC_Verifier: public StackObj {
 class No_Safepoint_Verifier : public No_GC_Verifier {
  friend class Pause_No_Safepoint_Verifier;
 
- private:
+ private:  
   bool _activated;
   Thread *_thread;
  public:
 #ifdef ASSERT
-  No_Safepoint_Verifier(bool activated = true, bool verifygc = true ) : No_GC_Verifier(verifygc) {
+  No_Safepoint_Verifier(bool activated = true, bool verifygc = true ) : No_GC_Verifier(verifygc) {      
     _thread = Thread::current();
     if (_activated) {
       _thread->_allow_allocation_count++;
@@ -212,7 +215,7 @@ class No_Safepoint_Verifier : public No_GC_Verifier {
 // something to do for the underlying No_GC_Verifier object.
 
 class Pause_No_Safepoint_Verifier : public Pause_No_GC_Verifier {
- private:
+ private:  
   No_Safepoint_Verifier * _nsv;
 
  public:
@@ -270,7 +273,7 @@ class No_Alloc_Verifier : public StackObj {
 
  public:
 #ifdef ASSERT
-  No_Alloc_Verifier(bool activated = true) {
+  No_Alloc_Verifier(bool activated = true) { 
     _activated = activated;
     if (_activated) Thread::current()->_allow_allocation_count++;
   }
@@ -283,3 +286,4 @@ class No_Alloc_Verifier : public StackObj {
   ~No_Alloc_Verifier() {}
 #endif
 };
+

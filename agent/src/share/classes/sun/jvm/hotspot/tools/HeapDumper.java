@@ -19,9 +19,9 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
-
+                                                                                          
 package sun.jvm.hotspot.tools;
 
 import sun.jvm.hotspot.utilities.HeapHprofBinWriter;
@@ -39,18 +39,18 @@ public class HeapDumper extends Tool {
     private String dumpFile;
 
     public HeapDumper(String dumpFile) {
-        this.dumpFile = dumpFile;
+	this.dumpFile = dumpFile;
     }
 
     protected void printFlagsUsage() {
-        System.out.println("    <no option>\tto dump heap to " +
+        System.out.println("    <no option>\tto dump heap to " + 
             DEFAULT_DUMP_FILE);
         System.out.println("    -f <file>\tto dump heap to <file>");
         super.printFlagsUsage();
     }
 
     // use HeapHprofBinWriter to write the heap dump
-    public void run() {
+    public void run() { 
         System.out.println("Dumping heap to " + dumpFile + " ...");
         try {
             new HeapHprofBinWriter().write(dumpFile);
@@ -65,7 +65,7 @@ public class HeapDumper extends Tool {
     public static void main(String args[]) {
         String file = DEFAULT_DUMP_FILE;
         if (args.length > 2) {
-            if (args[0].equals("-f")) {
+	    if (args[0].equals("-f")) {
                 file = args[1];
                 String[] newargs = new String[args.length-2];
                 System.arraycopy(args, 2, newargs, 0, args.length-2);

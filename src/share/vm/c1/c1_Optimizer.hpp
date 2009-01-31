@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,13 +22,13 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class Optimizer VALUE_OBJ_CLASS_SPEC {
  private:
   IR* _ir;
-
+  
  public:
   Optimizer(IR* ir);
   IR* ir() const                                 { return _ir; }
@@ -35,3 +38,4 @@ class Optimizer VALUE_OBJ_CLASS_SPEC {
   void eliminate_blocks();
   void eliminate_null_checks();
 };
+

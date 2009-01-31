@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class AllocationStats VALUE_OBJ_CLASS_SPEC {
@@ -40,20 +43,20 @@ class AllocationStats VALUE_OBJ_CLASS_SPEC {
   // this size is then simply computed as the product of these two
   // estimates.
   AdaptivePaddedAverage _demand_rate_estimate;
-
+     
   ssize_t     _desired;          // Estimate computed as described above
-  ssize_t     _coalDesired;     // desired +/- small-percent for tuning coalescing
+  ssize_t     _coalDesired;   	// desired +/- small-percent for tuning coalescing
 
-  ssize_t     _surplus;         // count - (desired +/- small-percent),
-                                // used to tune splitting in best fit
-  ssize_t     _bfrSurp;         // surplus at start of current sweep
-  ssize_t     _prevSweep;       // count from end of previous sweep
-  ssize_t     _beforeSweep;     // count from before current sweep
-  ssize_t     _coalBirths;      // additional chunks from coalescing
-  ssize_t     _coalDeaths;      // loss from coalescing
-  ssize_t     _splitBirths;     // additional chunks from splitting
-  ssize_t     _splitDeaths;     // loss from splitting
-  size_t     _returnedBytes;    // number of bytes returned to list.
+  ssize_t     _surplus;       	// count - (desired +/- small-percent), 
+				// used to tune splitting in best fit
+  ssize_t     _bfrSurp;     	// surplus at start of current sweep
+  ssize_t     _prevSweep;     	// count from end of previous sweep
+  ssize_t     _beforeSweep;   	// count from before current sweep
+  ssize_t     _coalBirths;    	// additional chunks from coalescing
+  ssize_t     _coalDeaths;    	// loss from coalescing
+  ssize_t     _splitBirths;   	// additional chunks from splitting
+  ssize_t     _splitDeaths;   	// loss from splitting
+  size_t     _returnedBytes;	// number of bytes returned to list.
  public:
   void initialize() {
     AdaptivePaddedAverage* dummy =

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 import com.sun.jdi.*;
@@ -78,7 +78,7 @@ abstract public class TestScaffold extends TargetAdapter {
         } catch (InterruptedException ee) {
         }
     }
-
+     
     boolean getExceptionCaught() {
         return exceptionCaught;
     }
@@ -112,7 +112,7 @@ abstract public class TestScaffold extends TargetAdapter {
     /************************************************************************
      * The following methods override those in our base class, TargetAdapter.
      *************************************************************************/
-
+    
     /**
      * Events handled directly by scaffold always resume (well, almost always)
      */
@@ -138,7 +138,7 @@ abstract public class TestScaffold extends TargetAdapter {
     /**
      * We want the BE to stop when it issues a VMDeathEvent in order to
      * give the FE time to complete handling events that occured before
-     * the VMDeath.  When we get the VMDeathEvent for this request in
+     * the VMDeath.  When we get the VMDeathEvent for this request in 
      * the listener in connect(), we will do a resume.
      * If a testcase wants to do something special with VMDeathEvent's,
      * then it should override this method with an empty method or
@@ -157,15 +157,15 @@ abstract public class TestScaffold extends TargetAdapter {
 
     /**
      * This will allow us to print a warning if a debuggee gets an
-     * unexpected exception.  The unexpected exception will be handled in
+     * unexpected exception.  The unexpected exception will be handled in 
      * the exceptionThrown method in the listener created in the connect()
      * method.
-     * If a testcase does not want an uncaught exception to cause a
+     * If a testcase does not want an uncaught exception to cause a 
      * msg, it must override this method.
      */
     protected void createDefaultExceptionRequest() {
-        ourExceptionRequest = requestManager.createExceptionRequest(null,
-                                                                false, true);
+        ourExceptionRequest = requestManager.createExceptionRequest(null, 
+                                                                false, true); 
 
         // We can't afford to make this be other than SUSPEND_NONE.  Otherwise,
         // it would have to be resumed.  If our connect() listener resumes it,
@@ -297,7 +297,7 @@ abstract public class TestScaffold extends TargetAdapter {
             traceln("TS: eventHandler: finished");
         }
     }
-
+  
     /**
      * Constructor
      */
@@ -313,17 +313,17 @@ abstract public class TestScaffold extends TargetAdapter {
         this.shouldTrace = false;
     }
 
-
+   
     protected void startUp(String targetName) {
-        List argList = new ArrayList(Arrays.asList(args));
-        argList.add(targetName);
-        println("run args: " + argList);
-        connect((String[]) argList.toArray(args));
-        waitForVMStart();
+	List argList = new ArrayList(Arrays.asList(args));
+	argList.add(targetName);
+	println("run args: " + argList);
+	connect((String[]) argList.toArray(args));
+	waitForVMStart();
     }
 
     protected BreakpointEvent startToMain(String targetName) {
-        startUp(targetName);
+	startUp(targetName);
         traceln("TS: back from startUp");
         BreakpointEvent bpr = resumeTo(targetName, "main", "([Ljava/lang/String;)V");
         waitForInput();
@@ -336,7 +336,7 @@ abstract public class TestScaffold extends TargetAdapter {
                 System.err.println("Press <enter> to continue");
                 System.in.read();
                 System.err.println("running...");
-
+                
             } catch(Exception e) {
             }
         }
@@ -429,7 +429,7 @@ abstract public class TestScaffold extends TargetAdapter {
         ArgInfo argInfo = parseArgs(args);
 
         argInfo.targetVMArgs += VMConnection.getDebuggeeVMOptions();
-        connection = new VMConnection(argInfo.connectorSpec,
+        connection = new VMConnection(argInfo.connectorSpec, 
                                       argInfo.traceFlags);
 
         addListener(new TargetAdapter() {
@@ -437,7 +437,7 @@ abstract public class TestScaffold extends TargetAdapter {
                     if (TestScaffold.this.containsOurVMDeathRequest(set)) {
                         traceln("TS: connect: set.resume() called");
                         set.resume();
-
+                            
                         // Note that we want to do the above resume before
                         // waking up any sleepers.
                         synchronized(TestScaffold.this) {
@@ -467,12 +467,12 @@ abstract public class TestScaffold extends TargetAdapter {
                         TestScaffold.this.exceptionCaught = true;
                     }
                 }
-
+                
                 public void vmDied(VMDeathEvent event) {
                     vmDied = true;
                     traceln("TS: vmDied called");
                 }
-
+                
                 public void vmDisconnected(VMDisconnectEvent event) {
                     synchronized(TestScaffold.this) {
                         vmDisconnected = true;
@@ -522,15 +522,15 @@ abstract public class TestScaffold extends TargetAdapter {
 
 
     protected void listenUntilVMDisconnect() {
-        try {
-            addListener (this);
-        } catch (Exception ex){
-            ex.printStackTrace();
-            testFailed = true;
-        } finally {
-            // Allow application to complete and shut down
-            resumeToVMDisconnect();
-        }
+	try {
+	    addListener (this);
+	} catch (Exception ex){
+	    ex.printStackTrace();
+	    testFailed = true;
+	} finally {
+	    // Allow application to complete and shut down
+	    resumeToVMDisconnect();
+	}
     }
 
     public synchronized ThreadReference waitForVMStart() {
@@ -608,7 +608,7 @@ abstract public class TestScaffold extends TargetAdapter {
     }
 
     private StepEvent doStep(ThreadReference thread, int gran, int depth) {
-        final StepRequest sr =
+        final StepRequest sr = 
                   requestManager.createStepRequest(thread, gran, depth);
 
         sr.addClassExclusionFilter("java.*");
@@ -642,7 +642,7 @@ abstract public class TestScaffold extends TargetAdapter {
     }
 
     public BreakpointEvent resumeTo(Location loc) {
-        final BreakpointRequest request =
+        final BreakpointRequest request = 
             requestManager.createBreakpointRequest(loc);
         request.addCountFilter(1);
         request.enable();
@@ -674,19 +674,19 @@ abstract public class TestScaffold extends TargetAdapter {
         return null;
     }
 
-    public Location findLocation(ReferenceType rt, int lineNumber)
+    public Location findLocation(ReferenceType rt, int lineNumber) 
                          throws AbsentInformationException {
         List locs = rt.locationsOfLine(lineNumber);
         if (locs.size() == 0) {
             throw new IllegalArgumentException("Bad line number");
         } else if (locs.size() > 1) {
             throw new IllegalArgumentException("Line number has multiple locations");
-        }
+        } 
 
         return (Location)locs.get(0);
     }
 
-    public BreakpointEvent resumeTo(String clsName, String methodName,
+    public BreakpointEvent resumeTo(String clsName, String methodName, 
                                          String methodSignature) {
         ReferenceType rt = findReferenceType(clsName);
         if (rt == null) {
@@ -711,7 +711,7 @@ abstract public class TestScaffold extends TargetAdapter {
     }
 
     public ClassPrepareEvent resumeToPrepareOf(String className) {
-        final ClassPrepareRequest request =
+        final ClassPrepareRequest request = 
             requestManager.createClassPrepareRequest();
         request.addClassFilter(className);
         request.addCountFilter(1);
@@ -734,7 +734,7 @@ abstract public class TestScaffold extends TargetAdapter {
     }
 
     public void shutdown(String message) {
-        traceln("TS: shutdown: vmDied= " + vmDied +
+        traceln("TS: shutdown: vmDied= " + vmDied + 
                  ", vmDisconnected= " + vmDisconnected +
                  ", connection = " + connection);
 
@@ -743,7 +743,7 @@ abstract public class TestScaffold extends TargetAdapter {
                 connection.disposeVM();
              } catch (VMDisconnectedException e) {
                 // Shutting down after the VM has gone away. This is
-                // not an error, and we just ignore it.
+                // not an error, and we just ignore it. 
             }
         } else {
             traceln("TS: shutdown: disposeVM not called");
@@ -751,7 +751,7 @@ abstract public class TestScaffold extends TargetAdapter {
         if (message != null) {
             println(message);
         }
-
+        
         vmDied = true;
         vmDisconnected = true;
     }

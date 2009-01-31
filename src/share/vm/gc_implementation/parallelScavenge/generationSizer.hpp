@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // There is a nice batch of tested generation sizing code in
@@ -36,7 +39,7 @@ class GenerationSizer : public TwoGenerationCollectorPolicy {
   void initialize_flags() {
     // Do basic sizing work
     this->TwoGenerationCollectorPolicy::initialize_flags();
-
+    
     // If the user hasn't explicitly set the number of worker
     // threads, set the count.
     if (ParallelGCThreads == 0) {
@@ -67,3 +70,5 @@ class GenerationSizer : public TwoGenerationCollectorPolicy {
   size_t perm_gen_size()      { return PermSize; }
   size_t max_perm_gen_size()  { return MaxPermSize; }
 };
+
+

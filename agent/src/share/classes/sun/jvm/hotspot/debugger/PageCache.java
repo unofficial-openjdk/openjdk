@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger;
@@ -56,7 +56,7 @@ public class PageCache {
     throws UnmappedAddressException {
     byte[] data = new byte[(int) numBytes];
     long numRead = 0;
-
+    
     while (numBytes > 0) {
       long pageBaseAddress = startAddress & pageMask;
       // Look up this page
@@ -72,7 +72,7 @@ public class PageCache {
       numBytes     -= numBytesFromPage;
       startAddress += numBytesFromPage;
     }
-
+    
     return data;
   }
 
@@ -134,13 +134,13 @@ public class PageCache {
     enabled = false;
     clear();
   }
-
+  
   /** Enables the page cache; fetched pages will be added to the
       cache. Call this when the target process has been suspended. */
   public synchronized void enable() {
     enabled = true;
   }
-
+  
 
   //--------------------------------------------------------------------------------
   // Internals only below this point

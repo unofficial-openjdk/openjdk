@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 /*
@@ -37,11 +37,11 @@
 #include "manifest_info.h"
 #endif
 
-#define PATH_SEPARATOR          ':'
-#define FILESEP                 "/"
-#define FILE_SEPARATOR          '/'
-#ifndef MAXNAMELEN
-#define MAXNAMELEN              PATH_MAX
+#define PATH_SEPARATOR		':'
+#define FILESEP			"/"
+#define FILE_SEPARATOR		'/'
+#ifndef	MAXNAMELEN
+#define MAXNAMELEN		PATH_MAX
 #endif
 
 #ifdef JAVA_ARGS
@@ -60,11 +60,11 @@
  * Support for doing cheap, accurate interval timing.
  */
 #include <sys/time.h>
-#define CounterGet()              (gethrtime()/1000)
-#define Counter2Micros(counts)    (counts)
+#define CounterGet()           	  (gethrtime()/1000)
+#define Counter2Micros(counts) 	  (counts)
 #else
-#define CounterGet()              (0)
-#define Counter2Micros(counts)    (1)
+#define CounterGet()		  (0)
+#define Counter2Micros(counts)	  (1)
 #endif /* HAVE_GETHRTIME */
 
 /*

@@ -1,12 +1,8 @@
 os_family = linux
 
-arch = x86
+arch = i486
 
-arch_model = x86_32
-
-os_arch = linux_x86
-
-os_arch_model = linux_x86_32
+os_arch = linux_i486
 
 lib_arch = i386
 

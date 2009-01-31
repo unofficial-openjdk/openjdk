@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.oops;
@@ -64,7 +64,7 @@ public class Method extends Oop {
     /*
     interpreterEntry           = type.getAddressField("_interpreter_entry");
     fromCompiledCodeEntryPoint = type.getAddressField("_from_compiled_code_entry_point");
-
+    
     */
     objectInitializerName = null;
     classInitializerName = null;
@@ -87,7 +87,7 @@ public class Method extends Oop {
   private static CIntField vtableIndex;
   private static CIntField invocationCounter;
   private static long      bytecodeOffset;
-
+  
   private static AddressField       code;
 
   // constant method names - <init>, <clinit>
@@ -122,7 +122,7 @@ public class Method extends Oop {
   public long         getMaxStack()                   { return                maxStack.getValue(this);          }
   public long         getMaxLocals()                  { return                maxLocals.getValue(this);         }
   public long         getSizeOfParameters()           { return                sizeOfParameters.getValue(this);  }
-  public long         getNameIndex()                  { return                getConstMethod().getNameIndex();  }
+  public long         getNameIndex()                  { return                getConstMethod().getNameIndex();  }  
   public long         getSignatureIndex()             { return            getConstMethod().getSignatureIndex(); }
   public long         getGenericSignatureIndex()      { return     getConstMethod().getGenericSignatureIndex(); }
   public long         getAccessFlags()                { return                accessFlags.getValue(this);       }
@@ -138,7 +138,7 @@ public class Method extends Oop {
   // get associated compiled native method, if available, else return null.
   public NMethod getNativeMethod() {
     Address addr = code.getValue(getHandle());
-    return (NMethod) VMObjectFactory.newObject(NMethod.class, addr);
+    return (NMethod) VMObjectFactory.newObject(NMethod.class, addr); 
   }
 
   // Convenience routine
@@ -198,7 +198,7 @@ public class Method extends Oop {
   // Accessors
   public Symbol  getName()          { return (Symbol) getConstants().getObjAt(getNameIndex());         }
   public Symbol  getSignature()     { return (Symbol) getConstants().getObjAt(getSignatureIndex());    }
-  public Symbol  getGenericSignature() {
+  public Symbol  getGenericSignature() { 
      long index = getGenericSignatureIndex();
      return (index != 0L) ? (Symbol) getConstants().getObjAt(index) : null;
   }
@@ -276,7 +276,7 @@ public class Method extends Oop {
   public boolean hasLocalVariableTable() {
     return getConstMethod().hasLocalVariableTable();
   }
-
+  
   /** Should only be called if table is present */
   public LocalVariableTableElement[] getLocalVariableTable() {
     return getConstMethod().getLocalVariableTable();
@@ -290,7 +290,7 @@ public class Method extends Oop {
     LocalVariableTableElement[] locals = getLocalVariableTable();
     for (int l = 0; l < locals.length; l++) {
        LocalVariableTableElement local = locals[l];
-       if ((bci >= local.getStartBCI()) &&
+       if ((bci >= local.getStartBCI()) && 
           (bci < (local.getStartBCI() + local.getLength())) &&
           slot == local.getSlot()) {
           return getConstants().getSymbolAt(local.getNameCPIndex());

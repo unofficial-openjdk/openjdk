@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -92,8 +95,8 @@ void CallInfo::set_common(KlassHandle resolved_klass, KlassHandle selected_klass
 // Klass resolution
 
 void LinkResolver::check_klass_accessability(KlassHandle ref_klass, KlassHandle sel_klass, TRAPS) {
-  if (!Reflection::verify_class_access(ref_klass->as_klassOop(),
-                                       sel_klass->as_klassOop(),
+  if (!Reflection::verify_class_access(ref_klass->as_klassOop(), 
+                                       sel_klass->as_klassOop(), 
                                        true)) {
     ResourceMark rm(THREAD);
     Exceptions::fthrow(
@@ -113,7 +116,7 @@ void LinkResolver::resolve_klass(KlassHandle& result, constantPoolHandle pool, i
 }
 
 void LinkResolver::resolve_klass_no_update(KlassHandle& result, constantPoolHandle pool, int index, TRAPS) {
-  klassOop result_oop =
+  klassOop result_oop = 
          constantPoolOopDesc::klass_ref_at_if_loaded_check(pool, index, CHECK);
   result = KlassHandle(THREAD, result_oop);
 }
@@ -151,10 +154,10 @@ void LinkResolver::lookup_method_in_interfaces(methodHandle& result, KlassHandle
   result = methodHandle(THREAD, ik->lookup_method_in_all_interfaces(name(), signature()));
 }
 
-void LinkResolver::check_method_accessability(KlassHandle ref_klass,
-                                              KlassHandle resolved_klass,
-                                              KlassHandle sel_klass,
-                                              methodHandle sel_method,
+void LinkResolver::check_method_accessability(KlassHandle ref_klass, 
+                                              KlassHandle resolved_klass, 
+                                              KlassHandle sel_klass, 
+                                              methodHandle sel_method, 
                                               TRAPS) {
 
   AccessFlags flags = sel_method->access_flags();
@@ -177,10 +180,10 @@ void LinkResolver::check_method_accessability(KlassHandle ref_klass,
     flags.set_flags(new_flags);
   }
 
-  if (!Reflection::verify_field_access(ref_klass->as_klassOop(),
+  if (!Reflection::verify_field_access(ref_klass->as_klassOop(), 
                                        resolved_klass->as_klassOop(),
-                                       sel_klass->as_klassOop(),
-                                       flags,
+                                       sel_klass->as_klassOop(), 
+                                       flags, 
                                        true)) {
     ResourceMark rm(THREAD);
     Exceptions::fthrow(
@@ -196,34 +199,34 @@ void LinkResolver::check_method_accessability(KlassHandle ref_klass,
   }
 }
 
-void LinkResolver::resolve_method(methodHandle& resolved_method, KlassHandle& resolved_klass,
-                                  constantPoolHandle pool, int index, TRAPS) {
+void LinkResolver::resolve_method(methodHandle& resolved_method, KlassHandle& resolved_klass, 
+				  constantPoolHandle pool, int index, TRAPS) {
 
   // resolve klass
   resolve_klass(resolved_klass, pool, index, CHECK);
-
+  
   symbolHandle method_name      (THREAD, pool->name_ref_at(index));
   symbolHandle method_signature (THREAD, pool->signature_ref_at(index));
   KlassHandle  current_klass(THREAD, pool->pool_holder());
-
+  
   resolve_method(resolved_method, resolved_klass, method_name, method_signature, current_klass, true, CHECK);
 }
 
 void LinkResolver::resolve_interface_method(methodHandle& resolved_method, KlassHandle& resolved_klass, constantPoolHandle pool, int index, TRAPS) {
 
   // resolve klass
-  resolve_klass(resolved_klass, pool, index, CHECK);
+  resolve_klass(resolved_klass, pool, index, CHECK);  
   symbolHandle method_name      (THREAD, pool->name_ref_at(index));
   symbolHandle method_signature (THREAD, pool->signature_ref_at(index));
   KlassHandle  current_klass(THREAD, pool->pool_holder());
-
+  
   resolve_interface_method(resolved_method, resolved_klass, method_name, method_signature, current_klass, true, CHECK);
 }
 
 
 void LinkResolver::resolve_method(methodHandle& resolved_method, KlassHandle resolved_klass,
-                                  symbolHandle method_name, symbolHandle method_signature,
-                                  KlassHandle current_klass, bool check_access, TRAPS) {
+				  symbolHandle method_name, symbolHandle method_signature, 
+				  KlassHandle current_klass, bool check_access, TRAPS) {
 
   // 1. check if klass is not interface
   if (resolved_klass->is_interface()) {
@@ -231,14 +234,14 @@ void LinkResolver::resolve_method(methodHandle& resolved_method, KlassHandle res
     jio_snprintf(buf, sizeof(buf), "Found interface %s, but class was expected", Klass::cast(resolved_klass())->external_name());
     THROW_MSG(vmSymbols::java_lang_IncompatibleClassChangeError(), buf);
   }
-
+  
   // 2. lookup method in resolved klass and its super klasses
   lookup_method_in_klasses(resolved_method, resolved_klass, method_name, method_signature, CHECK);
-
+  
   if (resolved_method.is_null()) { // not found in the class hierarchy
     // 3. lookup method in all the interfaces implemented by the resolved klass
     lookup_method_in_interfaces(resolved_method, resolved_klass, method_name, method_signature, CHECK);
-
+    
     if (resolved_method.is_null()) {
       // 4. method lookup failed
       ResourceMark rm(THREAD);
@@ -263,37 +266,37 @@ void LinkResolver::resolve_method(methodHandle& resolved_method, KlassHandle res
     assert(current_klass.not_null() , "current_klass should not be null");
 
     // check if method can be accessed by the referring class
-    check_method_accessability(current_klass,
-                               resolved_klass,
-                               KlassHandle(THREAD, resolved_method->method_holder()),
-                               resolved_method,
+    check_method_accessability(current_klass, 
+                               resolved_klass, 
+                               KlassHandle(THREAD, resolved_method->method_holder()), 
+                               resolved_method, 
                                CHECK);
-
+    
     // check loader constraints
     Handle loader (THREAD, instanceKlass::cast(current_klass())->class_loader());
     Handle class_loader (THREAD, instanceKlass::cast(resolved_method->method_holder())->class_loader());
     {
       ResourceMark rm(THREAD);
-      char* failed_type_name =
-        SystemDictionary::check_signature_loaders(method_signature, loader,
-                                                  class_loader, true, CHECK);
+      char* failed_type_name = 
+	SystemDictionary::check_signature_loaders(method_signature, loader,
+						  class_loader, true, CHECK);
       if (failed_type_name != NULL) {
-        const char* msg = "loader constraint violation: when resolving method"
-          " \"%s\" the class loader (instance of %s) of the current class, %s,"
-          " and the class loader (instance of %s) for resolved class, %s, have"
-          " different Class objects for the type %s used in the signature";
-        char* sig = methodOopDesc::name_and_sig_as_C_string(Klass::cast(resolved_klass()),method_name(),method_signature());
-        const char* loader1 = SystemDictionary::loader_name(loader());
-        char* current = instanceKlass::cast(current_klass())->name()->as_C_string();
-        const char* loader2 = SystemDictionary::loader_name(class_loader());
-        char* resolved = instanceKlass::cast(resolved_klass())->name()->as_C_string();
-        size_t buflen = strlen(msg) + strlen(sig) + strlen(loader1) +
-          strlen(current) + strlen(loader2) + strlen(resolved) +
-          strlen(failed_type_name);
-        char* buf = NEW_RESOURCE_ARRAY_IN_THREAD(THREAD, char, buflen);
-        jio_snprintf(buf, buflen, msg, sig, loader1, current, loader2,
-                     resolved, failed_type_name);
-        THROW_MSG(vmSymbols::java_lang_LinkageError(), buf);
+	const char* msg = "loader constraint violation: when resolving method"
+	  " \"%s\" the class loader (instance of %s) of the current class, %s,"
+	  " and the class loader (instance of %s) for resolved class, %s, have"
+	  " different Class objects for the type %s used in the signature";
+	char* sig = methodOopDesc::name_and_sig_as_C_string(Klass::cast(resolved_klass()),method_name(),method_signature());
+	const char* loader1 = SystemDictionary::loader_name(loader());
+	char* current = instanceKlass::cast(current_klass())->name()->as_C_string();
+	const char* loader2 = SystemDictionary::loader_name(class_loader());
+	char* resolved = instanceKlass::cast(resolved_klass())->name()->as_C_string();
+	size_t buflen = strlen(msg) + strlen(sig) + strlen(loader1) + 
+	  strlen(current) + strlen(loader2) + strlen(resolved) + 
+	  strlen(failed_type_name);
+	char* buf = NEW_RESOURCE_ARRAY_IN_THREAD(THREAD, char, buflen);
+	jio_snprintf(buf, buflen, msg, sig, loader1, current, loader2,
+		     resolved, failed_type_name);
+	THROW_MSG(vmSymbols::java_lang_LinkageError(), buf);
       }
     }
   }
@@ -312,10 +315,10 @@ void LinkResolver::resolve_interface_method(methodHandle& resolved_method,
     jio_snprintf(buf, sizeof(buf), "Found class %s, but interface was expected", Klass::cast(resolved_klass())->external_name());
     THROW_MSG(vmSymbols::java_lang_IncompatibleClassChangeError(), buf);
   }
-
+  
   // lookup method in this interface or its super, java.lang.Object
   lookup_instance_method_in_klasses(resolved_method, resolved_klass, method_name, method_signature, CHECK);
-
+  
   if (resolved_method.is_null()) {
     // lookup method in all the super-interfaces
     lookup_method_in_interfaces(resolved_method, resolved_klass, method_name, method_signature, CHECK);
@@ -329,33 +332,33 @@ void LinkResolver::resolve_interface_method(methodHandle& resolved_method,
     }
   }
 
-  if (check_access) {
+  if (check_access) {  
     HandleMark hm(THREAD);
     Handle loader (THREAD, instanceKlass::cast(current_klass())->class_loader());
     Handle class_loader (THREAD, instanceKlass::cast(resolved_method->method_holder())->class_loader());
     {
       ResourceMark rm(THREAD);
       char* failed_type_name =
-        SystemDictionary::check_signature_loaders(method_signature, loader,
-                                                  class_loader, true, CHECK);
+	SystemDictionary::check_signature_loaders(method_signature, loader, 
+						  class_loader, true, CHECK);  
       if (failed_type_name != NULL) {
-        const char* msg = "loader constraint violation: when resolving "
-          "interface method \"%s\" the class loader (instance of %s) of the "
-          "current class, %s, and the class loader (instance of %s) for "
-          "resolved class, %s, have different Class objects for the type %s "
-          "used in the signature";
-        char* sig = methodOopDesc::name_and_sig_as_C_string(Klass::cast(resolved_klass()),method_name(),method_signature());
-        const char* loader1 = SystemDictionary::loader_name(loader());
-        char* current = instanceKlass::cast(current_klass())->name()->as_C_string();
-        const char* loader2 = SystemDictionary::loader_name(class_loader());
-        char* resolved = instanceKlass::cast(resolved_klass())->name()->as_C_string();
-        size_t buflen = strlen(msg) + strlen(sig) + strlen(loader1) +
-          strlen(current) + strlen(loader2) + strlen(resolved) +
-          strlen(failed_type_name);
-        char* buf = NEW_RESOURCE_ARRAY_IN_THREAD(THREAD, char, buflen);
-        jio_snprintf(buf, buflen, msg, sig, loader1, current, loader2,
-                     resolved, failed_type_name);
-        THROW_MSG(vmSymbols::java_lang_LinkageError(), buf);
+	const char* msg = "loader constraint violation: when resolving "
+	  "interface method \"%s\" the class loader (instance of %s) of the "
+	  "current class, %s, and the class loader (instance of %s) for "
+	  "resolved class, %s, have different Class objects for the type %s "
+	  "used in the signature";
+	char* sig = methodOopDesc::name_and_sig_as_C_string(Klass::cast(resolved_klass()),method_name(),method_signature());
+	const char* loader1 = SystemDictionary::loader_name(loader());
+	char* current = instanceKlass::cast(current_klass())->name()->as_C_string();
+	const char* loader2 = SystemDictionary::loader_name(class_loader());
+	char* resolved = instanceKlass::cast(resolved_klass())->name()->as_C_string();
+	size_t buflen = strlen(msg) + strlen(sig) + strlen(loader1) + 
+	  strlen(current) + strlen(loader2) + strlen(resolved) + 
+	  strlen(failed_type_name);
+	char* buf = NEW_RESOURCE_ARRAY_IN_THREAD(THREAD, char, buflen);
+	jio_snprintf(buf, buflen, msg, sig, loader1, current, loader2,
+		     resolved, failed_type_name);
+	THROW_MSG(vmSymbols::java_lang_LinkageError(), buf);
       }
     }
   }
@@ -364,15 +367,15 @@ void LinkResolver::resolve_interface_method(methodHandle& resolved_method,
 //------------------------------------------------------------------------------------------------------------------------
 // Field resolution
 
-void LinkResolver::check_field_accessability(KlassHandle ref_klass,
+void LinkResolver::check_field_accessability(KlassHandle ref_klass, 
                                              KlassHandle resolved_klass,
-                                             KlassHandle sel_klass,
-                                             fieldDescriptor& fd,
+                                             KlassHandle sel_klass, 
+                                             fieldDescriptor& fd, 
                                              TRAPS) {
-  if (!Reflection::verify_field_access(ref_klass->as_klassOop(),
+  if (!Reflection::verify_field_access(ref_klass->as_klassOop(), 
                                        resolved_klass->as_klassOop(),
-                                       sel_klass->as_klassOop(),
-                                       fd.access_flags(),
+                                       sel_klass->as_klassOop(), 
+                                       fd.access_flags(), 
                                        true)) {
     ResourceMark rm(THREAD);
     Exceptions::fthrow(
@@ -423,7 +426,7 @@ void LinkResolver::resolve_field(FieldAccessInfo& result, constantPoolHandle poo
     ResourceMark rm(THREAD);
     THROW_MSG(vmSymbols::java_lang_NoSuchFieldError(), field->as_C_string());
   }
-
+  
   // check access
   KlassHandle ref_klass(THREAD, pool->pool_holder());
   check_field_accessability(ref_klass, resolved_klass, sel_klass, fd, CHECK);
@@ -435,11 +438,11 @@ void LinkResolver::resolve_field(FieldAccessInfo& result, constantPoolHandle poo
     THROW_MSG(vmSymbols::java_lang_IncompatibleClassChangeError(), msg);
   }
 
-  // Final fields can only be accessed from its own class.
-  if (is_put && fd.access_flags().is_final() && sel_klass() != pool->pool_holder()) {
+  // Final fields can only be accessed from its own class.  
+  if (is_put && fd.access_flags().is_final() && sel_klass() != pool->pool_holder()) {    
     THROW(vmSymbols::java_lang_IllegalAccessError());
   }
-
+  
   // initialize resolved_klass if necessary
   // note 1: the klass which declared the field must be initialized (i.e, sel_klass)
   //         according to the newest JVM spec (5.5, p.170) - was bug (gri 7/28/99)
@@ -458,25 +461,25 @@ void LinkResolver::resolve_field(FieldAccessInfo& result, constantPoolHandle poo
     {
       ResourceMark rm(THREAD);
       char* failed_type_name =
-        SystemDictionary::check_signature_loaders(signature_ref,
-                                                  ref_loader, sel_loader,
-                                                  false,
-                                                  CHECK);
+	SystemDictionary::check_signature_loaders(signature_ref,
+						  ref_loader, sel_loader,
+						  false,
+						  CHECK);
       if (failed_type_name != NULL) {
-        const char* msg = "loader constraint violation: when resolving field"
-          " \"%s\" the class loader (instance of %s) of the referring class, "
-          "%s, and the class loader (instance of %s) for the field's resolved "
-          "type, %s, have different Class objects for that type";
-        char* field_name = field_h()->as_C_string();
-        const char* loader1 = SystemDictionary::loader_name(ref_loader());
-        char* sel = instanceKlass::cast(sel_klass())->name()->as_C_string();
-        const char* loader2 = SystemDictionary::loader_name(sel_loader());
-        size_t buflen = strlen(msg) + strlen(field_name) + strlen(loader1) +
-          strlen(sel) + strlen(loader2) + strlen(failed_type_name);
-        char* buf = NEW_RESOURCE_ARRAY_IN_THREAD(THREAD, char, buflen);
-        jio_snprintf(buf, buflen, msg, field_name, loader1, sel, loader2,
-                     failed_type_name);
-        THROW_MSG(vmSymbols::java_lang_LinkageError(), buf);
+	const char* msg = "loader constraint violation: when resolving field"
+	  " \"%s\" the class loader (instance of %s) of the referring class, "
+	  "%s, and the class loader (instance of %s) for the field's resolved "
+	  "type, %s, have different Class objects for that type";
+	char* field_name = field_h()->as_C_string();
+	const char* loader1 = SystemDictionary::loader_name(ref_loader());
+	char* sel = instanceKlass::cast(sel_klass())->name()->as_C_string();
+	const char* loader2 = SystemDictionary::loader_name(sel_loader());
+	size_t buflen = strlen(msg) + strlen(field_name) + strlen(loader1) + 
+	  strlen(sel) + strlen(loader2) + strlen(failed_type_name);
+	char* buf = NEW_RESOURCE_ARRAY_IN_THREAD(THREAD, char, buflen);
+	jio_snprintf(buf, buflen, msg, field_name, loader1, sel, loader2,
+		     failed_type_name);
+	THROW_MSG(vmSymbols::java_lang_LinkageError(), buf);
       }
     }
   }
@@ -500,17 +503,17 @@ void LinkResolver::resolve_field(FieldAccessInfo& result, constantPoolHandle poo
 // recv_klass         the receiver klass
 
 
-void LinkResolver::resolve_static_call(CallInfo& result, KlassHandle& resolved_klass, symbolHandle method_name,
-                                       symbolHandle method_signature, KlassHandle current_klass,
+void LinkResolver::resolve_static_call(CallInfo& result, KlassHandle& resolved_klass, symbolHandle method_name, 
+                                       symbolHandle method_signature, KlassHandle current_klass, 
                                        bool check_access, bool initialize_class, TRAPS) {
-  methodHandle resolved_method;
+  methodHandle resolved_method;  
   linktime_resolve_static_method(resolved_method, resolved_klass, method_name, method_signature, current_klass, check_access, CHECK);
   resolved_klass = KlassHandle(THREAD, Klass::cast(resolved_method->method_holder()));
-
-  // Initialize klass (this should only happen if everything is ok)
+  
+  // Initialize klass (this should only happen if everything is ok)  
   if (initialize_class && resolved_klass->should_be_initialized()) {
     resolved_klass->initialize(CHECK);
-    linktime_resolve_static_method(resolved_method, resolved_klass, method_name, method_signature, current_klass, check_access, CHECK);
+    linktime_resolve_static_method(resolved_method, resolved_klass, method_name, method_signature, current_klass, check_access, CHECK);      
   }
 
   // setup result
@@ -518,10 +521,10 @@ void LinkResolver::resolve_static_call(CallInfo& result, KlassHandle& resolved_k
 }
 
 // throws linktime exceptions
-void LinkResolver::linktime_resolve_static_method(methodHandle& resolved_method, KlassHandle resolved_klass,
-                                                  symbolHandle method_name, symbolHandle method_signature,
-                                                  KlassHandle current_klass, bool check_access, TRAPS) {
-
+void LinkResolver::linktime_resolve_static_method(methodHandle& resolved_method, KlassHandle resolved_klass, 
+						  symbolHandle method_name, symbolHandle method_signature, 
+						  KlassHandle current_klass, bool check_access, TRAPS) {
+  
   resolve_method(resolved_method, resolved_klass, method_name, method_signature, current_klass, check_access, CHECK);
   assert(resolved_method->name() != vmSymbols::class_initializer_name(), "should have been checked in verifier");
 
@@ -536,7 +539,7 @@ void LinkResolver::linktime_resolve_static_method(methodHandle& resolved_method,
 }
 
 
-void LinkResolver::resolve_special_call(CallInfo& result, KlassHandle resolved_klass, symbolHandle method_name,
+void LinkResolver::resolve_special_call(CallInfo& result, KlassHandle resolved_klass, symbolHandle method_name, 
                                         symbolHandle method_signature, KlassHandle current_klass, bool check_access, TRAPS) {
   methodHandle resolved_method;
   linktime_resolve_special_method(resolved_method, resolved_klass, method_name, method_signature, current_klass, check_access, CHECK);
@@ -544,50 +547,50 @@ void LinkResolver::resolve_special_call(CallInfo& result, KlassHandle resolved_k
 }
 
 // throws linktime exceptions
-void LinkResolver::linktime_resolve_special_method(methodHandle& resolved_method, KlassHandle resolved_klass,
-                                                   symbolHandle method_name, symbolHandle method_signature,
-                                                   KlassHandle current_klass, bool check_access, TRAPS) {
+void LinkResolver::linktime_resolve_special_method(methodHandle& resolved_method, KlassHandle resolved_klass, 
+						   symbolHandle method_name, symbolHandle method_signature, 
+						   KlassHandle current_klass, bool check_access, TRAPS) {
 
   resolve_method(resolved_method, resolved_klass, method_name, method_signature, current_klass, check_access, CHECK);
-
+  
   // check if method name is <init>, that it is found in same klass as static type
   if (resolved_method->name() == vmSymbols::object_initializer_name() &&
       resolved_method->method_holder() != resolved_klass()) {
     ResourceMark rm(THREAD);
     Exceptions::fthrow(
       THREAD_AND_LOCATION,
-      vmSymbolHandles::java_lang_NoSuchMethodError(),
-      "%s: method %s%s not found",
-      resolved_klass->external_name(),
+      vmSymbolHandles::java_lang_NoSuchMethodError(), 
+      "%s: method %s%s not found", 
+      resolved_klass->external_name(), 
       resolved_method->name()->as_C_string(),
       resolved_method->signature()->as_C_string()
     );
     return;
   }
-
+  
   // check if not static
   if (resolved_method->is_static()) {
     char buf[200];
     jio_snprintf(buf, sizeof(buf),
-                 "Expecting non-static method %s",
-                 methodOopDesc::name_and_sig_as_C_string(Klass::cast(resolved_klass()),
-                                                         resolved_method->name(),
-                                                         resolved_method->signature()));
+		 "Expecting non-static method %s", 
+		 methodOopDesc::name_and_sig_as_C_string(Klass::cast(resolved_klass()),
+							 resolved_method->name(),
+							 resolved_method->signature()));
     THROW_MSG(vmSymbols::java_lang_IncompatibleClassChangeError(), buf);
   }
 }
 
 // throws runtime exceptions
 void LinkResolver::runtime_resolve_special_method(CallInfo& result, methodHandle resolved_method, KlassHandle resolved_klass,
-                                                  KlassHandle current_klass, bool check_access, TRAPS) {
-
+						  KlassHandle current_klass, bool check_access, TRAPS) {
+  
   // resolved method is selected method unless we have an old-style lookup
   methodHandle sel_method(THREAD, resolved_method());
-
+  
   // check if this is an old-style super call and do a new lookup if so
   { KlassHandle method_klass  = KlassHandle(THREAD,
                                             resolved_method->method_holder());
-
+           
     if (check_access &&
         // a) check if ACC_SUPER flag is set for the current class
         current_klass->is_super() &&
@@ -597,7 +600,7 @@ void LinkResolver::runtime_resolve_special_method(CallInfo& result, methodHandle
         resolved_method->name() != vmSymbols::object_initializer_name()) {
       // Lookup super method
       KlassHandle super_klass(THREAD, current_klass->super());
-      lookup_instance_method_in_klasses(sel_method, super_klass,
+      lookup_instance_method_in_klasses(sel_method, super_klass, 
                            symbolHandle(THREAD, resolved_method->name()),
                            symbolHandle(THREAD, resolved_method->signature()), CHECK);
       // check if found
@@ -615,11 +618,11 @@ void LinkResolver::runtime_resolve_special_method(CallInfo& result, methodHandle
   if (sel_method->is_static()) {
     char buf[200];
     jio_snprintf(buf, sizeof(buf), "Expecting non-static method %s", methodOopDesc::name_and_sig_as_C_string(Klass::cast(resolved_klass()),
-                                                                                                             resolved_method->name(),
-                                                                                                             resolved_method->signature()));
+													     resolved_method->name(),
+													     resolved_method->signature()));
     THROW_MSG(vmSymbols::java_lang_IncompatibleClassChangeError(), buf);
   }
-
+  
   // check if abstract
   if (sel_method->is_abstract()) {
     ResourceMark rm(THREAD);
@@ -628,26 +631,26 @@ void LinkResolver::runtime_resolve_special_method(CallInfo& result, methodHandle
                                                       sel_method->name(),
                                                       sel_method->signature()));
   }
-
+  
   // setup result
   result.set_static(resolved_klass, sel_method, CHECK);
 }
 
 void LinkResolver::resolve_virtual_call(CallInfo& result, Handle recv, KlassHandle receiver_klass, KlassHandle resolved_klass,
-                                        symbolHandle method_name, symbolHandle method_signature, KlassHandle current_klass,
+                                        symbolHandle method_name, symbolHandle method_signature, KlassHandle current_klass, 
                                         bool check_access, bool check_null_and_abstract, TRAPS) {
-  methodHandle resolved_method;
+  methodHandle resolved_method;  
   linktime_resolve_virtual_method(resolved_method, resolved_klass, method_name, method_signature, current_klass, check_access, CHECK);
   runtime_resolve_virtual_method(result, resolved_method, resolved_klass, recv, receiver_klass, check_null_and_abstract, CHECK);
 }
 
 // throws linktime exceptions
-void LinkResolver::linktime_resolve_virtual_method(methodHandle &resolved_method, KlassHandle resolved_klass,
-                                                   symbolHandle method_name, symbolHandle method_signature,
-                                                   KlassHandle current_klass, bool check_access, TRAPS) {
+void LinkResolver::linktime_resolve_virtual_method(methodHandle &resolved_method, KlassHandle resolved_klass, 
+						   symbolHandle method_name, symbolHandle method_signature,
+						   KlassHandle current_klass, bool check_access, TRAPS) {
   // normal method resolution
   resolve_method(resolved_method, resolved_klass, method_name, method_signature, current_klass, check_access, CHECK);
-
+  
   assert(resolved_method->name() != vmSymbols::object_initializer_name(), "should have been checked in verifier");
   assert(resolved_method->name() != vmSymbols::class_initializer_name (), "should have been checked in verifier");
 
@@ -655,32 +658,32 @@ void LinkResolver::linktime_resolve_virtual_method(methodHandle &resolved_method
   if (resolved_method->is_static()) {
     char buf[200];
     jio_snprintf(buf, sizeof(buf), "Expecting non-static method %s", methodOopDesc::name_and_sig_as_C_string(Klass::cast(resolved_klass()),
-                                                                                                             resolved_method->name(),
-                                                                                                             resolved_method->signature()));
+													     resolved_method->name(),
+													     resolved_method->signature()));
     THROW_MSG(vmSymbols::java_lang_IncompatibleClassChangeError(), buf);
-  }
+  }  
 }
 
 // throws runtime exceptions
 void LinkResolver::runtime_resolve_virtual_method(CallInfo& result,
                                                   methodHandle resolved_method,
-                                                  KlassHandle resolved_klass,
+                                                  KlassHandle resolved_klass, 
                                                   Handle recv,
                                                   KlassHandle recv_klass,
                                                   bool check_null_and_abstract,
                                                   TRAPS) {
-
+    
   // setup default return values
   int vtable_index = methodOopDesc::invalid_vtable_index;
   methodHandle selected_method;
-
+  
   assert(recv.is_null() || recv->is_oop(), "receiver is not an oop");
 
   // runtime method resolution
   if (check_null_and_abstract && recv.is_null()) { // check if receiver exists
     THROW(vmSymbols::java_lang_NullPointerException());
   }
-
+    
   // Virtual methods cannot be resolved before its klass has been linked, for otherwise the methodOop's
   // has not been rewritten, and the vtable initialized.
   assert(instanceKlass::cast(resolved_method->method_holder())->is_linked(), "must be linked");
@@ -692,19 +695,19 @@ void LinkResolver::runtime_resolve_virtual_method(CallInfo& result,
 
   // do lookup based on receiver klass using the vtable index
   if (resolved_method->method_holder()->klass_part()->is_interface()) { // miranda method
-    vtable_index = vtable_index_of_miranda_method(resolved_klass,
-                           symbolHandle(THREAD, resolved_method->name()),
+    vtable_index = vtable_index_of_miranda_method(resolved_klass, 
+                           symbolHandle(THREAD, resolved_method->name()), 
                            symbolHandle(THREAD, resolved_method->signature()), CHECK);
     assert(vtable_index >= 0 , "we should have valid vtable index at this point");
 
     instanceKlass* inst = instanceKlass::cast(recv_klass());
     selected_method = methodHandle(THREAD, inst->method_at_vtable(vtable_index));
-  } else {
+  } else {    
     // at this point we are sure that resolved_method is virtual and not
     // a miranda method; therefore, it must have a valid vtable index.
     vtable_index = resolved_method->vtable_index();
-    // We could get a negative vtable_index for final methods,
-    // because as an optimization they are they are never put in the vtable,
+    // We could get a negative vtable_index for final methods, 
+    // because as an optimization they are they are never put in the vtable, 
     // unless they override an existing method.
     // If we do get a negative, it means the resolved method is the the selected
     // method, and it can never be changed by an override.
@@ -718,7 +721,7 @@ void LinkResolver::runtime_resolve_virtual_method(CallInfo& result,
       selected_method = methodHandle(THREAD, inst->method_at_vtable(vtable_index));
     }
   }
-
+  
   // check if method exists
   if (selected_method.is_null()) {
     ResourceMark rm(THREAD);
@@ -727,7 +730,7 @@ void LinkResolver::runtime_resolve_virtual_method(CallInfo& result,
                                                       resolved_method->name(),
                                                       resolved_method->signature()));
   }
-
+  
   // check if abstract
   if (check_null_and_abstract && selected_method->is_abstract()) {
     ResourceMark rm(THREAD);
@@ -736,48 +739,48 @@ void LinkResolver::runtime_resolve_virtual_method(CallInfo& result,
                                                       selected_method->name(),
                                                       selected_method->signature()));
   }
-
+  
   // setup result
   result.set_virtual(resolved_klass, recv_klass, resolved_method, selected_method, vtable_index, CHECK);
 }
 
 void LinkResolver::resolve_interface_call(CallInfo& result, Handle recv, KlassHandle recv_klass, KlassHandle resolved_klass,
-                                          symbolHandle method_name, symbolHandle method_signature, KlassHandle current_klass,
+                                          symbolHandle method_name, symbolHandle method_signature, KlassHandle current_klass, 
                                           bool check_access, bool check_null_and_abstract, TRAPS) {
-  methodHandle resolved_method;
+  methodHandle resolved_method;  
   linktime_resolve_interface_method(resolved_method, resolved_klass, method_name, method_signature, current_klass, check_access, CHECK);
-  runtime_resolve_interface_method(result, resolved_method, resolved_klass, recv, recv_klass, check_null_and_abstract, CHECK);
+  runtime_resolve_interface_method(result, resolved_method, resolved_klass, recv, recv_klass, check_null_and_abstract, CHECK);  
 }
 
 // throws linktime exceptions
-void LinkResolver::linktime_resolve_interface_method(methodHandle& resolved_method, KlassHandle resolved_klass, symbolHandle method_name,
-                                                     symbolHandle method_signature, KlassHandle current_klass, bool check_access, TRAPS) {
+void LinkResolver::linktime_resolve_interface_method(methodHandle& resolved_method, KlassHandle resolved_klass, symbolHandle method_name, 
+						     symbolHandle method_signature, KlassHandle current_klass, bool check_access, TRAPS) {
   // normal interface method resolution
   resolve_interface_method(resolved_method, resolved_klass, method_name, method_signature, current_klass, check_access, CHECK);
 
   assert(resolved_method->name() != vmSymbols::object_initializer_name(), "should have been checked in verifier");
-  assert(resolved_method->name() != vmSymbols::class_initializer_name (), "should have been checked in verifier");
+  assert(resolved_method->name() != vmSymbols::class_initializer_name (), "should have been checked in verifier");  
 }
 
 // throws runtime exceptions
-void LinkResolver::runtime_resolve_interface_method(CallInfo& result, methodHandle resolved_method, KlassHandle resolved_klass,
-                                                    Handle recv, KlassHandle recv_klass, bool check_null_and_abstract, TRAPS) {
+void LinkResolver::runtime_resolve_interface_method(CallInfo& result, methodHandle resolved_method, KlassHandle resolved_klass, 
+						    Handle recv, KlassHandle recv_klass, bool check_null_and_abstract, TRAPS) {
   // check if receiver exists
   if (check_null_and_abstract && recv.is_null()) {
     THROW(vmSymbols::java_lang_NullPointerException());
   }
 
   // check if receiver klass implements the resolved interface
-  if (!recv_klass->is_subtype_of(resolved_klass())) {
+  if (!recv_klass->is_subtype_of(resolved_klass())) { 
     char buf[200];
-    jio_snprintf(buf, sizeof(buf), "Class %s does not implement the requested interface %s",
-                 (Klass::cast(recv_klass()))->external_name(),
-                 (Klass::cast(resolved_klass()))->external_name());
+    jio_snprintf(buf, sizeof(buf), "Class %s does not implement the requested interface %s", 
+		 (Klass::cast(recv_klass()))->external_name(),
+		 (Klass::cast(resolved_klass()))->external_name());
     THROW_MSG(vmSymbols::java_lang_IncompatibleClassChangeError(), buf);
   }
   // do lookup based on receiver klass
   methodHandle sel_method;
-  lookup_instance_method_in_klasses(sel_method, recv_klass,
+  lookup_instance_method_in_klasses(sel_method, recv_klass, 
             symbolHandle(THREAD, resolved_method->name()),
             symbolHandle(THREAD, resolved_method->signature()), CHECK);
   // check if method exists
@@ -817,7 +820,7 @@ methodHandle LinkResolver::linktime_resolve_interface_method_or_null(
                                                  bool check_access) {
   EXCEPTION_MARK;
   methodHandle method_result;
-  linktime_resolve_interface_method(method_result, resolved_klass, method_name, method_signature, current_klass, check_access, THREAD);
+  linktime_resolve_interface_method(method_result, resolved_klass, method_name, method_signature, current_klass, check_access, THREAD); 
   if (HAS_PENDING_EXCEPTION) {
     CLEAR_PENDING_EXCEPTION;
     return methodHandle();
@@ -834,7 +837,7 @@ methodHandle LinkResolver::linktime_resolve_virtual_method_or_null(
                                                  bool check_access) {
   EXCEPTION_MARK;
   methodHandle method_result;
-  linktime_resolve_virtual_method(method_result, resolved_klass, method_name, method_signature, current_klass, check_access, THREAD);
+  linktime_resolve_virtual_method(method_result, resolved_klass, method_name, method_signature, current_klass, check_access, THREAD); 
   if (HAS_PENDING_EXCEPTION) {
     CLEAR_PENDING_EXCEPTION;
     return methodHandle();
@@ -851,7 +854,7 @@ methodHandle LinkResolver::resolve_virtual_call_or_null(
                                                  KlassHandle current_klass) {
   EXCEPTION_MARK;
   CallInfo info;
-  resolve_virtual_call(info, Handle(), receiver_klass, resolved_klass, name, signature, current_klass, true, false, THREAD);
+  resolve_virtual_call(info, Handle(), receiver_klass, resolved_klass, name, signature, current_klass, true, false, THREAD); 
   if (HAS_PENDING_EXCEPTION) {
     CLEAR_PENDING_EXCEPTION;
     return methodHandle();
@@ -867,7 +870,7 @@ methodHandle LinkResolver::resolve_interface_call_or_null(
                                                  KlassHandle current_klass) {
   EXCEPTION_MARK;
   CallInfo info;
-  resolve_interface_call(info, Handle(), receiver_klass, resolved_klass, name, signature, current_klass, true, false, THREAD);
+  resolve_interface_call(info, Handle(), receiver_klass, resolved_klass, name, signature, current_klass, true, false, THREAD); 
   if (HAS_PENDING_EXCEPTION) {
     CLEAR_PENDING_EXCEPTION;
     return methodHandle();
@@ -883,7 +886,7 @@ int LinkResolver::resolve_virtual_vtable_index(
                                                KlassHandle current_klass) {
   EXCEPTION_MARK;
   CallInfo info;
-  resolve_virtual_call(info, Handle(), receiver_klass, resolved_klass, name, signature, current_klass, true, false, THREAD);
+  resolve_virtual_call(info, Handle(), receiver_klass, resolved_klass, name, signature, current_klass, true, false, THREAD); 
   if (HAS_PENDING_EXCEPTION) {
     CLEAR_PENDING_EXCEPTION;
     return methodOopDesc::invalid_vtable_index;
@@ -898,7 +901,7 @@ methodHandle LinkResolver::resolve_static_call_or_null(
                                                   KlassHandle current_klass) {
   EXCEPTION_MARK;
   CallInfo info;
-  resolve_static_call(info, resolved_klass, name, signature, current_klass, true, false, THREAD);
+  resolve_static_call(info, resolved_klass, name, signature, current_klass, true, false, THREAD); 
   if (HAS_PENDING_EXCEPTION) {
     CLEAR_PENDING_EXCEPTION;
     return methodHandle();
@@ -906,11 +909,11 @@ methodHandle LinkResolver::resolve_static_call_or_null(
   return info.selected_method();
 }
 
-methodHandle LinkResolver::resolve_special_call_or_null(KlassHandle resolved_klass, symbolHandle name, symbolHandle signature,
-                                                        KlassHandle current_klass) {
+methodHandle LinkResolver::resolve_special_call_or_null(KlassHandle resolved_klass, symbolHandle name, symbolHandle signature, 
+							KlassHandle current_klass) {
   EXCEPTION_MARK;
   CallInfo info;
-  resolve_special_call(info, resolved_klass, name, signature, current_klass, true, THREAD);
+  resolve_special_call(info, resolved_klass, name, signature, current_klass, true, THREAD); 
   if (HAS_PENDING_EXCEPTION) {
     CLEAR_PENDING_EXCEPTION;
     return methodHandle();
@@ -933,9 +936,9 @@ void LinkResolver::resolve_invoke(CallInfo& result, Handle recv, constantPoolHan
   return;
 }
 
-void LinkResolver::resolve_pool(KlassHandle& resolved_klass, symbolHandle& method_name, symbolHandle& method_signature,
+void LinkResolver::resolve_pool(KlassHandle& resolved_klass, symbolHandle& method_name, symbolHandle& method_signature, 
                                 KlassHandle& current_klass, constantPoolHandle pool, int index, TRAPS) {
-   // resolve klass
+   // resolve klass  
   resolve_klass(resolved_klass, pool, index, CHECK);
 
   // Get name, signature, and static klass
@@ -945,46 +948,46 @@ void LinkResolver::resolve_pool(KlassHandle& resolved_klass, symbolHandle& metho
 }
 
 
-void LinkResolver::resolve_invokestatic(CallInfo& result, constantPoolHandle pool, int index, TRAPS) {
-  KlassHandle  resolved_klass;
+void LinkResolver::resolve_invokestatic(CallInfo& result, constantPoolHandle pool, int index, TRAPS) {  
+  KlassHandle  resolved_klass;    
   symbolHandle method_name;
   symbolHandle method_signature;
   KlassHandle  current_klass;
-  resolve_pool(resolved_klass, method_name,  method_signature, current_klass, pool, index, CHECK);
+  resolve_pool(resolved_klass, method_name,  method_signature, current_klass, pool, index, CHECK);  
   resolve_static_call(result, resolved_klass, method_name, method_signature, current_klass, true, true, CHECK);
 }
 
 
-void LinkResolver::resolve_invokespecial(CallInfo& result, constantPoolHandle pool, int index, TRAPS) {
-  KlassHandle  resolved_klass;
+void LinkResolver::resolve_invokespecial(CallInfo& result, constantPoolHandle pool, int index, TRAPS) {            
+  KlassHandle  resolved_klass;    
   symbolHandle method_name;
   symbolHandle method_signature;
   KlassHandle  current_klass;
-  resolve_pool(resolved_klass, method_name,  method_signature, current_klass, pool, index, CHECK);
+  resolve_pool(resolved_klass, method_name,  method_signature, current_klass, pool, index, CHECK);  
   resolve_special_call(result, resolved_klass, method_name, method_signature, current_klass, true, CHECK);
 }
 
 
 void LinkResolver::resolve_invokevirtual(CallInfo& result, Handle recv,
-                                          constantPoolHandle pool, int index,
-                                          TRAPS) {
-
-  KlassHandle  resolved_klass;
+					  constantPoolHandle pool, int index,
+					  TRAPS) {
+        
+  KlassHandle  resolved_klass;    
   symbolHandle method_name;
   symbolHandle method_signature;
   KlassHandle  current_klass;
-  resolve_pool(resolved_klass, method_name,  method_signature, current_klass, pool, index, CHECK);
+  resolve_pool(resolved_klass, method_name,  method_signature, current_klass, pool, index, CHECK);  
   KlassHandle recvrKlass (THREAD, recv.is_null() ? (klassOop)NULL : recv->klass());
   resolve_virtual_call(result, recv, recvrKlass, resolved_klass, method_name, method_signature, current_klass, true, true, CHECK);
-}
+} 
 
 
 void LinkResolver::resolve_invokeinterface(CallInfo& result, Handle recv, constantPoolHandle pool, int index, TRAPS) {
-  KlassHandle  resolved_klass;
+  KlassHandle  resolved_klass;    
   symbolHandle method_name;
   symbolHandle method_signature;
   KlassHandle  current_klass;
-  resolve_pool(resolved_klass, method_name,  method_signature, current_klass, pool, index, CHECK);
+  resolve_pool(resolved_klass, method_name,  method_signature, current_klass, pool, index, CHECK);  
   KlassHandle recvrKlass (THREAD, recv.is_null() ? (klassOop)NULL : recv->klass());
   resolve_interface_call(result, recv, recvrKlass, resolved_klass, method_name, method_signature, current_klass, true, true, CHECK);
 }
@@ -998,3 +1001,4 @@ void FieldAccessInfo::print() {
 }
 
 #endif
+

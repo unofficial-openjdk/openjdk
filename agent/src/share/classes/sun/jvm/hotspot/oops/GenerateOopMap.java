@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.oops;
@@ -41,13 +41,13 @@ public class GenerateOopMap {
   private static final boolean DEBUG = false;
 
   // These two should be removed. But requires som code to be cleaned up
-  private static final int MAXARGSIZE     =   256;      // This should be enough
+  private static final int MAXARGSIZE     =   256;      // This should be enough                 
   private static final int MAX_LOCAL_VARS = 65536;      // 16-bit entry
   private static final boolean TraceMonitorMismatch = true;
   private static final boolean TraceOopMapRewrites = true;
 
   // Commonly used constants
-  static CellTypeState[] epsilonCTS = { CellTypeState.bottom };
+  static CellTypeState[] epsilonCTS = { CellTypeState.bottom }; 
   static CellTypeState   refCTS     = CellTypeState.ref;
   static CellTypeState   valCTS     = CellTypeState.value;
   static CellTypeState[]    vCTS    = { CellTypeState.value, CellTypeState.bottom };
@@ -65,29 +65,29 @@ public class GenerateOopMap {
   static class ComputeCallStack extends SignatureIterator {
     CellTypeStateList _effect;
     int _idx;
-
+  
     void set(CellTypeState state)         { _effect.get(_idx++).set(state); }
     int  length()                         { return _idx; };
-
+  
     public void doBool  ()              { set(CellTypeState.value); }
     public void doChar  ()              { set(CellTypeState.value); }
-    public void doFloat ()              { set(CellTypeState.value); }
+    public void doFloat ()              { set(CellTypeState.value); }  
     public void doByte  ()              { set(CellTypeState.value); }
     public void doShort ()              { set(CellTypeState.value); }
-    public void doInt   ()              { set(CellTypeState.value); }
+    public void doInt   ()              { set(CellTypeState.value); }  
     public void doVoid  ()              { set(CellTypeState.bottom);}
     public void doObject(int begin, int end) { set(CellTypeState.ref); }
     public void doArray (int begin, int end) { set(CellTypeState.ref); }
 
-    public void doDouble()              { set(CellTypeState.value);
+    public void doDouble()              { set(CellTypeState.value); 
                                           set(CellTypeState.value); }
-    public void doLong  ()              { set(CellTypeState.value);
+    public void doLong  ()              { set(CellTypeState.value); 
                                           set(CellTypeState.value); }
 
     ComputeCallStack(Symbol signature) {
       super(signature);
     }
-
+  
     // Compute methods
     int computeForParameters(boolean is_static, CellTypeStateList effect) {
       _idx    = 0;
@@ -98,7 +98,7 @@ public class GenerateOopMap {
       }
 
       iterateParameters();
-
+  
       return length();
     };
 
@@ -116,29 +116,29 @@ public class GenerateOopMap {
   static class ComputeEntryStack extends SignatureIterator {
     CellTypeStateList _effect;
     int _idx;
-
+  
     void set(CellTypeState state)         { _effect.get(_idx++).set(state); }
     int  length()                         { return _idx; };
-
+  
     public void doBool  ()              { set(CellTypeState.value); }
     public void doChar  ()              { set(CellTypeState.value); }
-    public void doFloat ()              { set(CellTypeState.value); }
+    public void doFloat ()              { set(CellTypeState.value); }  
     public void doByte  ()              { set(CellTypeState.value); }
     public void doShort ()              { set(CellTypeState.value); }
-    public void doInt   ()              { set(CellTypeState.value); }
+    public void doInt   ()              { set(CellTypeState.value); }  
     public void doVoid  ()              { set(CellTypeState.bottom);}
     public void doObject(int begin, int end) { set(CellTypeState.makeSlotRef(_idx)); }
     public void doArray (int begin, int end) { set(CellTypeState.makeSlotRef(_idx)); }
 
-    public void doDouble()              { set(CellTypeState.value);
+    public void doDouble()              { set(CellTypeState.value); 
                                           set(CellTypeState.value); }
-    public void doLong  ()              { set(CellTypeState.value);
+    public void doLong  ()              { set(CellTypeState.value); 
                                           set(CellTypeState.value); }
 
     ComputeEntryStack(Symbol signature) {
       super(signature);
     }
-
+  
     // Compute methods
     int computeForParameters(boolean is_static, CellTypeStateList effect) {
       _idx    = 0;
@@ -149,7 +149,7 @@ public class GenerateOopMap {
       }
 
       iterateParameters();
-
+  
       return length();
     };
 
@@ -167,9 +167,9 @@ public class GenerateOopMap {
       One-to-many mapping. */
   static class RetTableEntry {
     private static int _init_nof_jsrs; // Default size of jsrs list
-    private int _target_bci;           // Target PC address of jump (bytecode index)
-    private List/*<int>*/ _jsrs;       // List of return addresses  (bytecode index)
-    private RetTableEntry _next;       // Link to next entry
+    private int _target_bci;           // Target PC address of jump (bytecode index)  
+    private List/*<int>*/ _jsrs;       // List of return addresses  (bytecode index)  
+    private RetTableEntry _next;       // Link to next entry    
 
     RetTableEntry(int target, RetTableEntry next) {
       _target_bci = target;
@@ -181,14 +181,14 @@ public class GenerateOopMap {
     int targetBci()  { return _target_bci; }
     int nofJsrs()    { return _jsrs.size(); }
     int jsrs(int i)  { return ((Integer) _jsrs.get(i)).intValue(); }
-
+    
     // Update entry
     void addJsr  (int return_bci)     { _jsrs.add(new Integer(return_bci)); }
     void addDelta(int bci, int delta) {
       if (_target_bci > bci) {
         _target_bci += delta;
       }
-
+      
       for (int k = 0; k < nofJsrs(); k++) {
         int jsr = jsrs(k);
         if (jsr > bci) {
@@ -205,18 +205,18 @@ public class GenerateOopMap {
 
     private void addJsr(int return_bci, int target_bci) {
       RetTableEntry entry = _first;
-
-      // Scan table for entry
+    
+      // Scan table for entry 
       for (;(entry != null) && (entry.targetBci() != target_bci); entry = entry.next());
-
+  
       if (entry == null) {
-        // Allocate new entry and put in list
-        entry = new RetTableEntry(target_bci, _first);
+        // Allocate new entry and put in list 
+        entry = new RetTableEntry(target_bci, _first);    
         _first = entry;
       }
 
       // Now "entry" is set.  Make sure that the entry is initialized
-      // and has room for the new jsr.
+      // and has room for the new jsr.     
       entry.addJsr(return_bci);
     }
 
@@ -232,9 +232,9 @@ public class GenerateOopMap {
           break;
         case Bytecodes._jsr_w:
           addJsr(i.nextBCI(), i.dest_w());
-          break;
-        }
-      }
+          break;	    
+        } 
+      }  
     }
     void updateRetTable(int bci, int delta) {
       RetTableEntry cur = _first;
@@ -260,7 +260,7 @@ public class GenerateOopMap {
   }
 
   static class BasicBlock {
-    private boolean _changed;              // Reached a fixpoint or not
+    private boolean _changed;              // Reached a fixpoint or not      
     static final int _dead_basic_block = -2;
     // Alive but not yet reached by analysis
     static final int _unreached        = -1;
@@ -272,18 +272,18 @@ public class GenerateOopMap {
     int                     _max_stack;    // Determines split between stack and monitors
     CellTypeStateList       _state;        // State (vars, stack) at entry.
     int                     _stack_top;    // -1 indicates bottom stack value.
-    int                     _monitor_top;  // -1 indicates bottom monitor stack value.
+    int                     _monitor_top;  // -1 indicates bottom monitor stack value.    
 
     CellTypeStateList       vars()  { return _state; }
     CellTypeStateList       stack() { return _state.subList(_max_locals, _state.size()); }
 
     boolean changed()               { return _changed; }
     void    setChanged(boolean s)   { _changed = s; }
-
+    
     // Analysis has reached this basicblock
     boolean isReachable()           { return _stack_top >= 0; }
 
-    // All basicblocks that are unreachable are going to have a _stack_top == _dead_basic_block.
+    // All basicblocks that are unreachable are going to have a _stack_top == _dead_basic_block. 
     // This info. is setup in a pre-parse before the real abstract interpretation starts.
     boolean isDead()                { return _stack_top == _dead_basic_block; }
     boolean isAlive()               { return _stack_top != _dead_basic_block; }
@@ -309,8 +309,8 @@ public class GenerateOopMap {
   int      _max_locals;     // Cached value of no. of locals
   int      _max_stack;      // Cached value of max. stack depth
   int      _max_monitors;   // Cached value of max. monitor stack depth
-  boolean  _has_exceptions; // True, if exceptions exist for method
-  boolean  _got_error;      // True, if an error occured during interpretation.
+  boolean  _has_exceptions; // True, if exceptions exist for method    
+  boolean  _got_error;      // True, if an error occured during interpretation. 
   String   _error_msg;      // Error message. Set if _got_error is true.
   //  bool     _did_rewriting;  // was bytecodes rewritten
   //  bool     _did_relocation; // was relocation neccessary
@@ -340,8 +340,8 @@ public class GenerateOopMap {
   }
   void            makeContextUninitialized () {
     CellTypeStateList vs = vars();
-
-    for (int i = 0; i < _max_locals; i++)
+    
+    for (int i = 0; i < _max_locals; i++) 
       vs.get(i).set(CellTypeState.uninit);
 
     _stack_top = 0;
@@ -431,7 +431,7 @@ public class GenerateOopMap {
       copyState(bb._state, _state);
       bb._stack_top = _stack_top;
       bb._monitor_top = _monitor_top;
-      bb.setChanged(true);
+      bb.setChanged(true);  
     } else {
       throw new RuntimeException("stack height conflict: " +
                                  _stack_top + " vs. " + bb._stack_top);
@@ -524,7 +524,7 @@ public class GenerateOopMap {
   CellTypeStateList vars    ()     { return _state; }
   CellTypeStateList stack   ()     { return _state.subList(_max_locals, _state.size()); }
   CellTypeStateList monitors()     { return _state.subList(_max_locals+_max_stack, _state.size()); }
-
+  
   void            replaceAllCTSMatches       (CellTypeState match,
                                               CellTypeState replace) {
     int i;
@@ -563,9 +563,9 @@ public class GenerateOopMap {
       tty.print("    " + Bytecodes.name(currentBC.code()));
       switch(currentBC.code()) {
       case Bytecodes._invokevirtual:
-      case Bytecodes._invokespecial:
-      case Bytecodes._invokestatic:
-      case Bytecodes._invokeinterface:
+      case Bytecodes._invokespecial:     
+      case Bytecodes._invokestatic:      
+      case Bytecodes._invokeinterface:   
         // FIXME: print signature of referenced method (need more
         // accessors in ConstantPool and ConstantPoolCache)
         int idx = currentBC.getIndexBig();
@@ -602,9 +602,9 @@ public class GenerateOopMap {
       }
       switch(currentBC.code()) {
       case Bytecodes._invokevirtual:
-      case Bytecodes._invokespecial:
-      case Bytecodes._invokestatic:
-      case Bytecodes._invokeinterface:
+      case Bytecodes._invokespecial:     
+      case Bytecodes._invokestatic:      
+      case Bytecodes._invokeinterface:   
         // FIXME: print signature of referenced method (need more
         // accessors in ConstantPool and ConstantPoolCache)
         int idx = currentBC.getIndexBig();
@@ -639,14 +639,14 @@ public class GenerateOopMap {
   // Basicblocks methods
   void          initializeBB               () {
     _gc_points = 0;
-    _bb_count  = 0;
+    _bb_count  = 0;    
     _bb_hdr_bits = new BitMap((int) _method.getCodeSize());
   }
 
   void          markBBHeadersAndCountGCPoints() {
     initializeBB();
-
-    boolean fellThrough = false;  // False to get first BB marked.
+  
+    boolean fellThrough = false;  // False to get first BB marked.   
 
     // First mark all exception handlers as start of a basic-block
     TypeArray excps = method().getExceptionTable();
@@ -662,7 +662,7 @@ public class GenerateOopMap {
     while( (bytecode = bcs.next()) >= 0) {
       int bci = bcs.bci();
 
-      if (!fellThrough)
+      if (!fellThrough) 
         markBB(bci, null);
 
       fellThrough = jumpTargetsDo(bcs,
@@ -672,25 +672,25 @@ public class GenerateOopMap {
                                       }
                                     },
                                   null);
-
+        
       /* We will also mark successors of jsr's as basic block headers. */
       switch (bytecode) {
       case Bytecodes._jsr:
-        if (Assert.ASSERTS_ENABLED) {
+        if (Assert.ASSERTS_ENABLED) {        
           Assert.that(!fellThrough, "should not happen");
         }
-        markBB(bci + Bytecodes.lengthFor(bytecode), null);
+        markBB(bci + Bytecodes.lengthFor(bytecode), null); 
         break;
       case Bytecodes._jsr_w:
         if (Assert.ASSERTS_ENABLED) {
           Assert.that(!fellThrough, "should not happen");
         }
-        markBB(bci + Bytecodes.lengthFor(bytecode), null);
-        break;
+        markBB(bci + Bytecodes.lengthFor(bytecode), null); 
+        break;	      
       }
-
+      
       if (possibleGCPoint(bcs))
-        _gc_points++;
+        _gc_points++;        
     }
   }
 
@@ -730,7 +730,7 @@ public class GenerateOopMap {
       int m = (lo + hi) / 2;
       int mbci = bbs[m]._bci;
       int nbci;
-
+	
       if ( m == _bb_count-1) {
         if (Assert.ASSERTS_ENABLED) {
           Assert.that( bci >= mbci && bci < method().getCodeSize(), "sanity check failed");
@@ -752,7 +752,7 @@ public class GenerateOopMap {
       }
     }
 
-    throw new RuntimeException("should have found BB");
+    throw new RuntimeException("should have found BB");  
   }
 
   void          interpBB                    (BasicBlock bb) {
@@ -763,11 +763,11 @@ public class GenerateOopMap {
     }
     restoreState(bb);
 
-    BytecodeStream itr = new BytecodeStream(_method);
-
+    BytecodeStream itr = new BytecodeStream(_method);  
+  
     // Set iterator interval to be the current basicblock
     int lim_bci = nextBBStartPC(bb);
-    itr.setInterval(bb._bci, lim_bci);
+    itr.setInterval(bb._bci, lim_bci); 
 
     if (DEBUG) {
       System.err.println("interpBB: method = " + method().getName().asString() +
@@ -789,7 +789,7 @@ public class GenerateOopMap {
 
     // Iterates through all bytecodes except the last in a basic block.
     // We handle the last one special, since there is controlflow change.
-    while(itr.nextBCI() < lim_bci && !_got_error) {
+    while(itr.nextBCI() < lim_bci && !_got_error) {      
       if (_has_exceptions || (_monitor_top != 0)) {
         // We do not need to interpret the results of exceptional
         // continuation from this instruction when the method has no
@@ -810,14 +810,14 @@ public class GenerateOopMap {
         doExceptionEdge(itr);
       }
       interp1(itr);
-
+    
       boolean fall_through = jumpTargetsDo(itr, new JumpClosure() {
           public void process(GenerateOopMap c, int bcpDelta, int[] data) {
             c.mergeState(bcpDelta, data);
           }
         }, null);
       if (_got_error)  return;
-
+    
       if (itr.code() == Bytecodes._ret) {
         if (Assert.ASSERTS_ENABLED) {
           Assert.that(!fall_through, "cannot be set if ret instruction");
@@ -830,7 +830,7 @@ public class GenerateOopMap {
           }, itr.getIndex(), null);
       } else if (fall_through) {
         // Hit end of BB, but the instr. was a fall-through instruction,
-        // so perform transition as if the BB ended in a "jump".
+        // so perform transition as if the BB ended in a "jump".      
         if (Assert.ASSERTS_ENABLED) {
           Assert.that(lim_bci == _basic_blocks[bbIndex(bb) + 1]._bci, "there must be another bb");
         }
@@ -843,27 +843,27 @@ public class GenerateOopMap {
     for (int i = 0; i < _state_len; i++) {
       _state.get(i).set(bb._state.get(i));
     }
-    _stack_top   = bb._stack_top;
-    _monitor_top = bb._monitor_top;
+    _stack_top   = bb._stack_top;  
+    _monitor_top = bb._monitor_top;    
   }
 
   int           nextBBStartPC               (BasicBlock bb) {
     int bbNum = bbIndex(bb) + 1;
-    if (bbNum == _bb_count)
+    if (bbNum == _bb_count) 
       return (int) method().getCodeSize();
-
+    
     return _basic_blocks[bbNum]._bci;
   }
 
   void          updateBasicBlocks           (int bci, int delta) {
     BitMap bbBits = new BitMap((int) (_method.getCodeSize() + delta));
-    for(int k = 0; k < _bb_count; k++) {
-      if (_basic_blocks[k]._bci > bci) {
-        _basic_blocks[k]._bci     += delta;
-        _basic_blocks[k]._end_bci += delta;
-      }
+    for(int k = 0; k < _bb_count; k++) {        
+      if (_basic_blocks[k]._bci > bci) {      
+        _basic_blocks[k]._bci     += delta;    
+        _basic_blocks[k]._end_bci += delta;    
+      }    
       bbBits.atPut(_basic_blocks[k]._bci, true);
-    }
+    }  
     _bb_hdr_bits = bbBits;
   }
 
@@ -871,14 +871,14 @@ public class GenerateOopMap {
     if (Assert.ASSERTS_ENABLED) {
       Assert.that(bci>= 0 && bci < method().getCodeSize(), "index out of bounds");
     }
-    if (isBBHeader(bci))
+    if (isBBHeader(bci)) 
       return;
-
+  
     // FIXME: remove
     //    if (TraceNewOopMapGeneration) {
     //      tty.print_cr("Basicblock#%d begins at: %d", c._bb_count, bci);
     //    }
-    setBBMarkBit(bci);
+    setBBMarkBit(bci);  
     _bb_count++;
   }
 
@@ -886,30 +886,30 @@ public class GenerateOopMap {
   void          markReachableCode() {
     final int[] change = new int[1];
     change[0] = 1;
-
+  
     // Mark entry basic block as alive and all exception handlers
-    _basic_blocks[0].markAsAlive();
+    _basic_blocks[0].markAsAlive();  
     TypeArray excps = method().getExceptionTable();
     for(int i = 0; i < excps.getLength(); i += 4) {
       int handler_pc_idx = i+2;
       BasicBlock bb = getBasicBlockAt(excps.getIntAt(handler_pc_idx));
-      // If block is not already alive (due to multiple exception handlers to same bb), then
+      // If block is not already alive (due to multiple exception handlers to same bb), then 
       // make it alive
       if (bb.isDead())
         bb.markAsAlive();
     }
 
-    BytecodeStream bcs = new BytecodeStream(_method);
+    BytecodeStream bcs = new BytecodeStream(_method);  
 
     // Iterate through all basic blocks until we reach a fixpoint
     while (change[0] != 0) {
       change[0] = 0;
 
-      for (int i = 0; i < _bb_count; i++) {
+      for (int i = 0; i < _bb_count; i++) {      
         BasicBlock bb = _basic_blocks[i];
-        if (bb.isAlive()) {
+        if (bb.isAlive()) {         
           // Position bytecodestream at last bytecode in basicblock
-          bcs.setStart(bb._end_bci);
+          bcs.setStart(bb._end_bci); 
           bcs.next();
           int bytecode = bcs.code();
           int bci = bcs.bci();
@@ -922,7 +922,7 @@ public class GenerateOopMap {
                 c.reachableBasicblock(bciDelta, change);
               }
             }, change);
-
+                
           // We will also mark successors of jsr's as alive.
           switch (bytecode) {
           case Bytecodes._jsr:
@@ -931,7 +931,7 @@ public class GenerateOopMap {
               Assert.that(!fell_through, "should not happen");
             }
             reachableBasicblock(bci + Bytecodes.lengthFor(bytecode), change);
-            break;
+            break;          
           }
           if (fell_through) {
             // Mark successor as alive
@@ -949,17 +949,17 @@ public class GenerateOopMap {
     if (Assert.ASSERTS_ENABLED) {
       Assert.that(bci>= 0 && bci < method().getCodeSize(), "index out of bounds");
     }
-    BasicBlock bb = getBasicBlockAt(bci);
+    BasicBlock bb = getBasicBlockAt(bci);  
     if (bb.isDead()) {
-      bb.markAsAlive();
+      bb.markAsAlive();    
       data[0] = 1; // Mark basicblock as changed
-    }
+    }  
   }
 
   // Interpretation methods (primary)
   void  doInterpretation                    () {
     // "i" is just for debugging, so we can detect cases where this loop is
-    // iterated more than once.
+    // iterated more than once.   
     int i = 0;
     do {
       // FIXME: remove
@@ -1007,27 +1007,27 @@ public class GenerateOopMap {
         monitor_count++;
       }
 
-      int bci = j.bci();
-      if (isBBHeader(bci)) {
+      int bci = j.bci();        
+      if (isBBHeader(bci)) {                 
         // Initialize the basicblock structure
         BasicBlock bb    = _basic_blocks[bbNo];
-        bb._bci          = bci;
+        bb._bci          = bci;      
         bb._max_locals   = _max_locals;
         bb._max_stack    = _max_stack;
-        bb.setChanged(false);
+        bb.setChanged(false);      
         bb._stack_top    = BasicBlock._dead_basic_block; // Initialize all basicblocks are dead.
-        bb._monitor_top  = bad_monitors;
-
-        if (bbNo > 0) {
+        bb._monitor_top  = bad_monitors;      
+      
+        if (bbNo > 0) {        
           _basic_blocks[bbNo - 1]._end_bci = prev_bci;
-        }
+        }      
 
         bbNo++;
       }
       // Remember prevous bci.
       prev_bci = bci;
     }
-    // Set
+    // Set 
     _basic_blocks[bbNo-1]._end_bci = prev_bci;
 
     _max_monitors = monitor_count;
@@ -1076,12 +1076,12 @@ public class GenerateOopMap {
   void  setupMethodEntryState               () {
     // Initialize all locals to 'uninit' and set stack-height to 0
     makeContextUninitialized();
-
-    // Initialize CellState type of arguments
+  
+    // Initialize CellState type of arguments 
     methodsigToEffect(method().getSignature(), method().isStatic(), vars());
 
     // If some references must be pre-assigned to null, then set that up
-    initializeVars();
+    initializeVars(); 
 
     // This is the start state
     mergeStateIntoBB(_basic_blocks[0]);
@@ -1131,59 +1131,59 @@ public class GenerateOopMap {
     if (_report_result == true) {
       switch(itr.code()) {
       case Bytecodes._invokevirtual:
-      case Bytecodes._invokespecial:
-      case Bytecodes._invokestatic:
-      case Bytecodes._invokeinterface:
+      case Bytecodes._invokespecial:     
+      case Bytecodes._invokestatic:      
+      case Bytecodes._invokeinterface:   
         _itr_send = itr;
         _report_result_for_send = true;
-        break;
+        break;  
       default:
         fillStackmapForOpcodes(itr, vars(), stack(), _stack_top);
         break;
       }
     }
 
-    // abstract interpretation of current opcode
+    // abstract interpretation of current opcode   
     switch(itr.code()) {
     case Bytecodes._nop:               break;
-    case Bytecodes._goto:              break;
+    case Bytecodes._goto:              break; 
     case Bytecodes._goto_w:            break;
     case Bytecodes._iinc:              break;
     case Bytecodes._return:            doReturnMonitorCheck();
       break;
 
-    case Bytecodes._aconst_null:
+    case Bytecodes._aconst_null:       
     case Bytecodes._new:               ppush1(CellTypeState.makeLineRef(itr.bci()));
-      break;
+      break; 
 
-    case Bytecodes._iconst_m1:
-    case Bytecodes._iconst_0:
-    case Bytecodes._iconst_1:
-    case Bytecodes._iconst_2:
-    case Bytecodes._iconst_3:
-    case Bytecodes._iconst_4:
-    case Bytecodes._iconst_5:
-    case Bytecodes._fconst_0:
-    case Bytecodes._fconst_1:
-    case Bytecodes._fconst_2:
-    case Bytecodes._bipush:
+    case Bytecodes._iconst_m1:          
+    case Bytecodes._iconst_0:          
+    case Bytecodes._iconst_1:          
+    case Bytecodes._iconst_2:          
+    case Bytecodes._iconst_3:          
+    case Bytecodes._iconst_4:          
+    case Bytecodes._iconst_5:          
+    case Bytecodes._fconst_0:          
+    case Bytecodes._fconst_1:          
+    case Bytecodes._fconst_2:          
+    case Bytecodes._bipush:            
     case Bytecodes._sipush:            ppush1(valCTS);             break;
 
     case Bytecodes._lconst_0:
-    case Bytecodes._lconst_1:
+    case Bytecodes._lconst_1:          
     case Bytecodes._dconst_0:
-    case Bytecodes._dconst_1:          ppush(vvCTS);               break;
-
+    case Bytecodes._dconst_1:          ppush(vvCTS);               break; 
+    
     case Bytecodes._ldc2_w:            ppush(vvCTS);               break;
 
-    case Bytecodes._ldc:               doLdc(itr.getIndex(), itr.bci());    break;
-    case Bytecodes._ldc_w:             doLdc(itr.getIndexBig(), itr.bci());break;
+    case Bytecodes._ldc:               doLdc(itr.getIndex(), itr.bci());    break; 
+    case Bytecodes._ldc_w:             doLdc(itr.getIndexBig(), itr.bci());break; 
+    
+    case Bytecodes._iload:             
+    case Bytecodes._fload:             ppload(vCTS, itr.getIndex()); break; 
 
-    case Bytecodes._iload:
-    case Bytecodes._fload:             ppload(vCTS, itr.getIndex()); break;
-
-    case Bytecodes._lload:
-    case Bytecodes._dload:             ppload(vvCTS,itr.getIndex()); break;
+    case Bytecodes._lload:             
+    case Bytecodes._dload:             ppload(vvCTS,itr.getIndex()); break; 
 
     case Bytecodes._aload:             ppload(rCTS, itr.getIndex()); break;
 
@@ -1196,23 +1196,23 @@ public class GenerateOopMap {
     case Bytecodes._iload_3:
     case Bytecodes._fload_3:           ppload(vCTS, 3);            break;
 
-    case Bytecodes._lload_0:
+    case Bytecodes._lload_0:           
     case Bytecodes._dload_0:           ppload(vvCTS, 0);           break;
-    case Bytecodes._lload_1:
+    case Bytecodes._lload_1:           
     case Bytecodes._dload_1:           ppload(vvCTS, 1);           break;
-    case Bytecodes._lload_2:
+    case Bytecodes._lload_2:           
     case Bytecodes._dload_2:           ppload(vvCTS, 2);           break;
-    case Bytecodes._lload_3:
+    case Bytecodes._lload_3:           
     case Bytecodes._dload_3:           ppload(vvCTS, 3);           break;
-
+             
     case Bytecodes._aload_0:           ppload(rCTS, 0);            break;
     case Bytecodes._aload_1:           ppload(rCTS, 1);            break;
     case Bytecodes._aload_2:           ppload(rCTS, 2);            break;
     case Bytecodes._aload_3:           ppload(rCTS, 3);            break;
 
-    case Bytecodes._iaload:
-    case Bytecodes._faload:
-    case Bytecodes._baload:
+    case Bytecodes._iaload:            
+    case Bytecodes._faload:            
+    case Bytecodes._baload:    
     case Bytecodes._caload:
     case Bytecodes._saload:            pp(vrCTS, vCTS); break;
 
@@ -1220,47 +1220,47 @@ public class GenerateOopMap {
     case Bytecodes._daload:            pp(vrCTS, vvCTS); break;
 
     case Bytecodes._aaload:            ppNewRef(vrCTS, itr.bci()); break;
-
-    case Bytecodes._istore:
+    
+    case Bytecodes._istore:            
     case Bytecodes._fstore:            ppstore(vCTS, itr.getIndex()); break;
 
-    case Bytecodes._lstore:
+    case Bytecodes._lstore:            
     case Bytecodes._dstore:            ppstore(vvCTS, itr.getIndex()); break;
 
     case Bytecodes._astore:            doAstore(itr.getIndex());     break;
 
-    case Bytecodes._istore_0:
+    case Bytecodes._istore_0:          
     case Bytecodes._fstore_0:          ppstore(vCTS, 0);           break;
-    case Bytecodes._istore_1:
+    case Bytecodes._istore_1:          
     case Bytecodes._fstore_1:          ppstore(vCTS, 1);           break;
-    case Bytecodes._istore_2:
+    case Bytecodes._istore_2:          
     case Bytecodes._fstore_2:          ppstore(vCTS, 2);           break;
-    case Bytecodes._istore_3:
+    case Bytecodes._istore_3:          
     case Bytecodes._fstore_3:          ppstore(vCTS, 3);           break;
 
-    case Bytecodes._lstore_0:
+    case Bytecodes._lstore_0:          
     case Bytecodes._dstore_0:          ppstore(vvCTS, 0);          break;
-    case Bytecodes._lstore_1:
+    case Bytecodes._lstore_1:          
     case Bytecodes._dstore_1:          ppstore(vvCTS, 1);          break;
-    case Bytecodes._lstore_2:
+    case Bytecodes._lstore_2:          
     case Bytecodes._dstore_2:          ppstore(vvCTS, 2);          break;
-    case Bytecodes._lstore_3:
+    case Bytecodes._lstore_3:          
     case Bytecodes._dstore_3:          ppstore(vvCTS, 3);          break;
-
+            
     case Bytecodes._astore_0:          doAstore(0);                break;
     case Bytecodes._astore_1:          doAstore(1);                break;
     case Bytecodes._astore_2:          doAstore(2);                break;
     case Bytecodes._astore_3:          doAstore(3);                break;
 
-    case Bytecodes._iastore:
-    case Bytecodes._fastore:
+    case Bytecodes._iastore:           
+    case Bytecodes._fastore:           
     case Bytecodes._bastore:
     case Bytecodes._castore:
     case Bytecodes._sastore:           ppop(vvrCTS);               break;
-    case Bytecodes._lastore:
+    case Bytecodes._lastore:           
     case Bytecodes._dastore:           ppop(vvvrCTS);              break;
     case Bytecodes._aastore:           ppop(rvrCTS);               break;
-
+        
     case Bytecodes._pop:               ppopAny(1);                 break;
     case Bytecodes._pop2:              ppopAny(2);                 break;
 
@@ -1272,66 +1272,66 @@ public class GenerateOopMap {
     case Bytecodes._dup2_x2:           ppdupswap(4, "214321");     break;
     case Bytecodes._swap:              ppdupswap(2, "12");         break;
 
-    case Bytecodes._iadd:
-    case Bytecodes._fadd:
-    case Bytecodes._isub:
-    case Bytecodes._fsub:
-    case Bytecodes._imul:
-    case Bytecodes._fmul:
-    case Bytecodes._idiv:
-    case Bytecodes._fdiv:
-    case Bytecodes._irem:
-    case Bytecodes._frem:
-    case Bytecodes._ishl:
-    case Bytecodes._ishr:
-    case Bytecodes._iushr:
-    case Bytecodes._iand:
-    case Bytecodes._ior:
-    case Bytecodes._ixor:
-    case Bytecodes._l2f:
+    case Bytecodes._iadd:              
+    case Bytecodes._fadd:              
+    case Bytecodes._isub:              
+    case Bytecodes._fsub:              
+    case Bytecodes._imul:              
+    case Bytecodes._fmul:              
+    case Bytecodes._idiv:              
+    case Bytecodes._fdiv:              
+    case Bytecodes._irem:              
+    case Bytecodes._frem:              
+    case Bytecodes._ishl:              
+    case Bytecodes._ishr:              
+    case Bytecodes._iushr:             
+    case Bytecodes._iand:              
+    case Bytecodes._ior:               
+    case Bytecodes._ixor:              
+    case Bytecodes._l2f:               
     case Bytecodes._l2i:
-    case Bytecodes._d2f:
-    case Bytecodes._d2i:
+    case Bytecodes._d2f:               
+    case Bytecodes._d2i:               
     case Bytecodes._fcmpl:
     case Bytecodes._fcmpg:             pp(vvCTS, vCTS); break;
-
-    case Bytecodes._ladd:
-    case Bytecodes._dadd:
-    case Bytecodes._lsub:
-    case Bytecodes._dsub:
-    case Bytecodes._lmul:
-    case Bytecodes._dmul:
-    case Bytecodes._ldiv:
-    case Bytecodes._ddiv:
-    case Bytecodes._lrem:
-    case Bytecodes._drem:
-    case Bytecodes._land:
-    case Bytecodes._lor:
+    
+    case Bytecodes._ladd:              
+    case Bytecodes._dadd:              
+    case Bytecodes._lsub:              
+    case Bytecodes._dsub:              
+    case Bytecodes._lmul:              
+    case Bytecodes._dmul:              
+    case Bytecodes._ldiv:              
+    case Bytecodes._ddiv:              
+    case Bytecodes._lrem:              
+    case Bytecodes._drem:              
+    case Bytecodes._land:              
+    case Bytecodes._lor:               
     case Bytecodes._lxor:              pp(vvvvCTS, vvCTS); break;
 
-    case Bytecodes._ineg:
-    case Bytecodes._fneg:
-    case Bytecodes._i2f:
-    case Bytecodes._f2i:
+    case Bytecodes._ineg:              
+    case Bytecodes._fneg:              
+    case Bytecodes._i2f:               
+    case Bytecodes._f2i:               
     case Bytecodes._i2c:
-    case Bytecodes._i2s:
+    case Bytecodes._i2s:               
     case Bytecodes._i2b:               pp(vCTS, vCTS); break;
 
-    case Bytecodes._lneg:
-    case Bytecodes._dneg:
-    case Bytecodes._l2d:
+    case Bytecodes._lneg:              
+    case Bytecodes._dneg:              
+    case Bytecodes._l2d:               
     case Bytecodes._d2l:               pp(vvCTS, vvCTS); break;
-
-    case Bytecodes._lshl:
-    case Bytecodes._lshr:
-    case Bytecodes._lushr:             pp(vvvCTS, vvCTS); break;
-
-    case Bytecodes._i2l:
-    case Bytecodes._i2d:
+      
+    case Bytecodes._lshl:              
+    case Bytecodes._lshr:              
+    case Bytecodes._lushr:             pp(vvvCTS, vvCTS); break;    
+      
+    case Bytecodes._i2l:               
+    case Bytecodes._i2d:               
     case Bytecodes._f2l:
     case Bytecodes._f2d:               pp(vCTS, vvCTS); break;
-
-    case Bytecodes._lcmp:              pp(vvvvCTS, vCTS); break;
+            
+    case Bytecodes._lcmp:              pp(vvvvCTS, vCTS); break;    
     case Bytecodes._dcmpl:
     case Bytecodes._dcmpg:             pp(vvvvCTS, vCTS); break;
 
@@ -1340,10 +1340,10 @@ public class GenerateOopMap {
     case Bytecodes._iflt:
     case Bytecodes._ifge:
     case Bytecodes._ifgt:
-    case Bytecodes._ifle:
+    case Bytecodes._ifle:              
     case Bytecodes._tableswitch:       ppop1(valCTS);
       break;
-    case Bytecodes._ireturn:
+    case Bytecodes._ireturn:           
     case Bytecodes._freturn:           doReturnMonitorCheck();
       ppop1(valCTS);
       break;
@@ -1365,14 +1365,14 @@ public class GenerateOopMap {
 
     case Bytecodes._if_acmpeq:
     case Bytecodes._if_acmpne:         ppop(rrCTS);                 break;
-
+    
     case Bytecodes._jsr:               doJsr(itr.dest());          break;
     case Bytecodes._jsr_w:             doJsr(itr.dest_w());        break;
-
+    
     case Bytecodes._getstatic:         doField(true,  true,
                                                itr.getIndexBig(),
                                                itr.bci()); break;
-    case Bytecodes._putstatic:         doField(false, true,  itr.getIndexBig(), itr.bci()); break;
+    case Bytecodes._putstatic:         doField(false, true,  itr.getIndexBig(), itr.bci()); break; 
     case Bytecodes._getfield:          doField(true,  false, itr.getIndexBig(), itr.bci()); break;
     case Bytecodes._putfield:          doField(false, false, itr.getIndexBig(), itr.bci()); break;
 
@@ -1383,9 +1383,9 @@ public class GenerateOopMap {
     case Bytecodes._newarray:
     case Bytecodes._anewarray:         ppNewRef(vCTS, itr.bci()); break;
     case Bytecodes._checkcast:         doCheckcast(); break;
-    case Bytecodes._arraylength:
+    case Bytecodes._arraylength:       
     case Bytecodes._instanceof:        pp(rCTS, vCTS); break;
-    case Bytecodes._monitorenter:      doMonitorenter(itr.bci()); break;
+    case Bytecodes._monitorenter:      doMonitorenter(itr.bci()); break;  
     case Bytecodes._monitorexit:       doMonitorexit(itr.bci()); break;
 
     case Bytecodes._athrow:            // handled by do_exception_edge() BUT ...
@@ -1395,33 +1395,33 @@ public class GenerateOopMap {
         _monitor_safe = false;
       }
       break;
-
+                                        
     case Bytecodes._areturn:           doReturnMonitorCheck();
       ppop1(refCTS);
       break;
-    case Bytecodes._ifnull:
+    case Bytecodes._ifnull:   
     case Bytecodes._ifnonnull:         ppop1(refCTS); break;
     case Bytecodes._multianewarray:    doMultianewarray(itr.codeAt(itr.bci() + 3), itr.bci()); break;
-
+            
     case Bytecodes._wide:              throw new RuntimeException("Iterator should skip this bytecode");
     case Bytecodes._ret:                                           break;
-
+    
       // Java opcodes
     case Bytecodes._fast_aaccess_0:     ppNewRef(rCTS, itr.bci()); break; // Pair bytecode for (aload_0, _fast_agetfield)
 
-    case Bytecodes._fast_iaccess_0:     ppush1(valCTS);            break; // Pair bytecode for (aload_0, _fast_igetfield)
-
+    case Bytecodes._fast_iaccess_0:     ppush1(valCTS);            break; // Pair bytecode for (aload_0, _fast_igetfield)    
+    
     case Bytecodes._fast_igetfield:     pp(rCTS, vCTS);            break;
 
-    case Bytecodes._fast_agetfield:     ppNewRef(rCTS, itr.bci()); break;
-
-    case Bytecodes._fast_aload_0:       ppload(rCTS,  0);          break;
+    case Bytecodes._fast_agetfield:     ppNewRef(rCTS, itr.bci()); break;                                      
+    
+    case Bytecodes._fast_aload_0:       ppload(rCTS,  0);          break;    
 
     case Bytecodes._lookupswitch:
     case Bytecodes._fast_linearswitch:
-    case Bytecodes._fast_binaryswitch:  ppop1(valCTS);             break;
-
-    default:
+    case Bytecodes._fast_binaryswitch:  ppop1(valCTS);             break;  
+        
+    default: 
       throw new RuntimeException("unexpected opcode: " + itr.code());
     }
   }
@@ -1518,7 +1518,7 @@ public class GenerateOopMap {
 
     // We don't set _monitor_top to bad_monitors because there are no successors
     // to this exceptional exit.
-
+ 
     if (TraceMonitorMismatch && _monitor_safe) {
       // We check _monitor_safe so that we only report the first mismatched
       // exceptional exit.
@@ -1539,7 +1539,7 @@ public class GenerateOopMap {
     for (int i = 0; i < in.length && !in[i].equal(CellTypeState.bottom); i++) {
       CellTypeState expected = in[i];
       CellTypeState actual   = pop();
-      checkType(expected, actual);
+      checkType(expected, actual);  
       if (Assert.ASSERTS_ENABLED) {
         Assert.that(loc_no >= 0, "sanity check");
       }
@@ -1649,7 +1649,7 @@ public class GenerateOopMap {
 
     // pop all arguments
     for(int i = 0; i < poplen; i++) actual[i] = pop();
-
+  
     // put them back
     for (int i = 0; i < out.length(); i++) {
       char push_ch = out.charAt(i);
@@ -1678,7 +1678,7 @@ public class GenerateOopMap {
       // really matter (at least for now)
       throw new RuntimeException("wrong type on stack (found: " +
                                  r_or_p.toChar() + ", expected: {pr})");
-    }
+    }   
     setVar(idx, r_or_p);
   }
 
@@ -1703,7 +1703,7 @@ public class GenerateOopMap {
     char sigch = (char) signature.getByteAt(0);
     CellTypeState[] temp = new CellTypeState[4];
     CellTypeState[] eff  = sigcharToEffect(sigch, bci, temp);
-
+  
     CellTypeState[] in = new CellTypeState[4];
     CellTypeState[] out;
     int i =  0;
@@ -1728,7 +1728,7 @@ public class GenerateOopMap {
     int nameAndTypeIdx    = cp.getNameAndTypeRefIndexAt(idx);
     int signatureIdx      = cp.getSignatureRefIndexAt(nameAndTypeIdx);
     Symbol signature      = cp.getSymbolAt(signatureIdx);
-
+  
     if (DEBUG) {
       System.err.println("doMethod: signature = " + signature.asString() + ", idx = " + idx +
                          ", nameAndTypeIdx = " + nameAndTypeIdx + ", signatureIdx = " + signatureIdx +
@@ -1737,11 +1737,11 @@ public class GenerateOopMap {
 
     // Parse method signature
     CellTypeStateList out = new CellTypeStateList(4);
-    CellTypeStateList in  = new CellTypeStateList(MAXARGSIZE+1);   // Includes result
+    CellTypeStateList in  = new CellTypeStateList(MAXARGSIZE+1);   // Includes result      
     ComputeCallStack cse  = new ComputeCallStack(signature);
 
     // Compute return type
-    int res_length = cse.computeForReturntype(out);
+    int res_length = cse.computeForReturntype(out);       
 
     // Temporary hack.
     if (out.get(0).equal(CellTypeState.ref) && out.get(1).equal(CellTypeState.bottom)) {
@@ -1753,7 +1753,7 @@ public class GenerateOopMap {
     }
 
     // Compute arguments
-    int arg_length = cse.computeForParameters(is_static, in);
+    int arg_length = cse.computeForParameters(is_static, in);       
     if (Assert.ASSERTS_ENABLED) {
       Assert.that(arg_length<=MAXARGSIZE, "too many locals");
     }
@@ -1763,12 +1763,12 @@ public class GenerateOopMap {
 
     // Report results
     if (_report_result_for_send == true) {
-      fillStackmapForOpcodes(_itr_send, vars(), stack(), _stack_top);
+      fillStackmapForOpcodes(_itr_send, vars(), stack(), _stack_top); 
       _report_result_for_send = false;
     }
 
     // Push return address
-    ppush(out);
+    ppush(out);  
   }
 
   void  doMultianewarray                    (int dims, int bci) {
@@ -1887,7 +1887,7 @@ public class GenerateOopMap {
     return vCTS;                                      // Otherwise
   }
 
-  // Copies (optionally bottom/zero terminated) CTS string from "src" into "dst".
+  // Copies (optionally bottom/zero terminated) CTS string from "src" into "dst". 
   //   Does NOT terminate with a bottom. Returns the number of cells copied.
   int copyCTS                               (CellTypeState[] dst, CellTypeState[] src) {
     int idx = 0;
@@ -1900,18 +1900,18 @@ public class GenerateOopMap {
   // Create result set
   boolean  _report_result;
   boolean  _report_result_for_send;         // Unfortunatly, stackmaps for sends are special, so we need some extra
-  BytecodeStream _itr_send;                 // variables to handle them properly.
+  BytecodeStream _itr_send;                 // variables to handle them properly. 
 
   void  reportResult                        () {
     //    if (TraceNewOopMapGeneration) tty.print_cr("Report result pass");
 
     // We now want to report the result of the parse
     _report_result = true;
-
+  
     // Prolog code
-    fillStackmapProlog(_gc_points);
+    fillStackmapProlog(_gc_points);  
 
-    // Mark everything changed, then do one interpretation pass.
+    // Mark everything changed, then do one interpretation pass. 
     for (int i = 0; i<_bb_count; i++) {
       if (_basic_blocks[i].isReachable()) {
         _basic_blocks[i].setChanged(true);
@@ -1930,9 +1930,9 @@ public class GenerateOopMap {
     _report_result = false;
   }
 
-  // Initvars
+  // Initvars 
   List/*<Integer>*/ _init_vars;
-
+  
   void  initializeVars                      () {
     for (int k = 0; k < _init_vars.size(); k++)
       _state.get(((Integer) _init_vars.get(k)).intValue()).set(CellTypeState.makeSlotRef(k));
@@ -1947,15 +1947,15 @@ public class GenerateOopMap {
     // Is it already in the set?
     if (_init_vars.contains(local))
       return;
-
+  
     _init_vars.add(local);
   }
 
-  // Conflicts rewrite logic
+  // Conflicts rewrite logic 
   boolean   _conflict;                      // True, if a conflict occured during interpretation
   int       _nof_refval_conflicts;          // No. of conflicts that require rewrites
-  int[]     _new_var_map;
-
+  int[]     _new_var_map;                
+  
   void recordRefvalConflict                 (int varNo) {
     if (Assert.ASSERTS_ENABLED) {
       Assert.that(varNo>=0 && varNo< _max_locals, "index out of range");
@@ -1969,7 +1969,7 @@ public class GenerateOopMap {
       _new_var_map = new int[_max_locals];
       for (int k = 0; k < _max_locals; k++)  _new_var_map[k] = k;
     }
-
+   
     if ( _new_var_map[varNo] == varNo) {
       // Check if max. number of locals has been reached
       if (_max_locals + _nof_refval_conflicts >= MAX_LOCAL_VARS) {
@@ -1997,17 +1997,17 @@ public class GenerateOopMap {
   //  bool expand_current_instr                 (int bci, int ilen, int newIlen, u_char inst_buffer[]);
   //  bool is_astore                            (BytecodeStream *itr, int *index);
   //  bool is_aload                             (BytecodeStream *itr, int *index);
-
+  
   // List of bci's where a return address is on top of the stack
-  //  GrowableArray<intptr_t> *_ret_adr_tos;
+  //  GrowableArray<intptr_t> *_ret_adr_tos;         
 
   //  bool stack_top_holds_ret_addr             (int bci);
   //  void compute_ret_adr_at_TOS               ();
   //  void update_ret_adr_at_TOS                (int bci, int delta);
-
+    
   String stateVecToString                   (CellTypeStateList vec, int len) {
     for (int i = 0; i < len; i++) {
-      _state_vec_buf[i] = vec.get(i).toChar();
+      _state_vec_buf[i] = vec.get(i).toChar();      
     }
     return new String(_state_vec_buf, 0, len);
   }
@@ -2019,17 +2019,17 @@ public class GenerateOopMap {
     if (!ra.isGoodAddress()) {
       throw new RuntimeException("ret returns from two jsr subroutines?");
     }
-    int target = ra.getInfo();
+    int target = ra.getInfo();  
 
     RetTableEntry rtEnt = _rt.findJsrsForTarget(target);
     int bci = bcs.bci();
     for (int i = 0; i < rtEnt.nofJsrs(); i++) {
-      int target_bci = rtEnt.jsrs(i);
-      // Make sure a jrtRet does not set the changed bit for dead basicblock.
+      int target_bci = rtEnt.jsrs(i);    
+      // Make sure a jrtRet does not set the changed bit for dead basicblock.     
       BasicBlock jsr_bb    = getBasicBlockContaining(target_bci - 1);
       if (Assert.ASSERTS_ENABLED) {
         BasicBlock target_bb = _basic_blocks[1 + bbIndex(jsr_bb)];
-        Assert.that(target_bb  == getBasicBlockAt(target_bci), "wrong calc. of successor basicblock");
+        Assert.that(target_bb  == getBasicBlockAt(target_bci), "wrong calc. of successor basicblock");    
       }
       boolean alive = jsr_bb.isAlive();
       //      if (TraceNewOopMapGeneration) {
@@ -2052,7 +2052,7 @@ public class GenerateOopMap {
     int bci = bcs.bci();
 
     switch (bcs.code()) {
-    case Bytecodes._ifeq:
+    case Bytecodes._ifeq: 
     case Bytecodes._ifne:
     case Bytecodes._iflt:
     case Bytecodes._ifge:
@@ -2066,51 +2066,51 @@ public class GenerateOopMap {
     case Bytecodes._if_icmple:
     case Bytecodes._if_acmpeq:
     case Bytecodes._if_acmpne:
-    case Bytecodes._ifnull:
-    case Bytecodes._ifnonnull:
-      closure.process(this, bcs.dest(), data);
-      closure.process(this, bci + 3, data);
+    case Bytecodes._ifnull:   
+    case Bytecodes._ifnonnull:      
+      closure.process(this, bcs.dest(), data); 
+      closure.process(this, bci + 3, data);            
       break;
 
-    case Bytecodes._goto:
-      closure.process(this, bcs.dest(), data);
+    case Bytecodes._goto:           
+      closure.process(this, bcs.dest(), data);  
       break;
-    case Bytecodes._goto_w:
-      closure.process(this, bcs.dest_w(), data);
+    case Bytecodes._goto_w:         
+      closure.process(this, bcs.dest_w(), data);    
       break;
-    case Bytecodes._tableswitch:
+    case Bytecodes._tableswitch:  
       {
         BytecodeTableswitch tableswitch = BytecodeTableswitch.at(bcs);
-        int len = tableswitch.length();
-
+        int len = tableswitch.length();        
+        
         closure.process(this, bci + tableswitch.defaultOffset(), data); /* Default. jump address */
         while (--len >= 0) {
           closure.process(this, bci + tableswitch.destOffsetAt(len), data);
         }
-        break;
+        break; 
       }
-
+      
     case Bytecodes._fast_linearswitch:     // Java opcodes
     case Bytecodes._fast_binaryswitch:     // get_int_table handles conversions
     case Bytecodes._lookupswitch:
       {
         BytecodeLookupswitch lookupswitch = BytecodeLookupswitch.at(bcs);
-        int npairs = lookupswitch.numberOfPairs();
+        int npairs = lookupswitch.numberOfPairs(); 
         closure.process(this, bci + lookupswitch.defaultOffset(), data); /* Default. */
         while(--npairs >= 0) {
           LookupswitchPair pair = lookupswitch.pairAt(npairs);
           closure.process(this, bci + pair.offset(), data);
         }
         break;
-      }
+      }          
     case Bytecodes._jsr:
-      Assert.that(bcs.isWide()==false, "sanity check");
-      closure.process(this, bcs.dest(), data);
-      break;
-    case Bytecodes._jsr_w:
-      closure.process(this, bcs.dest_w(), data);
-      break;
-    case Bytecodes._wide:
+      Assert.that(bcs.isWide()==false, "sanity check");      
+      closure.process(this, bcs.dest(), data);             
+      break;     
+    case Bytecodes._jsr_w:      
+      closure.process(this, bcs.dest_w(), data); 
+      break;          
+    case Bytecodes._wide:           
       throw new RuntimeException("Should not reach here");
     case Bytecodes._athrow:
     case Bytecodes._ireturn:
@@ -2118,10 +2118,10 @@ public class GenerateOopMap {
     case Bytecodes._freturn:
     case Bytecodes._dreturn:
     case Bytecodes._areturn:
-    case Bytecodes._return:
+    case Bytecodes._return:         
     case Bytecodes._ret:
-      break;
-    default:
+      break;    
+    default:                 
       return true;
     }
     return false;
@@ -2136,7 +2136,7 @@ public class GenerateOopMap {
   // Public routines for GenerateOopMap
   //
   public GenerateOopMap(Method method) {
-    // We have to initialize all variables here, that can be queried direcly
+    // We have to initialize all variables here, that can be queried direcly   
     _method = method;
     _max_locals=0;
     _init_vars = null;
@@ -2153,7 +2153,7 @@ public class GenerateOopMap {
                          method().getSignature().asString());
     }
 
-    // Initialize values
+    // Initialize values  
     _got_error      = false;
     _conflict       = false;
     _max_locals     = (int) method().getMaxLocals();
@@ -2167,20 +2167,20 @@ public class GenerateOopMap {
     _new_var_map    = null;
     //    _ret_adr_tos    = new GrowableArray<intptr_t>(5);  // 5 seems like a good number;
     //    _did_rewriting  = false;
-    //    _did_relocation = false;
+    //    _did_relocation = false;  
 
     // FIXME: remove
     /*
-    if (TraceNewOopMapGeneration) {
-      tty.print("Method name: %s\n", method().name().as_C_string());
+    if (TraceNewOopMapGeneration) {    
+      tty.print("Method name: %s\n", method().name().as_C_string());    
       if (Verbose) {
         _method.print_codes();
         tty.print_cr("Exception table:");
         typeArrayOop excps = method().exception_table();
         for(int i = 0; i < excps.length(); i += 4) {
-          tty.print_cr("[%d - %d] . %d", excps.int_at(i + 0), excps.int_at(i + 1), excps.int_at(i + 2));
+          tty.print_cr("[%d - %d] . %d", excps.int_at(i + 0), excps.int_at(i + 1), excps.int_at(i + 2));        
         }
-      }
+      }    
     }
     */
 
@@ -2203,9 +2203,9 @@ public class GenerateOopMap {
     if (!_got_error)
       doInterpretation();
 
-    // Step 4:Return results
+    // Step 4:Return results  
     if (!_got_error && reportResults())
-      reportResult();
+      reportResult();  
 
     if (_got_error) {
       // We could expand this code to throw somekind of exception (e.g., VerifyException). However,
@@ -2223,7 +2223,7 @@ public class GenerateOopMap {
 
     // We now want to report the result of the parse
     _report_result = true;
-
+ 
     // Find basicblock and report results
     BasicBlock bb = getBasicBlockContaining(bci);
     if (Assert.ASSERTS_ENABLED) {
@@ -2234,7 +2234,7 @@ public class GenerateOopMap {
   }
 
   // Query
-  public int maxLocals()                                  { return _max_locals; }
+  public int maxLocals()                                  { return _max_locals; }  
   public Method method()                                  { return _method; }
 
   //  bool did_rewriting()                             { return _did_rewriting; }
@@ -2268,7 +2268,7 @@ public class GenerateOopMap {
       if (Assert.ASSERTS_ENABLED) {
         Assert.that(_matching_enter_bci != -1, "monitor matching invariant");
       }
-    }
+    }  
     return _matching_enter_bci;
   }
 
@@ -2307,7 +2307,7 @@ public class GenerateOopMap {
   // All these methods are used during a call to computeMap. Note:
   // None of the return results are valid after computeMap returns,
   // since all values are allocated as resource objects.
-  //
+  //  
   // All virtual method must be implemented in subclasses
   public boolean allowRewrites            ()                              { return false; }
   public boolean reportResults            ()                              { return true;  }

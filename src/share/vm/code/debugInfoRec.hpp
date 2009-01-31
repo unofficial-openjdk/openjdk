@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1998-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //** The DebugInformationRecorder collects debugging information
@@ -39,8 +42,8 @@
 //         - create monitor stack if needed (use create_monitor_values)
 //         - describe scope (use describe_scope)
 //         "repeat last four steps for all scopes"
-//         "outer most scope first and inner most scope last"
-//         NB: nodes from create_scope_values and create_locations
+//         "outer most scope first and inner most scope last" 
+//         NB: nodes from create_scope_values and create_locations 
 //             can be reused for simple sharing.
 //         - mark the end of the scopes (end_safepoint or end_non_safepoint)
 //   2) Use oop_size, data_size, pcs_size to create the nmethod and
@@ -93,13 +96,13 @@ class DebugInformationRecorder: public ResourceObj {
 
 
   void dump_object_pool(GrowableArray<ScopeValue*>* objects);
-
+  
   // This call must follow every add_safepoint,
   // after any intervening describe_scope calls.
   void end_safepoint(int pc_offset)      { end_scopes(pc_offset, true); }
   void end_non_safepoint(int pc_offset)  { end_scopes(pc_offset, false); }
 
-  // helper fuctions for describe_scope to enable sharing
+  // helper fuctions for describe_scope to enable sharing 
   DebugToken* create_scope_values(GrowableArray<ScopeValue*>* values);
   DebugToken* create_monitor_values(GrowableArray<MonitorValue*>* monitors);
 
@@ -137,7 +140,7 @@ class DebugInformationRecorder: public ResourceObj {
   const bool _recording_non_safepoints;
 
   DebugInfoWriteStream* _stream;
-
+  
   DebugInfoWriteStream* stream() const { return _stream; }
 
   OopRecorder* _oop_recorder;
@@ -180,3 +183,4 @@ class DebugInformationRecorder: public ResourceObj {
  public:
   enum { serialized_null = 0 };
 };
+

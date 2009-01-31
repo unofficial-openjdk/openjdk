@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -113,7 +116,7 @@ int CompileLog::identify(ciObject* obj) {
   assert(id < _identities_limit, "oob");
   // Mark this id as processed.
   // (Be sure to do this before any recursive calls to identify.)
-  _identities[id] = 1;  // mark
+  _identities[id] = 1;  // mark 
 
   // Now, print the object's identity once, in detail.
   if (obj->is_klass()) {
@@ -285,10 +288,11 @@ void CompileLog::finish_log_on_error(outputStream* file, char* buf, int buflen) 
 // ------------------------------------------------------------------
 // CompileLog::finish_log
 //
-// Called during normal shutdown. For now, any clean-up needed in normal
+// Called during normal shutdown. For now, any clean-up needed in normal 
 // shutdown is also needed in VM abort, so is covered by finish_log_on_error().
 // Just allocate a buffer and call finish_log_on_error().
 void CompileLog::finish_log(outputStream* file) {
   char buf[4 * K];
   finish_log_on_error(file, buf, sizeof(buf));
 }
+

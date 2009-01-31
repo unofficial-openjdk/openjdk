@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.memory;
@@ -49,7 +49,7 @@ public class DefNewGeneration extends Generation {
 
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("DefNewGeneration");
-
+    
     edenSpaceField = type.getAddressField("_eden_space");
     fromSpaceField = type.getAddressField("_from_space");
     toSpaceField   = type.getAddressField("_to_space");
@@ -58,7 +58,7 @@ public class DefNewGeneration extends Generation {
   public DefNewGeneration(Address addr) {
     super(addr);
   }
-
+  
   public Generation.Name kind() {
     return Generation.Name.DEF_NEW;
   }

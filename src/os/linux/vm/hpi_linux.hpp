@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //
@@ -82,7 +85,7 @@ inline int hpi::timeout(int fd, long timeout) {
 
     pfd.fd = fd;
     pfd.events = POLLIN | POLLERR;
-
+  
     int res = ::poll(&pfd, 1, timeout);
 
     if (res == OS_ERR && errno == EINTR) {
@@ -90,12 +93,12 @@ inline int hpi::timeout(int fd, long timeout) {
       // On Linux any value < 0 means "forever"
 
       if(timeout >= 0) {
-        gettimeofday(&t, NULL);
-        newtime = ((julong)t.tv_sec * 1000)  +  t.tv_usec / 1000;
-        timeout -= newtime - prevtime;
-        if(timeout <= 0)
-          return OS_OK;
-        prevtime = newtime;
+	gettimeofday(&t, NULL);
+	newtime = ((julong)t.tv_sec * 1000)  +  t.tv_usec / 1000;
+	timeout -= newtime - prevtime;
+	if(timeout <= 0)
+	  return OS_OK;
+	prevtime = newtime;
       }
     } else
       return res;
@@ -122,12 +125,12 @@ inline int hpi::accept(int fd, struct sockaddr *him, int *len) {
 }
 
 inline int hpi::recvfrom(int fd, char *buf, int nBytes, int flags,
-                         sockaddr *from, int *fromlen) {
+		         sockaddr *from, int *fromlen) {
   RESTARTABLE_RETURN_INT(::recvfrom(fd, buf, nBytes, (unsigned int) flags, from, (socklen_t *)fromlen));
 }
 
 inline int hpi::sendto(int fd, char *buf, int len, int flags,
-                        struct sockaddr *to, int tolen) {
+			struct sockaddr *to, int tolen) {
   RESTARTABLE_RETURN_INT(::sendto(fd, buf, len, (unsigned int) flags, to, tolen));
 }
 
@@ -141,22 +144,22 @@ inline int hpi::socket_available(int fd, jint *pbytes) {
 }
 
 
-// following methods have been updated to avoid problems in
+// following methods have been updated to avoid problems in 
 // hpi's sockets calls based on sys_api_td.c (JDK1.3)
 
 /*
-HPIDECL(socket_shutdown, "socket_shutdown", _socket, SocketShutdown,
+HPIDECL(socket_shutdown, "socket_shutdown", _socket, SocketShutdown, 
         int, "%d",
         (int fd, int howto),
         ("fd = %d, howto = %d", fd, howto),
         (fd, howto));
-        */
+	*/
 inline int hpi::socket_shutdown(int fd, int howto){
   return ::shutdown(fd, howto);
 }
 
 /*
-HPIDECL(bind, "bind", _socket, Bind,
+HPIDECL(bind, "bind", _socket, Bind, 
         int, "%d",
         (int fd, struct sockaddr *him, int len),
         ("fd = %d, him = %p, len = %d",
@@ -168,13 +171,13 @@ inline int hpi::bind(int fd, struct sockaddr *him, int len){
 }
 
 /*
-HPIDECL(get_sock_name, "get_sock_name", _socket, GetSocketName,
+HPIDECL(get_sock_name, "get_sock_name", _socket, GetSocketName, 
         int, "%d",
         (int fd, struct sockaddr *him, int *len),
         ("fd = %d, him = %p, len = %p",
          fd, him, len),
         (fd, him, len));
-        */
+	*/
 inline int hpi::get_sock_name(int fd, struct sockaddr *him, int *len){
   return ::getsockname(fd, him, (socklen_t *)len);
 }
@@ -185,7 +188,7 @@ HPIDECL(get_host_name, "get_host_name", _socket, GetHostName, int, "%d",
         ("hostname = %p, namelen = %d",
          hostname, namelen),
         (hostname, namelen));
-        */
+	*/
 inline int hpi::get_host_name(char* name, int namelen){
   return ::gethostname(name, namelen);
 }
@@ -196,9 +199,9 @@ HPIDECL(get_sock_opt, "get_sock_opt", _socket, SocketGetOption, int, "%d",
         ("fd = %d, level = %d, optname = %d, optval = %p, optlen = %p",
          fd, level, optname, optval, optlen),
         (fd, level, optname, optval, optlen));
-        */
-inline int hpi::get_sock_opt(int fd, int level, int optname,
-                             char *optval, int* optlen){
+	*/
+inline int hpi::get_sock_opt(int fd, int level, int optname, 
+			     char *optval, int* optlen){
   return ::getsockopt(fd, level, optname, optval, (socklen_t *)optlen);
 }
 
@@ -208,13 +211,13 @@ HPIDECL(set_sock_opt, "set_sock_opt", _socket, SocketSetOption, int, "%d",
         ("fd = %d, level = %d, optname = %d, optval = %p, optlen = %d",
          fd, level, optname, optval, optlen),
         (fd, level, optname, optval, optlen));
-        */
-inline int hpi::set_sock_opt(int fd, int level, int optname,
-                             const char *optval, int optlen){
+	*/
+inline int hpi::set_sock_opt(int fd, int level, int optname, 
+			     const char *optval, int optlen){
   return ::setsockopt(fd, level, optname, optval, optlen);
 }
 
 
 // Reconciliation History
-// hpi_solaris.hpp      1.9 99/08/30 16:31:23
+// hpi_solaris.hpp	1.9 99/08/30 16:31:23
 // End

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -39,14 +42,14 @@ void instanceRefKlass::oop_follow_contents(oop obj) {
           discover_reference(obj, reference_type())) {
       // reference already enqueued, referent will be traversed later
       instanceKlass::oop_follow_contents(obj);
-      debug_only(
+      debug_only( 
         if(TraceReferenceGC && PrintGCDetails) {
-          gclog_or_tty->print_cr("       Non NULL enqueued " INTPTR_FORMAT, (address)obj);
+          gclog_or_tty->print_cr("       Non NULL enqueued " INTPTR_FORMAT, (address)obj); 
         }
       )
       return;
     } else {
-      // treat referent as normal oop
+      // treat referent as normal oop      
       debug_only(
         if(TraceReferenceGC && PrintGCDetails) {
           gclog_or_tty->print_cr("       Non NULL normal " INTPTR_FORMAT, (address)obj);
@@ -68,7 +71,7 @@ void instanceRefKlass::oop_follow_contents(oop obj) {
 
 #ifndef SERIALGC
 void instanceRefKlass::oop_follow_contents(ParCompactionManager* cm,
-                                           oop obj) {
+					   oop obj) {
   oop* referent_addr = java_lang_ref_Reference::referent_addr(obj);
   oop referent = *referent_addr;
   debug_only(
@@ -82,14 +85,14 @@ void instanceRefKlass::oop_follow_contents(ParCompactionManager* cm,
           discover_reference(obj, reference_type())) {
       // reference already enqueued, referent will be traversed later
       instanceKlass::oop_follow_contents(cm, obj);
-      debug_only(
+      debug_only( 
         if(TraceReferenceGC && PrintGCDetails) {
-          gclog_or_tty->print_cr("       Non NULL enqueued " INTPTR_FORMAT, (address)obj);
+          gclog_or_tty->print_cr("       Non NULL enqueued " INTPTR_FORMAT, (address)obj); 
         }
       )
       return;
     } else {
-      // treat referent as normal oop
+      // treat referent as normal oop      
       debug_only(
         if(TraceReferenceGC && PrintGCDetails) {
           gclog_or_tty->print_cr("       Non NULL normal " INTPTR_FORMAT, (address)obj);
@@ -114,7 +117,7 @@ void instanceRefKlass::oop_follow_contents(ParCompactionManager* cm,
 int instanceRefKlass::oop_adjust_pointers(oop obj) {
   int size = size_helper();
   instanceKlass::oop_adjust_pointers(obj);
-
+  
   oop* referent_addr = java_lang_ref_Reference::referent_addr(obj);
   MarkSweep::adjust_pointer(referent_addr);
   oop* next_addr = java_lang_ref_Reference::next_addr(obj);
@@ -125,16 +128,16 @@ int instanceRefKlass::oop_adjust_pointers(oop obj) {
 #ifdef ASSERT
   if(TraceReferenceGC && PrintGCDetails) {
     gclog_or_tty->print_cr("instanceRefKlass::oop_adjust_pointers obj "
-                           INTPTR_FORMAT, (address)obj);
+			   INTPTR_FORMAT, (address)obj);
     gclog_or_tty->print_cr("     referent_addr/* " INTPTR_FORMAT " / "
-                           INTPTR_FORMAT, referent_addr,
-                           referent_addr ? (address)*referent_addr : NULL);
+			   INTPTR_FORMAT, referent_addr,
+			   referent_addr ? (address)*referent_addr : NULL);
     gclog_or_tty->print_cr("     next_addr/* " INTPTR_FORMAT " / "
-                           INTPTR_FORMAT, next_addr,
-                           next_addr ? (address)*next_addr : NULL);
+			   INTPTR_FORMAT, next_addr,
+			   next_addr ? (address)*next_addr : NULL);
     gclog_or_tty->print_cr("     discovered_addr/* " INTPTR_FORMAT " / "
-                           INTPTR_FORMAT, discovered_addr,
-                           discovered_addr ? (address)*discovered_addr : NULL);
+			   INTPTR_FORMAT, discovered_addr,
+			   discovered_addr ? (address)*discovered_addr : NULL);
   }
 #endif
 
@@ -257,7 +260,7 @@ void instanceRefKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
 
 int instanceRefKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
   instanceKlass::oop_update_pointers(cm, obj);
-
+  
   oop* referent_addr = java_lang_ref_Reference::referent_addr(obj);
   PSParallelCompact::adjust_pointer(referent_addr);
   oop* next_addr = java_lang_ref_Reference::next_addr(obj);
@@ -268,16 +271,16 @@ int instanceRefKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
 #ifdef ASSERT
   if(TraceReferenceGC && PrintGCDetails) {
     gclog_or_tty->print_cr("instanceRefKlass::oop_update_pointers obj "
-                           INTPTR_FORMAT, (oopDesc*) obj);
+			   INTPTR_FORMAT, (oopDesc*) obj);
     gclog_or_tty->print_cr("     referent_addr/* " INTPTR_FORMAT " / "
-                           INTPTR_FORMAT, referent_addr,
-                           referent_addr ? (oopDesc*) *referent_addr : NULL);
+			   INTPTR_FORMAT, referent_addr,
+			   referent_addr ? (oopDesc*) *referent_addr : NULL);
     gclog_or_tty->print_cr("     next_addr/* " INTPTR_FORMAT " / "
-                           INTPTR_FORMAT, next_addr,
-                           next_addr ? (oopDesc*) *next_addr : NULL);
+			   INTPTR_FORMAT, next_addr,
+			   next_addr ? (oopDesc*) *next_addr : NULL);
     gclog_or_tty->print_cr("     discovered_addr/* " INTPTR_FORMAT " / "
-                   INTPTR_FORMAT, discovered_addr,
-                   discovered_addr ? (oopDesc*) *discovered_addr : NULL);
+		   INTPTR_FORMAT, discovered_addr,
+		   discovered_addr ? (oopDesc*) *discovered_addr : NULL);
   }
 #endif
 
@@ -286,9 +289,9 @@ int instanceRefKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
 
 int
 instanceRefKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
-                                      HeapWord* beg_addr, HeapWord* end_addr) {
+				      HeapWord* beg_addr, HeapWord* end_addr) {
   instanceKlass::oop_update_pointers(cm, obj, beg_addr, end_addr);
-
+  
   oop* p;
   oop* referent_addr = p = java_lang_ref_Reference::referent_addr(obj);
   PSParallelCompact::adjust_pointer(p, beg_addr, end_addr);
@@ -300,16 +303,16 @@ instanceRefKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
 #ifdef ASSERT
   if(TraceReferenceGC && PrintGCDetails) {
     gclog_or_tty->print_cr("instanceRefKlass::oop_update_pointers obj "
-                           INTPTR_FORMAT, (oopDesc*) obj);
+			   INTPTR_FORMAT, (oopDesc*) obj);
     gclog_or_tty->print_cr("     referent_addr/* " INTPTR_FORMAT " / "
-                           INTPTR_FORMAT, referent_addr,
-                           referent_addr ? (oopDesc*) *referent_addr : NULL);
+			   INTPTR_FORMAT, referent_addr,
+			   referent_addr ? (oopDesc*) *referent_addr : NULL);
     gclog_or_tty->print_cr("     next_addr/* " INTPTR_FORMAT " / "
-                           INTPTR_FORMAT, next_addr,
-                           next_addr ? (oopDesc*) *next_addr : NULL);
+			   INTPTR_FORMAT, next_addr,
+			   next_addr ? (oopDesc*) *next_addr : NULL);
     gclog_or_tty->print_cr("     discovered_addr/* " INTPTR_FORMAT " / "
-                   INTPTR_FORMAT, discovered_addr,
-                   discovered_addr ? (oopDesc*) *discovered_addr : NULL);
+		   INTPTR_FORMAT, discovered_addr,
+		   discovered_addr ? (oopDesc*) *discovered_addr : NULL);
   }
 #endif
 
@@ -319,7 +322,7 @@ instanceRefKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
 
 void instanceRefKlass::update_nonstatic_oop_maps(klassOop k) {
   // Clear the nonstatic oop-map entries corresponding to referent
-  // and nextPending field.  They are treated specially by the
+  // and nextPending field.  They are treated specially by the 
   // garbage collector.
   // The discovered field is used only by the garbage collector
   // and is also treated specially.
@@ -337,7 +340,7 @@ void instanceRefKlass::update_nonstatic_oop_maps(klassOop k) {
   // Check that the current map is (2,4) - currently points at field with
   // offset 2 (words) and has 4 map entries.
   debug_only(int offset = java_lang_ref_Reference::referent_offset);
-  debug_only(int length = ((java_lang_ref_Reference::discovered_offset -
+  debug_only(int length = ((java_lang_ref_Reference::discovered_offset - 
     java_lang_ref_Reference::referent_offset)/wordSize) + 1);
 
   if (UseSharedSpaces) {
@@ -365,7 +368,7 @@ void instanceRefKlass::oop_verify_on(oop obj, outputStream* st) {
   GenCollectedHeap* gch = NULL;
   if (Universe::heap()->kind() == CollectedHeap::GenCollectedHeap)
     gch = GenCollectedHeap::heap();
-
+  
   if (referent != NULL) {
     guarantee(referent->is_oop(), "referent field heap failed");
     if (gch != NULL && !gch->is_in_youngest(obj))
@@ -377,7 +380,7 @@ void instanceRefKlass::oop_verify_on(oop obj, outputStream* st) {
   // Verify next field
   oop next = java_lang_ref_Reference::next(obj);
   if (next != NULL) {
-    guarantee(next->is_oop(), "next field verify failed");
+    guarantee(next->is_oop(), "next field verify failed");    
     guarantee(next->is_instanceRef(), "next field verify failed");
     if (gch != NULL && !gch->is_in_youngest(obj)) {
       // We do a specific remembered set check here since the next field is

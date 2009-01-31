@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -45,7 +48,7 @@ void PSMarkSweepDecorator::set_destination_decorator_perm_gen() {
 void PSMarkSweepDecorator::advance_destination_decorator() {
   ParallelScavengeHeap* heap = (ParallelScavengeHeap*)Universe::heap();
   assert(heap->kind() == CollectedHeap::ParallelScavengeHeap, "Sanity");
-
+  
   assert(_destination_decorator != NULL, "Sanity");
   guarantee(_destination_decorator != heap->perm_gen()->object_mark_sweep(), "Cannot advance perm gen decorator");
 
@@ -102,26 +105,26 @@ void PSMarkSweepDecorator::precompact() {
 
   HeapWord* compact_top = dest->compaction_top();
   HeapWord* compact_end = dest->space()->end();
-
-  HeapWord* q = space()->bottom();
-  HeapWord* t = space()->top();
-
-  HeapWord*  end_of_live= q;    /* One byte beyond the last byte of the last
-                                   live object. */
-  HeapWord*  first_dead = space()->end(); /* The first dead object. */
-  LiveRange* liveRange  = NULL; /* The current live range, recorded in the
-                                   first header of preceding free area. */
-  _first_dead = first_dead;
+                                           
+  HeapWord* q = space()->bottom();                                                    
+  HeapWord* t = space()->top();                                                
+  
+  HeapWord*  end_of_live= q;    /* One byte beyond the last byte of the last 
+				   live object. */                           
+  HeapWord*  first_dead = space()->end(); /* The first dead object. */                 
+  LiveRange* liveRange  = NULL; /* The current live range, recorded in the   
+				   first header of preceding free area. */   
+  _first_dead = first_dead;                                                  
 
   const intx interval = PrefetchScanIntervalInBytes;
-
-  while (q < t) {
+                                                                             
+  while (q < t) {                                                            
     assert(oop(q)->mark()->is_marked() || oop(q)->mark()->is_unlocked() ||
-           oop(q)->mark()->has_bias_pattern(),
-           "these are the only valid states during a mark sweep");
-    if (oop(q)->is_gc_marked()) {
-      /* prefetch beyond q */
-      Prefetch::write(q, interval);
+           oop(q)->mark()->has_bias_pattern(),     
+	   "these are the only valid states during a mark sweep");           
+    if (oop(q)->is_gc_marked()) {  
+      /* prefetch beyond q */                                                
+      Prefetch::write(q, interval);                          
       size_t size = oop(q)->size();
 
       size_t compaction_max_size = pointer_delta(compact_end, compact_top);
@@ -143,8 +146,8 @@ void PSMarkSweepDecorator::precompact() {
         compact_end = dest->space()->end();
         assert(compact_top == dest->space()->bottom(), "Advanced to space already in use");
         assert(compact_end > compact_top, "Must always be space remaining");
-        compaction_max_size =
-          pointer_delta(compact_end, compact_top);
+	compaction_max_size = 
+	  pointer_delta(compact_end, compact_top);
       }
 
       // store the forwarding pointer into the mark word
@@ -152,13 +155,13 @@ void PSMarkSweepDecorator::precompact() {
         oop(q)->forward_to(oop(compact_top));
         assert(oop(q)->is_gc_marked(), "encoding the pointer should preserve the mark");
       } else {
-        // Don't clear the mark since it's confuses parallel old
-        // verification.
-        if (!UseParallelOldGC || !VerifyParallelOldWithMarkSweep) {
+	// Don't clear the mark since it's confuses parallel old
+	// verification.
+	if (!UseParallelOldGC || !VerifyParallelOldWithMarkSweep) {
           // if the object isn't moving we can just set the mark to the default
-          // mark and handle it specially later on.
+          // mark and handle it specially later on.  
           oop(q)->init_mark();
-        }
+	}
         assert(oop(q)->forwardee() == NULL, "should be forwarded to NULL");
       }
 
@@ -170,26 +173,26 @@ void PSMarkSweepDecorator::precompact() {
 
       debug_only(MarkSweep::register_live_oop(oop(q), size));
       compact_top += size;
-      assert(compact_top <= dest->space()->end(),
-        "Exceeding space in destination");
+      assert(compact_top <= dest->space()->end(), 
+	"Exceeding space in destination");
 
-      q += size;
-      end_of_live = q;
-    } else {
-      /* run over all the contiguous dead objects */
-      HeapWord* end = q;
-      do {
-        /* prefetch beyond end */
-        Prefetch::write(end, interval);
-        end += oop(end)->size();
+      q += size;                                                             
+      end_of_live = q;                                                       
+    } else {                                                                 
+      /* run over all the contiguous dead objects */                         
+      HeapWord* end = q;                                                     
+      do {                                                                   
+        /* prefetch beyond end */                                            
+        Prefetch::write(end, interval);                            
+	end += oop(end)->size();
       } while (end < t && (!oop(end)->is_gc_marked()));
 
       /* see if we might want to pretend this object is alive so that
        * we don't have to compact quite as often.
        */
       if (allowed_deadspace > 0 && q == compact_top) {
-        size_t sz = pointer_delta(end, q);
-        if (insert_deadspace(allowed_deadspace, q, sz)) {
+	size_t sz = pointer_delta(end, q);
+	if (insert_deadspace(allowed_deadspace, q, sz)) {
           size_t compaction_max_size = pointer_delta(compact_end, compact_top);
 
           // This should only happen if a space in the young gen overflows the
@@ -198,19 +201,19 @@ void PSMarkSweepDecorator::precompact() {
           while (sz > compaction_max_size) {
             // First record the last compact_top
             dest->set_compaction_top(compact_top);
-
+            
             // Advance to the next compaction decorator
             advance_destination_decorator();
             dest = destination_decorator();
-
+            
             // Update compaction info
             start_array = dest->start_array();
             compact_top = dest->compaction_top();
             compact_end = dest->space()->end();
             assert(compact_top == dest->space()->bottom(), "Advanced to space already in use");
             assert(compact_end > compact_top, "Must always be space remaining");
-            compaction_max_size =
-              pointer_delta(compact_end, compact_top);
+	    compaction_max_size = 
+	      pointer_delta(compact_end, compact_top);
           }
 
           // store the forwarding pointer into the mark word
@@ -219,12 +222,12 @@ void PSMarkSweepDecorator::precompact() {
             assert(oop(q)->is_gc_marked(), "encoding the pointer should preserve the mark");
           } else {
             // if the object isn't moving we can just set the mark to the default
-            // Don't clear the mark since it's confuses parallel old
-            // verification.
-            if (!UseParallelOldGC || !VerifyParallelOldWithMarkSweep) {
-              // mark and handle it specially later on.
+	    // Don't clear the mark since it's confuses parallel old
+	    // verification.
+	    if (!UseParallelOldGC || !VerifyParallelOldWithMarkSweep) {
+              // mark and handle it specially later on.  
               oop(q)->init_mark();
-            }
+	    }
             assert(oop(q)->forwardee() == NULL, "should be forwarded to NULL");
           }
 
@@ -232,56 +235,56 @@ void PSMarkSweepDecorator::precompact() {
             // Update object start array
             if (start_array)
               start_array->allocate_block(compact_top);
-          }
+	  }
 
           debug_only(MarkSweep::register_live_oop(oop(q), sz));
           compact_top += sz;
-          assert(compact_top <= dest->space()->end(),
-            "Exceeding space in destination");
+          assert(compact_top <= dest->space()->end(), 
+	    "Exceeding space in destination");
 
-          q = end;
-          end_of_live = end;
-          continue;
-        }
+	  q = end;
+	  end_of_live = end;
+	  continue;
+	}
       }
 
-      /* for the previous LiveRange, record the end of the live objects. */
-      if (liveRange) {
-        liveRange->set_end(q);
-      }
-
-      /* record the current LiveRange object.
-       * liveRange->start() is overlaid on the mark word.
-       */
-      liveRange = (LiveRange*)q;
-      liveRange->set_start(end);
-      liveRange->set_end(end);
-
-      /* see if this is the first dead region. */
-      if (q < first_dead) {
-        first_dead = q;
-      }
-
-      /* move on to the next object */
-      q = end;
-    }
-  }
-
-  assert(q == t, "just checking");
-  if (liveRange != NULL) {
-    liveRange->set_end(q);
-  }
-  _end_of_live = end_of_live;
-  if (end_of_live < first_dead) {
-    first_dead = end_of_live;
-  }
-  _first_dead = first_dead;
-
+      /* for the previous LiveRange, record the end of the live objects. */  
+      if (liveRange) {                                                       
+	liveRange->set_end(q);                                               
+      }                                                                      
+                                                                             
+      /* record the current LiveRange object.                                
+       * liveRange->start() is overlaid on the mark word.                    
+       */                                                                    
+      liveRange = (LiveRange*)q;                                             
+      liveRange->set_start(end);                                             
+      liveRange->set_end(end);                                               
+                                                                             
+      /* see if this is the first dead region. */                            
+      if (q < first_dead) {                                                  
+	first_dead = q;                                                      
+      }                                                                      
+                                                                             
+      /* move on to the next object */                                       
+      q = end;                                                               
+    }                                                                        
+  }                                                                          
+                                                                             
+  assert(q == t, "just checking");                                           
+  if (liveRange != NULL) {                                                   
+    liveRange->set_end(q);                                                   
+  }                                                                          
+  _end_of_live = end_of_live;                                                
+  if (end_of_live < first_dead) {                                            
+    first_dead = end_of_live;                                                
+  }                                                                          
+  _first_dead = first_dead;                                                  
+        
   // Update compaction top
   dest->set_compaction_top(compact_top);
 }
 
-bool PSMarkSweepDecorator::insert_deadspace(ssize_t& allowed_deadspace_words,
+bool PSMarkSweepDecorator::insert_deadspace(ssize_t& allowed_deadspace_words, 
                                        HeapWord* q, size_t deadlength) {
   allowed_deadspace_words -= deadlength;
   if (allowed_deadspace_words >= 0) {
@@ -296,11 +299,11 @@ bool PSMarkSweepDecorator::insert_deadspace(ssize_t& allowed_deadspace_words,
                                             * (HeapWordSize/sizeof(jint))));
     } else {
       assert((int) deadlength == instanceOopDesc::header_size(),
-             "size for smallest fake dead object doesn't match");
+	     "size for smallest fake dead object doesn't match");
       oop(q)->set_klass(SystemDictionary::object_klass());
     }
     assert((int) deadlength == oop(q)->size(),
-           "make sure size for fake dead object match");
+	   "make sure size for fake dead object match");
     // Recall that we required "q == compaction_top".
     return true;
   } else {
@@ -330,11 +333,11 @@ void PSMarkSweepDecorator::adjust_pointers() {
 
       // point all the oops to the new location
       size_t size = oop(q)->adjust_pointers();
-
+	
       debug_only(MarkSweep::check_interior_pointers());
-
+      
       debug_only(MarkSweep::validate_live_oop(oop(q), size));
-
+      
       q += size;
     }
 
@@ -388,7 +391,7 @@ void PSMarkSweepDecorator::compact(bool mangle_free_space ) {
     // mark word during the previous pass, so we can't use is_gc_marked for the
     // traversal.
     HeapWord* const end = _first_dead;
-
+      
     while (q < end) {
       size_t size = oop(q)->size();
       assert(!oop(q)->is_gc_marked(), "should be unmarked (special dense prefix handling)");
@@ -397,7 +400,7 @@ void PSMarkSweepDecorator::compact(bool mangle_free_space ) {
       q += size;
     }
 #endif
-
+      
     if (_first_dead == t) {
       q = t;
     } else {

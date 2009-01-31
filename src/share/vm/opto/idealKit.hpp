@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //-----------------------------------------------------------------------------
@@ -60,7 +63,7 @@
 //       increment(i, ConI(1));
 //    } end_loop(); dead(i);
 //    bind(exit);
-//
+// 
 // See string_indexOf for a more complete example.
 
 class IdealKit;
@@ -109,7 +112,7 @@ class IdealKit: public StackObj {
   void do_memory_merge(Node* merging, Node* join);
   void clear(Node* m);                     // clear a cvstate
   void stop() { clear(_cvstate); }         // clear current cvstate
-  Node* delay_transform(Node* n);
+  Node* delay_transform(Node* n);          
   Node* transform(Node* n);                // gvn.transform or push node on delay list
   Node* promote_to_phi(Node* n, Node* reg);// Promote "n" to a phi on region "reg"
   bool was_promoted_to_phi(Node* n, Node* reg) {
@@ -130,7 +133,7 @@ class IdealKit: public StackObj {
 
   // Users should not care about slices only MergedMem so no access for them.
   Node* memory(uint alias_idx);
-
+ 
  public:
   IdealKit(PhaseGVN &gvn, Node* control, Node* memory, bool delay_all_transforms = false);
   ~IdealKit() {

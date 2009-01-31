@@ -19,13 +19,13 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.jdi;
 import com.sun.jdi.*;
 
-public class LocalVariableImpl extends MirrorImpl
+public class LocalVariableImpl extends MirrorImpl 
                                implements LocalVariable, ValueContainer
 {
     private final Method method;
@@ -46,7 +46,7 @@ public class LocalVariableImpl extends MirrorImpl
         this.scopeEnd = scopeEnd;
         this.name = name;
         this.signature = signature;
-        this.genericSignature = genericSignature;
+	this.genericSignature = genericSignature;
     }
 
     public boolean equals(Object obj) {
@@ -94,7 +94,7 @@ public class LocalVariableImpl extends MirrorImpl
     }
 
     public Type findType(String signature) throws ClassNotLoadedException {
-        ReferenceTypeImpl enclosing = (ReferenceTypeImpl)method.declaringType();
+        ReferenceTypeImpl enclosing = (ReferenceTypeImpl)method.declaringType(); 
         return enclosing.findType(signature);
     }
 
@@ -140,13 +140,13 @@ public class LocalVariableImpl extends MirrorImpl
         return slot;
     }
 
-    /*
+    /* 
      * Compilers/VMs can have byte code ranges for variables of the
      * same names that overlap. This is because the byte code ranges
-     * aren't necessarily scopes; they may have more to do with the
+     * aren't necessarily scopes; they may have more to do with the 
      * lifetime of the variable's slot, depending on implementation.
      *
-     * This method determines whether this variable hides an
+     * This method determines whether this variable hides an 
      * identically named variable; ie, their byte code ranges overlap
      * this one starts after the given one. If it returns true this
      * variable should be preferred when looking for a single variable
@@ -163,7 +163,8 @@ public class LocalVariableImpl extends MirrorImpl
     }
 
     public String toString() {
-       return name() + " in " + method.toString() +
+       return name() + " in " + method.toString() + 
               "@" + scopeStart.toString();
     }
 }
+

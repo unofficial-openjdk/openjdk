@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,17 +22,17 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // The markOop describes the header of an object.
 //
-// Note that the mark is not a real oop but just a word.
+// Note that the mark is not a real oop but just a word. 
 // It is placed in the oop hierarchy for historical reasons.
 //
 // Bit-format of an object header (most significant first):
 //
-//
+//  
 //  unused:0/25 hash:25/31 age:4 biased_lock:1 lock:2 = 32/64 bits
 //
 //  - hash contains the identity hash value: largest value is
@@ -131,8 +134,8 @@ class markOopDesc: public oopDesc {
 
 #ifdef _WIN64
     // These values are too big for Win64
-    const static uintptr_t hash_mask = right_n_bits(hash_bits);
-    const static uintptr_t hash_mask_in_place  =
+    const static uintptr_t hash_mask = right_n_bits(hash_bits); 
+    const static uintptr_t hash_mask_in_place  = 
                             (address_word)hash_mask << hash_shift;
 #endif
 
@@ -205,14 +208,14 @@ class markOopDesc: public oopDesc {
 
   // Special temporary state of the markOop while being inflated.
   // Code that looks at mark outside a lock need to take this into account.
-  bool is_being_inflated() const { return (value() == 0); }
+  bool is_being_inflated() const { return (value() == 0); } 
 
-  // Distinguished markword value - used when inflating over
+  // Distinguished markword value - used when inflating over 
   // an existing stacklock.  0 indicates the markword is "BUSY".
   // Lockword mutators that use a LD...CAS idiom should always
   // check for and avoid overwriting a 0 value installed by some
   // other thread.  (They should spin or block instead.  The 0 value
-  // is transient and *should* be short-lived).
+  // is transient and *should* be short-lived). 
   static markOop INFLATING() { return (markOop) 0; }    // inflate-in-progress
 
   // Should this header be preserved during GC?
@@ -258,7 +261,7 @@ class markOopDesc: public oopDesc {
   }
   inline bool must_be_preserved_with_bias_for_cms_scavenge(klassOop klass_of_obj_containing_mark) const;
 
-  // WARNING: The following routines are used EXCLUSIVELY by
+  // WARNING: The following routines are used EXCLUSIVELY by 
   // synchronization functions. They are not really gc safe.
   // They must get updated if markOop layout get changed.
   markOop set_unlocked() const {
@@ -297,7 +300,7 @@ class markOopDesc: public oopDesc {
     tmp |= ((hash & hash_mask) << hash_shift);
     return (markOop)tmp;
   }
-  // it is only used to be stored into BasicLock as the
+  // it is only used to be stored into BasicLock as the 
   // indicator that the lock is using heavyweight monitor
   static markOop unused_mark() {
     return (markOop) marked_value;
@@ -318,9 +321,9 @@ class markOopDesc: public oopDesc {
     assert(bias_epoch <= max_bias_epoch, "bias epoch too large");
     return (markOop) (tmp | (bias_epoch << epoch_shift) | (age << age_shift) | biased_lock_pattern);
   }
-
+  
   // used to encode pointers during GC
-  markOop clear_lock_bits() { return markOop(value() & ~lock_mask_in_place); }
+  markOop clear_lock_bits() { return markOop(value() & ~lock_mask_in_place); }  
 
   // age operations
   markOop set_marked()   { return markOop((value() & ~lock_mask_in_place) | marked_value); }
@@ -333,12 +336,12 @@ class markOopDesc: public oopDesc {
   markOop incr_age()          const { return age() == max_age ? markOop(this) : set_age(age() + 1); }
 
   // hash operations
-  intptr_t hash() const {
+  intptr_t hash() const {     
     return mask_bits(value() >> hash_shift, hash_mask);
   }
-
-  bool has_no_hash() const {
-    return hash() == no_hash;
+  
+  bool has_no_hash() const { 
+    return hash() == no_hash; 
   }
 
   // Prototype mark for initialization

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2002-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 private:
@@ -28,7 +31,7 @@ private:
 public:
 
    enum pd_Constants {
-     flushed = 1                                 // winodows have flushed
+     flushed = 1                                 // winodows have flushed 
    };
 
   int flags(void)                                { return _flags; }
@@ -51,7 +54,7 @@ public:
   }
 
   void copy(JavaFrameAnchor* src) {
-    // In order to make sure the transition state is valid for "this"
+    // In order to make sure the transition state is valid for "this" 
     // We must clear _last_Java_sp before copying the rest of the new data
     //
     // Hack Alert: Temporary bugfix for 4717480/4721647
@@ -69,7 +72,7 @@ public:
 
   // Is stack walkable
   inline bool walkable( void) {
-        return _flags & flushed;
+	return _flags & flushed;
   }
 
   void make_walkable(JavaThread* thread);
@@ -80,7 +83,7 @@ public:
 private:
 
   intptr_t* last_Java_sp() const {
-    // _last_Java_sp will always be a an unbiased stack pointer
+    // _last_Java_sp will always be a an unbiased stack pointer 
     // if is is biased then some setter screwed up. This is
     // deadly.
 #ifdef _LP64

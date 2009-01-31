@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
   //
@@ -37,10 +40,11 @@
   static jint  atomic_add_bootstrap         (jint,  volatile jint*);
   static void  fence_bootstrap              ();
 
-  static void setup_fpu() {}
+  static void setup_fpu() {} 
 
   static bool is_allocatable(size_t bytes);
 
   // Used to register dynamic code cache area with the OS
   // Note: Currently only used in 64 bit Windows implementations
   static bool register_code_area(char *low, char *high) { return true; }
+

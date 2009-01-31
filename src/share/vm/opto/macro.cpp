@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -202,11 +205,11 @@ Node* PhaseMacroExpand::make_store(Node* ctl, Node* mem, Node* base, int offset,
 }
 
 //=============================================================================
-//
-//                              A L L O C A T I O N
+// 
+//                              A L L O C A T I O N 
 //
 // Allocation attempts to be fast in the case of frequent small objects.
-// It breaks down like this:
+// It breaks down like this: 
 //
 // 1) Size in doublewords is computed.  This is a constant for objects and
 // variable for most arrays.  Doubleword units are used to avoid size
@@ -233,7 +236,7 @@ Node* PhaseMacroExpand::make_store(Node* ctl, Node* mem, Node* base, int offset,
 // 5) If NOT using TLABs, Store-Conditional the adjusted heap top back
 // down.  If contended, repeat at step 3.  If using TLABs normal-store
 // adjusted heap top back down; there is no contention.
-//
+// 
 // 6) If !ZeroTLAB then Bulk-clear the object/array.  Fill in klass & mark
 // fields.
 //
@@ -365,10 +368,10 @@ void PhaseMacroExpand::expand_allocate_common(
       transform_later(contended_region);
       transform_later(contended_phi_rawmem);
     }
-
-    // Load(-locked) the heap top.
+  
+    // Load(-locked) the heap top.  
     // See note above concerning the control input when using a TLAB
-    Node *old_eden_top = UseTLAB
+    Node *old_eden_top = UseTLAB 
       ? new (C, 3) LoadPNode     ( ctrl, contended_phi_rawmem, eden_top_adr, TypeRawPtr::BOTTOM, TypeRawPtr::BOTTOM )
       : new (C, 3) LoadPLockedNode( contended_region, contended_phi_rawmem, eden_top_adr );
 
@@ -383,7 +386,7 @@ void PhaseMacroExpand::expand_allocate_common(
     transform_later(needgc_bol);
     IfNode *needgc_iff = new (C, 2) IfNode(contended_region, needgc_bol, PROB_UNLIKELY_MAG(4), COUNT_UNKNOWN );
     transform_later(needgc_iff);
-
+    
     // Plug the failing-heap-space-need-gc test into the slow-path region
     Node *needgc_true = new (C, 1) IfTrueNode( needgc_iff );
     transform_later(needgc_true);
@@ -494,7 +497,10 @@ void PhaseMacroExpand::expand_allocate_common(
 
   call->init_req(TypeFunc::Parms+0, klass_node);
   if (length != NULL) {
-    call->init_req(TypeFunc::Parms+1, length);
+    assert(alloc->in(AllocateNode::ALength) == length, "");
+    Node* raw_length = alloc->in(AllocateNode::ALengthRaw);
+    // slow-call always gets the pre-casted value of length
+    call->init_req(TypeFunc::Parms+1, raw_length);
   }
 
   // Copy debug information and adjust JVMState information, then replace
@@ -679,31 +685,31 @@ PhaseMacroExpand::initialize_object(AllocateNode* alloc,
 }
 
 // Generate prefetch instructions for next allocations.
-Node* PhaseMacroExpand::prefetch_allocation(Node* i_o, Node*& needgc_false,
-                                        Node*& contended_phi_rawmem,
-                                        Node* old_eden_top, Node* new_eden_top,
+Node* PhaseMacroExpand::prefetch_allocation(Node* i_o, Node*& needgc_false, 
+                                        Node*& contended_phi_rawmem, 
+                                        Node* old_eden_top, Node* new_eden_top, 
                                         Node* length) {
-   if( UseTLAB && AllocatePrefetchStyle == 2 ) {
+   if( UseTLAB && AllocatePrefetchStyle == 2 ) { 
       // Generate prefetch allocation with watermark check.
-      // As an allocation hits the watermark, we will prefetch starting
+      // As an allocation hits the watermark, we will prefetch starting 
       // at a "distance" away from watermark.
       enum { fall_in_path = 1, pf_path = 2 };
 
       Node *pf_region = new (C, 3) RegionNode(3);
-      Node *pf_phi_rawmem = new (C, 3) PhiNode( pf_region, Type::MEMORY,
+      Node *pf_phi_rawmem = new (C, 3) PhiNode( pf_region, Type::MEMORY, 
                                                 TypeRawPtr::BOTTOM );
       // I/O is used for Prefetch
-      Node *pf_phi_abio = new (C, 3) PhiNode( pf_region, Type::ABIO );
+      Node *pf_phi_abio = new (C, 3) PhiNode( pf_region, Type::ABIO ); 
 
       Node *thread = new (C, 1) ThreadLocalNode();
       transform_later(thread);
 
-      Node *eden_pf_adr = new (C, 4) AddPNode( top()/*not oop*/, thread,
+      Node *eden_pf_adr = new (C, 4) AddPNode( top()/*not oop*/, thread, 
                    _igvn.MakeConX(in_bytes(JavaThread::tlab_pf_top_offset())) );
       transform_later(eden_pf_adr);
 
-      Node *old_pf_wm = new (C, 3) LoadPNode( needgc_false,
-                                   contended_phi_rawmem, eden_pf_adr,
+      Node *old_pf_wm = new (C, 3) LoadPNode( needgc_false, 
+                                   contended_phi_rawmem, eden_pf_adr, 
                                    TypeRawPtr::BOTTOM, TypeRawPtr::BOTTOM );
       transform_later(old_pf_wm);
 
@@ -712,10 +718,10 @@ Node* PhaseMacroExpand::prefetch_allocation(Node* i_o, Node*& needgc_false,
       transform_later(need_pf_cmp);
       Node *need_pf_bol = new (C, 2) BoolNode( need_pf_cmp, BoolTest::ge );
       transform_later(need_pf_bol);
-      IfNode *need_pf_iff = new (C, 2) IfNode( needgc_false, need_pf_bol,
+      IfNode *need_pf_iff = new (C, 2) IfNode( needgc_false, need_pf_bol, 
                                        PROB_UNLIKELY_MAG(4), COUNT_UNKNOWN );
       transform_later(need_pf_iff);
-
+      
       // true node, add prefetchdistance
       Node *need_pf_true = new (C, 1) IfTrueNode( need_pf_iff );
       transform_later(need_pf_true);
@@ -723,13 +729,13 @@ Node* PhaseMacroExpand::prefetch_allocation(Node* i_o, Node*& needgc_false,
       Node *need_pf_false = new (C, 1) IfFalseNode( need_pf_iff );
       transform_later(need_pf_false);
 
-      Node *new_pf_wmt = new (C, 4) AddPNode( top(), old_pf_wm,
+      Node *new_pf_wmt = new (C, 4) AddPNode( top(), old_pf_wm, 
                                     _igvn.MakeConX(AllocatePrefetchDistance) );
       transform_later(new_pf_wmt );
       new_pf_wmt->set_req(0, need_pf_true);
 
-      Node *store_new_wmt = new (C, 4) StorePNode( need_pf_true,
-                                       contended_phi_rawmem, eden_pf_adr,
+      Node *store_new_wmt = new (C, 4) StorePNode( need_pf_true, 
+                                       contended_phi_rawmem, eden_pf_adr, 
                                        TypeRawPtr::BOTTOM, new_pf_wmt );
       transform_later(store_new_wmt);
 
@@ -743,7 +749,7 @@ Node* PhaseMacroExpand::prefetch_allocation(Node* i_o, Node*& needgc_false,
       uint distance = 0;
 
       for ( uint i = 0; i < lines; i++ ) {
-        prefetch_adr = new (C, 4) AddPNode( old_pf_wm, new_pf_wmt,
+        prefetch_adr = new (C, 4) AddPNode( old_pf_wm, new_pf_wmt, 
                                             _igvn.MakeConX(distance) );
         transform_later(prefetch_adr);
         prefetch = new (C, 3) PrefetchWriteNode( i_o, prefetch_adr );
@@ -775,11 +781,11 @@ Node* PhaseMacroExpand::prefetch_allocation(Node* i_o, Node*& needgc_false,
       uint step_size = AllocatePrefetchStepSize;
       uint distance = AllocatePrefetchDistance;
       for ( uint i = 0; i < lines; i++ ) {
-        prefetch_adr = new (C, 4) AddPNode( old_eden_top, new_eden_top,
+        prefetch_adr = new (C, 4) AddPNode( old_eden_top, new_eden_top, 
                                             _igvn.MakeConX(distance) );
         transform_later(prefetch_adr);
         prefetch = new (C, 3) PrefetchWriteNode( i_o, prefetch_adr );
-        // Do not let it float too high, since if eden_top == eden_end,
+        // Do not let it float too high, since if eden_top == eden_end, 
         // both might be null.
         if( i == 0 ) { // Set control for first prefetch, next follows it
           prefetch->init_req(0, needgc_false);
@@ -853,12 +859,12 @@ void PhaseMacroExpand::expand_lock_node(LockNode *lock) {
 
   // Make the merge point
   Node *region = new (C, 3) RegionNode(3);
-
+  
   Node *bol = transform_later(new (C, 2) BoolNode(flock,BoolTest::ne));
   Node *iff = new (C, 2) IfNode( ctrl, bol, PROB_MIN, COUNT_UNKNOWN );
   // Optimize test; set region slot 2
   Node *slow_path = opt_iff(region,iff);
-
+  
   // Make slow path call
   CallNode *call = make_slow_call( (CallNode *) lock, OptoRuntime::complete_monitor_enter_Type(), OptoRuntime::complete_monitor_locking_Java(), NULL, slow_path, obj, box );
 
@@ -922,7 +928,7 @@ void PhaseMacroExpand::expand_unlock_node(UnlockNode *unlock) {
   Node *slow_path = opt_iff(region,iff);
 
   CallNode *call = make_slow_call( (CallNode *) unlock, OptoRuntime::complete_monitor_exit_Type(), CAST_FROM_FN_PTR(address, SharedRuntime::complete_monitor_unlocking_C), "complete_monitor_unlocking_C", slow_path, obj, box );
-
+  
   extract_call_projections(call);
 
   assert ( _ioproj_fallthrough == NULL && _ioproj_catchall == NULL &&
@@ -993,3 +999,4 @@ bool PhaseMacroExpand::expand_macro_nodes() {
   _igvn.optimize();
   return false;
 }
+

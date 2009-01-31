@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class JavaThread;
@@ -32,11 +35,11 @@ class JavaThread;
 // frames.  Hence, it must always be passed in as an argument to
 // frame::sender(RegisterMap*).
 //
-// In particular,
+// In particular, 
 //   1) It provides access to the thread for which the stack belongs.  The
 //      thread object is needed in order to get sender of a deoptimized frame.
 //
-//   2) It is used to pass information from a callee frame to its caller
+//   2) It is used to pass information from a callee frame to its caller 
 //      frame about how the frame should be traversed.  This is used to let
 //      the caller frame take care of calling oops-do of out-going
 //      arguments, when the callee frame is not instantiated yet.  This
@@ -46,14 +49,14 @@ class JavaThread;
 //      this is hidden by using the StackFrameStream.)  This is used when
 //      doing follow_oops and oops_do.
 //
-//   3) The RegisterMap keeps track of the values of callee-saved registers
+//   3) The RegisterMap keeps track of the values of callee-saved registers 
 //      from frame to frame (hence, the name).  For some stack traversal the
 //      values of the callee-saved registers does not matter, e.g., if you
 //      only need the static properies such as frame type, pc, and such.
 //      Updating of the RegisterMap can be turned off by instantiating the
 //      register map as: RegisterMap map(thread, false);
 
-class RegisterMap : public StackObj {
+class RegisterMap : public StackObj { 
  public:
     typedef julong LocationValidType;
   enum {
@@ -64,7 +67,7 @@ class RegisterMap : public StackObj {
  private:
   intptr_t*    _location[reg_count];    // Location of registers (intptr_t* looks better than address in the debugger)
   LocationValidType _location_valid[location_valid_size];
-  bool        _include_argument_oops;   // Should include argument_oop marked locations for compiler
+  bool        _include_argument_oops;   // Should include argument_oop marked locations for compiler  
   JavaThread* _thread;                  // Reference to current thread
   bool        _update_map;              // Tells if the register map need to be
                                         // updated when traversing the stack
@@ -79,7 +82,7 @@ class RegisterMap : public StackObj {
   debug_only(intptr_t* _update_for_id;) // Assert that RegisterMap is not updated twice for same frame
   RegisterMap(JavaThread *thread, bool update_map = true);
   RegisterMap(const RegisterMap* map);
-
+    
   address location(VMReg reg) const {
     int index = reg->value() / location_valid_type_size;
     assert(0 <= reg->value() && reg->value() < reg_count, "range check");

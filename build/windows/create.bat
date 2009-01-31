@@ -40,22 +40,13 @@ cl 2>&1 | grep "IA-64" >NUL
 if %errorlevel% == 0 goto isia64
 cl 2>&1 | grep "AMD64" >NUL
 if %errorlevel% == 0 goto amd64
-set ARCH=x86
-set BUILDARCH=i486
-set Platform_arch=x86
-set Platform_arch_model=x86_32
+set ARCH=i486
 goto end
 :amd64
-set ARCH=x86
-set BUILDARCH=amd64
-set Platform_arch=x86
-set Platform_arch_model=x86_64
+set ARCH=amd64
 goto end
 :isia64
 set ARCH=ia64
-set BUILDARCH=ia64
-set Platform_arch=ia64
-set Platform_arch_model=ia64
 :end
 
 setlocal
@@ -143,9 +134,6 @@ echo HOTSPOTWORKSPACE=%HotSpotWorkSpace%   >>    %HotSpotBuildSpace%\%%i\local.m
 echo HOTSPOTBUILDSPACE=%HotSpotBuildSpace% >>    %HotSpotBuildSpace%\%%i\local.make
 echo HOTSPOTJDKDIST=%HotSpotJDKDist%       >>    %HotSpotBuildSpace%\%%i\local.make
 echo ARCH=%ARCH%                           >>    %HotSpotBuildSpace%\%%i\local.make
-echo BUILDARCH=%BUILDARCH%                 >>    %HotSpotBuildSpace%\%%i\local.make
-echo Platform_arch=%Platform_arch%         >>    %HotSpotBuildSpace%\%%i\local.make
-echo Platform_arch_model=%Platform_arch_model% >>    %HotSpotBuildSpace%\%%i\local.make
 
 REM build config specific stuff
 

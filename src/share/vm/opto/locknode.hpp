@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //------------------------------BoxLockNode------------------------------------
@@ -43,8 +46,8 @@ public:
   static OptoReg::Name stack_slot(Node* box_node);
 
 #ifndef PRODUCT
-  virtual void format( PhaseRegAlloc *, outputStream *st ) const;
-  virtual void dump_spec(outputStream *st) const { st->print("  Lock %d",_slot); }
+  virtual void format( PhaseRegAlloc * ) const;
+  virtual void dump_spec() const { tty->print("  Lock %d",_slot); }
 #endif
 };
 
@@ -95,3 +98,4 @@ public:
   const Type *sub(const Type *t1, const Type *t2) const { return TypeInt::CC;}
 
 };
+

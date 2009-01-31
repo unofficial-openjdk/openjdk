@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This is the implementation of a very simple dbx import module which
@@ -241,7 +244,7 @@ ServiceabilityAgentDbxModule::install() {
   // This is fairly painful. Since dbx doesn't currently load
   // libthread_db with RTLD_GLOBAL, we can't just use RTLD_DEFAULT for
   // the argument to dlsym. Instead, we have to use rtld_db to search
-  // through the loaded objects in the target process for libthread.so and
+  // through the loaded objects in the target process for libthread.so and 
 
   // Try rtld_db
   if (rd_init(RD_VERSION) != RD_OK) {
@@ -378,7 +381,7 @@ ServiceabilityAgentDbxModule::run() {
     close(listening_socket);
     return false;
   }
-
+  
   sockaddr_in server_address;
   // Build the server address. We can bind the listening socket to the
   // INADDR_ANY internet address.
@@ -473,9 +476,9 @@ ServiceabilityAgentDbxModule::run() {
 
     // FIXME: should have some way of synchronizing these commands
     // between the C and Java sources.
-
+    
     NEEDS_CLEANUP;
-
+    
     // Do a blocking read of a line from the socket.
     char *input_buffer = myComm.readLine();
     if (input_buffer == NULL) {
@@ -535,7 +538,7 @@ ServiceabilityAgentDbxModule::run() {
   return true;
 }
 
-void
+void 
 ServiceabilityAgentDbxModule::cleanup(int client_socket) {
   shutdown(client_socket, 2);
   close(client_socket);
@@ -690,7 +693,7 @@ ServiceabilityAgentDbxModule::handlePeek(char* data) {
             myComm.writeBinBuf(buf, strideLen);
             bufIdx = 0;
           } else {
-            // Start gathering data to write.
+            // Start gathering data to write. 
             myComm.writeBinChar(0);
           }
           strideLen = 0;
@@ -948,7 +951,7 @@ ServiceabilityAgentDbxModule::scanUnsignedInt(char** data, unsigned int* num) {
     *num *= 10;
     *num += cur - '0';
     ++*data;
-  }
+  }  
 
   return true;
 }

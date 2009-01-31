@@ -61,7 +61,7 @@ include $(GAMMADIR)/make/defs.make
 endif
 include $(GAMMADIR)/build/$(OSNAME)/makefiles/rules.make
 
-ifndef LP64
+ifneq ($(SRCARCH), amd64)
 ifndef CC_INTERP
 FORCE_TIERED=1
 endif
@@ -166,6 +166,8 @@ endif
 # in the build.sh script:
 TARGETS           = debug jvmg fastdebug optimized profiled product
 
+MFLAGS += HOTSPOT_RELEASE_VERSION=$(HOTSPOT_RELEASE_VERSION) HOTSPOT_BUILD_VERSION=$(HOTSPOT_BUILD_VERSION) JRE_RELEASE_VERSION=$(JRE_RELEASE_VERSION) SA_BUILD_VERSION=$(SA_BUILD_VERSION)
+
 SUBDIR_DOCS       = $(OSNAME)_$(BUILDARCH)_docs
 SUBDIRS_C1        = $(addprefix $(OSNAME)_$(BUILDARCH)_compiler1/,$(TARGETS))
 SUBDIRS_C2        = $(addprefix $(OSNAME)_$(BUILDARCH)_compiler2/,$(TARGETS))
@@ -179,8 +181,6 @@ TARGETS_CORE      = $(addsuffix core,$(TARGETS))
 
 BUILDTREE_MAKE    = $(GAMMADIR)/build/$(OSNAME)/makefiles/buildtree.make
 BUILDTREE_VARS    = GAMMADIR=$(GAMMADIR) OS_FAMILY=$(OSNAME) ARCH=$(SRCARCH) BUILDARCH=$(BUILDARCH) LIBARCH=$(LIBARCH)
-BUILDTREE_VARS   += HOTSPOT_RELEASE_VERSION=$(HOTSPOT_RELEASE_VERSION) HOTSPOT_BUILD_VERSION=$(HOTSPOT_BUILD_VERSION) JRE_RELEASE_VERSION=$(JRE_RELEASE_VERSION)
-
 BUILDTREE         = $(MAKE) -f $(BUILDTREE_MAKE) $(BUILDTREE_VARS)
 
 #-------------------------------------------------------------------------------

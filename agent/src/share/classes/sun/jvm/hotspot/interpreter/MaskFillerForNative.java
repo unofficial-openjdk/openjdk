@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.interpreter;
@@ -36,7 +36,7 @@ class MaskFillerForNative extends NativeSignatureIterator {
     this.mask = mask;
     this.size = maskSize;
   }
-
+  
   public void passInt()    { /* ignore */ }
   public void passLong()   { /* ignore */ }
   public void passFloat()  { /* ignore */ }
@@ -46,7 +46,7 @@ class MaskFillerForNative extends NativeSignatureIterator {
   public void generate() {
     super.iterate();
   }
-
+  
   //----------------------------------------------------------------------
   // Internals only below this point
   //

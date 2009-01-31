@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,17 +22,17 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
 #include "incls/_psPromotionManager.cpp.incl"
 
-PSPromotionManager**         PSPromotionManager::_manager_array = NULL;
-OopStarTaskQueueSet*         PSPromotionManager::_stack_array_depth = NULL;
-OopTaskQueueSet*             PSPromotionManager::_stack_array_breadth = NULL;
-PSOldGen*                    PSPromotionManager::_old_gen = NULL;
-MutableSpace*                PSPromotionManager::_young_space = NULL;
+PSPromotionManager** PSPromotionManager::_manager_array = NULL;
+OopStarTaskQueueSet* PSPromotionManager::_stack_array_depth = NULL;
+OopTaskQueueSet*     PSPromotionManager::_stack_array_breadth = NULL;
+PSOldGen*            PSPromotionManager::_old_gen = NULL;
+MutableSpace*        PSPromotionManager::_young_space = NULL;
 
 void PSPromotionManager::initialize() {
   ParallelScavengeHeap* heap = (ParallelScavengeHeap*)Universe::heap();
@@ -41,7 +44,7 @@ void PSPromotionManager::initialize() {
   assert(_manager_array == NULL, "Attempt to initialize twice");
   _manager_array = NEW_C_HEAP_ARRAY(PSPromotionManager*, ParallelGCThreads+1 );
   guarantee(_manager_array != NULL, "Could not initialize promotion manager");
-
+  
   if (UseDepthFirstScavengeOrder) {
     _stack_array_depth = new OopStarTaskQueueSet(ParallelGCThreads);
     guarantee(_stack_array_depth != NULL, "Count not initialize promotion manager");
@@ -62,9 +65,10 @@ void PSPromotionManager::initialize() {
   }
 
   // The VMThread gets its own PSPromotionManager, which is not available
-  // for work stealing.
+  // for work stealing. 
   _manager_array[ParallelGCThreads] = new PSPromotionManager();
   guarantee(_manager_array[ParallelGCThreads] != NULL, "Could not create PSPromotionManager");
+
 }
 
 PSPromotionManager* PSPromotionManager::gc_thread_promotion_manager(int index) {
@@ -90,10 +94,6 @@ void PSPromotionManager::pre_scavenge() {
 }
 
 void PSPromotionManager::post_scavenge() {
-#if PS_PM_STATS
-  print_stats();
-#endif // PS_PM_STATS
-
   for(uint i=0; i<ParallelGCThreads+1; i++) {
     PSPromotionManager* manager = manager_array(i);
 
@@ -137,38 +137,6 @@ void PSPromotionManager::post_scavenge() {
   }
 }
 
-#if PS_PM_STATS
-
-void
-PSPromotionManager::print_stats(uint i) {
-  tty->print_cr("---- GC Worker %2d Stats", i);
-  tty->print_cr("    total pushes            %8d", _total_pushes);
-  tty->print_cr("    masked pushes           %8d", _masked_pushes);
-  tty->print_cr("    overflow pushes         %8d", _overflow_pushes);
-  tty->print_cr("    max overflow length     %8d", _max_overflow_length);
-  tty->print_cr("");
-  tty->print_cr("    arrays chunked          %8d", _arrays_chunked);
-  tty->print_cr("    array chunks processed  %8d", _array_chunks_processed);
-  tty->print_cr("");
-  tty->print_cr("    total steals            %8d", _total_steals);
-  tty->print_cr("    masked steals           %8d", _masked_steals);
-  tty->print_cr("");
-}
-
-void
-PSPromotionManager::print_stats() {
-  tty->print_cr("== GC Tasks Stats (%s), GC %3d",
-                (UseDepthFirstScavengeOrder) ? "Depth-First" : "Breadth-First",
-                Universe::heap()->total_collections());
-
-  for (uint i = 0; i < ParallelGCThreads+1; ++i) {
-    PSPromotionManager* manager = manager_array(i);
-    manager->print_stats(i);
-  }
-}
-
-#endif // PS_PM_STATS
-
 PSPromotionManager::PSPromotionManager() {
   ParallelScavengeHeap* heap = (ParallelScavengeHeap*)Universe::heap();
   assert(heap->kind() == CollectedHeap::ParallelScavengeHeap, "Sanity");
@@ -201,10 +169,6 @@ PSPromotionManager::PSPromotionManager() {
                                      (uint) (queue_size / 4));
   }
 
-  _array_chunk_size = ParGCArrayScanChunk;
-  // let's choose 1.5x the chunk size
-  _min_array_size_for_chunking = 3 * _array_chunk_size / 2;
-
   reset();
 }
 
@@ -225,23 +189,11 @@ void PSPromotionManager::reset() {
   lab_base = old_gen()->object_space()->top();
   _old_lab.initialize(MemRegion(lab_base, (size_t)0));
   _old_gen_is_full = false;
-
+  
   _prefetch_queue.clear();
-
-#if PS_PM_STATS
-  _total_pushes = 0;
-  _masked_pushes = 0;
-  _overflow_pushes = 0;
-  _max_overflow_length = 0;
-  _arrays_chunked = 0;
-  _array_chunks_processed = 0;
-  _total_steals = 0;
-  _masked_steals = 0;
-#endif // PS_PM_STATS
 }
 
 void PSPromotionManager::drain_stacks_depth(bool totally_drain) {
-  assert(depth_first(), "invariant");
   assert(overflow_stack_depth() != NULL, "invariant");
   totally_drain = totally_drain || _totally_drain;
 
@@ -260,21 +212,21 @@ void PSPromotionManager::drain_stacks_depth(bool totally_drain) {
     // claimed stack while we work.
     while(!overflow_stack_depth()->is_empty()) {
       p = overflow_stack_depth()->pop();
-      process_popped_location_depth(p);
+      PSScavenge::copy_and_push_safe_barrier(this, p);
     }
 
     if (totally_drain) {
       while (claimed_stack_depth()->pop_local(p)) {
-        process_popped_location_depth(p);
+	PSScavenge::copy_and_push_safe_barrier(this, p);
       }
     } else {
       while (claimed_stack_depth()->size() > _target_stack_size &&
-             claimed_stack_depth()->pop_local(p)) {
-        process_popped_location_depth(p);
+	     claimed_stack_depth()->pop_local(p)) {
+	PSScavenge::copy_and_push_safe_barrier(this, p);
       }
     }
   } while( (totally_drain && claimed_stack_depth()->size() > 0) ||
-           (overflow_stack_depth()->length() > 0) );
+	   (overflow_stack_depth()->length() > 0) );
 
   assert(!totally_drain || claimed_stack_empty(), "Sanity");
   assert(totally_drain ||
@@ -284,7 +236,6 @@ void PSPromotionManager::drain_stacks_depth(bool totally_drain) {
 }
 
 void PSPromotionManager::drain_stacks_breadth(bool totally_drain) {
-  assert(!depth_first(), "invariant");
   assert(overflow_stack_breadth() != NULL, "invariant");
   totally_drain = totally_drain || _totally_drain;
 
@@ -309,17 +260,17 @@ void PSPromotionManager::drain_stacks_breadth(bool totally_drain) {
     if (totally_drain) {
       // obj is a reference!!!
       while (claimed_stack_breadth()->pop_local(obj)) {
-        // It would be nice to assert about the type of objects we might
-        // pop, but they can come from anywhere, unfortunately.
-        obj->copy_contents(this);
+	// It would be nice to assert about the type of objects we might
+	// pop, but they can come from anywhere, unfortunately.
+	obj->copy_contents(this);
       }
     } else {
       // obj is a reference!!!
       while (claimed_stack_breadth()->size() > _target_stack_size &&
-             claimed_stack_breadth()->pop_local(obj)) {
-        // It would be nice to assert about the type of objects we might
-        // pop, but they can come from anywhere, unfortunately.
-        obj->copy_contents(this);
+	     claimed_stack_breadth()->pop_local(obj)) {
+	// It would be nice to assert about the type of objects we might
+	// pop, but they can come from anywhere, unfortunately.
+	obj->copy_contents(this);
       }
     }
 
@@ -329,7 +280,7 @@ void PSPromotionManager::drain_stacks_breadth(bool totally_drain) {
       flush_prefetch_queue();
     }
   } while((totally_drain && claimed_stack_breadth()->size() > 0) ||
-          (overflow_stack_breadth()->length() > 0));
+	  (overflow_stack_breadth()->length() > 0));
 
   assert(!totally_drain || claimed_stack_empty(), "Sanity");
   assert(totally_drain ||
@@ -347,7 +298,7 @@ void PSPromotionManager::flush_labs() {
   assert(!_young_lab.is_flushed() || _young_gen_is_full, "Sanity");
   if (!_young_lab.is_flushed())
     _young_lab.flush();
-
+ 
   assert(!_old_lab.is_flushed() || _old_gen_is_full, "Sanity");
   if (!_old_lab.is_flushed())
     _old_lab.flush();
@@ -368,7 +319,7 @@ oop PSPromotionManager::copy_to_survivor_space(oop o, bool depth_first) {
   assert(PSScavenge::should_scavenge(o), "Sanity");
 
   oop new_obj = NULL;
-
+  
   // NOTE! We must be very careful with any methods that access the mark
   // in o. There may be multiple threads racing on it, and it may be forwarded
   // at any time. Do not use oop methods for accessing the mark!
@@ -394,7 +345,7 @@ oop PSPromotionManager::copy_to_survivor_space(oop o, bool depth_first) {
         } else {
           // Flush and fill
           _young_lab.flush();
-
+          
           HeapWord* lab_base = young_space()->cas_allocate(YoungPLABSize);
           if (lab_base != NULL) {
             _young_lab.initialize(MemRegion(lab_base, YoungPLABSize));
@@ -406,14 +357,14 @@ oop PSPromotionManager::copy_to_survivor_space(oop o, bool depth_first) {
         }
       }
     }
-
+    
     // Otherwise try allocating obj tenured
     if (new_obj == NULL) {
-#ifndef PRODUCT
+#ifndef	PRODUCT
       if (Universe::heap()->promotion_should_fail()) {
-        return oop_promotion_failed(o, test_mark);
+	return oop_promotion_failed(o, test_mark);
       }
-#endif  // #ifndef PRODUCT
+#endif	// #ifndef PRODUCT
 
       new_obj = (oop) _old_lab.allocate(new_obj_size);
       new_obj_is_tenured = true;
@@ -427,7 +378,7 @@ oop PSPromotionManager::copy_to_survivor_space(oop o, bool depth_first) {
           } else {
             // Flush and fill
             _old_lab.flush();
-
+            
             HeapWord* lab_base = old_gen()->cas_allocate(OldPLABSize);
             if(lab_base != NULL) {
               _old_lab.initialize(MemRegion(lab_base, OldPLABSize));
@@ -454,43 +405,28 @@ oop PSPromotionManager::copy_to_survivor_space(oop o, bool depth_first) {
 
     // Copy obj
     Copy::aligned_disjoint_words((HeapWord*)o, (HeapWord*)new_obj, new_obj_size);
-
+    
     // Now we have to CAS in the header.
     if (o->cas_forward_to(new_obj, test_mark)) {
       // We won any races, we "own" this object.
       assert(new_obj == o->forwardee(), "Sanity");
-
+      
       // Increment age if obj still in new generation. Now that
       // we're dealing with a markOop that cannot change, it is
       // okay to use the non mt safe oop methods.
-      if (!new_obj_is_tenured) {
+      if (!new_obj_is_tenured) { 
         new_obj->incr_age();
         assert(young_space()->contains(new_obj), "Attempt to push non-promoted obj");
       }
 
       if (depth_first) {
-        // Do the size comparison first with new_obj_size, which we
-        // already have. Hopefully, only a few objects are larger than
-        // _min_array_size_for_chunking, and most of them will be arrays.
-        // So, the is->objArray() test would be very infrequent.
-        if (new_obj_size > _min_array_size_for_chunking &&
-            new_obj->is_objArray() &&
-            PSChunkLargeArrays) {
-          // we'll chunk it
-#if PS_PM_STATS
-          ++_arrays_chunked;
-#endif // PS_PM_STATS
-          oop* const masked_o = mask_chunked_array_oop(o);
-          push_depth(masked_o);
-#if PS_PM_STATS
-          ++_masked_pushes;
-#endif // PS_PM_STATS
-        } else {
-          // we'll just push its contents
-          new_obj->push_contents(this);
-        }
+	new_obj->push_contents(this);
       } else {
-        push_breadth(new_obj);
+	// If we loop too many times, handle_stack_overflow will assert.
+	// It may be worth adding loop count asserts anyway.
+	if (!claimed_stack_breadth()->push(new_obj)) {
+	  overflow_stack_breadth()->push(new_obj);
+	}
       }
     }  else {
       // We lost, someone else "owns" this object
@@ -502,7 +438,7 @@ oop PSPromotionManager::copy_to_survivor_space(oop o, bool depth_first) {
         if (!_old_lab.unallocate_object(new_obj)) {
           // The promotion lab failed to unallocate the object.
           // We need to overwrite the object with a filler that
-          // contains no interior pointers.
+          // contains no interior pointers. 
           MemRegion mr((HeapWord*)new_obj, new_obj_size);
           // Clean this up and move to oopFactory (see bug 4718422)
           SharedHeap::fill_region_with_object(mr);
@@ -511,7 +447,7 @@ oop PSPromotionManager::copy_to_survivor_space(oop o, bool depth_first) {
         if (!_young_lab.unallocate_object(new_obj)) {
           // The promotion lab failed to unallocate the object.
           // We need to overwrite the object with a filler that
-          // contains no interior pointers.
+          // contains no interior pointers. 
           MemRegion mr((HeapWord*)new_obj, new_obj_size);
           // Clean this up and move to oopFactory (see bug 4718422)
           SharedHeap::fill_region_with_object(mr);
@@ -530,55 +466,14 @@ oop PSPromotionManager::copy_to_survivor_space(oop o, bool depth_first) {
   // This code must come after the CAS test, or it will print incorrect
   // information.
   if (TraceScavenge) {
-    gclog_or_tty->print_cr("{%s %s 0x%x -> 0x%x (%d)}",
-       PSScavenge::should_scavenge(new_obj) ? "copying" : "tenuring",
+    gclog_or_tty->print_cr("{%s %s 0x%x -> 0x%x (%d)}", 
+       PSScavenge::should_scavenge(new_obj) ? "copying" : "tenuring", 
        new_obj->blueprint()->internal_name(), o, new_obj, new_obj->size());
 
   }
 #endif
 
   return new_obj;
-}
-
-void PSPromotionManager::process_array_chunk(oop old) {
-  assert(PSChunkLargeArrays, "invariant");
-  assert(old->is_objArray(), "invariant");
-  assert(old->is_forwarded(), "invariant");
-
-#if PS_PM_STATS
-  ++_array_chunks_processed;
-#endif // PS_PM_STATS
-
-  oop const obj = old->forwardee();
-
-  int start;
-  int const end = arrayOop(old)->length();
-  if (end > (int) _min_array_size_for_chunking) {
-    // we'll chunk more
-    start = end - _array_chunk_size;
-    assert(start > 0, "invariant");
-    arrayOop(old)->set_length(start);
-    push_depth(mask_chunked_array_oop(old));
-#if PS_PM_STATS
-    ++_masked_pushes;
-#endif // PS_PM_STATS
-  } else {
-    // this is the final chunk for this array
-    start = 0;
-    int const actual_length = arrayOop(obj)->length();
-    arrayOop(old)->set_length(actual_length);
-  }
-
-  assert(start < end, "invariant");
-  oop* const base      = objArrayOop(obj)->base();
-  oop* p               = base + start;
-  oop* const chunk_end = base + end;
-  while (p < chunk_end) {
-    if (PSScavenge::should_scavenge(*p)) {
-      claim_or_forward_depth(p);
-    }
-    ++p;
-  }
 }
 
 oop PSPromotionManager::oop_promotion_failed(oop obj, markOop obj_mark) {
@@ -598,7 +493,9 @@ oop PSPromotionManager::oop_promotion_failed(oop obj, markOop obj_mark) {
     } else {
       // Don't bother incrementing the age, just push
       // onto the claimed_stack..
-      push_breadth(obj);
+      if(!claimed_stack_breadth()->push(obj)) {
+	overflow_stack_breadth()->push(obj);
+      }
     }
 
     // Save the mark if needed
@@ -606,18 +503,18 @@ oop PSPromotionManager::oop_promotion_failed(oop obj, markOop obj_mark) {
   }  else {
     // We lost, someone else "owns" this object
     guarantee(obj->is_forwarded(), "Object must be forwarded if the cas failed.");
-
+    
     // No unallocation to worry about.
     obj = obj->forwardee();
   }
-
+  
 #ifdef DEBUG
   if (TraceScavenge) {
-    gclog_or_tty->print_cr("{%s %s 0x%x (%d)}",
-                           "promotion-failure",
+    gclog_or_tty->print_cr("{%s %s 0x%x (%d)}", 
+                           "promotion-failure", 
                            obj->blueprint()->internal_name(),
                            obj, obj->size());
-
+    
   }
 #endif
 

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.oops;
@@ -31,9 +31,9 @@ public class OopField extends Field {
   public OopField(FieldIdentifier id, long offset, boolean isVMField) {
     super(id, offset, isVMField);
   }
-
+   
   public OopField(sun.jvm.hotspot.types.OopField vmField, long startOffset) {
-    super(new NamedFieldIdentifier(vmField.getName()), vmField.getOffset() + startOffset, true);
+    super(new NamedFieldIdentifier(vmField.getName()), vmField.getOffset() + startOffset, true); 
   }
 
   public OopField(InstanceKlass holder, int fieldArrayIndex) {

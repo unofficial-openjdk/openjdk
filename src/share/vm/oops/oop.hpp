@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // oopDesc is the top baseclass for objects classes.  The {name}Desc classes describe
@@ -190,7 +193,7 @@ class oopDesc {
   void release_double_field_put(int offset, jdouble contents);
 
   // printing functions for VM debugging
-  void print_on(outputStream* st) const;         // First level print
+  void print_on(outputStream* st) const;         // First level print 
   void print_value_on(outputStream* st) const;   // Second level print.
   void print_address_on(outputStream* st) const; // Address printing
 
@@ -236,15 +239,15 @@ class oopDesc {
   void copy_contents(PSPromotionManager* pm);
   void push_contents(PSPromotionManager* pm);
 
-  // Parallel Old
+  // Parallel Old 
   void update_contents(ParCompactionManager* cm);
   void update_contents(ParCompactionManager* cm,
-                       HeapWord* begin_limit,
-                       HeapWord* end_limit);
+		       HeapWord* begin_limit,
+		       HeapWord* end_limit);
   void update_contents(ParCompactionManager* cm,
-                       klassOop old_klass,
-                       HeapWord* begin_limit,
-                       HeapWord* end_limit);
+		       klassOop old_klass,
+		       HeapWord* begin_limit,
+	               HeapWord* end_limit);
 
   void follow_contents(ParCompactionManager* cm);
   void follow_header(ParCompactionManager* cm);
@@ -252,6 +255,7 @@ class oopDesc {
 
   bool is_perm() const;
   bool is_perm_or_null() const;
+  bool is_perm_and_alloced() const;
   bool is_shared() const;
   bool is_shared_readonly() const;
   bool is_shared_readwrite() const;
@@ -299,8 +303,8 @@ class oopDesc {
   int oop_iterate(OopClosureType* blk);                                  \
   int oop_iterate(OopClosureType* blk, MemRegion mr);  // Only in mr.
 
-  ALL_OOP_OOP_ITERATE_CLOSURES_1(OOP_ITERATE_DECL)
-  ALL_OOP_OOP_ITERATE_CLOSURES_3(OOP_ITERATE_DECL)
+  ALL_OOP_OOP_ITERATE_CLOSURES_1(OOP_ITERATE_DECL) 
+  ALL_OOP_OOP_ITERATE_CLOSURES_3(OOP_ITERATE_DECL) 
 
   void oop_iterate_header(OopClosure* blk);
   void oop_iterate_header(OopClosure* blk, MemRegion mr);

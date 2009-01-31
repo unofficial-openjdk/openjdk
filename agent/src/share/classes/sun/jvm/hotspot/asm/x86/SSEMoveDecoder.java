@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.x86;
@@ -27,7 +27,7 @@ package sun.jvm.hotspot.asm.x86;
 import sun.jvm.hotspot.asm.*;
 
 public class SSEMoveDecoder extends SSEInstructionDecoder {
-
+   
    public SSEMoveDecoder(String name, int addrMode1, int operandType1, int addrMode2, int operandType2) {
       super(name, addrMode1, operandType1, addrMode2, operandType2);
    }
@@ -36,7 +36,7 @@ public class SSEMoveDecoder extends SSEInstructionDecoder {
       Operand op1 = getOperand1(bytesArray, operandSize, addrSize);
       Operand op2 = getOperand2(bytesArray, operandSize, addrSize);
       int size = byteIndex - instrStartIndex;
-
+            
       if( (op1 instanceof X86Register) && (op2 instanceof ImmediateOrRegister) ) {
          return factory.newMoveInstruction(name, (X86Register)op1, (ImmediateOrRegister)op2, size, 0);
       }

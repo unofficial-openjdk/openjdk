@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.runtime.solaris_x86;
@@ -60,10 +60,10 @@ public class SolarisX86JavaThreadPDAccess implements JavaThreadPDAccess {
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("JavaThread");
     Type anchorType = db.lookupType("JavaFrameAnchor");
-
+    
     lastJavaFPField    = anchorType.getAddressField("_last_Java_fp");
     osThreadField      = type.getAddressField("_osthread");
-
+    
     type = db.lookupType("OSThread");
     osThreadThreadIDField   = type.getCIntegerField("_thread_id");
   }

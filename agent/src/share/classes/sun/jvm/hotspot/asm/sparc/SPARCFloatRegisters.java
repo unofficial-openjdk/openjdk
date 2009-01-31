@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -141,12 +141,12 @@ public class SPARCFloatRegisters {
         F60 = new SPARCFloatRegister(60);
         F62 = new SPARCFloatRegister(62);
         registers = (new SPARCFloatRegister[] {
-            F0, F2, F3, F4, F5, F6, F7, F8, F9, F10,
-            F11, F12, F13, F14, F15, F16, F17, F18, F19, F20,
-            F21, F22, F23, F24, F25, F26, F27, F28, F29, F30,
-            F31, F32, null, F34, null, F36, null, F38, null, F40,
-            null, F42, null, F44, null, F46, null, F48, null, F50,
-            null, F52, null, F54, null, F56, null, F58, null, F60,
+            F0, F2, F3, F4, F5, F6, F7, F8, F9, F10, 
+            F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, 
+            F21, F22, F23, F24, F25, F26, F27, F28, F29, F30, 
+            F31, F32, null, F34, null, F36, null, F38, null, F40, 
+            null, F42, null, F44, null, F46, null, F48, null, F50, 
+            null, F52, null, F54, null, F56, null, F58, null, F60, 
             null, F62, null
         });
     }

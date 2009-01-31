@@ -42,7 +42,7 @@ BootStrapDir=$(JAVA_HOME)
 JvmtiOutDir=$(HOTSPOTBUILDSPACE)\jvmtifiles
 !include $(HOTSPOTWORKSPACE)/build/windows/makefiles/jvmti.make
 
-Platform=$(HOTSPOTWORKSPACE)/build/windows/platform_$(BUILDARCH)
+Platform=$(HOTSPOTWORKSPACE)/build/windows/platform_$(ARCH)
 
 default:: $(AdditionalTargets) $(JvmtiGeneratedFiles)
 

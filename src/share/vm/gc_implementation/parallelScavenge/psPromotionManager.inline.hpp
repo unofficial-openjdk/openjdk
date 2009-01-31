@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 inline PSPromotionManager* PSPromotionManager::manager_array(int index) {
@@ -36,11 +39,13 @@ inline void PSPromotionManager::claim_or_forward_internal_depth(oop* p) {
 
       // Card mark
       if (PSScavenge::is_obj_in_young((HeapWord*) o)) {
-        PSScavenge::card_table()->inline_write_ref_field_gc(p, o);
+	PSScavenge::card_table()->inline_write_ref_field_gc(p, o);
       }
       *p = o;
     } else {
-      push_depth(p);
+      if (!claimed_stack_depth()->push(p)) {
+	overflow_stack_depth()->push(p);
+      }
     }
   }
 }
@@ -53,7 +58,7 @@ inline void PSPromotionManager::claim_or_forward_internal_breadth(oop* p) {
     } else {
       o = copy_to_survivor_space(o, false);
     }
-
+  
     // Card mark
     if (PSScavenge::is_obj_in_young((HeapWord*) o)) {
       PSScavenge::card_table()->inline_write_ref_field_gc(p, o);
@@ -103,15 +108,5 @@ inline void PSPromotionManager::claim_or_forward_breadth(oop* p) {
     // length of the delay is random depending on the objects
     // in the queue and the delay can be zero.
     claim_or_forward_internal_breadth(p);
-  }
-}
-
-inline void PSPromotionManager::process_popped_location_depth(oop* p) {
-  if (is_oop_masked(p)) {
-    assert(PSChunkLargeArrays, "invariant");
-    oop const old = unmask_chunked_array_oop(p);
-    process_array_chunk(old);
-  } else {
-    PSScavenge::copy_and_push_safe_barrier(this, p);
   }
 }

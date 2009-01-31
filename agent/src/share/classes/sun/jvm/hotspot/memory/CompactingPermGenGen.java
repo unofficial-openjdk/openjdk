@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.memory;
@@ -29,21 +29,21 @@ import java.util.*;
 
 import sun.jvm.hotspot.debugger.*;
 import sun.jvm.hotspot.runtime.*;
-import sun.jvm.hotspot.types.*;
+import sun.jvm.hotspot.types.*; 
 
 /** This is the "generation" view of a CompactingPermGen. */
 public class CompactingPermGenGen extends OneContigSpaceCardGeneration {
   private static AddressField unsharedBottomField;
-  private static AddressField unsharedEndField;
-  private static AddressField sharedBottomField;
-  private static AddressField sharedEndField;
-  private static AddressField readOnlyBottomField;
+  private static AddressField unsharedEndField;  
+  private static AddressField sharedBottomField;  
+  private static AddressField sharedEndField; 
+  private static AddressField readOnlyBottomField; 
   private static AddressField readOnlyEndField;
-  private static AddressField readWriteBottomField;
+  private static AddressField readWriteBottomField; 
   private static AddressField readWriteEndField;
   private static AddressField roSpaceField;
   private static AddressField rwSpaceField;
-
+ 
   static {
     VM.registerVMInitializedObserver(new Observer() {
         public void update(Observable o, Object data) {
@@ -78,7 +78,7 @@ public class CompactingPermGenGen extends OneContigSpaceCardGeneration {
   public OffsetTableContigSpace roSpace() {
     return newOffsetTableContigSpace(roSpaceField.getValue(addr));
   }
-
+  
   public OffsetTableContigSpace rwSpace() {
     return newOffsetTableContigSpace(rwSpaceField.getValue(addr));
   }

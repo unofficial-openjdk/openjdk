@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -30,7 +33,7 @@ debug_only(int ResourceArea::_warned;)      // to suppress multiple warnings
 
 // The following routines are declared in allocation.hpp and used everywhere:
 
-// Allocation in thread-local resource area
+// Allocation in thread-local resource area 
 extern char* resource_allocate_bytes(size_t size) {
   return Thread::current()->resource_area()->allocate_bytes(size);
 }

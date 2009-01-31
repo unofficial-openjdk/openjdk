@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.ia64;
@@ -36,7 +36,7 @@ public abstract class IA64ThreadContext implements ThreadContext {
   // For eg. floating point registers are ignored.
 
   // NOTE: the indices for the various registers must be maintained as
-  // listed across various operating systems. However, only a
+  // listed across various operating systems. However, only a 
   // subset of the registers' values are guaranteed to be present
 
   // global registers r0-r31
@@ -100,16 +100,16 @@ public abstract class IA64ThreadContext implements ThreadContext {
 
   // register stack info
   public static final int RS_PFS   = 47; // Previous function state
-  public static final int AP_PFS   = RS_PFS;
+  public static final int AP_PFS   = RS_PFS; 
   public static final int RS_BSP   = 48; // Backing store pointer
-  public static final int AR_BSP   = RS_BSP;
+  public static final int AR_BSP   = RS_BSP;  
   public static final int RS_BSPSTORE = 49;
   public static final int AP_BSPSTORE = RS_BSPSTORE;
   public static final int RS_RSC   = 50;     // RSE configuration
   public static final int AP_RSC   = RS_RSC;
   public static final int RS_RNAT  = 51; // RSE Nat collection register
   public static final int AP_RNAT  = RS_RNAT;
-
+ 
   // trap status register
   public static final int ST_IPSR  = 52; // Interuption Processor Status
   public static final int ST_IIP   = 53; // Interruption IP
@@ -124,7 +124,7 @@ public abstract class IA64ThreadContext implements ThreadContext {
   public static final int DB_I5    = 60;
   public static final int DB_I6    = 61;
   public static final int DB_I7    = 62;
-
+  
   public static final int DB_D0    = 63;
   public static final int DB_D1    = 64;
   public static final int DB_D2    = 65;
@@ -139,8 +139,8 @@ public abstract class IA64ThreadContext implements ThreadContext {
   private static final String[] regNames = {
      "GR0", "GR1", "GR2", "GR3", "GR4", "GR5", "GR6", "GR7", "GR8",
      "GR9", "GR10", "GR11", "GR12", "GR13", "GR14", "GR15", "GR16",
-     "GR17","GR18", "GR19", "GR20", "GR21", "GR22", "GR23", "GR24",
-     "GR25","GR26", "GR27", "GR28", "GR29", "GR30", "GR31",
+     "GR17","GR18", "GR19", "GR20", "GR21", "GR22", "GR23", "GR24", 
+     "GR25","GR26", "GR27", "GR28", "GR29", "GR30", "GR31", 
      "INT_NATS", "PREDS",
      "BR0", "BR1", "BR2", "BR3", "BR4", "BR5", "BR6", "BR7",
      "AP_UNAT", "AP_LC", "AP_EC", "AP_CCV", "AP_DCR",
@@ -151,7 +151,7 @@ public abstract class IA64ThreadContext implements ThreadContext {
   };
 
   private long[] data;
-
+  
   public IA64ThreadContext() {
     data = new long[NPRGREG];
   }

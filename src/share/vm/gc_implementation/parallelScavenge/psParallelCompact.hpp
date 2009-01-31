@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class ParallelScavengeHeap;
@@ -97,33 +100,28 @@ public:
   class ChunkData
   {
   public:
-    // Destination address of the chunk.
-    HeapWord* destination() const { return _destination; }
+    static const size_t Available;
+    static const size_t Claimed;
+    static const size_t Completed;
 
-    // The first chunk containing data destined for this chunk.
-    size_t source_chunk() const { return _source_chunk; }
-
-    // The object (if any) starting in this chunk and ending in a different
-    // chunk that could not be updated during the main (parallel) compaction
-    // phase.  This is different from _partial_obj_addr, which is an object that
-    // extends onto a source chunk.  However, the two uses do not overlap in
-    // time, so the same field is used to save space.
-    HeapWord* deferred_obj_addr() const { return _partial_obj_addr; }
-
-    // The starting address of the partial object extending onto the chunk.
-    HeapWord* partial_obj_addr() const { return _partial_obj_addr; }
-
+  public:
     // Size of the partial object extending onto the chunk (words).
     size_t partial_obj_size() const { return _partial_obj_size; }
+
+    // The starting address of the partial object.
+    HeapWord* partial_obj_addr() const { return _partial_obj_addr; }
 
     // Size of live data that lies within this chunk due to objects that start
     // in this chunk (words).  This does not include the partial object
     // extending onto the chunk (if any), or the part of an object that extends
     // onto the next chunk (if any).
-    size_t live_obj_size() const { return _dc_and_los & los_mask; }
+    size_t live_obj_size() const { return _live_obj_size; }
 
     // Total live data that lies within the chunk (words).
-    size_t data_size() const { return partial_obj_size() + live_obj_size(); }
+    size_t data_size() const { return _partial_obj_size + _live_obj_size; }
+
+    // Destination address of the chunk.
+    HeapWord* destination() const { return _destination; }
 
     // The destination_count is the number of other chunks to which data from
     // this chunk will be copied.  At the end of the summary phase, the valid
@@ -138,80 +136,96 @@ public:
     // During compaction as chunks are emptied, the destination_count is
     // decremented (atomically) and when it reaches 0, it can be claimed and
     // then filled.
-    //
+    // 
     // A chunk is claimed for processing by atomically changing the
-    // destination_count to the claimed value (dc_claimed).  After a chunk has
-    // been filled, the destination_count should be set to the completed value
-    // (dc_completed).
-    inline uint destination_count() const;
-    inline uint destination_count_raw() const;
+    // destination_count from Available to Claimed.  After a chunk has been
+    // filled, the destination_count should be set to ChunkData::Completed.
+    size_t destination_count() const { return _destination_count; }
+
+    // Cached address of the first live object starting in the chunk.  If the
+    // value has not been cached yet, returns NULL.  If there is no live object
+    // starting in the chunk, returns the address one past the end of the chunk.
+    HeapWord* first_live_obj() { return _first_live_obj; }
+
+    // Object that crosses this chunk's right (upper) boundary and whose
+    // starting address is in this chunk.  This is set during
+    // compaction when an object extends over the right (upper) boundary of
+    // a destination chunk.  This is different than _partial_obj_addr
+    // which extends over the left (lower) boundary of a source chunk.
+    // This object is unique to a chunk.
+    HeapWord* obj_not_updated() const { return _obj_not_updated; }
+
+    // The first chunk containing data destined for this chunk.
+    size_t source_chunk() const { return _source_chunk; }
 
     // The location of the java heap data that corresponds to this chunk.
-    inline HeapWord* data_location() const;
+    HeapWord* data_location() const { return _data_location; }
 
     // The highest address referenced by objects in this chunk.
-    inline HeapWord* highest_ref() const;
+    HeapWord* highest_ref() const { return _highest_ref; }
 
     // Whether this chunk is available to be claimed, has been claimed, or has
     // been completed.
-    //
-    // Minor subtlety:  claimed() returns true if the chunk is marked
-    // completed(), which is desirable since a chunk must be claimed before it
-    // can be completed.
-    bool available() const { return _dc_and_los < dc_one; }
-    bool claimed() const   { return _dc_and_los >= dc_claimed; }
-    bool completed() const { return _dc_and_los >= dc_completed; }
+    bool available() const { return _destination_count == Available; }
+    bool claimed() const   { return _destination_count == Claimed; }
+    bool completed() const { return _destination_count == Completed; }
 
     // These are not atomic.
-    void set_destination(HeapWord* addr)       { _destination = addr; }
-    void set_source_chunk(size_t chunk)        { _source_chunk = chunk; }
-    void set_deferred_obj_addr(HeapWord* addr) { _partial_obj_addr = addr; }
-    void set_partial_obj_addr(HeapWord* addr)  { _partial_obj_addr = addr; }
-    void set_partial_obj_size(size_t words)    {
-      _partial_obj_size = (chunk_sz_t) words;
-    }
-
-    inline void set_destination_count(uint count);
-    inline void set_live_obj_size(size_t words);
-    inline void set_data_location(HeapWord* addr);
+    void set_partial_obj_size(size_t words)  { _partial_obj_size = words; }
+    void set_partial_obj_addr(HeapWord* k)   { _partial_obj_addr = k; }
+    void set_live_obj_size(size_t words)     { _live_obj_size = words; }
+    void set_destination(HeapWord* addr)     { _destination = addr; }
+    void set_destination_count(size_t count) { _destination_count = count; }
+    void set_first_live_obj(HeapWord* v)     { _first_live_obj = v; }
+    void set_obj_not_updated(HeapWord* addr) { _obj_not_updated = addr; }
+    void set_source_chunk(size_t chunk)      { _source_chunk = chunk; }
+    void set_data_location(HeapWord* addr)   { _data_location = addr; }
     inline void set_completed();
     inline bool claim_unsafe();
 
     // These are atomic.
-    inline void add_live_obj(size_t words);
-    inline void set_highest_ref(HeapWord* addr);
-    inline void decrement_destination_count();
-    inline bool claim();
+    void add_live_obj(size_t words)          { add_live_obj((intptr_t)words); }
+
+    void set_highest_ref(HeapWord* addr) {
+      HeapWord* tmp = _highest_ref;
+      while (addr > tmp) {
+	tmp = (HeapWord*)Atomic::cmpxchg_ptr(addr, &_highest_ref, tmp);
+      }
+    }
+
+    void decrement_destination_count() {
+      assert(_destination_count < Claimed, "Chunk already claimed");
+      assert(_destination_count > 0, "count must not go negative");
+      Atomic::add_ptr(-1, &_destination_count);
+    }
+
+    bool claim() {
+      size_t old_val = cmpxchg_size_t(Claimed, &_destination_count, Available);
+      return old_val == Available;
+    }
 
   private:
-    // The type used to represent object sizes within a chunk.
-    typedef uint chunk_sz_t;
+    static size_t cmpxchg_size_t(size_t new_val, volatile size_t* addr,
+				 size_t old_val) {
+      return size_t(Atomic::cmpxchg_ptr((void*)new_val, addr, (void*)old_val));
+    }
+    void add_live_obj(intptr_t sz) { Atomic::add_ptr(sz, &_live_obj_size); }
 
-    // Constants for manipulating the _dc_and_los field, which holds both the
-    // destination count and live obj size.  The live obj size lives at the
-    // least significant end so no masking is necessary when adding.
-    static const chunk_sz_t dc_shift;           // Shift amount.
-    static const chunk_sz_t dc_mask;            // Mask for destination count.
-    static const chunk_sz_t dc_one;             // 1, shifted appropriately.
-    static const chunk_sz_t dc_claimed;         // Chunk has been claimed.
-    static const chunk_sz_t dc_completed;       // Chunk has been completed.
-    static const chunk_sz_t los_mask;           // Mask for live obj size.
-
-    HeapWord*           _destination;
-    size_t              _source_chunk;
-    HeapWord*           _partial_obj_addr;
-    chunk_sz_t          _partial_obj_size;
-    chunk_sz_t volatile _dc_and_los;
-#ifdef ASSERT
-    // These enable optimizations that are only partially implemented.  Use
-    // debug builds to prevent the code fragments from breaking.
-    HeapWord*           _data_location;
-    HeapWord*           _highest_ref;
-#endif  // #ifdef ASSERT
+  private:
+    size_t          _partial_obj_size;
+    HeapWord*       _partial_obj_addr;
+    volatile size_t _live_obj_size;
+    HeapWord*       _destination;
+    HeapWord*       _first_live_obj;
+    HeapWord*	    _obj_not_updated;
+    size_t          _source_chunk;
+    HeapWord*       _data_location;
+    HeapWord*       _highest_ref;
+    volatile size_t _destination_count;
 
 #ifdef ASSERT
    public:
-    uint            _pushed;    // 0 until chunk is pushed onto a worker's stack
+    uint	    _pushed;	// 0 until chunk is pushed onto a worker's stack
    private:
 #endif
   };
@@ -219,7 +233,7 @@ public:
   // 'Blocks' allow shorter sections of the bitmap to be searched.  Each Block
   // holds an offset, which is the amount of live data in the Chunk to the left
   // of the first live object in the Block.  This amount of live data will
-  // include any object extending into the block. The first block in
+  // include any object extending into the block. The first block in 
   // a chunk does not include any partial object extending into the
   // the chunk.
   //
@@ -237,7 +251,7 @@ public:
     void set_first_is_start_bit(bool v) { _first_is_start_bit = v; }
 
 #if 0
-    // The need for this method was anticipated but it is
+    // The need for this method was anticipated but it is 
     // never actually used.  Do not include it for now.  If
     // it is needed, consider the problem of what is passed
     // as "v".  To avoid warning errors the method set_start_bit_offset()
@@ -260,15 +274,15 @@ public:
       _offset = - _offset;
       _first_is_start_bit = false;
     }
-    bool first_is_start_bit() {
+    bool first_is_start_bit() { 
       assert(_set_phase > 0, "Not initialized");
-      return _first_is_start_bit;
+      return _first_is_start_bit; 
     }
-    bool first_is_end_bit() {
+    bool first_is_end_bit() { 
       assert(_set_phase > 0, "Not initialized");
-      return !_first_is_start_bit;
+      return !_first_is_start_bit; 
     }
-
+    
   private:
     blk_ofs_t _offset;
     // This is temporary until the mark_bitmap is separated into
@@ -308,10 +322,10 @@ public:
   // destination of chunk n is simply the start of chunk n.  The argument beg
   // must be chunk-aligned; end need not be.
   void summarize_dense_prefix(HeapWord* beg, HeapWord* end);
-
+  
   bool summarize(HeapWord* target_beg, HeapWord* target_end,
-                 HeapWord* source_beg, HeapWord* source_end,
-                 HeapWord** target_next, HeapWord** source_next = 0);
+		 HeapWord* source_beg, HeapWord* source_end,
+		 HeapWord** target_next, HeapWord** source_next = 0);
 
   void clear();
   void clear_range(size_t beg_chunk, size_t end_chunk);
@@ -337,11 +351,15 @@ public:
   // Analogous to chunk_offset() for blocks.
   size_t     block_offset(const HeapWord* addr) const;
   size_t     addr_to_block_idx(const HeapWord* addr) const;
-  size_t     addr_to_block_idx(const oop obj) const {
-    return addr_to_block_idx((HeapWord*) obj);
+  size_t     addr_to_block_idx(const oop obj) const { 
+    return addr_to_block_idx((HeapWord*) obj); 
   }
   inline BlockData* addr_to_block_ptr(const HeapWord* addr) const;
   inline HeapWord*  block_to_addr(size_t block) const;
+
+  // The given object (new location) was not updated.
+  // Set the _obj_not_updated field in the appropriate chunk.
+  void set_obj_not_updated(HeapWord* moved_obj);
 
   // Return the address one past the end of the partial object.
   HeapWord* partial_obj_end(size_t chunk_idx) const;
@@ -368,13 +386,23 @@ public:
   // If there is no partial object, returns false.
   bool partial_obj_ends_in_block(size_t block_index);
 
+  // Returns the address of the first live object starting in the chunk.
+  HeapWord* first_live_or_end_in_chunk(size_t chunk_index);
+
+  // Returns the address of the first live object starting in the chunk.
+  HeapWord* first_live_or_end_in_chunk_range(size_t chunk_index_start,
+					     size_t chunk_index_end);
+
+  // Returns the address of the first live object starting in the block.
+  HeapWord* first_live_object_in_block(size_t block_index);
+
   // Returns the block index for the block
   static size_t block_idx(BlockData* block);
 
-#ifdef  ASSERT
+#ifdef	ASSERT
   void verify_clear(const PSVirtualSpace* vspace);
   void verify_clear();
-#endif  // #ifdef ASSERT
+#endif	// #ifdef ASSERT
 
 private:
   bool initialize_block_data(size_t region_size);
@@ -383,9 +411,9 @@ private:
 
 private:
   HeapWord*       _region_start;
-#ifdef  ASSERT
+#ifdef	ASSERT
   HeapWord*       _region_end;
-#endif  // #ifdef ASSERT
+#endif	// #ifdef ASSERT
 
   PSVirtualSpace* _chunk_vspace;
   ChunkData*      _chunk_data;
@@ -396,95 +424,21 @@ private:
   size_t          _block_count;
 };
 
-inline uint
-ParallelCompactData::ChunkData::destination_count_raw() const
-{
-  return _dc_and_los & dc_mask;
-}
-
-inline uint
-ParallelCompactData::ChunkData::destination_count() const
-{
-  return destination_count_raw() >> dc_shift;
-}
-
-inline void
-ParallelCompactData::ChunkData::set_destination_count(uint count)
-{
-  assert(count <= (dc_completed >> dc_shift), "count too large");
-  const chunk_sz_t live_sz = (chunk_sz_t) live_obj_size();
-  _dc_and_los = (count << dc_shift) | live_sz;
-}
-
-inline void ParallelCompactData::ChunkData::set_live_obj_size(size_t words)
-{
-  assert(words <= los_mask, "would overflow");
-  _dc_and_los = destination_count_raw() | (chunk_sz_t)words;
-}
-
-inline void ParallelCompactData::ChunkData::decrement_destination_count()
-{
-  assert(_dc_and_los < dc_claimed, "already claimed");
-  assert(_dc_and_los >= dc_one, "count would go negative");
-  Atomic::add((int)dc_mask, (volatile int*)&_dc_and_los);
-}
-
-inline HeapWord* ParallelCompactData::ChunkData::data_location() const
-{
-  DEBUG_ONLY(return _data_location;)
-  NOT_DEBUG(return NULL;)
-}
-
-inline HeapWord* ParallelCompactData::ChunkData::highest_ref() const
-{
-  DEBUG_ONLY(return _highest_ref;)
-  NOT_DEBUG(return NULL;)
-}
-
-inline void ParallelCompactData::ChunkData::set_data_location(HeapWord* addr)
-{
-  DEBUG_ONLY(_data_location = addr;)
-}
-
 inline void ParallelCompactData::ChunkData::set_completed()
 {
   assert(claimed(), "must be claimed first");
-  _dc_and_los = dc_completed | (chunk_sz_t) live_obj_size();
+  set_destination_count(Completed);
 }
 
 // MT-unsafe claiming of a chunk.  Should only be used during single threaded
 // execution.
 inline bool ParallelCompactData::ChunkData::claim_unsafe()
 {
-  if (available()) {
-    _dc_and_los |= dc_claimed;
+  if (destination_count() == Available) {
+    set_destination_count(Claimed);
     return true;
   }
   return false;
-}
-
-inline void ParallelCompactData::ChunkData::add_live_obj(size_t words)
-{
-  assert(words <= (size_t)los_mask - live_obj_size(), "overflow");
-  Atomic::add((int) words, (volatile int*) &_dc_and_los);
-}
-
-inline void ParallelCompactData::ChunkData::set_highest_ref(HeapWord* addr)
-{
-#ifdef ASSERT
-  HeapWord* tmp = _highest_ref;
-  while (addr > tmp) {
-    tmp = (HeapWord*)Atomic::cmpxchg_ptr(addr, &_highest_ref, tmp);
-  }
-#endif  // #ifdef ASSERT
-}
-
-inline bool ParallelCompactData::ChunkData::claim()
-{
-  const int los = (int) live_obj_size();
-  const int old = Atomic::cmpxchg(dc_claimed | los,
-                                  (volatile int*) &_dc_and_los, los);
-  return old == los;
 }
 
 inline ParallelCompactData::ChunkData*
@@ -604,7 +558,7 @@ ParallelCompactData::block_to_addr(size_t block) const
 
 // Abstract closure for use with ParMarkBitMap::iterate(), which will invoke the
 // do_addr() method.
-//
+// 
 // The closure is initialized with the number of heap words to process
 // (words_remaining()), and becomes 'full' when it reaches 0.  The do_addr()
 // methods in subclasses should update the total as words are processed.  Since
@@ -620,7 +574,7 @@ class ParMarkBitMapClosure: public StackObj {
 
  public:
   inline ParMarkBitMapClosure(ParMarkBitMap* mbm, ParCompactionManager* cm,
-                              size_t words = max_uintx);
+			      size_t words = max_uintx);
 
   inline ParCompactionManager* compaction_manager() const;
   inline ParMarkBitMap*        bitmap() const;
@@ -639,18 +593,18 @@ class ParMarkBitMapClosure: public StackObj {
   ParMarkBitMap* const        _bitmap;
   ParCompactionManager* const _compaction_manager;
   DEBUG_ONLY(const size_t     _initial_words_remaining;) // Useful in debugger.
-  size_t                      _words_remaining; // Words left to copy.
+  size_t                      _words_remaining;	// Words left to copy.
 
  protected:
-  HeapWord*                   _source;          // Next addr that would be read.
+  HeapWord*                   _source;		// Next addr that would be read.
 };
 
 inline
 ParMarkBitMapClosure::ParMarkBitMapClosure(ParMarkBitMap* bitmap,
-                                           ParCompactionManager* cm,
-                                           size_t words):
+					   ParCompactionManager* cm,
+					   size_t words):
   _bitmap(bitmap), _compaction_manager(cm)
-#ifdef  ASSERT
+#ifdef	ASSERT
   , _initial_words_remaining(words)
 #endif
 {
@@ -697,9 +651,9 @@ class BitBlockUpdateClosure: public ParMarkBitMapClosure {
   size_t    _chunk_index;
 
  public:
-  BitBlockUpdateClosure(ParMarkBitMap* mbm,
-                        ParCompactionManager* cm,
-                        size_t chunk_index);
+  BitBlockUpdateClosure(ParMarkBitMap* mbm, 
+			ParCompactionManager* cm, 
+			size_t chunk_index);
 
   size_t cur_block() { return _cur_block; }
   size_t chunk_index() { return _chunk_index; }
@@ -773,10 +727,10 @@ class PSParallelCompact : AllStatic {
     void do_oop(oop* p) { adjust_pointer(p, _is_root); }
   };
 
-  // Closure for verifying update of pointers.  Does not
+  // Closure for verifying update of pointers.  Does not 
   // have any side effects.
   class VerifyUpdateClosure: public ParMarkBitMapClosure {
-    const MutableSpace* _space; // Is this ever used?
+    const MutableSpace* _space;	// Is this ever used?
 
    public:
     VerifyUpdateClosure(ParCompactionManager* cm, const MutableSpace* sp) :
@@ -815,7 +769,7 @@ class PSParallelCompact : AllStatic {
   static CollectorCounters*   _counters;
   static ParMarkBitMap        _mark_bitmap;
   static ParallelCompactData  _summary_data;
-  static IsAliveClosure       _is_alive_closure;
+  static IsAliveClosure	      _is_alive_closure;
   static SpaceInfo            _space_info[last_space_id];
   static bool                 _print_phases;
   static AdjustPointerClosure _adjust_root_pointer_closure;
@@ -832,9 +786,9 @@ class PSParallelCompact : AllStatic {
   static double _dwl_std_dev;
   static double _dwl_first_term;
   static double _dwl_adjustment;
-#ifdef  ASSERT
+#ifdef	ASSERT
   static bool   _dwl_initialized;
-#endif  // #ifdef ASSERT
+#endif	// #ifdef ASSERT
 
  private:
   // Closure accessors
@@ -855,7 +809,7 @@ class PSParallelCompact : AllStatic {
 
   // Mark live objects
   static void marking_phase(ParCompactionManager* cm,
-                            bool maximum_heap_compaction);
+			    bool maximum_heap_compaction);
   static void follow_stack(ParCompactionManager* cm);
   static void follow_weak_klass_links(ParCompactionManager* cm);
 
@@ -867,7 +821,7 @@ class PSParallelCompact : AllStatic {
   // Compute the dense prefix for the designated space.  This is an experimental
   // implementation currently not used in production.
   static HeapWord* compute_dense_prefix_via_density(const SpaceId id,
-                                                    bool maximum_compaction);
+						    bool maximum_compaction);
 
   // Methods used to compute the dense prefix.
 
@@ -886,34 +840,34 @@ class PSParallelCompact : AllStatic {
   // dead_words of dead space to the left.  The argument beg must be the first
   // chunk in the space that is not completely live.
   static ChunkData* dead_wood_limit_chunk(const ChunkData* beg,
-                                          const ChunkData* end,
-                                          size_t dead_words);
+					  const ChunkData* end,
+					  size_t dead_words);
 
   // Return a pointer to the first chunk in the range [beg, end) that is not
   // completely full.
   static ChunkData* first_dead_space_chunk(const ChunkData* beg,
-                                           const ChunkData* end);
+					   const ChunkData* end);
 
   // Return a value indicating the benefit or 'yield' if the compacted region
   // were to start (or equivalently if the dense prefix were to end) at the
   // candidate chunk.  Higher values are better.
-  //
+  // 
   // The value is based on the amount of space reclaimed vs. the costs of (a)
   // updating references in the dense prefix plus (b) copying objects and
   // updating references in the compacted region.
   static inline double reclaimed_ratio(const ChunkData* const candidate,
-                                       HeapWord* const bottom,
-                                       HeapWord* const top,
-                                       HeapWord* const new_top);
+				       HeapWord* const bottom,
+				       HeapWord* const top,
+				       HeapWord* const new_top);
 
   // Compute the dense prefix for the designated space.
   static HeapWord* compute_dense_prefix(const SpaceId id,
-                                        bool maximum_compaction);
+					bool maximum_compaction);
 
   // Return true if dead space crosses onto the specified Chunk; bit must be the
   // bit index corresponding to the first word of the Chunk.
   static inline bool dead_space_crosses_boundary(const ChunkData* chunk,
-                                                 idx_t bit);
+						 idx_t bit);
 
   // Summary phase utility routine to fill dead space (if any) at the dense
   // prefix boundary.  Should only be called if the the dense prefix is
@@ -927,8 +881,8 @@ class PSParallelCompact : AllStatic {
   static bool block_first_offset(size_t block_index, idx_t* block_offset_ptr);
 
   // Fill in the BlockData
-  static void summarize_blocks(ParCompactionManager* cm,
-                               SpaceId first_compaction_space_id);
+  static void summarize_blocks(ParCompactionManager* cm, 
+			       SpaceId first_compaction_space_id);
 
   // The space that is compacted after space_id.
   static SpaceId next_compaction_space_id(SpaceId space_id);
@@ -945,17 +899,17 @@ class PSParallelCompact : AllStatic {
 
   // Add available chunks to the stack and draining tasks to the task queue.
   static void enqueue_chunk_draining_tasks(GCTaskQueue* q,
-                                           uint parallel_gc_threads);
+					   uint parallel_gc_threads);
 
   // Add dense prefix update tasks to the task queue.
   static void enqueue_dense_prefix_tasks(GCTaskQueue* q,
-                                         uint parallel_gc_threads);
+					 uint parallel_gc_threads);
 
   // Add chunk stealing tasks to the task queue.
   static void enqueue_chunk_stealing_tasks(
-                                       GCTaskQueue* q,
-                                       ParallelTaskTerminator* terminator_ptr,
-                                       uint parallel_gc_threads);
+				       GCTaskQueue* q,
+				       ParallelTaskTerminator* terminator_ptr,
+				       uint parallel_gc_threads);
 
   // For debugging only - compacts the old gen serially
   static void compact_serial(ParCompactionManager* cm);
@@ -963,8 +917,8 @@ class PSParallelCompact : AllStatic {
   // If objects are left in eden after a collection, try to move the boundary
   // and absorb them into the old gen.  Returns true if eden was emptied.
   static bool absorb_live_data_from_eden(PSAdaptiveSizePolicy* size_policy,
-                                         PSYoungGen* young_gen,
-                                         PSOldGen* old_gen);
+					 PSYoungGen* young_gen,
+					 PSOldGen* old_gen);
 
   // Reset time since last full gc
   static void reset_millis_since_last_gc();
@@ -1032,21 +986,21 @@ class PSParallelCompact : AllStatic {
 
   // Used to add tasks
   static GCTaskManager* const gc_task_manager();
-  static klassOop updated_int_array_klass_obj() {
-    return _updated_int_array_klass_obj;
+  static klassOop updated_int_array_klass_obj() { 
+    return _updated_int_array_klass_obj; 
   }
-
+  
   // Marking support
   static inline bool mark_obj(oop obj);
-  static bool mark_obj(oop* p)  {
+  static bool mark_obj(oop* p)  { 
     if (*p != NULL) {
-      return mark_obj(*p);
+      return mark_obj(*p); 
     } else {
       return false;
     }
   }
-  static void mark_and_push(ParCompactionManager* cm, oop* p) {
-                                          // Check mark and maybe push on
+  static void mark_and_push(ParCompactionManager* cm, oop* p) {     
+					  // Check mark and maybe push on
                                           // marking stack
     oop m = *p;
     if (m != NULL && mark_bitmap()->is_unmarked(m)) {
@@ -1066,7 +1020,7 @@ class PSParallelCompact : AllStatic {
   static inline ObjectStartArray* start_array(SpaceId space_id);
 
   // Return true if the klass should be updated.
-  static inline bool should_update_klass(klassOop k);
+  static inline bool should_update_klass(klassOop k); 
 
   // Move and update the live objects in the specified space.
   static void move_and_update(ParCompactionManager* cm, SpaceId space_id);
@@ -1074,11 +1028,11 @@ class PSParallelCompact : AllStatic {
   // Process the end of the given chunk range in the dense prefix.
   // This includes saving any object not updated.
   static void dense_prefix_chunks_epilogue(ParCompactionManager* cm,
-                                           size_t chunk_start_index,
-                                           size_t chunk_end_index,
-                                           idx_t exiting_object_offset,
-                                           idx_t chunk_offset_start,
-                                           idx_t chunk_offset_end);
+					   size_t chunk_start_index,
+					   size_t chunk_end_index,
+					   idx_t exiting_object_offset,
+					   idx_t chunk_offset_start,
+					   idx_t chunk_offset_end);
 
   // Update a chunk in the dense prefix.  For each live object
   // in the chunk, update it's interior references.  For each
@@ -1089,9 +1043,9 @@ class PSParallelCompact : AllStatic {
   // (holds only dead objects that don't need any processing), so
   // dead space can be filled in any order.
   static void update_and_deadwood_in_dense_prefix(ParCompactionManager* cm,
-                                                  SpaceId space_id,
-                                                  size_t chunk_index_start,
-                                                  size_t chunk_index_end);
+						  SpaceId space_id,
+					          size_t chunk_index_start,
+						  size_t chunk_index_end);
 
   // Return the address of the count + 1st live word in the range [beg, end).
   static HeapWord* skip_live_words(HeapWord* beg, HeapWord* end, size_t count);
@@ -1099,7 +1053,7 @@ class PSParallelCompact : AllStatic {
   // Return the address of the word to be copied to dest_addr, which must be
   // aligned to a chunk boundary.
   static HeapWord* first_src_addr(HeapWord* const dest_addr,
-                                  size_t src_chunk_idx);
+				  size_t src_chunk_idx);
 
   // Determine the next source chunk, set closure.source() to the start of the
   // new chunk return the chunk index.  Parameter end_addr is the address one
@@ -1107,15 +1061,15 @@ class PSParallelCompact : AllStatic {
   // new source space and set src_space_id (in-out parameter) and src_space_top
   // (out parameter) accordingly.
   static size_t next_src_chunk(MoveAndUpdateClosure& closure,
-                               SpaceId& src_space_id,
-                               HeapWord*& src_space_top,
-                               HeapWord* end_addr);
+			       SpaceId& src_space_id,
+			       HeapWord*& src_space_top,
+			       HeapWord* end_addr);
 
   // Decrement the destination count for each non-empty source chunk in the
   // range [beg_chunk, chunk(chunk_align_up(end_addr))).
   static void decrement_destination_counts(ParCompactionManager* cm,
-                                           size_t beg_chunk,
-                                           HeapWord* end_addr);
+					   size_t beg_chunk,
+					   HeapWord* end_addr);
 
   // Fill a chunk, copying objects from one or more source chunks.
   static void fill_chunk(ParCompactionManager* cm, size_t chunk_idx);
@@ -1127,15 +1081,15 @@ class PSParallelCompact : AllStatic {
   static void update_deferred_objects(ParCompactionManager* cm, SpaceId id);
 
   // Mark pointer and follow contents.
-  static void mark_and_follow(ParCompactionManager* cm, oop* p);
+  static void mark_and_follow(ParCompactionManager* cm, oop* p);    
 
   static ParMarkBitMap* mark_bitmap() { return &_mark_bitmap; }
   static ParallelCompactData& summary_data() { return _summary_data; }
 
   static inline void adjust_pointer(oop* p) { adjust_pointer(p, false); }
   static inline void adjust_pointer(oop* p,
-                                    HeapWord* beg_addr,
-                                    HeapWord* end_addr);
+				    HeapWord* beg_addr,
+				    HeapWord* end_addr);
 
   // Reference Processing
   static ReferenceProcessor* const ref_processor() { return _ref_processor; }
@@ -1163,26 +1117,26 @@ class PSParallelCompact : AllStatic {
   // within an oop that was live during the last GC. Helpful for
   // tracking down heap stomps.
   static void print_new_location_of_heap_address(HeapWord* q);
-#endif  // #ifdef VALIDATE_MARK_SWEEP
+#endif	// #ifdef VALIDATE_MARK_SWEEP
 
   // Call backs for class unloading
   // Update subklass/sibling/implementor links at end of marking.
-  static void revisit_weak_klass_link(ParCompactionManager* cm, Klass* k);
+  static void revisit_weak_klass_link(ParCompactionManager* cm, Klass* k); 
 
-#ifndef PRODUCT
+#ifndef	PRODUCT
   // Debugging support.
   static const char* space_names[last_space_id];
   static void print_chunk_ranges();
   static void print_dense_prefix_stats(const char* const algorithm,
-                                       const SpaceId id,
-                                       const bool maximum_compaction,
-                                       HeapWord* const addr);
-#endif  // #ifndef PRODUCT
+				       const SpaceId id,
+				       const bool maximum_compaction,
+				       HeapWord* const addr);
+#endif	// #ifndef PRODUCT
 
-#ifdef  ASSERT
+#ifdef	ASSERT
   // Verify that all the chunks have been emptied.
   static void verify_complete(SpaceId space_id);
-#endif  // #ifdef ASSERT
+#endif	// #ifdef ASSERT
 };
 
 bool PSParallelCompact::mark_obj(oop obj) {
@@ -1209,11 +1163,11 @@ inline double PSParallelCompact::normal_distribution(double density)
 
 inline bool
 PSParallelCompact::dead_space_crosses_boundary(const ChunkData* chunk,
-                                               idx_t bit)
+					       idx_t bit)
 {
   assert(bit > 0, "cannot call this for the first bit/chunk");
   assert(_summary_data.chunk_to_addr(chunk) == _mark_bitmap.bit_to_addr(bit),
-         "sanity check");
+	 "sanity check");
 
   // Dead space crosses the boundary if (1) a partial object does not extend
   // onto the chunk, (2) an object does not start at the beginning of the chunk,
@@ -1258,8 +1212,8 @@ inline bool PSParallelCompact::should_update_klass(klassOop k) {
 }
 
 inline void PSParallelCompact::adjust_pointer(oop* p,
-                                              HeapWord* beg_addr,
-                                              HeapWord* end_addr) {
+					      HeapWord* beg_addr,
+					      HeapWord* end_addr) {
   if (is_in(p, beg_addr, end_addr)) {
     adjust_pointer(p);
   }
@@ -1268,8 +1222,8 @@ inline void PSParallelCompact::adjust_pointer(oop* p,
 class MoveAndUpdateClosure: public ParMarkBitMapClosure {
  public:
   inline MoveAndUpdateClosure(ParMarkBitMap* bitmap, ParCompactionManager* cm,
-                              ObjectStartArray* start_array,
-                              HeapWord* destination, size_t words);
+			      ObjectStartArray* start_array,
+			      HeapWord* destination, size_t words);
 
   // Accessors.
   HeapWord* destination() const         { return _destination; }
@@ -1295,15 +1249,15 @@ class MoveAndUpdateClosure: public ParMarkBitMapClosure {
 
  protected:
   ObjectStartArray* const _start_array;
-  HeapWord*               _destination;         // Next addr to be written.
+  HeapWord*               _destination;		// Next addr to be written.
 };
 
 inline
 MoveAndUpdateClosure::MoveAndUpdateClosure(ParMarkBitMap* bitmap,
-                                           ParCompactionManager* cm,
-                                           ObjectStartArray* start_array,
-                                           HeapWord* destination,
-                                           size_t words) :
+					   ParCompactionManager* cm,
+					   ObjectStartArray* start_array,
+					   HeapWord* destination,
+					   size_t words) :
   ParMarkBitMapClosure(bitmap, cm, words), _start_array(start_array)
 {
   _destination = destination;
@@ -1322,9 +1276,9 @@ class UpdateOnlyClosure: public ParMarkBitMapClosure {
   ObjectStartArray* const          _start_array;
 
  public:
-  UpdateOnlyClosure(ParMarkBitMap* mbm,
-                    ParCompactionManager* cm,
-                    PSParallelCompact::SpaceId space_id);
+  UpdateOnlyClosure(ParMarkBitMap* mbm, 
+		    ParCompactionManager* cm,
+		    PSParallelCompact::SpaceId space_id);
 
   // Update the object.
   virtual IterationStatus do_addr(HeapWord* addr, size_t words);
@@ -1345,8 +1299,8 @@ public:
     _start_array(PSParallelCompact::start_array(space_id))
   {
     assert(_space_id == PSParallelCompact::perm_space_id ||
-           _space_id == PSParallelCompact::old_space_id,
-           "cannot use FillClosure in the young gen");
+	   _space_id == PSParallelCompact::old_space_id,
+	   "cannot use FillClosure in the young gen");
     assert(bitmap() != NULL, "need a bitmap");
     assert(_start_array != NULL, "need a start array");
   }

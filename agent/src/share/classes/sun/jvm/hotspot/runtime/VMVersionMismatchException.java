@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.runtime;
@@ -28,26 +28,26 @@ package sun.jvm.hotspot.runtime;
     is not supported current version of SA. */
 public class VMVersionMismatchException extends RuntimeException {
     public VMVersionMismatchException(String supported, String target) {
-        super();
-        supportedVersions = supported;
-        targetVersion = target;
-    }
+	super();
+	supportedVersions = supported;
+	targetVersion = target;
+    }  
 
     public String getMessage() {
-        StringBuffer msg = new StringBuffer();
+	StringBuffer msg = new StringBuffer();
         msg.append("Supported versions are ");
-        msg.append(supportedVersions);
-        msg.append(". Target VM is ");
-        msg.append(targetVersion);
-        return msg.toString();
+	msg.append(supportedVersions);
+	msg.append(". Target VM is ");
+	msg.append(targetVersion);
+	return msg.toString();
     }
 
     public String getSupportedVersions() {
-        return supportedVersions;
+	return supportedVersions;
     }
 
     public String getTargetVersion() {
-        return targetVersion;
+	return targetVersion;
     }
 
     private String supportedVersions;

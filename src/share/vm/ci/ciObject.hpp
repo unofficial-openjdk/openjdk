@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // ciObject
@@ -73,7 +76,7 @@ protected:
   }
 
   // Virtual behavior of the print() method.
-  virtual void print_impl(outputStream* st) {}
+  virtual void print_impl() {}
 
   virtual const char* type_string() { return "ciObject"; }
 
@@ -253,8 +256,9 @@ public:
   }
 
   // Print debugging output about this ciObject.
-  void print(outputStream* st = tty);
+  void print();
 
   // Print debugging output about the oop this ciObject represents.
-  void print_oop(outputStream* st = tty);
+  void print_oop();
 };
+

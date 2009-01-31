@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.ui;
@@ -34,7 +34,7 @@ import sun.jvm.hotspot.runtime.*;
 public class DeadlockDetectionPanel extends JPanel {
     public DeadlockDetectionPanel() {
         super();
-
+        
         setLayout(new BorderLayout());
 
         // Simple at first
@@ -52,8 +52,8 @@ public class DeadlockDetectionPanel extends JPanel {
         printDeadlocks(tty);
         textArea.setText(bos.toString());
     }
-
+  
     private void printDeadlocks(PrintStream tty) {
         DeadlockDetector.print(tty);
-    }
+    }      
 }

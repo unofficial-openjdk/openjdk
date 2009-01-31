@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.windbg;
@@ -101,7 +101,7 @@ public class WindbgDebuggerLocal extends DebuggerBase implements WindbgDebugger 
              if ( (address % alignment != 0)
                 &&(alignment != 8 || address % 4 != 0)) {
                 throw new UnalignedAddressException(
-                        "Trying to read at address: "
+                        "Trying to read at address: " 
                       + addressValueToString(address)
                       + " with alignment: " + alignment,
                         address);
@@ -168,7 +168,7 @@ public class WindbgDebuggerLocal extends DebuggerBase implements WindbgDebugger 
 
   /** From the Debugger interface via JVMDebugger */
   public synchronized boolean detach() {
-    if ( ! attached)
+    if ( ! attached) 
        return false;
 
     // Close all open DLLs
@@ -230,11 +230,11 @@ public class WindbgDebuggerLocal extends DebuggerBase implements WindbgDebugger 
 
   public CDebugger getCDebugger() throws DebuggerException {
     if (cdbg == null) {
-      // FIXME: CDebugger is not yet supported for IA64 because
+      // FIXME: CDebugger is not yet supported for IA64 because 
       // of native stack walking issues.
       if (! getCPU().equals("ia64")) {
          cdbg = new WindbgCDebugger(this);
-      }
+      } 
     }
     return cdbg;
   }
@@ -256,7 +256,7 @@ public class WindbgDebuggerLocal extends DebuggerBase implements WindbgDebugger 
 
   public synchronized ClosestSymbol lookup(long address) {
     return lookupByAddress0(address);
-  }
+  }   
 
   /** From the Debugger interface */
   public MachineDescription getMachineDescription() {
@@ -297,7 +297,7 @@ public class WindbgDebuggerLocal extends DebuggerBase implements WindbgDebugger 
     utils.checkAlignment(address, jintSize);
     byte[] data = readBytes(address, jlongSize);
     return utils.dataToJLong(data, jlongSize);
-  }
+  }  
 
   //--------------------------------------------------------------------------------
   // Internal routines (for implementation of WindbgAddress).
@@ -331,7 +331,7 @@ public class WindbgDebuggerLocal extends DebuggerBase implements WindbgDebugger 
   // Thread context access
   //
 
-  private synchronized void setThreadIntegerRegisterSet(long threadId,
+  private synchronized void setThreadIntegerRegisterSet(long threadId, 
                                                long[] regs) {
     threadIntegerRegisterSet.put(new Long(threadId), regs);
   }
@@ -345,7 +345,7 @@ public class WindbgDebuggerLocal extends DebuggerBase implements WindbgDebugger 
     requireAttach();
     return (long[]) threadIntegerRegisterSet.get(new Long(threadId));
   }
-
+  
   public synchronized List getThreadList() throws DebuggerException {
     requireAttach();
     return threadList;
@@ -374,8 +374,8 @@ public class WindbgDebuggerLocal extends DebuggerBase implements WindbgDebugger 
     if (path != null) {
        DLL dll = null;
        if (useNativeLookup) {
-          dll = new DLL(this, path, size,newAddress(base)) {
-                 public ClosestSymbol  closestSymbolToPC(Address pcAsAddr) {
+	  dll = new DLL(this, path, size,newAddress(base)) {
+	         public ClosestSymbol  closestSymbolToPC(Address pcAsAddr) {
                    long pc = getAddressValue(pcAsAddr);
                    ClosestSymbol sym = lookupByAddress0(pc);
                    if (sym == null) {
@@ -384,7 +384,7 @@ public class WindbgDebuggerLocal extends DebuggerBase implements WindbgDebugger 
                      return sym;
                    }
                  }
-              };
+	      };
        } else {
          dll = new DLL(this, path, size, newAddress(base));
        }
@@ -416,7 +416,7 @@ public class WindbgDebuggerLocal extends DebuggerBase implements WindbgDebugger 
   // attach/detach helpers
   private void checkAttached() {
     if (attached) {
-       String msg = (isCore)? "already attached to a Dr. Watson dump!" :
+       String msg = (isCore)? "already attached to a Dr. Watson dump!" : 
                               "already attached to a process!";
        throw new DebuggerException(msg);
     }
@@ -463,7 +463,7 @@ public class WindbgDebuggerLocal extends DebuggerBase implements WindbgDebugger 
       if (addr != null) {
         return addr.getValue();
       }
-    }
+    }    
     return 0L;
   }
 
@@ -478,7 +478,7 @@ public class WindbgDebuggerLocal extends DebuggerBase implements WindbgDebugger 
        return new ReadResult(address);
   }
 
-
+    
   private DLL findDLLByName(String fullPathName) {
     for (Iterator iter = loadObjects.iterator(); iter.hasNext(); ) {
       DLL dll = (DLL) iter.next();
@@ -510,14 +510,14 @@ public class WindbgDebuggerLocal extends DebuggerBase implements WindbgDebugger 
       * On Windows 2000 and earlier, these files do not exist.
       * The user must download Debugging Tools For Windows (DTFW)
       * and install it in order to use SA.
-      *
-      * We have to make sure we use the two files from the same directory
-      * in case there are more than one copy on the system because
-      * one version of dbgeng.dll might not be compatible with a
+      * 
+      * We have to make sure we use the two files from the same directory 
+      * in case there are more than one copy on the system because 
+      * one version of dbgeng.dll might not be compatible with a 
       * different version of dbghelp.dll.
-      * We first look for them in the directory pointed at by
+      * We first look for them in the directory pointed at by 
       * env. var. DEBUGGINGTOOLSFORWINDOWS, next in the default
-      * installation dir for DTFW, and lastly in the standard
+      * installation dir for DTFW, and lastly in the standard 
       * system directory.  We expect that that we will find
       * them in the standard system directory on all systems
       * newer than Windows 2000.
@@ -560,9 +560,9 @@ public class WindbgDebuggerLocal extends DebuggerBase implements WindbgDebugger 
     }
     if (DTFWHome == null) {
       // The files better be in the system dir.
-      String sysDir = System.getenv("SYSTEMROOT") +
+      String sysDir = System.getenv("SYSTEMROOT") + 
           File.separator + "system32";
-
+            
       File feng = new File(sysDir + File.separator + "dbgeng.dll");
       if (!feng.exists()) {
         throw new UnsatisfiedLinkError("File dbgeng.dll does not exist in " +
@@ -573,7 +573,7 @@ public class WindbgDebuggerLocal extends DebuggerBase implements WindbgDebugger 
                                        "location and set environment variable " +
                                        "   DEBUGGINGTOOLSFORWINDOWS  "  +
                                        "to the pathname of that location.");
-      }
+      }            
     }
 
     // Now, load sawindbg.dll

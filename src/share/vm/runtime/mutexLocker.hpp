@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Mutexes used in the VM.
@@ -37,7 +40,7 @@ extern Mutex*   JmethodIdCreation_lock;          // a lock on creating JNI metho
 extern Mutex*   JfieldIdCreation_lock;           // a lock on creating JNI static field identifiers
 extern Monitor* JNICritical_lock;                // a lock used while entering and exiting JNI critical regions, allows GC to sometimes get in
 extern Mutex*   JvmtiThreadState_lock;           // a lock on modification of JVMTI thread data
-extern Monitor* JvmtiPendingEvent_lock;          // a lock on the JVMTI pending events list
+extern Monitor*	JvmtiPendingEvent_lock;		 // a lock on the JVMTI pending events list
 extern Mutex*   Heap_lock;                       // a lock on the heap
 extern Mutex*   ExpandHeap_lock;                 // a lock on expanding the heap
 extern Mutex*   AdapterHandlerLibrary_lock;      // a lock on the AdapterHandlerLibrary
@@ -48,14 +51,14 @@ extern Mutex*   StringTable_lock;                // a lock on the interned strin
 extern Mutex*   CodeCache_lock;                  // a lock on the CodeCache, rank is special, use MutexLockerEx
 extern Mutex*   MethodData_lock;                 // a lock on installation of method data
 extern Mutex*   RetData_lock;                    // a lock on installation of RetData inside method data
-extern Mutex*   DerivedPointerTableGC_lock;      // a lock to protect the derived pointer table
-extern Monitor* VMOperationQueue_lock;           // a lock on queue of vm_operations waiting to execute
+extern Mutex*	DerivedPointerTableGC_lock;	 // a lock to protect the derived pointer table
+extern Monitor* VMOperationQueue_lock;	         // a lock on queue of vm_operations waiting to execute
 extern Monitor* VMOperationRequest_lock;         // a lock on Threads waiting for a vm_operation to terminate
 extern Monitor* Safepoint_lock;                  // a lock used by the safepoint abstraction
 extern Monitor* SerializePage_lock;              // a lock used when VMThread changing serialize memory page permission during safepoint
-extern Monitor* Threads_lock;                    // a lock on the Threads table of active Java threads
+extern Monitor* Threads_lock;                    // a lock on the Threads table of active Java threads 
                                                  // (also used by Safepoints too to block threads creation/destruction)
-extern Monitor* CGC_lock;                        // used for coordination between
+extern Monitor* CGC_lock;                        // used for coordination between 
                                                  // fore- & background GC threads.
 extern Mutex*   STS_init_lock;                   // coordinate initialization of SuspendibleThreadSets.
 extern Monitor* SLT_lock;                        // used in CMS GC for acquiring PLL
@@ -88,7 +91,7 @@ extern Mutex*   Debug1_lock;                     // A bunch of pre-allocated loc
 extern Mutex*   Debug2_lock;                     // down synchronization related bugs!
 extern Mutex*   Debug3_lock;
 
-extern Mutex*   RawMonitor_lock;
+extern Mutex*   RawMonitor_lock;             
 extern Mutex*   PerfDataMemAlloc_lock;           // a lock on the allocator for PerfData memory for performance data
 extern Mutex*   PerfDataManager_lock;            // a long on access to PerfDataManager resources
 extern Mutex*   ParkerFreeList_lock;
@@ -136,7 +139,7 @@ class MutexLocker: StackObj {
     _mutex->lock(thread);
   }
 
-  ~MutexLocker() {
+  ~MutexLocker() {    
     _mutex->unlock();
   }
 
@@ -166,11 +169,11 @@ class MutexLockerEx: public StackObj {
     _mutex = mutex;
     if (_mutex != NULL) {
       assert(mutex->rank() > Mutex::special || no_safepoint_check,
-        "Mutexes with rank special or lower should not do safepoint checks");
+	"Mutexes with rank special or lower should not do safepoint checks");
       if (no_safepoint_check)
-        _mutex->lock_without_safepoint_check();
+	_mutex->lock_without_safepoint_check();
       else
-        _mutex->lock();
+	_mutex->lock();
     }
   }
 
@@ -310,16 +313,17 @@ class VerifyMutexLocker: StackObj {
     _reentrant = mutex->owned_by_self();
     if (!_reentrant) {
       // We temp. diable strict safepoint checking, while we require the lock
-      FlagSetting fs(StrictSafepointChecks, false);
+      FlagSetting fs(StrictSafepointChecks, false);    
       _mutex->lock();
     }
   }
-
+  
   ~VerifyMutexLocker() {
-    if (!_reentrant) {
+    if (!_reentrant) {     
       _mutex->unlock();
     }
   }
 };
 
 #endif
+

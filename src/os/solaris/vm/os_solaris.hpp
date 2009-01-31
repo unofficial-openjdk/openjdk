@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Solaris_OS defines the interface to Solaris operating systems
@@ -28,7 +31,7 @@ class Solaris {
   friend class os;
 
  private:
-
+  
   // Support for "new" libthread APIs for getting & setting thread context (2.8)
   #define TRS_VALID       0
   #define TRS_NONVOLATILE 1
@@ -119,7 +122,7 @@ class Solaris {
 
  public:
   // Large Page Support--ISM.
-  static bool largepage_range(char* addr, size_t size);
+  static bool largepage_range(char* addr, size_t size); 
 
   static int SIGinterrupt() { return _SIGinterrupt; }
   static int SIGasync() { return _SIGasync; }
@@ -161,17 +164,17 @@ class Solaris {
 
   // Workaround for 4352906. thr_stksegment sometimes returns
   // a bad value for the primordial thread's stack base when
-  // it is called more than one time.
-  // Workaround is to cache the initial value to avoid further
-  // calls to thr_stksegment.
+  // it is called more than one time. 
+  // Workaround is to cache the initial value to avoid further 
+  // calls to thr_stksegment. 
   // It appears that someone (Hotspot?) is trashing the user's
   // proc_t structure (note that this is a system struct).
   static address _main_stack_base;
 
  public:
-  static void libthread_init();
-  static void synchronization_init();
-  static void liblgrp_init();
+  static void libthread_init();        
+  static void synchronization_init();  
+  static void liblgrp_init();  
   // Load miscellaneous symbols.
   static void misc_sym_init();
   // This boolean allows users to forward their own non-matching signals
@@ -205,7 +208,7 @@ class Solaris {
 
   static int thr_setstate(thread_t tid, int flag, gregset_t rs)   { return _thr_setstate(tid, flag, rs); }
   static void set_thr_setstate(int_fnP_thread_t_i_gregset_t func) { _thr_setstate = func; }
-
+  
   static int thr_setmutator(thread_t tid, int enabled)    { return _thr_setmutator(tid, enabled); }
   static void set_thr_setmutator(int_fnP_thread_t_i func) { _thr_setmutator = func; }
 
@@ -267,7 +270,7 @@ class Solaris {
   }
   static int lgrp_nlgrps(lgrp_cookie_t cookie)       { return _lgrp_nlgrps != NULL ? _lgrp_nlgrps(cookie) : -1; }
   static int lgrp_cookie_stale(lgrp_cookie_t cookie) {
-    return _lgrp_cookie_stale != NULL ? _lgrp_cookie_stale(cookie) : -1;
+    return _lgrp_cookie_stale != NULL ? _lgrp_cookie_stale(cookie) : -1; 
   }
   static lgrp_cookie_t lgrp_cookie()                 { return _lgrp_cookie; }
 
@@ -287,7 +290,7 @@ class Solaris {
   static JavaThread* setup_interruptible();
   static void cleanup_interruptible(JavaThread* thread);
 
-  // perf counter incrementers used by _INTERRUPTIBLE
+  // perf counter incrementers used by _INTERRUPTIBLE 
 
   static void bump_interrupted_before_count();
   static void bump_interrupted_during_count();
@@ -317,7 +320,7 @@ class Solaris {
 
   // Stack repair handling
 
-  // none present
+  // none present 
 
 };
 
@@ -326,15 +329,15 @@ class PlatformEvent : public CHeapObj {
     double CachePad [4] ;   // increase odds that _mutex is sole occupant of cache line
     volatile int _Event ;
     int _nParked ;
-    int _pipev [2] ;
+    int _pipev [2] ; 
     mutex_t _mutex  [1] ;
     cond_t  _cond   [1] ;
-    double PostPad  [2] ;
+    double PostPad  [2] ;  
 
   protected:
     // Defining a protected ctor effectively gives us an abstract base class.
     // That is, a PlatformEvent can never be instantiated "naked" but only
-    // as a part of a ParkEvent (recall that ParkEvent extends PlatformEvent).
+    // as a part of a ParkEvent (recall that ParkEvent extends PlatformEvent).  
     // TODO-FIXME: make dtor private
     ~PlatformEvent() { guarantee (0, "invariant") ; }
     PlatformEvent() {
@@ -343,25 +346,25 @@ class PlatformEvent : public CHeapObj {
       assert_status(status == 0, status, "cond_init");
       status = os::Solaris::mutex_init(_mutex);
       assert_status(status == 0, status, "mutex_init");
-      _Event   = 0 ;
+      _Event   = 0 ;  
       _nParked = 0 ;
-      _pipev[0] = _pipev[1] = -1 ;
+      _pipev[0] = _pipev[1] = -1 ; 
     }
 
   public:
     // Exercise caution using reset() and fired() -- they may require MEMBARs
-    void reset() { _Event = 0 ; }
-    int  fired() { return _Event; }
-    void park () ;
-    int  park (jlong millis) ;
-    int  TryPark () ;
-    void unpark () ;
-} ;
+    void reset() { _Event = 0 ; } 
+    int  fired() { return _Event; } 
+    void park () ; 
+    int  park (jlong millis) ; 
+    int  TryPark () ; 
+    void unpark () ; 
+} ; 
 
-class PlatformParker : public CHeapObj {
+class PlatformParker : public CHeapObj { 
   protected:
-    mutex_t _mutex [1] ;
-    cond_t  _cond  [1] ;
+    mutex_t _mutex [1] ; 
+    cond_t  _cond  [1] ; 
 
   public:       // TODO-FIXME: make dtor private
     ~PlatformParker() { guarantee (0, "invariant") ; }
@@ -374,4 +377,10 @@ class PlatformParker : public CHeapObj {
       status = os::Solaris::mutex_init(_mutex);
       assert_status(status == 0, status, "mutex_init");
     }
-} ;
+} ; 
+
+
+
+    
+
+

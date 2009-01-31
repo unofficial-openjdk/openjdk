@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // RedefineClasses tracing support via the TraceRedefineClasses
@@ -31,7 +34,7 @@
 // the old cumulative behavior, pick the level after the one in
 // which you are interested and subtract one, e.g., 33554431 will
 // print every tracing message.
-//
+// 
 //    0x00000000 |          0 - default; no tracing messages
 //    0x00000001 |          1 - name each target class before loading, after
 //                              loading and after redefinition is completed
@@ -52,7 +55,7 @@
 //    0x00001000 |       4096 - unused
 //    0x00002000 |       8192 - unused
 //    0x00004000 |      16384 - unused
-//    0x00008000 |      32768 - old/new method matching/add/delete
+//    0x00008000 |      32768 - old/new method matching/add/delete 
 //    0x00010000 |      65536 - impl details: CP size info
 //    0x00020000 |     131072 - impl details: CP merge pass info
 //    0x00040000 |     262144 - impl details: CP index maps
@@ -121,3 +124,5 @@
   if (RC_TRACE_ENABLED(0x00000004)) { \
     t.stop(); \
   } while (0)
+
+

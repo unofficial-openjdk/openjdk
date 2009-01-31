@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -117,7 +120,7 @@ void UnhandledOops::clear_unhandled_oops() {
     // in the unhandled oop generator.
     if(!_thread->is_in_stack((address)entry._oop_ptr)) {
       tty->print_cr("oop_ptr is " INTPTR_FORMAT, (address)entry._oop_ptr);
-      tty->print_cr("thread is " INTPTR_FORMAT " from pc " INTPTR_FORMAT,
+      tty->print_cr("thread is " INTPTR_FORMAT " from pc " INTPTR_FORMAT, 
                      (address)_thread, (address)entry._pc);
       assert(false, "heap is corrupted by the unhandled oop detector");
     }

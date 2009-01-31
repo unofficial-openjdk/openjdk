@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.c1;
@@ -45,7 +45,7 @@ public class Runtime1 {
 
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("Runtime1");
-
+    
     blobsField = type.getField("_blobs");
   }
 

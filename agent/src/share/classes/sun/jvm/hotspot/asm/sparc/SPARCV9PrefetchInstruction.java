@@ -19,14 +19,14 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.sparc;
 
 import sun.jvm.hotspot.asm.*;
 
-public class SPARCV9PrefetchInstruction extends SPARCInstruction
+public class SPARCV9PrefetchInstruction extends SPARCInstruction 
                     implements SPARCV9Instruction {
     final private SPARCRegisterIndirectAddress addr;
     final private int prefetchFcn;
@@ -37,7 +37,7 @@ public class SPARCV9PrefetchInstruction extends SPARCInstruction
     public static final int PREFETCH_MANY_WRITES = 2;
     public static final int PREFETCH_ONE_WRITE   = 3;
     public static final int PREFETCH_PAGE        = 4;
-
+  
     public SPARCV9PrefetchInstruction(String name, SPARCRegisterIndirectAddress addr, int prefetchFcn) {
         super(name);
         this.addr = addr;

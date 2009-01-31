@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 # include "incls/_precompiled.incl"
 # include "incls/_growableArray.cpp.incl"
@@ -32,7 +35,7 @@ void GenericGrowableArray::set_nesting() {
 }
 
 void GenericGrowableArray::check_nesting() {
-  // Check for insidious allocation bug: if a GrowableArray overflows, the
+  // Check for insidious allocation bug: if a GrowableArray overflows, the 
   // grown array must be allocated under the same ResourceMark as the original.
   // Otherwise, the _data array will be deallocated too early.
   if (on_stack() &&
@@ -51,3 +54,4 @@ void* GenericGrowableArray::raw_allocate(int elementSize) {
     return _arena->Amalloc(elementSize * _max);
   }
 }
+

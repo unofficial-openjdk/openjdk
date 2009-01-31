@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This file specializes the assember with interpreter-specific macros
@@ -60,7 +63,7 @@ class InterpreterMacroAssembler: public MacroAssembler {
     Register        last_java_sp,
     address         entry_point,
     int             number_of_arguments,
-    bool            check_exception=true
+    bool	    check_exception=true
   );
 
   virtual void check_and_handle_popframe(Register java_thread);
@@ -102,8 +105,8 @@ class InterpreterMacroAssembler: public MacroAssembler {
   // Removes the current activation (incl. unlocking of monitors).
   // Additionally this code is used for earlyReturn in which case we
   // want to skip throwing an exception and installing an exception.
-  void remove_activation(TosState state,
-                         bool throw_monitor_exception = true,
+  void remove_activation(TosState state, 
+                         bool throw_monitor_exception = true, 
                          bool install_monitor_exception = true);
 
  protected:
@@ -112,13 +115,13 @@ class InterpreterMacroAssembler: public MacroAssembler {
 
  public:
   // Super call_VM calls - correspond to MacroAssembler::call_VM(_leaf) calls
-  void super_call_VM(Register thread_cache,
-                     Register oop_result,
-                     Register last_java_sp,
-                     address entry_point,
-                     Register arg_1,
-                     Register arg_2,
-                     bool check_exception = true);
+  void super_call_VM(Register thread_cache, 
+		     Register oop_result, 
+		     Register last_java_sp, 
+		     address entry_point, 
+		     Register arg_1, 
+		     Register arg_2, 
+		     bool check_exception = true);
 
 #ifndef CC_INTERP
   void super_call_VM_leaf(Register thread_cache, address entry_point, Register arg_1);
@@ -180,16 +183,16 @@ class InterpreterMacroAssembler: public MacroAssembler {
   enum signedOrNot { Signed, Unsigned };
   enum setCCOrNot  { set_CC,  dont_set_CC };
 
-  void get_2_byte_integer_at_bcp( int         bcp_offset,
-                                  Register    Rtmp,
-                                  Register    Rdst,
+  void get_2_byte_integer_at_bcp( int         bcp_offset, 
+                                  Register    Rtmp, 
+				  Register    Rdst,
                                   signedOrNot is_signed,
-                                  setCCOrNot  should_set_CC = dont_set_CC );
+                        	  setCCOrNot  should_set_CC = dont_set_CC );
 
   void get_4_byte_integer_at_bcp( int        bcp_offset,
-                                  Register   Rtmp,
-                                  Register   Rdst,
-                                  setCCOrNot should_set_CC = dont_set_CC );
+                                  Register   Rtmp, 
+				  Register   Rdst,
+				  setCCOrNot should_set_CC = dont_set_CC );
 
   void get_cache_and_index_at_bcp(Register cache, Register tmp, int bcp_offset);
   void get_cache_entry_pointer_at_bcp(Register cache, Register tmp, int bcp_offset);
@@ -202,7 +205,7 @@ class InterpreterMacroAssembler: public MacroAssembler {
   void fast_iaaccess(int n, address bcp);
   void fast_iagetfield(address bcp);
   void fast_iaputfield(address bcp, bool do_store_check );
-
+  
   void index_check(Register array, Register index, int index_shift, Register tmp, Register res);
   void index_check_without_pop(Register array, Register index, int index_shift, Register tmp, Register res);
 
@@ -219,8 +222,8 @@ class InterpreterMacroAssembler: public MacroAssembler {
   void unlock_if_synchronized_method(TosState state, bool throw_monitor_exception = true, bool install_monitor_exception = true);
 
   void add_monitor_to_stack( bool stack_is_empty,
-                             Register Rtemp,
-                             Register Rtemp2 );
+		             Register Rtemp,
+			     Register Rtemp2 );
 
   // Load/store aligned in _LP64 but unaligned otherwise
   // These only apply to the Interpreter expression stack and locals!
@@ -284,11 +287,11 @@ class InterpreterMacroAssembler: public MacroAssembler {
   void increment_mdp_data_at(int constant, Register bumped_count,
                              bool decrement = false);
   void increment_mdp_data_at(Register reg, int constant,
-                             Register bumped_count, Register scratch2,
+			     Register bumped_count, Register scratch2,
                              bool decrement = false);
   void set_mdp_flag_at(int flag_constant, Register scratch);
   void test_mdp_data_at(int offset, Register value, Label& not_equal_continue,
-                        Register scratch);
+			Register scratch);
 
   void record_klass_in_profile(Register receiver, Register scratch);
   void record_klass_in_profile_helper(Register receiver, Register scratch,
@@ -296,7 +299,7 @@ class InterpreterMacroAssembler: public MacroAssembler {
 
   void update_mdp_by_offset(int offset_of_disp, Register scratch);
   void update_mdp_by_offset(Register reg, int offset_of_disp,
-                            Register scratch);
+			    Register scratch);
   void update_mdp_by_constant(int constant);
   void update_mdp_for_ret(TosState state, Register return_bci);
 
@@ -311,9 +314,9 @@ class InterpreterMacroAssembler: public MacroAssembler {
   void profile_typecheck_failed(Register scratch);
   void profile_switch_default(Register scratch);
   void profile_switch_case(Register index,
-                           Register scratch1,
-                           Register scratch2,
-                           Register scratch3);
+			   Register scratch1,
+			   Register scratch2,
+			   Register scratch3);
 
   // Debugging
   void interp_verify_oop(Register reg, TosState state, const char * file, int line);    // only if +VerifyOops && state == atos

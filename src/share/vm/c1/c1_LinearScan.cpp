@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -558,7 +561,7 @@ void LinearScan::compute_local_live_sets() {
     if (block->is_set(BlockBegin::exception_entry_flag)) {
       // Phi functions at the begin of an exception handler are
       // implicitly defined (= killed) at the beginning of the block.
-      for_each_phi_fun(block, phi,
+      for_each_phi_fun(block, phi, 
         live_kill.set_bit(phi->operand()->vreg_number())
       );
     }
@@ -625,7 +628,7 @@ void LinearScan::compute_local_live_sets() {
       for (k = 0; k < n; k++) {
         CodeEmitInfo* info = visitor.info_at(k);
         ValueStack* stack = info->stack();
-        for_each_state_value(stack, value,
+        for_each_state_value(stack, value, 
           set_live_gen_kill(value, op, live_gen, live_kill)
         );
       }
@@ -729,7 +732,7 @@ void LinearScan::compute_global_live_sets() {
 
   // Perform a backward dataflow analysis to compute live_out and live_in for each block.
   // The loop is executed until a fixpoint is reached (no changes in an iteration)
-  // Exception handlers must be processed because not all live values are
+  // Exception handlers must be processed because not all live values are 
   // present in the state array, e.g. because of global value numbering
   do {
     change_occurred = false;
@@ -836,7 +839,7 @@ void LinearScan::compute_global_live_sets() {
       }
     }
 
-#endif
+#endif    
     // when this fails, virtual registers are used before they are defined.
     assert(false, "live_in set of first block must be empty");
     // bailout of if this occurs in product mode.
@@ -960,8 +963,8 @@ void LinearScan::add_def(int reg_num, int def_pos, IntervalUseKind use_kind, Bas
 
   change_spill_definition_pos(interval, def_pos);
   if (use_kind == noUse && interval->spill_state() <= startInMemory) {
-        // detection of method-parameters and roundfp-results
-        // TODO: move this directly to position where use-kind is computed
+  	// detection of method-parameters and roundfp-results
+  	// TODO: move this directly to position where use-kind is computed
     interval->set_spill_state(startInMemory);
   }
 }
@@ -1055,7 +1058,7 @@ IntervalUseKind LinearScan::use_kind_of_input_operand(LIR_Op* op, LIR_Opr opr) {
         // input operand must have a register instead of output operand (leads to better register allocation)
         return mustHaveRegister;
       }
-
+      
       // The input operand is not forced to a register (moves from stack to register are allowed),
       // but it is faster if the input operand is in a register
       return shouldHaveRegister;
@@ -1372,7 +1375,7 @@ void LinearScan::build_intervals() {
       for (k = 0; k < n; k++) {
         CodeEmitInfo* info = visitor.info_at(k);
         ValueStack* stack = info->stack();
-        for_each_state_value(stack, value,
+        for_each_state_value(stack, value, 
           add_use(value, block_from, op_id + 1, noUse);
         );
       }
@@ -1829,7 +1832,7 @@ void LinearScan::resolve_exception_entry(BlockBegin* block, MoveResolver &move_r
   }
 
   // the live_in bits are not set for phi functions of the xhandler entry, so iterate them separately
-  for_each_phi_fun(block, phi,
+  for_each_phi_fun(block, phi, 
     resolve_exception_entry(block, phi->operand()->vreg_number(), move_resolver)
   );
 
@@ -1847,7 +1850,7 @@ void LinearScan::resolve_exception_edge(XHandler* handler, int throwing_op_id, i
     return;
   }
 
-  // the computation of to_interval is equal to resolve_collect_mappings,
+  // the computation of to_interval is equal to resolve_collect_mappings, 
   // but from_interval is more complicated because of phi functions
   BlockBegin* to_block = handler->entry_block();
   Interval* to_interval = interval_at_block_begin(to_block, reg_num);
@@ -1915,7 +1918,7 @@ void LinearScan::resolve_exception_edge(XHandler* handler, int throwing_op_id, M
     entry_code->jump(handler->entry_block());
     handler->set_entry_code(entry_code);
   }
-}
+}   
 
 
 void LinearScan::resolve_exception_handlers() {
@@ -2334,19 +2337,19 @@ OopMap* LinearScan::compute_oop_map(IntervalWalker* iw, LIR_Op* op, CodeEmitInfo
 
       // caller-save registers must not be included into oop-maps at calls
       assert(!is_call_site || assigned_reg >= nof_regs || !is_caller_save(assigned_reg), "interval is in a caller-save register at a call -> register will be overwritten");
-
+      
       VMReg name = vm_reg_for_interval(interval);
       map->set_oop(name);
-
+      
       // Spill optimization: when the stack value is guaranteed to be always correct,
       // then it must be added to the oop map even if the interval is currently in a register
-      if (interval->always_in_memory() &&
+      if (interval->always_in_memory() && 
           op->id() > interval->spill_definition_pos() &&
           interval->assigned_reg() != interval->canonical_spill_slot()) {
         assert(interval->spill_definition_pos() > 0, "position not set correctly");
         assert(interval->canonical_spill_slot() >= LinearScan::nof_regs, "no spill slot assigned");
         assert(interval->assigned_reg() < LinearScan::nof_regs, "interval is on stack, so stack slot is registered twice");
-
+        
         map->set_oop(frame_map()->slot_regname(interval->canonical_spill_slot() - LinearScan::nof_regs));
       }
     }
@@ -2647,7 +2650,7 @@ int LinearScan::append_scope_value(int op_id, Value value, GrowableArray<ScopeVa
     assert(con != NULL || opr->is_virtual(), "asumption: non-Constant instructions have only virtual operands");
 
     if (con != NULL && !con->is_pinned() && !opr->is_constant()) {
-      // Unpinned constants may have a virtual operand for a part of the lifetime
+      // Unpinned constants may have a virtual operand for a part of the lifetime 
       // or may be illegal when it was optimized away,
       // so always use a constant operand
       opr = LIR_OprFact::value_type(con->type());
@@ -2938,7 +2941,7 @@ void LinearScan::do_linear_scan() {
     resolve_exception_handlers();
   }
   // fill in number of spill slots into frame_map
-  propagate_spill_slots();
+  propagate_spill_slots(); 
   CHECK_BAILOUT();
 
   NOT_PRODUCT(print_intervals("After Register Allocation"));
@@ -3236,7 +3239,7 @@ class RegisterVerifier: public StackObj {
   void process_operations(LIR_List* ops, IntervalList* input_state);
 
  public:
-  RegisterVerifier(LinearScan* allocator)
+  RegisterVerifier(LinearScan* allocator) 
     : _allocator(allocator)
     , _work_list(16)
     , _saved_states(BlockBegin::number_of_blocks(), NULL)
@@ -3261,7 +3264,7 @@ void RegisterVerifier::verify(BlockBegin* start) {
     LIR_Opr opr = args->at(n);
     if (opr->is_register()) {
       Interval* interval = interval_at(reg_num(opr));
-
+      
       if (interval->assigned_reg() < state_size()) {
         input_state->at_put(interval->assigned_reg(), interval);
       }
@@ -3344,7 +3347,7 @@ void RegisterVerifier::process_successor(BlockBegin* block, IntervalList* input_
           saved_state->at_put(i, NULL);
 
           TRACE_LINEAR_SCAN(4, tty->print_cr("process_successor B%d: invalidating slot %d", block->block_id(), i));
-        }
+        } 
       }
     }
 
@@ -4382,7 +4385,7 @@ void Interval::print(outputStream* out) const {
   // print ranges
   Range* cur = _first;
   while (cur != Range::end()) {
-    cur->print(out);
+    cur->print(out); 
     cur = cur->next();
     assert(cur != NULL, "range list not closed with range sentinel");
   }
@@ -4407,7 +4410,7 @@ void Interval::print(outputStream* out) const {
 
 // **** Implementation of IntervalWalker ****************************
 
-IntervalWalker::IntervalWalker(LinearScan* allocator, Interval* unhandled_fixed_first, Interval* unhandled_any_first)
+IntervalWalker::IntervalWalker(LinearScan* allocator, Interval* unhandled_fixed_first, Interval* unhandled_any_first) 
  : _compilation(allocator->compilation())
  , _allocator(allocator)
 {
@@ -5489,7 +5492,7 @@ bool LinearScanWalker::is_move(LIR_Op* op, Interval* from, Interval* to) {
   return in->is_virtual() && res->is_virtual() && in->vreg_number() == from->reg_num() && res->vreg_number() == to->reg_num();
 }
 
-// optimization (especially for phi functions of nested loops):
+// optimization (especially for phi functions of nested loops): 
 // assign same spill slot to non-intersecting intervals
 void LinearScanWalker::combine_spilled_intervals(Interval* cur) {
   if (cur->is_split_child()) {
@@ -5885,14 +5888,14 @@ void ControlFlowOptimizer::reorder_short_loop(BlockList* code, BlockBegin* heade
   int max_end = MIN2(header_idx + ShortLoopSize, code->length());
   while (i < max_end && code->at(i)->loop_depth() >= header_block->loop_depth()) {
     i++;
-  }
+  } 
 
   if (i == code->length() || code->at(i)->loop_depth() < header_block->loop_depth()) {
     int end_idx = i - 1;
     BlockBegin* end_block = code->at(end_idx);
 
     if (end_block->number_of_sux() == 1 && end_block->sux_at(0) == header_block) {
-      // short loop from header_idx to end_idx found -> reorder blocks such that
+      // short loop from header_idx to end_idx found -> reorder blocks such that 
       // the header_block is the last block instead of the first block of the loop
       TRACE_LINEAR_SCAN(1, tty->print_cr("Reordering short loop: length %d, header B%d, end B%d",
                                          end_idx - header_idx + 1,
@@ -6086,7 +6089,7 @@ void ControlFlowOptimizer::delete_jumps_to_return(BlockList* code) {
       //       -> this may lead to unnecesary return instructions in the final code
 
       assert(cur_last_op->info() == NULL, "return instructions do not have debug information");
-      assert(block->number_of_sux() == 0 ||
+      assert(block->number_of_sux() == 0 || 
              (return_converted.at(block->block_id()) && block->number_of_sux() == 1),
              "blocks that end with return must not have successors");
 

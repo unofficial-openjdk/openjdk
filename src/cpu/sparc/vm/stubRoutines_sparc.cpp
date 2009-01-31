@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -32,7 +35,7 @@
 extern "C" {
   address _flush_reg_windows();   // in .s file.
   // Flush registers to stack. In case of error we will need to stack walk.
-  address bootstrap_flush_windows(void) {
+  address bootstrap_flush_windows(void) { 
     Thread* thread = ThreadLocalStorage::get_thread_slow();
     // Very early in process there is no thread.
     if (thread != NULL) {

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class CompactibleFreeListSpace;
@@ -38,16 +41,16 @@ class Mutex;
 
 class FreeList VALUE_OBJ_CLASS_SPEC {
   friend class CompactibleFreeListSpace;
-  FreeChunk*    _head;          // List of free chunks
-  FreeChunk*    _tail;          // Tail of list of free chunks
-  size_t        _size;          // Size in Heap words of each chunks
-  ssize_t       _count;         // Number of entries in list
-  size_t        _hint;          // next larger size list with a positive surplus
+  FreeChunk*	_head;		// List of free chunks
+  FreeChunk*	_tail;		// Tail of list of free chunks
+  size_t	_size;		// Size in Heap words of each chunks
+  ssize_t	_count;		// Number of entries in list
+  size_t        _hint;		// next larger size list with a positive surplus
 
-  AllocationStats _allocation_stats;            // statistics for smart allocation
+  AllocationStats _allocation_stats;		// statistics for smart allocation
 
 #ifdef ASSERT
-  Mutex*        _protecting_lock;
+  Mutex*	_protecting_lock;
 #endif
 
   // Asserts false if the protecting lock (if any) is not held.
@@ -93,16 +96,16 @@ class FreeList VALUE_OBJ_CLASS_SPEC {
     assert_proper_lock_protection();
     return _head;
   }
-  void set_head(FreeChunk* v) {
+  void set_head(FreeChunk* v) { 
     assert_proper_lock_protection();
-    _head = v;
-    assert(!_head || _head->size() == _size, "bad chunk size");
+    _head = v; 
+    assert(!_head || _head->size() == _size, "bad chunk size"); 
   }
   // Set the head of the list and set the prev field of non-null
   // values to NULL.
   void link_head(FreeChunk* v) {
     assert_proper_lock_protection();
-    set_head(v);
+    set_head(v); 
     // If this method is not used (just set the head instead),
     // this check can be avoided.
     if (v != NULL) {
@@ -114,16 +117,16 @@ class FreeList VALUE_OBJ_CLASS_SPEC {
     assert_proper_lock_protection();
     return _tail;
   }
-  void set_tail(FreeChunk* v) {
+  void set_tail(FreeChunk* v) { 
     assert_proper_lock_protection();
-    _tail = v;
+    _tail = v; 
     assert(!_tail || _tail->size() == _size, "bad chunk size");
   }
   // Set the tail of the list and set the next field of non-null
   // values to NULL.
   void link_tail(FreeChunk* v) {
     assert_proper_lock_protection();
-    set_tail(v);
+    set_tail(v); 
     if (v != NULL) {
       v->clearNext();
     }
@@ -262,12 +265,12 @@ class FreeList VALUE_OBJ_CLASS_SPEC {
 
   NOT_PRODUCT(
     // For debugging.  The "_returnedBytes" in all the lists are summed
-    // and compared with the total number of bytes swept during a
+    // and compared with the total number of bytes swept during a 
     // collection.
     size_t returnedBytes() const { return _allocation_stats.returnedBytes(); }
     void set_returnedBytes(size_t v) { _allocation_stats.set_returnedBytes(v); }
-    void increment_returnedBytes_by(size_t v) {
-      _allocation_stats.set_returnedBytes(_allocation_stats.returnedBytes() + v);
+    void increment_returnedBytes_by(size_t v) { 
+      _allocation_stats.set_returnedBytes(_allocation_stats.returnedBytes() + v); 
     }
   )
 
@@ -275,7 +278,7 @@ class FreeList VALUE_OBJ_CLASS_SPEC {
   // the list is empty.
   FreeChunk* getChunkAtHead();
 
-  // Remove the first "n" or "count", whichever is smaller, chunks from the
+  // Remove the first "n" or "count", whichever is smaller, chunks from the 
   // list, setting "fl", which is required to be empty, to point to them.
   void getFirstNChunksFromList(size_t n, FreeList* fl);
 

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,27 +22,27 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A Cache for storing (method, bci) -> oopMap.
-// The memory management system uses the cache when locating object
+// The memory management system uses the cache when locating object 
 // references in an interpreted frame.
 //
 // OopMapCache's are allocated lazily per instanceKlass.
 
-// The oopMap (InterpreterOopMap) is stored as a bit mask. If the
+// The oopMap (InterpreterOopMap) is stored as a bit mask. If the 
 // bit_mask can fit into two words it is stored in
 // the _bit_mask array, otherwise it is allocated on the heap.
-// For OopMapCacheEntry the bit_mask is allocated in the C heap
+// For OopMapCacheEntry the bit_mask is allocated in the C heap 
 // because these entries persist between garbage collections.
 // For InterpreterOopMap the bit_mask is allocated in
 // a resource area for better performance.  InterpreterOopMap
 // should only be created and deleted during same garbage collection.
 //
-// If ENABBLE_ZAP_DEAD_LOCALS is defined, two bits are used
+// If ENABBLE_ZAP_DEAD_LOCALS is defined, two bits are used 
 // per entry instead of one. In all cases,
-// the first bit is set to indicate oops as opposed to other
+// the first bit is set to indicate oops as opposed to other 
 // values. If the second bit is available,
 // it is set for dead values. We get the following encoding:
 //
@@ -60,12 +63,12 @@ class InterpreterOopMap: ResourceObj {
 
  public:
   enum {
-    N                = 2,                // the number of words reserved
-                                         // for inlined mask storage
-    small_mask_limit = N * BitsPerWord,  // the maximum number of bits
-                                         // available for small masks,
-                                         // small_mask_limit can be set to 0
-                                         // for testing bit_mask allocation
+    N                = 2,                // the number of words reserved 
+					 // for inlined mask storage
+    small_mask_limit = N * BitsPerWord,  // the maximum number of bits 
+					 // available for small masks,
+					 // small_mask_limit can be set to 0 
+					 // for testing bit_mask allocation
 
 #ifdef ENABLE_ZAP_DEAD_LOCALS
     bits_per_entry   = 2,
@@ -83,32 +86,32 @@ class InterpreterOopMap: ResourceObj {
   int            _expression_stack_size; // the size of the expression stack in slots
 
  protected:
-  intptr_t       _bit_mask[N];    // the bit mask if
-                                  // mask_size <= small_mask_limit,
-                                  // ptr to bit mask otherwise
-                                  // "protected" so that sub classes can
-                                  // access it without using trickery in
-                                  // methd bit_mask().
+  intptr_t       _bit_mask[N];    // the bit mask if 
+				  // mask_size <= small_mask_limit, 
+				  // ptr to bit mask otherwise
+				  // "protected" so that sub classes can 
+				  // access it without using trickery in 
+				  // methd bit_mask().
 #ifdef ASSERT
   bool _resource_allocate_bit_mask;
 #endif
 
   // access methods
   methodOop      method() const                  { return _method; }
-  void           set_method(methodOop v)         { _method = v; }
+  void		 set_method(methodOop v)	 { _method = v; }
   int            bci() const                     { return _bci; }
-  void           set_bci(int v)                  { _bci = v; }
+  void		 set_bci(int v)			 { _bci = v; }
   int            mask_size() const               { return _mask_size; }
-  void           set_mask_size(int v)            { _mask_size = v; }
+  void		 set_mask_size(int v)		 { _mask_size = v; }
   int            number_of_entries() const       { return mask_size() / bits_per_entry; }
   // Test bit mask size and return either the in-line bit mask or allocated
   // bit mask.
   uintptr_t*  bit_mask()                         { return (uintptr_t*)(mask_size() <= small_mask_limit ? (intptr_t)_bit_mask : _bit_mask[0]); }
 
   // return the word size of_bit_mask.  mask_size() <= 4 * MAX_USHORT
-  size_t mask_word_size() {
-    return (mask_size() + BitsPerWord - 1) / BitsPerWord;
-  }
+  size_t mask_word_size() { 
+    return (mask_size() + BitsPerWord - 1) / BitsPerWord; 
+  } 
 
   uintptr_t entry_at(int offset)            { int i = offset * bits_per_entry; return bit_mask()[i / BitsPerWord] >> (i % BitsPerWord); }
 
@@ -123,7 +126,7 @@ class InterpreterOopMap: ResourceObj {
   bool is_empty();
 
   // Initialization
-  void initialize();
+  void initialize();  
 
  public:
   InterpreterOopMap();
@@ -139,7 +142,7 @@ class InterpreterOopMap: ResourceObj {
   void oop_iterate(OopClosure * blk);
   void oop_iterate(OopClosure * blk, MemRegion mr);
   void verify();
-  void print();
+  void print();  
 
   bool is_oop  (int offset)                      { return (entry_at(offset) & (1 << oop_bit_number )) != 0; }
 
@@ -154,7 +157,7 @@ class OopMapCache : public CHeapObj {
  private:
   enum { _size        = 32,     // Use fixed size for now
          _probe_depth = 3       // probe depth in case of collisions
-  };
+  };                          
 
   OopMapCacheEntry* _array;
 
@@ -188,3 +191,4 @@ class OopMapCache : public CHeapObj {
   // Returns total no. of bytes allocated as part of OopMapCache's
   static long memory_usage()                     PRODUCT_RETURN0;
 };
+

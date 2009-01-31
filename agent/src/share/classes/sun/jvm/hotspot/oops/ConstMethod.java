@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.oops;
@@ -105,32 +105,32 @@ public class ConstMethod extends Oop {
     return (Method) method.getValue(this);
   }
 
-  public TypeArray getExceptionTable() {
-    return (TypeArray) exceptionTable.getValue(this);
-  }
+  public TypeArray getExceptionTable() { 
+    return (TypeArray) exceptionTable.getValue(this);    
+  } 
 
-  public long getConstMethodSize() {
-    return constMethodSize.getValue(this);
+  public long getConstMethodSize() { 
+    return constMethodSize.getValue(this);          
   }
 
   public byte getFlags() {
     return flags.getValue(this);
   }
 
-  public long getCodeSize() {
-    return codeSize.getValue(this);
+  public long getCodeSize() { 
+    return codeSize.getValue(this);          
   }
 
-  public long getNameIndex() {
-    return nameIndex.getValue(this);
+  public long getNameIndex() { 
+    return nameIndex.getValue(this);         
   }
 
-  public long getSignatureIndex() {
-    return signatureIndex.getValue(this);
+  public long getSignatureIndex() { 
+    return signatureIndex.getValue(this);    
   }
 
-  public long getGenericSignatureIndex() {
-    return genericSignatureIndex.getValue(this);
+  public long getGenericSignatureIndex() { 
+    return genericSignatureIndex.getValue(this);    
   }
 
   public Symbol getName() {
@@ -268,7 +268,7 @@ public class ConstMethod extends Oop {
 
   public boolean hasLocalVariableTable() {
     return (getFlags() & HAS_LOCALVARIABLE_TABLE) != 0;
-  }
+  } 
 
   public Symbol getLocalVariableName(int bci, int slot) {
     return getMethod().getLocalVariableName(bci, slot);

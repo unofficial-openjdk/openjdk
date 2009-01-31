@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -52,7 +55,7 @@ symbolOop SymbolTable::lookup(int index, const char* name,
 // entries in the symbol table during normal execution (only during
 // safepoints).
 
-symbolOop SymbolTable::lookup(const char* name, int len, TRAPS) {
+symbolOop SymbolTable::lookup(const char* name, int len, TRAPS) {  
   unsigned int hashValue = hash_symbol(name, len);
   int index = the_table()->hash_to_index(hashValue);
 
@@ -60,7 +63,7 @@ symbolOop SymbolTable::lookup(const char* name, int len, TRAPS) {
 
   // Found
   if (s != NULL) return s;
-
+  
   // Otherwise, add to symbol to table
   return the_table()->basic_add(index, (u1*)name, len, hashValue, CHECK_NULL);
 }
@@ -78,11 +81,11 @@ symbolOop SymbolTable::lookup(symbolHandle sym, int begin, int end, TRAPS) {
     hashValue = hash_symbol(name, len);
     index = the_table()->hash_to_index(hashValue);
     symbolOop s = the_table()->lookup(index, name, len, hashValue);
-
+  
     // Found
     if (s != NULL) return s;
   }
-
+   
   // Otherwise, add to symbol to table. Copy to a C string first.
   char stack_buf[128];
   ResourceMark rm(THREAD);
@@ -102,7 +105,7 @@ symbolOop SymbolTable::lookup(symbolHandle sym, int begin, int end, TRAPS) {
 }
 
 symbolOop SymbolTable::lookup_only(const char* name, int len,
-                                   unsigned int& hash) {
+                                   unsigned int& hash) {  
   hash = hash_symbol(name, len);
   int index = the_table()->hash_to_index(hash);
 
@@ -136,7 +139,7 @@ symbolOop SymbolTable::probe(const char* name, int len) {
 
 
 symbolOop SymbolTable::basic_add(int index, u1 *name, int len,
-                                 unsigned int hashValue, TRAPS) {
+                                 unsigned int hashValue, TRAPS) {  
   assert(!Universe::heap()->is_in_reserved(name) || GC_locker::is_active(),
          "proposed name of symbol must be stable");
 
@@ -159,7 +162,7 @@ symbolOop SymbolTable::basic_add(int index, u1 *name, int len,
     // A race occured and another thread introduced the symbol, this one
     // will be dropped and collected.
     return test;
-  }
+  }  
 
   HashtableEntry* entry = new_entry(hashValue, sym());
   add_entry(index, entry);
@@ -235,7 +238,7 @@ void SymbolTable::print_histogram() {
   const int results_length = 100;
   int results[results_length];
   int i,j;
-
+  
   // initialize results to zero
   for (j = 0; j < results_length; j++) {
     results[j] = 0;
@@ -261,7 +264,7 @@ void SymbolTable::print_histogram() {
   tty->print_cr("%8s %5d", "Total  ", total);
   tty->print_cr("%8s %5d", "Maximum", max_symbols);
   tty->print_cr("%8s %3.2f", "Average",
-          ((float) total / (float) the_table()->table_size()));
+	  ((float) total / (float) the_table()->table_size()));
   tty->print_cr("%s", "Histogram:");
   tty->print_cr(" %s %29s", "Length", "Number chains that length");
   for (i = 0; i < results_length; i++) {
@@ -269,7 +272,7 @@ void SymbolTable::print_histogram() {
       tty->print_cr("%6d %10d", i, results[i]);
     }
   }
-  int line_length = 70;
+  int line_length = 70;    
   tty->print_cr("%s %30s", " Length", "Number chains that length");
   for (i = 0; i < results_length; i++) {
     if (results[i] > 0) {
@@ -282,9 +285,9 @@ void SymbolTable::print_histogram() {
       }
       tty->cr();
     }
-  }
+  }  
   tty->print_cr(" %s %d: %d\n", "Number chains longer than",
-                    results_length, out_of_range);
+	            results_length, out_of_range);
 }
 
 #endif // PRODUCT
@@ -373,7 +376,7 @@ oop StringTable::lookup(int index, jchar* name,
 
 
 oop StringTable::basic_add(int index, Handle string_or_null, jchar* name,
-                           int len, unsigned int hashValue, TRAPS) {
+                           int len, unsigned int hashValue, TRAPS) {  
   debug_only(StableMemoryChecker smc(name, len * sizeof(name[0])));
   assert(!Universe::heap()->is_in_reserved(name) || GC_locker::is_active(),
          "proposed name of symbol must be stable");
@@ -399,7 +402,7 @@ oop StringTable::basic_add(int index, Handle string_or_null, jchar* name,
   if (test != NULL) {
     // Entry already added
     return test;
-  }
+  }  
 
   HashtableEntry* entry = new_entry(hashValue, string());
   add_entry(index, entry);
@@ -425,10 +428,10 @@ oop StringTable::intern(Handle string_or_null, jchar* name,
 
   // Found
   if (string != NULL) return string;
-
+  
   // Otherwise, add to symbol to table
   return the_table()->basic_add(index, string_or_null, name, len,
-                                hashValue, CHECK_NULL);
+                                hashValue, CHECK_NULL);  
 }
 
 oop StringTable::intern(symbolOop symbol, TRAPS) {

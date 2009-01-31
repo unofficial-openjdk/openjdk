@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Portions of code courtesy of Clifford Click
@@ -32,7 +35,7 @@
 
 //=============================================================================
 //------------------------------Identity---------------------------------------
-// If right input is a constant 0, return the left input.
+// If right input is a constant 0, return the left input.  
 Node *SubNode::Identity( PhaseTransform *phase ) {
   assert(in(1) != this, "Must already have called Value");
   assert(in(2) != this, "Must already have called Value");
@@ -63,7 +66,7 @@ Node *SubNode::Identity( PhaseTransform *phase ) {
 }
 
 //------------------------------Value------------------------------------------
-// A subtract node differences it's two inputs.
+// A subtract node differences it's two inputs.  
 const Type *SubNode::Value( PhaseTransform *phase ) const {
   const Node* in1 = in(1);
   const Node* in2 = in(2);
@@ -78,7 +81,7 @@ const Type *SubNode::Value( PhaseTransform *phase ) const {
   if (phase->eqv_uncast(in1, in2))  return add_id();
 
   // Either input is BOTTOM ==> the result is the local BOTTOM
-  if( t1 == Type::BOTTOM || t2 == Type::BOTTOM )
+  if( t1 == Type::BOTTOM || t2 == Type::BOTTOM ) 
     return bottom_type();
 
   return sub(t1,t2);            // Local flavor of type subtraction
@@ -86,31 +89,6 @@ const Type *SubNode::Value( PhaseTransform *phase ) const {
 }
 
 //=============================================================================
-
-//------------------------------Helper function--------------------------------
-static bool ok_to_convert(Node* inc, Node* iv) {
-    // Do not collapse (x+c0)-y if "+" is a loop increment, because the
-    // "-" is loop invariant and collapsing extends the live-range of "x"
-    // to overlap with the "+", forcing another register to be used in
-    // the loop.
-    // This test will be clearer with '&&' (apply DeMorgan's rule)
-    // but I like the early cutouts that happen here.
-    const PhiNode *phi;
-    if( ( !inc->in(1)->is_Phi() ||
-          !(phi=inc->in(1)->as_Phi()) ||
-          phi->is_copy() ||
-          !phi->region()->is_CountedLoop() ||
-          inc != phi->region()->as_CountedLoop()->incr() )
-       &&
-        // Do not collapse (x+c0)-iv if "iv" is a loop induction variable,
-        // because "x" maybe invariant.
-        ( !iv->is_loop_iv() )
-      ) {
-      return true;
-    } else {
-      return false;
-    }
-}
 //------------------------------Ideal------------------------------------------
 Node *SubINode::Ideal(PhaseGVN *phase, bool can_reshape){
   Node *in1 = in(1);
@@ -121,7 +99,7 @@ Node *SubINode::Ideal(PhaseGVN *phase, bool can_reshape){
 #ifdef ASSERT
   // Check for dead loop
   if( phase->eqv( in1, this ) || phase->eqv( in2, this ) ||
-      ( op1 == Op_AddI || op1 == Op_SubI ) &&
+      ( op1 == Op_AddI || op1 == Op_SubI ) && 
       ( phase->eqv( in1->in(1), this ) || phase->eqv( in1->in(2), this ) ||
         phase->eqv( in1->in(1), in1  ) || phase->eqv( in1->in(2), in1 ) ) )
     assert(false, "dead loop in SubINode::Ideal");
@@ -137,20 +115,39 @@ Node *SubINode::Ideal(PhaseGVN *phase, bool can_reshape){
   }
 
   // Convert "(x+c0) - y" into (x-y) + c0"
-  // Do not collapse (x+c0)-y if "+" is a loop increment or
-  // if "y" is a loop induction variable.
-  if( op1 == Op_AddI && ok_to_convert(in1, in2) ) {
-    const Type *tadd = phase->type( in1->in(2) );
-    if( tadd->singleton() && tadd != Type::TOP ) {
-      Node *sub2 = phase->transform( new (phase->C, 3) SubINode( in1->in(1), in2 ));
-      return new (phase->C, 3) AddINode( sub2, in1->in(2) );
+  if( op1 == Op_AddI ) {
+    // Do not collapse (x+y)-y if "+" is a loop increment, because the
+    // "-" is loop invariant and collapsing extends the live-range of "x"
+    // to overlap with the "+", forcing another register to be used in
+    // the loop.
+    const PhiNode *phi;
+    // This test will be clearer with '&&' (apply DeMorgan's rule)
+    // but I like the early cutouts that happen here.
+    if( ( !in1->in(1)->is_Phi() ||
+          !(phi=in1->in(1)->as_Phi()) ||
+          phi->is_copy() ||
+          !phi->region()->is_CountedLoop() ||
+          in1 != phi->region()->as_CountedLoop()->incr() )
+       &&
+        // Do not collapse (x+c0)-iv if "iv" is a loop induction variable,
+        // because "x" maybe invariant.
+        ( !in2->is_Phi() ||
+          !(phi=in2->as_Phi()) ||
+          phi->is_copy() ||
+          !phi->region()->is_CountedLoop() ||
+          (Node*)phi != phi->region()->as_CountedLoop()->phi() )
+      ) { 
+      const Type *tadd = phase->type( in1->in(2) );
+      if( tadd->singleton() && tadd != Type::TOP ) {
+        Node *sub2 = phase->transform( new (phase->C, 3) SubINode( in1->in(1), in2 ));
+        return new (phase->C, 3) AddINode( sub2, in1->in(2) );
+      }
     }
   }
 
 
   // Convert "x - (y+c0)" into "(x-y) - c0"
-  // Need the same check as in above optimization but reversed.
-  if (op2 == Op_AddI && ok_to_convert(in2, in1)) {
+  if (op2 == Op_AddI) {
     Node* in21 = in2->in(1);
     Node* in22 = in2->in(2);
     const TypeInt* tcon = phase->type(in22)->isa_int();
@@ -166,7 +163,7 @@ Node *SubINode::Ideal(PhaseGVN *phase, bool can_reshape){
 
 #ifdef ASSERT
   // Check for dead loop
-  if( ( op2 == Op_AddI || op2 == Op_SubI ) &&
+  if( ( op2 == Op_AddI || op2 == Op_SubI ) && 
       ( phase->eqv( in2->in(1), this ) || phase->eqv( in2->in(2), this ) ||
         phase->eqv( in2->in(1), in2  ) || phase->eqv( in2->in(2), in2  ) ) )
     assert(false, "dead loop in SubINode::Ideal");
@@ -186,7 +183,7 @@ Node *SubINode::Ideal(PhaseGVN *phase, bool can_reshape){
     return new (phase->C, 3) SubINode( phase->intcon(0),in2->in(1));
 
   // Convert "0 - (x-y)" into "y-x"
-  if( t1 == TypeInt::ZERO && op2 == Op_SubI )
+  if( t1 == TypeInt::ZERO && op2 == Op_SubI ) 
     return new (phase->C, 3) SubINode( in2->in(2), in2->in(1) );
 
   // Convert "0 - (x+con)" into "-con-x"
@@ -214,7 +211,7 @@ Node *SubINode::Ideal(PhaseGVN *phase, bool can_reshape){
 }
 
 //------------------------------sub--------------------------------------------
-// A subtract node differences it's two inputs.
+// A subtract node differences it's two inputs.  
 const Type *SubINode::sub( const Type *t1, const Type *t2 ) const {
   const TypeInt *r0 = t1->is_int(); // Handy access
   const TypeInt *r1 = t2->is_int();
@@ -243,7 +240,7 @@ Node *SubLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
 #ifdef ASSERT
   // Check for dead loop
   if( phase->eqv( in1, this ) || phase->eqv( in2, this ) ||
-      ( op1 == Op_AddL || op1 == Op_SubL ) &&
+      ( op1 == Op_AddL || op1 == Op_SubL ) && 
       ( phase->eqv( in1->in(1), this ) || phase->eqv( in1->in(2), this ) ||
         phase->eqv( in1->in(1), in1  ) || phase->eqv( in1->in(2), in1  ) ) )
     assert(false, "dead loop in SubLNode::Ideal");
@@ -257,20 +254,27 @@ Node *SubLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
     return new (phase->C, 3) AddLNode(in1, phase->longcon(-i->get_con()));
 
   // Convert "(x+c0) - y" into (x-y) + c0"
-  // Do not collapse (x+c0)-y if "+" is a loop increment or
-  // if "y" is a loop induction variable.
-  if( op1 == Op_AddL && ok_to_convert(in1, in2) ) {
+  if( op1 == Op_AddL ) {
+    // Do not collapse (x+y)-y if "+" is a loop increment, because the
+    // "-" is loop invariant and collapsing extends the live-range of "x"
+    // to overlap with the "+", forcing another register to be used in
+    // the loop.
     Node *in11 = in1->in(1);
-    const Type *tadd = phase->type( in1->in(2) );
-    if( tadd->singleton() && tadd != Type::TOP ) {
-      Node *sub2 = phase->transform( new (phase->C, 3) SubLNode( in11, in2 ));
-      return new (phase->C, 3) AddLNode( sub2, in1->in(2) );
+    const PhiNode *phi = in11->is_Phi() ? in11->as_Phi() : NULL;
+    if( phi == NULL ||
+        phi->is_copy() ||
+        !phi->region()->is_CountedLoop() ||
+        in1 != phi->region()->as_CountedLoop()->incr() ) {
+      const Type *tadd = phase->type( in1->in(2) );
+      if( tadd->singleton() && tadd != Type::TOP ) {
+        Node *sub2 = phase->transform( new (phase->C, 3) SubLNode( in11, in2 ));
+        return new (phase->C, 3) AddLNode( sub2, in1->in(2) );
+      }
     }
   }
 
   // Convert "x - (y+c0)" into "(x-y) - c0"
-  // Need the same check as in above optimization but reversed.
-  if (op2 == Op_AddL && ok_to_convert(in2, in1)) {
+  if (op2 == Op_AddL) {
     Node* in21 = in2->in(1);
     Node* in22 = in2->in(2);
     const TypeLong* tcon = phase->type(in22)->isa_long();
@@ -280,13 +284,13 @@ Node *SubLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
       return new (phase->C, 3) AddLNode(sub2, neg_c0);
     }
   }
-
+                       
   const Type *t1 = phase->type( in1 );
   if( t1 == Type::TOP ) return NULL;
 
 #ifdef ASSERT
   // Check for dead loop
-  if( ( op2 == Op_AddL || op2 == Op_SubL ) &&
+  if( ( op2 == Op_AddL || op2 == Op_SubL ) && 
       ( phase->eqv( in2->in(1), this ) || phase->eqv( in2->in(2), this ) ||
         phase->eqv( in2->in(1), in2  ) || phase->eqv( in2->in(2), in2  ) ) )
     assert(false, "dead loop in SubLNode::Ideal");
@@ -302,7 +306,7 @@ Node *SubLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
     return new (phase->C, 3) SubLNode( phase->makecon(TypeLong::ZERO),in2->in(1));
 
   // Convert "0 - (x-y)" into "y-x"
-  if( phase->type( in1 ) == TypeLong::ZERO && op2 == Op_SubL )
+  if( phase->type( in1 ) == TypeLong::ZERO && op2 == Op_SubL ) 
     return new (phase->C, 3) SubLNode( in2->in(2), in2->in(1) );
 
   // Convert "(X+A) - (X+B)" into "A - B"
@@ -323,7 +327,7 @@ Node *SubLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
 }
 
 //------------------------------sub--------------------------------------------
-// A subtract node differences it's two inputs.
+// A subtract node differences it's two inputs.  
 const Type *SubLNode::sub( const Type *t1, const Type *t2 ) const {
   const TypeLong *r0 = t1->is_long(); // Handy access
   const TypeLong *r1 = t2->is_long();
@@ -343,7 +347,7 @@ const Type *SubLNode::sub( const Type *t1, const Type *t2 ) const {
 
 //=============================================================================
 //------------------------------Value------------------------------------------
-// A subtract node differences its two inputs.
+// A subtract node differences its two inputs.  
 const Type *SubFPNode::Value( PhaseTransform *phase ) const {
   const Node* in1 = in(1);
   const Node* in2 = in(2);
@@ -362,7 +366,7 @@ const Type *SubFPNode::Value( PhaseTransform *phase ) const {
   // Either input is BOTTOM ==> the result is the local BOTTOM
   const Type *bot = bottom_type();
   if( (t1 == bot) || (t2 == bot) ||
-      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) )
+      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) ) 
     return bot;
 
   return sub(t1,t2);            // Local flavor of type subtraction
@@ -377,12 +381,12 @@ Node *SubFNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   if( t2->base() == Type::FloatCon ) {  // Might be bottom or top...
     // return new (phase->C, 3) AddFNode(in(1), phase->makecon( TypeF::make(-t2->getf()) ) );
   }
-
+                       
   // Not associative because of boundary conditions (infinity)
   if( IdealizedNumerics && !phase->C->method()->is_strict() ) {
     // Convert "x - (x+y)" into "-y"
     if( in(2)->is_Add() &&
-        phase->eqv(in(1),in(2)->in(1) ) )
+        phase->eqv(in(1),in(2)->in(1) ) ) 
       return new (phase->C, 3) SubFNode( phase->makecon(TypeF::ZERO),in(2)->in(2));
   }
 
@@ -395,18 +399,18 @@ Node *SubFNode::Ideal(PhaseGVN *phase, bool can_reshape) {
 }
 
 //------------------------------sub--------------------------------------------
-// A subtract node differences its two inputs.
+// A subtract node differences its two inputs.  
 const Type *SubFNode::sub( const Type *t1, const Type *t2 ) const {
   // no folding if one of operands is infinity or NaN, do not do constant folding
   if( g_isfinite(t1->getf()) && g_isfinite(t2->getf()) ) {
     return TypeF::make( t1->getf() - t2->getf() );
-  }
+  } 
   else if( g_isnan(t1->getf()) ) {
     return t1;
-  }
+  } 
   else if( g_isnan(t2->getf()) ) {
     return t2;
-  }
+  } 
   else {
     return Type::FLOAT;
   }
@@ -420,12 +424,12 @@ Node *SubDNode::Ideal(PhaseGVN *phase, bool can_reshape){
   if( t2->base() == Type::DoubleCon ) { // Might be bottom or top...
     // return new (phase->C, 3) AddDNode(in(1), phase->makecon( TypeD::make(-t2->getd()) ) );
   }
-
+                       
   // Not associative because of boundary conditions (infinity)
-  if( IdealizedNumerics && !phase->C->method()->is_strict() ) {
+  if( IdealizedNumerics && !phase->C->method()->is_strict() ) { 
     // Convert "x - (x+y)" into "-y"
     if( in(2)->is_Add() &&
-        phase->eqv(in(1),in(2)->in(1) ) )
+        phase->eqv(in(1),in(2)->in(1) ) ) 
       return new (phase->C, 3) SubDNode( phase->makecon(TypeD::ZERO),in(2)->in(2));
   }
 
@@ -438,7 +442,7 @@ Node *SubDNode::Ideal(PhaseGVN *phase, bool can_reshape){
 }
 
 //------------------------------sub--------------------------------------------
-// A subtract node differences its two inputs.
+// A subtract node differences its two inputs.  
 const Type *SubDNode::sub( const Type *t1, const Type *t2 ) const {
   // no folding if one of operands is infinity or NaN, do not do constant folding
   if( g_isfinite(t1->getd()) && g_isfinite(t2->getd()) ) {
@@ -467,7 +471,7 @@ Node *CmpNode::Identity( PhaseTransform *phase ) {
 //=============================================================================
 //------------------------------cmp--------------------------------------------
 // Simplify a CmpI (compare 2 integers) node, based on local information.
-// If both inputs are constants, compare them.
+// If both inputs are constants, compare them.  
 const Type *CmpINode::sub( const Type *t1, const Type *t2 ) const {
   const TypeInt *r0 = t1->is_int(); // Handy access
   const TypeInt *r1 = t2->is_int();
@@ -488,7 +492,7 @@ const Type *CmpINode::sub( const Type *t1, const Type *t2 ) const {
 }
 
 // Simplify a CmpU (compare 2 integers) node, based on local information.
-// If both inputs are constants, compare them.
+// If both inputs are constants, compare them.  
 const Type *CmpUNode::sub( const Type *t1, const Type *t2 ) const {
   assert(!t1->isa_ptr(), "obsolete usage of CmpU");
 
@@ -530,7 +534,7 @@ const Type *CmpUNode::sub( const Type *t1, const Type *t2 ) const {
       return TypeInt::CC_GE;
     } else if (hi0 <= lo1) {
       // Check for special case in Hashtable::get.  (See below.)
-      if ((jint)lo0 >= 0 && (jint)lo1 >= 0 &&
+      if ((jint)lo0 >= 0 && (jint)lo1 >= 0 && 
           in(1)->Opcode() == Op_ModI &&
           in(1)->in(2) == in(2) )
         return TypeInt::CC_LT;
@@ -543,7 +547,7 @@ const Type *CmpUNode::sub( const Type *t1, const Type *t2 ) const {
   // to be positive.
   // (This is a gross hack, since the sub method never
   // looks at the structure of the node in any other case.)
-  if ((jint)lo0 >= 0 && (jint)lo1 >= 0 &&
+  if ((jint)lo0 >= 0 && (jint)lo1 >= 0 && 
       in(1)->Opcode() == Op_ModI &&
       in(1)->in(2)->uncast() == in(2)->uncast())
     return TypeInt::CC_LT;
@@ -572,7 +576,7 @@ Node *CmpINode::Ideal( PhaseGVN *phase, bool can_reshape ) {
 
 //=============================================================================
 // Simplify a CmpL (compare 2 longs ) node, based on local information.
-// If both inputs are constants, compare them.
+// If both inputs are constants, compare them.  
 const Type *CmpLNode::sub( const Type *t1, const Type *t2 ) const {
   const TypeLong *r0 = t1->is_long(); // Handy access
   const TypeLong *r1 = t2->is_long();
@@ -595,14 +599,14 @@ const Type *CmpLNode::sub( const Type *t1, const Type *t2 ) const {
 //=============================================================================
 //------------------------------sub--------------------------------------------
 // Simplify an CmpP (compare 2 pointers) node, based on local information.
-// If both inputs are constants, compare them.
+// If both inputs are constants, compare them.  
 const Type *CmpPNode::sub( const Type *t1, const Type *t2 ) const {
   const TypePtr *r0 = t1->is_ptr(); // Handy access
   const TypePtr *r1 = t2->is_ptr();
-
+        
   // Undefined inputs makes for an undefined result
   if( TypePtr::above_centerline(r0->_ptr) ||
-      TypePtr::above_centerline(r1->_ptr) )
+      TypePtr::above_centerline(r1->_ptr) ) 
     return Type::TOP;
 
   if (r0 == r1 && r0->singleton()) {
@@ -646,13 +650,13 @@ const Type *CmpPNode::sub( const Type *t1, const Type *t2 ) const {
   // Unknown inputs makes an unknown result
   if( r0->singleton() ) {
     intptr_t bits0 = r0->get_con();
-    if( r1->singleton() )
+    if( r1->singleton() ) 
       return bits0 == r1->get_con() ? TypeInt::CC_EQ : TypeInt::CC_GT;
     return ( r1->_ptr == TypePtr::NotNull && bits0==0 ) ? TypeInt::CC_GT : TypeInt::CC;
   } else if( r1->singleton() ) {
     intptr_t bits1 = r1->get_con();
     return ( r0->_ptr == TypePtr::NotNull && bits1==0 ) ? TypeInt::CC_GT : TypeInt::CC;
-  } else
+  } else 
     return TypeInt::CC;
 }
 
@@ -721,8 +725,8 @@ Node *CmpPNode::Ideal( PhaseGVN *phase, bool can_reshape ) {
       phase->C->dependencies()->assert_leaf_type(ik);
     }
   }
-
-  // Bypass the dependent load, and compare directly
+  
+  // Bypass the dependent load, and compare directly 
   this->set_req(1,ldk2);
 
   return this;
@@ -731,7 +735,7 @@ Node *CmpPNode::Ideal( PhaseGVN *phase, bool can_reshape ) {
 //=============================================================================
 //------------------------------Value------------------------------------------
 // Simplify an CmpF (compare 2 floats ) node, based on local information.
-// If both inputs are constants, compare them.
+// If both inputs are constants, compare them.  
 const Type *CmpFNode::Value( PhaseTransform *phase ) const {
   const Node* in1 = in(1);
   const Node* in2 = in(2);
@@ -741,7 +745,7 @@ const Type *CmpFNode::Value( PhaseTransform *phase ) const {
   const Type* t2 = (in2 == this) ? Type::TOP : phase->type(in2);
   if( t2 == Type::TOP ) return Type::TOP;
 
-  // Not constants?  Don't know squat - even if they are the same
+  // Not constants?  Don't know squat - even if they are the same 
   // value!  If they are NaN's they compare to LT instead of EQ.
   const TypeF *tf1 = t1->isa_float_constant();
   const TypeF *tf2 = t2->isa_float_constant();
@@ -761,7 +765,7 @@ const Type *CmpFNode::Value( PhaseTransform *phase ) const {
 //=============================================================================
 //------------------------------Value------------------------------------------
 // Simplify an CmpD (compare 2 doubles ) node, based on local information.
-// If both inputs are constants, compare them.
+// If both inputs are constants, compare them.  
 const Type *CmpDNode::Value( PhaseTransform *phase ) const {
   const Node* in1 = in(1);
   const Node* in2 = in(2);
@@ -771,7 +775,7 @@ const Type *CmpDNode::Value( PhaseTransform *phase ) const {
   const Type* t2 = (in2 == this) ? Type::TOP : phase->type(in2);
   if( t2 == Type::TOP ) return Type::TOP;
 
-  // Not constants?  Don't know squat - even if they are the same
+  // Not constants?  Don't know squat - even if they are the same 
   // value!  If they are NaN's they compare to LT instead of EQ.
   const TypeD *td1 = t1->isa_double_constant();
   const TypeD *td2 = t2->isa_double_constant();
@@ -795,10 +799,10 @@ Node *CmpDNode::Ideal(PhaseGVN *phase, bool can_reshape){
   // Valid when 'value' does not lose precision as a float.
   // Benefits: eliminates conversion, does not require 24-bit mode
 
-  // NaNs prevent commuting operands.  This transform works regardless of the
+  // NaNs prevent commuting operands.  This transform works regardless of the 
   // order of ConD and ConvF2D inputs by preserving the original order.
   int idx_f2d = 1;              // ConvF2D on left side?
-  if( in(idx_f2d)->Opcode() != Op_ConvF2D )
+  if( in(idx_f2d)->Opcode() != Op_ConvF2D ) 
     idx_f2d = 2;                // No, swap to check for reversed args
   int idx_con = 3-idx_f2d;      // Check for the constant on other input
 
@@ -818,8 +822,8 @@ Node *CmpDNode::Ideal(PhaseGVN *phase, bool can_reshape){
         new_in1 = new_in2;
         new_in2 = tmp;
       }
-      CmpFNode *new_cmp = (Opcode() == Op_CmpD3)
-        ? new (phase->C, 3) CmpF3Node( new_in1, new_in2 )
+      CmpFNode *new_cmp = (Opcode() == Op_CmpD3) 
+        ? new (phase->C, 3) CmpF3Node( new_in1, new_in2 ) 
         : new (phase->C, 3) CmpFNode ( new_in1, new_in2 ) ;
       return new_cmp;           // Changed to CmpFNode
     }
@@ -838,11 +842,11 @@ const Type *BoolTest::cc2logical( const Type *CC ) const {
   const TypeInt *ti = CC->is_int();
   if( ti->is_con() ) {          // Only 1 kind of condition codes set?
     // Match low order 2 bits
-    int tmp = ((ti->get_con()&3) == (_test&3)) ? 1 : 0;
+    int tmp = ((ti->get_con()&3) == (_test&3)) ? 1 : 0; 
     if( _test & 4 ) tmp = 1-tmp;     // Optionally complement result
     return TypeInt::make(tmp);       // Boolean result
   }
-
+ 
   if( CC == TypeInt::CC_GE ) {
     if( _test == ge ) return TypeInt::ONE;
     if( _test == lt ) return TypeInt::ZERO;
@@ -858,14 +862,14 @@ const Type *BoolTest::cc2logical( const Type *CC ) const {
 //------------------------------dump_spec-------------------------------------
 // Print special per-node info
 #ifndef PRODUCT
-void BoolTest::dump_on(outputStream *st) const {
+void BoolTest::dump() const {
   const char *msg[] = {"eq","gt","??","lt","ne","le","??","ge"};
-  st->print(msg[_test]);
+  tty->print(msg[_test]);
 }
 #endif
 
 //=============================================================================
-uint BoolNode::hash() const { return (Node::hash() << 3)|(_test._test+1); }
+uint BoolNode::hash() const { return (Node::hash() << 3)|(_test._test+1); } 
 uint BoolNode::size_of() const { return sizeof(BoolNode); }
 
 //------------------------------operator==-------------------------------------
@@ -973,7 +977,7 @@ Node *BoolNode::Ideal(PhaseGVN *phase, bool can_reshape) {
     Node *ncmp = phase->transform(new (phase->C, 3) CmpINode(j_xor->in(1),cmp2));
     return new (phase->C, 2) BoolNode( ncmp, _test.negate() );
   }
-
+  
   // Change "bool eq/ne (cmp (Conv2B X) 0)" into "bool eq/ne (cmp X 0)".
   // This is a standard idiom for branching on a boolean value.
   Node *c2b = cmp1;
@@ -1011,19 +1015,19 @@ Node *BoolNode::Ideal(PhaseGVN *phase, bool can_reshape) {
     return new (phase->C, 2) BoolNode( ncmp, _test.commute() );
   }
 
-  //  The transformation below is not valid for either signed or unsigned
-  //  comparisons due to wraparound concerns at MAX_VALUE and MIN_VALUE.
-  //  This transformation can be resurrected when we are able to
+  //  The transformation below is not valid for either signed or unsigned 
+  //  comparisons due to wraparound concerns at MAX_VALUE and MIN_VALUE.  
+  //  This transformation can be resurrected when we are able to  
   //  make inferences about the range of values being subtracted from
   //  (or added to) relative to the wraparound point.
   //
-  //    // Remove +/-1's if possible.
+  //    // Remove +/-1's if possible.  
   //    // "X <= Y-1" becomes "X <  Y"
   //    // "X+1 <= Y" becomes "X <  Y"
   //    // "X <  Y+1" becomes "X <= Y"
   //    // "X-1 <  Y" becomes "X <= Y"
   //    // Do not this to compares off of the counted-loop-end.  These guys are
-  //    // checking the trip counter and they want to use the post-incremented
+  //    // checking the trip counter and they want to use the post-incremented 
   //    // counter.  If they use the PRE-incremented counter, then the counter has
   //    // to be incremented in a private block on a loop backedge.
   //    if( du && du->cnt(this) && du->out(this)[0]->Opcode() == Op_CountedLoopEnd )
@@ -1042,7 +1046,7 @@ Node *BoolNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   //    int cmp2_op = cmp2->Opcode();
   //    if( _test._test == BoolTest::le ) {
   //      if( cmp1_op == Op_AddI &&
-  //          phase->type( cmp1->in(2) ) == TypeInt::ONE )
+  //          phase->type( cmp1->in(2) ) == TypeInt::ONE ) 
   //        return clone_cmp( cmp, cmp1->in(1), cmp2, phase, BoolTest::lt );
   //      else if( cmp2_op == Op_AddI &&
   //         phase->type( cmp2->in(2) ) == TypeInt::MINUS_1 )
@@ -1055,7 +1059,7 @@ Node *BoolNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   //         phase->type( cmp2->in(2) ) == TypeInt::ONE )
   //        return clone_cmp( cmp, cmp1, cmp2->in(1), phase, BoolTest::le );
   //    }
-
+    
   return NULL;
 }
 
@@ -1069,10 +1073,10 @@ const Type *BoolNode::Value( PhaseTransform *phase ) const {
 //------------------------------dump_spec--------------------------------------
 // Dump special per-node info
 #ifndef PRODUCT
-void BoolNode::dump_spec(outputStream *st) const {
-  st->print("[");
-  _test.dump_on(st);
-  st->print("]");
+void BoolNode::dump_spec() const {
+  tty->print("[");
+  _test.dump();
+  tty->print("]");
 }
 #endif
 
@@ -1204,3 +1208,4 @@ const Type *PowDNode::Value( PhaseTransform *phase ) const {
   if( d2 < 0.0 ) return Type::DOUBLE;
   return TypeD::make( SharedRuntime::dpow( d1, d2 ) );
 }
+

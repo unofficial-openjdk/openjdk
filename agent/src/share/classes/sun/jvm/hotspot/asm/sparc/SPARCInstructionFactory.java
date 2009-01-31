@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -63,17 +63,17 @@ public interface SPARCInstructionFactory {
     public SPARCInstruction newIndirectCallInstruction(SPARCRegisterIndirectAddress addr,
                                   SPARCRegister rd);
 
-    public SPARCInstruction newReturnInstruction(SPARCRegisterIndirectAddress addr,
+    public SPARCInstruction newReturnInstruction(SPARCRegisterIndirectAddress addr, 
                                   SPARCRegister rd, boolean isLeaf);
 
-    public SPARCInstruction newJmplInstruction(SPARCRegisterIndirectAddress addr,
+    public SPARCInstruction newJmplInstruction(SPARCRegisterIndirectAddress addr, 
                                   SPARCRegister rd);
 
     public SPARCInstruction newFP2RegisterInstruction(String name, int opf, SPARCFloatRegister rs, SPARCFloatRegister rd);
 
     public SPARCInstruction newFPMoveInstruction(String name, int opf, SPARCFloatRegister rs, SPARCFloatRegister rd);
 
-    public SPARCInstruction newFPArithmeticInstruction(String name, int opf, int rtlOperation,
+    public SPARCInstruction newFPArithmeticInstruction(String name, int opf, int rtlOperation, 
                                                      SPARCFloatRegister rs1, SPARCFloatRegister rs2,
                                                      SPARCFloatRegister rd);
 
@@ -87,23 +87,23 @@ public interface SPARCInstructionFactory {
 
     public SPARCInstruction newRettInstruction(SPARCRegisterIndirectAddress addr);
 
-    public SPARCInstruction newArithmeticInstruction(String name, int opcode, int rtlOperation,
+    public SPARCInstruction newArithmeticInstruction(String name, int opcode, int rtlOperation, 
                                                      SPARCRegister rs1, ImmediateOrRegister operand2,
                                                      SPARCRegister rd);
 
-    public SPARCInstruction newLogicInstruction(String name, int opcode, int rtlOperation,
+    public SPARCInstruction newLogicInstruction(String name, int opcode, int rtlOperation, 
                                                 SPARCRegister rs1, ImmediateOrRegister operand2,
                                                 SPARCRegister rd);
 
-    public SPARCInstruction newMoveInstruction(String name, int opcode,
+    public SPARCInstruction newMoveInstruction(String name, int opcode,  
                                                ImmediateOrRegister operand2,
                                                SPARCRegister rd);
 
-    public SPARCInstruction newShiftInstruction(String name, int opcode, int rtlOperation,
+    public SPARCInstruction newShiftInstruction(String name, int opcode, int rtlOperation, 
                                                      SPARCRegister rs1, ImmediateOrRegister operand2,
                                                      SPARCRegister rd);
 
-    public SPARCInstruction newCoprocessorInstruction(int instruction, int cpopcode, int opc,
+    public SPARCInstruction newCoprocessorInstruction(int instruction, int cpopcode, int opc, 
                                                      int rs1Num, int rs2Num, int rdNum);
     public SPARCInstruction newSwapInstruction(String name, SPARCRegisterIndirectAddress addr, SPARCRegister rd);
     public SPARCInstruction newLdstubInstruction(String name, SPARCRegisterIndirectAddress addr, SPARCRegister rd);

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.jdi;
@@ -67,12 +67,12 @@ public class FieldImpl extends TypeComponentImpl implements Field {
 
     // get the value of this Field from a specific Oop
     ValueImpl getValue(Oop target) {
-        ValueImpl valueImpl;
+	ValueImpl valueImpl;
         sun.jvm.hotspot.oops.Field saField = (sun.jvm.hotspot.oops.Field) ref();
         sun.jvm.hotspot.oops.FieldType ft = saField.getFieldType();
         if (ft.isArray()) {
-            sun.jvm.hotspot.oops.OopField of = (sun.jvm.hotspot.oops.OopField)saField;
-            valueImpl = (ArrayReferenceImpl) vm.arrayMirror((Array)of.getValue(target));
+	    sun.jvm.hotspot.oops.OopField of = (sun.jvm.hotspot.oops.OopField)saField;
+	    valueImpl = (ArrayReferenceImpl) vm.arrayMirror((Array)of.getValue(target));
         } else if (ft.isObject()) {
             sun.jvm.hotspot.oops.OopField of = (sun.jvm.hotspot.oops.OopField)saField;
             valueImpl = (ObjectReferenceImpl) vm.objectMirror(of.getValue(target));
@@ -128,7 +128,7 @@ public class FieldImpl extends TypeComponentImpl implements Field {
     public boolean isEnumConstant() {
         return saField.isEnumConstant();
     }
-
+  
     public Type type() throws ClassNotLoadedException {
         // So, we do it just like JDI does by searching the enclosing type.
         return findType(signature());
@@ -140,8 +140,8 @@ public class FieldImpl extends TypeComponentImpl implements Field {
     }
 
     public String genericSignature() {
-        Symbol genSig = saField.getGenericSignature();
-        return (genSig != null)? genSig.asString() : null;
+	Symbol genSig = saField.getGenericSignature();
+	return (genSig != null)? genSig.asString() : null;
     }
 
     // From interface Comparable
@@ -150,7 +150,7 @@ public class FieldImpl extends TypeComponentImpl implements Field {
         ReferenceTypeImpl declaringType = (ReferenceTypeImpl)declaringType();
         int rc = declaringType.compareTo(field.declaringType());
         if (rc == 0) {
-            rc = declaringType.indexOf(this) -
+            rc = declaringType.indexOf(this) - 
                 declaringType.indexOf(field);
         }
         return rc;
@@ -210,7 +210,7 @@ public class FieldImpl extends TypeComponentImpl implements Field {
 
 
     private Type findType(String signature) throws ClassNotLoadedException {
-        ReferenceTypeImpl enclosing = (ReferenceTypeImpl)declaringType();
+        ReferenceTypeImpl enclosing = (ReferenceTypeImpl)declaringType(); 
         return enclosing.findType(signature);
     }
 

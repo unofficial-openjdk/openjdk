@@ -23,6 +23,8 @@
 #
 
 #
+# %W% %E% %U%
+#
 # The cscope.out file is made in the current directory and spans the entire
 # source tree.
 #

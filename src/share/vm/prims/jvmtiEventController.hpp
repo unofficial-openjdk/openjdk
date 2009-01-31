@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #ifndef _JAVA_JVMTI_EVENT_CONTROLLER_H_
@@ -50,7 +53,7 @@ typedef struct {
 } jvmtiExtEventCallbacks;
 
 
-// The complete range of events is EXT_MIN_EVENT_TYPE_VAL to
+// The complete range of events is EXT_MIN_EVENT_TYPE_VAL to 
 // JVMTI_MAX_EVENT_TYPE_VAL (inclusive and contiguous).
 const int TOTAL_MIN_EVENT_TYPE_VAL = EXT_MIN_EVENT_TYPE_VAL;
 const int TOTAL_MAX_EVENT_TYPE_VAL = JVMTI_MAX_EVENT_TYPE_VAL;
@@ -64,7 +67,7 @@ const int TOTAL_MAX_EVENT_TYPE_VAL = JVMTI_MAX_EVENT_TYPE_VAL;
 //
 // A boolean array indexed by event_type, used as an internal
 // data structure to track what JVMTI event types are enabled.
-// Used for user set enabling and disabling (globally and on a
+// Used for user set enabling and disabling (globally and on a 
 // per thread basis), and for computed merges across environments,
 // threads and the VM as a whole.
 //
@@ -148,11 +151,11 @@ class JvmtiEnvEventEnable VALUE_OBJ_CLASS_SPEC {
 private:
   friend class JvmtiEventControllerPrivate;
 
-  // user set global event enablement indexed by jvmtiEvent
+  // user set global event enablement indexed by jvmtiEvent  
   JvmtiEventEnabled _event_user_enabled;
 
   // this flag indicates the presence (true) or absence (false) of event callbacks
-  // it is indexed by jvmtiEvent
+  // it is indexed by jvmtiEvent  
   JvmtiEventEnabled _event_callback_enabled;
 
   // indexed by jvmtiEvent true if enabled globally or on any thread.
@@ -171,7 +174,7 @@ public:
 //
 // JvmtiEventController
 //
-// The class is the access point for all actions that change
+// The class is the access point for all actions that change 
 // which events are active, this include:
 //      enabling and disabling events
 //      changing the callbacks/eventhook (they may be null)
@@ -186,7 +189,7 @@ class JvmtiEventController : AllStatic {
 private:
   friend class JvmtiEventControllerPrivate;
 
-  // for all environments, global array indexed by jvmtiEvent
+  // for all environments, global array indexed by jvmtiEvent 
   static JvmtiEventEnabled _universal_global_event_enabled;
 
 public:
@@ -205,20 +208,20 @@ public:
   // Use (thread == NULL) to enable/disable an event globally.
   // Use (thread != NULL) to enable/disable an event for a particular thread.
   // thread is ignored for events that can only be specified globally
-  static void set_user_enabled(JvmtiEnvBase *env, JavaThread *thread,
+  static void set_user_enabled(JvmtiEnvBase *env, JavaThread *thread, 
                                jvmtiEvent event_type, bool enabled);
 
   // Setting callbacks changes computed enablement and must be done
   // at a safepoint otherwise a NULL callback could be attempted
-  static void set_event_callbacks(JvmtiEnvBase *env,
-                                  const jvmtiEventCallbacks* callbacks,
+  static void set_event_callbacks(JvmtiEnvBase *env,  
+                                  const jvmtiEventCallbacks* callbacks, 
                                   jint size_of_callbacks);
 
-  // Sets the callback function for a single extension event and enables
+  // Sets the callback function for a single extension event and enables 
   // (or disables it).
   static void set_extension_event_callback(JvmtiEnvBase* env,
-                                           jint extension_event_index,
-                                           jvmtiExtensionEvent callback);
+					   jint extension_event_index, 
+					   jvmtiExtensionEvent callback);
 
   static void set_frame_pop(JvmtiEnvThreadState *env_thread, JvmtiFramePop fpop);
   static void clear_frame_pop(JvmtiEnvThreadState *env_thread, JvmtiFramePop fpop);

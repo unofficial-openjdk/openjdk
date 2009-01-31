@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Forward declarations of classes defined here
@@ -260,10 +263,10 @@ class SubTasksDone: public CHeapObj {
   jint _threads_completed;
 #ifdef ASSERT
   jint _claimed;
-#endif
+#endif  
 
   // Set all tasks to unclaimed.
-  void clear();
+  void clear(); 
 
 public:
   // Initializes "this" to a state in which there are "n" tasks to be

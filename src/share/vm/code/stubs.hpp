@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // The classes in this file provide a simple framework for the
@@ -36,7 +39,7 @@
 // A concrete stub layout may look like this (both data
 // and code sections could be empty as well):
 //
-//                ________
+//                ________ 
 // stub       -->|        | <--+
 //               |  data  |    |
 //               |________|    |
@@ -206,3 +209,6 @@ class StubQueue: public CHeapObj {
   void  verify();                                // verifies the stub queue
   void  print();                                 // prints information about the stub queue
 };
+
+
+

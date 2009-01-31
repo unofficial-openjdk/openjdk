@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2004-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This class keeps statistical information and computes the
@@ -29,9 +32,9 @@
 //   minor collection
 //   concurrent collection
 //      stop-the-world component
-//      concurrent component
+//	concurrent component
 //   major compacting collection
-//      uses decaying cost
+//	uses decaying cost
 
 // Forward decls
 class elapsedTimer;
@@ -53,7 +56,7 @@ class CMSAdaptiveSizePolicy : public AdaptiveSizePolicy {
   // the time during which the cms collector runs concurrently
   // with the mutators.
   //   Between end of most recent cms reset and start of initial mark
-                // This may be redundant
+		// This may be redundant
   double _latest_cms_reset_end_to_initial_mark_start_secs;
   //   Between end of the most recent initial mark and start of remark
   double _latest_cms_initial_mark_end_to_remark_start_secs;
@@ -65,7 +68,7 @@ class CMSAdaptiveSizePolicy : public AdaptiveSizePolicy {
   double _latest_cms_concurrent_marking_time_secs;
   double _latest_cms_concurrent_precleaning_time_secs;
   double _latest_cms_concurrent_sweeping_time_secs;
-  //   Between end of most recent STW MSC and start of next STW MSC
+  //   Between end of most recent STW MSC and start of next STW MSC 
   double _latest_cms_msc_end_to_msc_start_time_secs;
   //   Between end of most recent MS and start of next MS
   //   This does not include any time spent during a concurrent
@@ -92,11 +95,11 @@ class CMSAdaptiveSizePolicy : public AdaptiveSizePolicy {
   size_t _generation_alignment;
 
   // If this variable is true, the size of the young generation
-  // may be changed in order to reduce the pause(s) of the
+  // may be changed in order to reduce the pause(s) of the 
   // collection of the tenured generation in order to meet the
-  // pause time goal.  It is common to change the size of the
+  // pause time goal.  It is common to change the size of the 
   // tenured generation in order to meet the pause time goal
-  // for the tenured generation.  With the CMS collector for
+  // for the tenured generation.  With the CMS collector for 
   // the tenured generation, the size of the young generation
   // can have an significant affect on the pause times for collecting the
   // tenured generation.
@@ -120,13 +123,13 @@ class CMSAdaptiveSizePolicy : public AdaptiveSizePolicy {
   void set_first_after_collection() { _first_after_collection = true; }
 
  protected:
-  // Average of the sum of the concurrent times for
+  // Average of the sum of the concurrent times for 
   // one collection in seconds.
   AdaptiveWeightedAverage* _avg_concurrent_time;
   // Average time between concurrent collections in seconds.
   AdaptiveWeightedAverage* _avg_concurrent_interval;
   // Average cost of the concurrent part of a collection
-  // in seconds.
+  // in seconds. 
   AdaptiveWeightedAverage* _avg_concurrent_gc_cost;
 
   // Average of the initial pause of a concurrent collection in seconds.
@@ -134,7 +137,7 @@ class CMSAdaptiveSizePolicy : public AdaptiveSizePolicy {
   // Average of the remark pause of a concurrent collection in seconds.
   AdaptivePaddedAverage* _avg_remark_pause;
 
-  // Average of the stop-the-world (STW) (initial mark + remark)
+  // Average of the stop-the-world (STW) (initial mark + remark) 
   // times in seconds for concurrent collections.
   AdaptiveWeightedAverage* _avg_cms_STW_time;
   // Average of the STW collection cost for concurrent collections.
@@ -144,7 +147,7 @@ class CMSAdaptiveSizePolicy : public AdaptiveSizePolicy {
   AdaptiveWeightedAverage* _avg_cms_free_at_sweep;
   // Average of the bytes free at the end of the collection.
   AdaptiveWeightedAverage* _avg_cms_free;
-  // Average of the bytes promoted between cms collections.
+  // Average of the bytes promoted between cms collections. 
   AdaptiveWeightedAverage* _avg_cms_promo;
 
   // stop-the-world (STW) mark-sweep-compact
@@ -176,7 +179,7 @@ class CMSAdaptiveSizePolicy : public AdaptiveSizePolicy {
   // and a pause time as the dependent variable.
   // For example _remark_pause_old_estimator
   // is a fit of the old generation size as the
-  // independent variable and the remark pause
+  // independent variable and the remark pause 
   // as the dependent variable.
   //   remark pause time vs. cms gen size
   LinearLeastSquareFit* _remark_pause_old_estimator;
@@ -191,11 +194,11 @@ class CMSAdaptiveSizePolicy : public AdaptiveSizePolicy {
   int processor_count() const { return _processor_count; }
   int concurrent_processor_count() const { return _concurrent_processor_count; }
 
-  AdaptiveWeightedAverage* avg_concurrent_time() const {
-    return _avg_concurrent_time;
+  AdaptiveWeightedAverage* avg_concurrent_time() const { 
+    return _avg_concurrent_time; 
   }
 
-  AdaptiveWeightedAverage* avg_concurrent_interval() const {
+  AdaptiveWeightedAverage* avg_concurrent_interval() const { 
     return _avg_concurrent_interval;
   }
 
@@ -319,17 +322,17 @@ class CMSAdaptiveSizePolicy : public AdaptiveSizePolicy {
 
   // This returns the maximum average for the concurrent, ms, and
   // msc collections.  This is meant to be used for the calculation
-  // of the decayed major gc cost and is not in general the
+  // of the decayed major gc cost and is not in general the 
   // average of all the different types of major collections.
   virtual double major_gc_interval_average_for_decay() const;
 
  public:
   CMSAdaptiveSizePolicy(size_t init_eden_size,
-                        size_t init_promo_size,
-                        size_t init_survivor_size,
-                        double max_gc_minor_pause_sec,
-                        double max_gc_pause_sec,
-                        uint gc_cost_ratio);
+			size_t init_promo_size,
+		        size_t init_survivor_size,
+		        double max_gc_minor_pause_sec,
+		        double max_gc_pause_sec,
+			uint gc_cost_ratio);
 
   // The timers for the stop-the-world phases measure a total
   // stop-the-world time.  The timer is started and stopped
@@ -341,7 +344,7 @@ class CMSAdaptiveSizePolicy : public AdaptiveSizePolicy {
 
   // Methods for gathering information about the
   // concurrent marking phase of the collection.
-  // Records the mutator times and
+  // Records the mutator times and 
   // resets the concurrent timer.
   void concurrent_marking_begin();
   // Resets concurrent phase timer in the begin methods and
@@ -357,8 +360,8 @@ class CMSAdaptiveSizePolicy : public AdaptiveSizePolicy {
   // Stops the concurrent phases time.  Gathers
   // information and resets the timer.
   void concurrent_phases_end(GCCause::Cause gc_cause,
-                              size_t cur_eden,
-                              size_t cur_promo);
+			      size_t cur_eden,
+			      size_t cur_promo);
 
   // Methods for gather information about STW Mark-Sweep-Compact
   void msc_collection_begin();
@@ -383,7 +386,7 @@ class CMSAdaptiveSizePolicy : public AdaptiveSizePolicy {
     return MAX2(0.0F, _avg_msc_gc_cost->average());
   }
 
-  //
+  // 
   double compacting_gc_cost() const {
     double result = MIN2(1.0, minor_gc_cost() + msc_gc_cost());
     assert(result >= 0.0, "Both minor and major costs are non-negative");
@@ -396,13 +399,13 @@ class CMSAdaptiveSizePolicy : public AdaptiveSizePolicy {
    // Time begining and end of the marking phase for
    // a synchronous MS collection.  A MS collection
    // that finishes in the foreground can have started
-   // in the background.  These methods capture the
+   // in the background.  These methods capture the 
    // completion of the marking (after the initial
    // marking) that is done in the foreground.
    void ms_collection_marking_begin();
    void ms_collection_marking_end(GCCause::Cause gc_cause);
 
-   static elapsedTimer* concurrent_timer_ptr() {
+   static elapsedTimer* concurrent_timer_ptr() { 
      return &_concurrent_timer;
    }
 
@@ -431,7 +434,7 @@ class CMSAdaptiveSizePolicy : public AdaptiveSizePolicy {
   size_t generation_alignment() { return _generation_alignment; }
 
   virtual void compute_young_generation_free_space(size_t cur_eden,
-                                                   size_t max_eden_size);
+						   size_t max_eden_size);
   // Calculates new survivor space size;  returns a new tenuring threshold
   // value. Stores new survivor size in _survivor_size.
   virtual int compute_survivor_space_size_and_threshold(
@@ -441,7 +444,7 @@ class CMSAdaptiveSizePolicy : public AdaptiveSizePolicy {
 
   virtual void compute_tenured_generation_free_space(size_t cur_tenured_free,
                                            size_t max_tenured_available,
-                                           size_t cur_eden);
+					   size_t cur_eden);
 
   size_t eden_decrement_aligned_down(size_t cur_eden);
   size_t eden_increment_aligned_up(size_t cur_eden);

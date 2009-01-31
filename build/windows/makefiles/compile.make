@@ -51,21 +51,21 @@ CPP_FLAGS=/nologo /W3 /WX
 # Let's add debug information always too.
 CPP_FLAGS=$(CPP_FLAGS) /Zi
 
-# Based on BUILDARCH we add some flags and select the default compiler name
-!if "$(BUILDARCH)" == "ia64"
+# Based on ARCH we add some flags and select the default compiler name
+!if "$(ARCH)" == "ia64"
 MACHINE=IA64
 DEFAULT_COMPILER_NAME=VS2003
 CPP_FLAGS=$(CPP_FLAGS) /D "CC_INTERP" /D "_LP64" /D "IA64"
 !endif
 
-!if "$(BUILDARCH)" == "amd64"
+!if "$(ARCH)" == "amd64"
 MACHINE=AMD64
 DEFAULT_COMPILER_NAME=VS2005
 CPP_FLAGS=$(CPP_FLAGS) /D "_LP64" /D "AMD64"
 LP64=1
 !endif
 
-!if "$(BUILDARCH)" == "i486"
+!if "$(ARCH)" == "i486"
 MACHINE=I386
 DEFAULT_COMPILER_NAME=VS2003
 CPP_FLAGS=$(CPP_FLAGS) /D "IA32"
@@ -157,7 +157,7 @@ GX_OPTION = /EHsc
 #    NOTE: Currently we decided to not use /GS-
 BUFFEROVERFLOWLIB = bufferoverflowU.lib
 LINK_FLAGS = $(LINK_FLAGS) $(BUFFEROVERFLOWLIB)
-!if "$(BUILDARCH)" == "i486"
+!if "$(ARCH)" == "i486"
 # VS2005 on x86 restricts the use of certain libc functions without this
 CPP_FLAGS=$(CPP_FLAGS) /D _CRT_SECURE_NO_DEPRECATE
 !endif

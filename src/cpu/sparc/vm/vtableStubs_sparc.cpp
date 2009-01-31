@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -65,7 +68,7 @@ VtableStub* VtableStubs::create_vtable_stub(int vtable_index) {
   // set methodOop (in case of interpreted method), and destination address
   int entry_offset = instanceKlass::vtable_start_offset() + vtable_index*vtableEntry::size();
 #ifndef PRODUCT
-  if (DebugVtables) {
+  if (DebugVtables) { 
     Label L;
     // check offset vs vtable length
     __ ld(G3_scratch, instanceKlass::vtable_length_offset()*wordSize, G5);
@@ -152,7 +155,7 @@ VtableStub* VtableStubs::create_itable_stub(int vtable_index) {
 #endif /* PRODUCT */
 
   // load start of itable entries into L0 register
-  const int base = instanceKlass::vtable_start_offset() * wordSize;
+  const int base = instanceKlass::vtable_start_offset() * wordSize;    
   __ ld(Address(G3_klassOop, 0, instanceKlass::vtable_length_offset() * wordSize), L0);
 
   // %%% Could store the aligned, prescaled offset in the klassoop.

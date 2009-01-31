@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // These are the CPU-specific fields, types and integer
@@ -43,7 +46,7 @@
 
 
 #define VM_TYPES_CPU(declare_type, declare_toplevel_type, declare_oop_type, declare_integer_type, declare_unsigned_integer_type, declare_c1_toplevel_type, declare_c2_type, declare_c2_toplevel_type, last_entry)                               \
-
+                                                                                                                                     
   /* NOTE that we do not use the last_entry() macro here; it is used  */
   /* in vmStructs_<os>_<cpu>.hpp's VM_TYPES_OS_CPU macro (and must    */
   /* be present there)                                                */
@@ -87,13 +90,13 @@
   declare_c2_constant(R_G6_num)                                           \
   declare_c2_constant(R_G7_num)
 
-
+                                                                        
   /* NOTE that we do not use the last_entry() macro here; it is used       */
   /* in vmStructs_<os>_<cpu>.hpp's VM_INT_CONSTANTS_OS_CPU macro (and must */
   /* be present there)                                                     */
 
 #define VM_LONG_CONSTANTS_CPU(declare_constant, declare_preprocessor_constant, declare_c1_constant, declare_c2_constant, declare_c2_preprocessor_constant, last_entry)                                                              \
-
+                                                                        
   /* NOTE that we do not use the last_entry() macro here; it is used        */
   /* in vmStructs_<os>_<cpu>.hpp's VM_LONG_CONSTANTS_OS_CPU macro (and must */
   /* be present there)                                                      */

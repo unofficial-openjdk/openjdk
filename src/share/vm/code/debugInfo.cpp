@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -81,7 +84,7 @@ ScopeValue* ScopeValue::read_from(DebugInfoReadStream* stream) {
    case CONSTANT_DOUBLE_CODE: result = new ConstantDoubleValue(stream);  break;
    case OBJECT_CODE:          result = stream->read_object_value();      break;
    case OBJECT_ID_CODE:       result = stream->get_cached_object();      break;
-   default: ShouldNotReachHere();
+   default: ShouldNotReachHere();            
   }
   return result;
 }
@@ -250,3 +253,4 @@ void MonitorValue::print_on(outputStream* st) const {
   }
 }
 #endif
+

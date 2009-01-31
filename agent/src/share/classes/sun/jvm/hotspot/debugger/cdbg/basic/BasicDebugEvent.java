@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.cdbg.basic;
@@ -39,7 +39,7 @@ public class BasicDebugEvent implements DebugEvent {
     this.type = type;
     this.thread = thread;
   }
-
+  
   public DebugEvent.Type getType()               { return type;            }
   public ThreadProxy     getThread()             { return thread;          }
   public Address         getPC()                 { return pc;              }

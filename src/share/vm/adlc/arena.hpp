@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1998-2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // All classes in the virtual machine must be subclassed
@@ -71,15 +74,15 @@ class Chunk: public CHeapObj {
   void  operator delete(void* p, size_t length);
   Chunk(size_t length);
 
-  enum {
+  enum { 
       init_size =  1*1024,      // Size of first chunk
       size      = 32*1024       // Default size of an Arena chunk (following the first)
-  };
-  Chunk*       _next;           // Next Chunk in list
-  size_t       _len;            // Size of this Chunk
+  };	
+  Chunk*       _next;	        // Next Chunk in list
+  size_t       _len;		// Size of this Chunk
 
-  void chop();                  // Chop this chunk
-  void next_chop();             // Chop next chunk
+  void chop();			// Chop this chunk
+  void next_chop();		// Chop next chunk
 
   // Boundaries of data area (possibly unused)
   char* bottom() const { return ((char*) this) + sizeof(Chunk);  }
@@ -94,10 +97,10 @@ protected:
   friend class ResourceMark;
   friend class HandleMark;
   friend class NoHandleMark;
-  Chunk *_first;                // First chunk
-  Chunk *_chunk;                // current chunk
-  char *_hwm, *_max;            // High water mark and max in current chunk
-  void* grow(size_t x);         // Get a new Chunk of at least size x
+  Chunk *_first;		// First chunk
+  Chunk *_chunk;		// current chunk
+  char *_hwm, *_max;		// High water mark and max in current chunk
+  void* grow(size_t x);		// Get a new Chunk of at least size x
   size_t _size_in_bytes;          // Size of arena (used for memory usage tracing)
 public:
   Arena();
@@ -107,36 +110,36 @@ public:
   char* hwm() const             { return _hwm; }
 
   // Fast allocate in the arena.  Common case is: pointer test + increment.
-  void* Amalloc(size_t x) {
+  void* Amalloc(size_t x) { 
 #ifdef _LP64
-    x = (x + (8-1)) & ((unsigned)(-8));
+    x = (x + (8-1)) & ((unsigned)(-8)); 
 #else
-    x = (x + (4-1)) & ((unsigned)(-4));
+    x = (x + (4-1)) & ((unsigned)(-4)); 
 #endif
     if (_hwm + x > _max) {
-      return grow(x);
+      return grow(x); 
     } else {
-      char *old = _hwm;
-      _hwm += x;
-      return old;
+      char *old = _hwm; 
+      _hwm += x; 
+      return old; 
     }
   }
   // Further assume size is padded out to words
   // Warning:  in LP64, Amalloc_4 is really Amalloc_8
-  void *Amalloc_4(size_t x) {
+  void *Amalloc_4(size_t x) { 
     assert( (x&(sizeof(char*)-1)) == 0, "misaligned size" );
     if (_hwm + x > _max) {
       return grow(x);
     } else {
-      char *old = _hwm;
-      _hwm += x;
-      return old;
+      char *old = _hwm; 
+      _hwm += x; 
+      return old; 
     }
   }
 
   // Fast delete in area.  Common case is: NOP (except for storage reclaimed)
-  void Afree(void *ptr, size_t size) {
-    if (((char*)ptr) + size == _hwm) _hwm = (char*)ptr;
+  void Afree(void *ptr, size_t size) { 
+    if (((char*)ptr) + size == _hwm) _hwm = (char*)ptr;  
   }
 
   void *Acalloc( size_t items, size_t x );
@@ -151,7 +154,8 @@ public:
   // Total of all chunks in use (not thread-safe)
   size_t used() const;
 
-  // Total # of bytes used
+  // Total # of bytes used  
   size_t size_in_bytes() const         {  return _size_in_bytes; }
   void   set_size_in_bytes(size_t size)  { _size_in_bytes = size;   }
-};
+}; 
+

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -28,7 +31,7 @@
 constantPoolOop constantPoolKlass::allocate(int length, TRAPS) {
   int size = constantPoolOopDesc::object_size(length);
   KlassHandle klass (THREAD, as_klassOop());
-  constantPoolOop c =
+  constantPoolOop c = 
     (constantPoolOop)CollectedHeap::permanent_array_allocate(klass, size, length, CHECK_NULL);
 
   c->set_tags(NULL);
@@ -54,7 +57,7 @@ constantPoolOop constantPoolKlass::allocate(int length, TRAPS) {
 
 klassOop constantPoolKlass::create_klass(TRAPS) {
   constantPoolKlass o;
-  KlassHandle klassklass(THREAD, Universe::arrayKlassKlassObj());
+  KlassHandle klassklass(THREAD, Universe::arrayKlassKlassObj());  
   arrayKlassHandle k = base_create_array_klass(o.vtbl_value(), header_size(), klassklass, CHECK_NULL);
   arrayKlassHandle super (THREAD, k->super());
   complete_create_array_klass(k, super, CHECK_NULL);
@@ -62,7 +65,7 @@ klassOop constantPoolKlass::create_klass(TRAPS) {
 }
 
 
-int constantPoolKlass::oop_size(oop obj) const {
+int constantPoolKlass::oop_size(oop obj) const { 
   assert(obj->is_constantPool(), "must be constantPool");
   return constantPoolOop(obj)->object_size();
 }
@@ -71,7 +74,7 @@ int constantPoolKlass::oop_size(oop obj) const {
 void constantPoolKlass::oop_follow_contents(oop obj) {
   assert (obj->is_constantPool(), "obj must be constant pool");
   constantPoolOop cp = (constantPoolOop) obj;
-  // Performance tweak: We skip iterating over the klass pointer since we
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::constantPoolKlassObj never moves.
 
   // If the tags array is null we are in the middle of allocating this constant pool
@@ -80,8 +83,8 @@ void constantPoolKlass::oop_follow_contents(oop obj) {
     oop* base = (oop*)cp->base();
     for (int i = 0; i < cp->length(); i++) {
       if (cp->is_pointer_entry(i)) {
-        if (*base != NULL) MarkSweep::mark_and_push(base);
-      }
+        if (*base != NULL) MarkSweep::mark_and_push(base); 
+      } 
       base++;
     }
     // gc of constant pool instance variables
@@ -93,10 +96,10 @@ void constantPoolKlass::oop_follow_contents(oop obj) {
 
 #ifndef SERIALGC
 void constantPoolKlass::oop_follow_contents(ParCompactionManager* cm,
-                                            oop obj) {
+					    oop obj) {
   assert (obj->is_constantPool(), "obj must be constant pool");
   constantPoolOop cp = (constantPoolOop) obj;
-  // Performance tweak: We skip iterating over the klass pointer since we
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::constantPoolKlassObj never moves.
 
   // If the tags array is null we are in the middle of allocating this constant
@@ -106,8 +109,8 @@ void constantPoolKlass::oop_follow_contents(ParCompactionManager* cm,
     oop* base = (oop*)cp->base();
     for (int i = 0; i < cp->length(); i++) {
       if (cp->is_pointer_entry(i)) {
-        if (*base != NULL) PSParallelCompact::mark_and_push(cm, base);
-      }
+        if (*base != NULL) PSParallelCompact::mark_and_push(cm, base); 
+      } 
       base++;
     }
     // gc of constant pool instance variables
@@ -122,10 +125,10 @@ void constantPoolKlass::oop_follow_contents(ParCompactionManager* cm,
 int constantPoolKlass::oop_adjust_pointers(oop obj) {
   assert (obj->is_constantPool(), "obj must be constant pool");
   constantPoolOop cp = (constantPoolOop) obj;
-  // Get size before changing pointers.
+  // Get size before changing pointers. 
   // Don't call size() or oop_size() since that is a virtual call.
   int size = cp->object_size();
-  // Performance tweak: We skip iterating over the klass pointer since we
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::constantPoolKlassObj never moves.
 
   // If the tags array is null we are in the middle of allocating this constant
@@ -134,8 +137,8 @@ int constantPoolKlass::oop_adjust_pointers(oop obj) {
     oop* base = (oop*)cp->base();
     for (int i = 0; i< cp->length();  i++) {
       if (cp->is_pointer_entry(i)) {
-        MarkSweep::adjust_pointer(base);
-      }
+        MarkSweep::adjust_pointer(base); 
+      } 
       base++;
     }
   }
@@ -148,10 +151,10 @@ int constantPoolKlass::oop_adjust_pointers(oop obj) {
 
 int constantPoolKlass::oop_oop_iterate(oop obj, OopClosure* blk) {
   assert (obj->is_constantPool(), "obj must be constant pool");
-  // Performance tweak: We skip iterating over the klass pointer since we
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::constantPoolKlassObj never moves.
   constantPoolOop cp = (constantPoolOop) obj;
-  // Get size before changing pointers.
+  // Get size before changing pointers. 
   // Don't call size() or oop_size() since that is a virtual call.
   int size = cp->object_size();
 
@@ -161,8 +164,8 @@ int constantPoolKlass::oop_oop_iterate(oop obj, OopClosure* blk) {
     oop* base = (oop*)cp->base();
     for (int i = 0; i < cp->length(); i++) {
       if (cp->is_pointer_entry(i)) {
-        blk->do_oop(base);
-      }
+        blk->do_oop(base); 
+      } 
       base++;
     }
   }
@@ -175,10 +178,10 @@ int constantPoolKlass::oop_oop_iterate(oop obj, OopClosure* blk) {
 
 int constantPoolKlass::oop_oop_iterate_m(oop obj, OopClosure* blk, MemRegion mr) {
   assert (obj->is_constantPool(), "obj must be constant pool");
-  // Performance tweak: We skip iterating over the klass pointer since we
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::constantPoolKlassObj never moves.
   constantPoolOop cp = (constantPoolOop) obj;
-  // Get size before changing pointers.
+  // Get size before changing pointers. 
   // Don't call size() or oop_size() since that is a virtual call.
   int size = cp->object_size();
 
@@ -189,7 +192,7 @@ int constantPoolKlass::oop_oop_iterate_m(oop obj, OopClosure* blk, MemRegion mr)
     for (int i = 0; i < cp->length(); i++) {
       if (mr.contains(base)) {
         if (cp->is_pointer_entry(i)) {
-          blk->do_oop(base);
+          blk->do_oop(base); 
         }
       }
       base++;
@@ -216,7 +219,7 @@ int constantPoolKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
     oop* base = (oop*)cp->base();
     for (int i = 0; i < cp->length(); ++i, ++base) {
       if (cp->is_pointer_entry(i)) {
-        PSParallelCompact::adjust_pointer(base);
+        PSParallelCompact::adjust_pointer(base); 
       }
     }
   }
@@ -228,7 +231,7 @@ int constantPoolKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
 
 int
 constantPoolKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
-                                       HeapWord* beg_addr, HeapWord* end_addr) {
+				       HeapWord* beg_addr, HeapWord* end_addr) {
   assert (obj->is_constantPool(), "obj must be constant pool");
   constantPoolOop cp = (constantPoolOop) obj;
 
@@ -276,7 +279,7 @@ void constantPoolKlass::oop_print_on(oop obj, outputStream* st) {
   oop anObj;
   assert(obj->is_constantPool(), "must be constantPool");
   arrayKlass::oop_print_on(obj, st);
-  constantPoolOop cp = constantPoolOop(obj);
+  constantPoolOop cp = constantPoolOop(obj);  
 
   // Temp. remove cache so we can do lookups with original indicies.
   constantPoolCacheHandle cache (THREAD, cp->cache());
@@ -295,9 +298,9 @@ void constantPoolKlass::oop_print_on(oop obj, outputStream* st) {
         break;
       case JVM_CONSTANT_Fieldref :
       case JVM_CONSTANT_Methodref :
-      case JVM_CONSTANT_InterfaceMethodref :
+      case JVM_CONSTANT_InterfaceMethodref :        
         st->print("klass_index=%d", cp->klass_ref_index_at(index));
-        st->print(" name_and_type_index=%d", cp->name_and_type_ref_index_at(index));
+        st->print(" name_and_type_index=%d", cp->name_and_type_ref_index_at(index));        
         break;
       case JVM_CONSTANT_UnresolvedString :
       case JVM_CONSTANT_String :
@@ -319,14 +322,14 @@ void constantPoolKlass::oop_print_on(oop obj, outputStream* st) {
         st->print("%lf", cp->double_at(index));
         index++;   // Skip entry following eigth-byte constant
         break;
-      case JVM_CONSTANT_NameAndType :
+      case JVM_CONSTANT_NameAndType :        
         st->print("name_index=%d", cp->name_ref_index_at(index));
         st->print(" signature_index=%d", cp->signature_ref_index_at(index));
         break;
       case JVM_CONSTANT_Utf8 :
         cp->symbol_at(index)->print_value_on(st);
         break;
-      case JVM_CONSTANT_UnresolvedClass :               // fall-through
+      case JVM_CONSTANT_UnresolvedClass :		// fall-through
       case JVM_CONSTANT_UnresolvedClassInError: {
         // unresolved_klass_at requires lock or safe world.
         oop entry = *cp->obj_at_addr(index);
@@ -357,7 +360,7 @@ const char* constantPoolKlass::internal_name() const {
 void constantPoolKlass::oop_verify_on(oop obj, outputStream* st) {
   Klass::oop_verify_on(obj, st);
   guarantee(obj->is_constantPool(), "object must be constant pool");
-  constantPoolOop cp = constantPoolOop(obj);
+  constantPoolOop cp = constantPoolOop(obj);  
   guarantee(cp->is_perm(), "should be in permspace");
   if (!cp->partially_loaded()) {
     oop* base = (oop*)cp->base();
@@ -421,18 +424,18 @@ void constantPoolKlass::oop_set_partially_loaded(oop obj) {
 // CompileTheWorld support. Preload all classes loaded references in the passed in constantpool
 void constantPoolKlass::preload_and_initialize_all_classes(oop obj, TRAPS) {
   guarantee(obj->is_constantPool(), "object must be constant pool");
-  constantPoolHandle cp(THREAD, (constantPoolOop)obj);
+  constantPoolHandle cp(THREAD, (constantPoolOop)obj);  
   guarantee(!cp->partially_loaded(), "must be fully loaded");
-
-  for (int i = 0; i< cp->length();  i++) {
+    
+  for (int i = 0; i< cp->length();  i++) {    
     if (cp->tag_at(i).is_unresolved_klass()) {
       // This will force loading of the class
       klassOop klass = cp->klass_at(i, CHECK);
       if (klass->is_instance()) {
         // Force initialization of class
         instanceKlass::cast(klass)->initialize(CHECK);
-      }
-    }
+      } 
+    }    
   }
 }
 

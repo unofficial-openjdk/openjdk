@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -31,69 +34,69 @@
 
 // ------------------------------------------------------------------
 // ciFlags::print_klass_flags
-void ciFlags::print_klass_flags(outputStream* st) {
+void ciFlags::print_klass_flags() {
   if (is_public()) {
-    st->print("public");
+    tty->print("public");
   } else {
-    st->print("DEFAULT_ACCESS");
+    tty->print("DEFAULT_ACCESS");
   }
 
   if (is_final()) {
-    st->print(",final");
+    tty->print(",final");
   }
   if (is_super()) {
-    st->print(",super");
+    tty->print(",super");
   }
   if (is_interface()) {
-    st->print(",interface");
+    tty->print(",interface");
   }
   if (is_abstract()) {
-    st->print(",abstract");
+    tty->print(",abstract");
   }
 }
 
 // ------------------------------------------------------------------
 // ciFlags::print_member_flags
-void ciFlags::print_member_flags(outputStream* st) {
+void ciFlags::print_member_flags() {
   if (is_public()) {
-    st->print("public");
+    tty->print("public");
   } else if (is_private()) {
-    st->print("private");
+    tty->print("private");
   } else if (is_protected()) {
-    st->print("protected");
+    tty->print("protected");
   } else {
-    st->print("DEFAULT_ACCESS");
+    tty->print("DEFAULT_ACCESS");
   }
 
   if (is_static()) {
-    st->print(",static");
+    tty->print(",static");
   }
   if (is_final()) {
-    st->print(",final");
+    tty->print(",final");
   }
   if (is_synchronized()) {
-    st->print(",synchronized");
+    tty->print(",synchronized");
   }
   if (is_volatile()) {
-    st->print(",volatile");
+    tty->print(",volatile");
   }
   if (is_transient()) {
-    st->print(",transient");
+    tty->print(",transient");
   }
   if (is_native()) {
-    st->print(",native");
+    tty->print(",native");
   }
   if (is_abstract()) {
-    st->print(",abstract");
+    tty->print(",abstract");
   }
   if (is_strict()) {
-    st->print(",strict");
+    tty->print(",strict");
   }
-
+    
 }
 
 // ------------------------------------------------------------------
 // ciFlags::print
-void ciFlags::print(outputStream* st) {
-  st->print(" flags=%x", _flags);
+void ciFlags::print() {
+  tty->print(" flags=%x", _flags);
 }

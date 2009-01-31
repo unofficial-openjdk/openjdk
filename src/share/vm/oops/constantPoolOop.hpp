@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A constantPool is an array containing class constants as described in the
@@ -50,7 +53,7 @@ class constantPoolOopDesc : public arrayOopDesc {
 
  private:
   intptr_t* base() const { return (intptr_t*) (((char*) this) + sizeof(constantPoolOopDesc)); }
-  oop* tags_addr()       { return (oop*)&_tags; }
+  oop* tags_addr()	 { return (oop*)&_tags; }
   oop* cache_addr()      { return (oop*)&_cache; }
 
   oop* obj_at_addr(int which) const {
@@ -97,7 +100,7 @@ class constantPoolOopDesc : public arrayOopDesc {
 
   // Storing constants
 
-  void klass_at_put(int which, klassOop k) {
+  void klass_at_put(int which, klassOop k) { 
     oop_store_without_check((volatile oop *)obj_at_addr(which), oop(k));
     // The interpreter assumes when the tag is stored, the klass is resolved
     // and the klassOop is a klass rather than a symbolOop, so we need
@@ -113,7 +116,7 @@ class constantPoolOopDesc : public arrayOopDesc {
   // For temporary use while constructing constant pool
   void klass_index_at_put(int which, int name_index) {
     tag_at_put(which, JVM_CONSTANT_ClassIndex);
-    *int_at_addr(which) = name_index;
+    *int_at_addr(which) = name_index; 
   }
 
   // Temporary until actual use
@@ -133,25 +136,25 @@ class constantPoolOopDesc : public arrayOopDesc {
     oop_store_without_check(obj_at_addr(which), oop(s));
   }
 
-  void int_at_put(int which, jint i) {
+  void int_at_put(int which, jint i) { 
     tag_at_put(which, JVM_CONSTANT_Integer);
-    *int_at_addr(which) = i;
+    *int_at_addr(which) = i; 
   }
-
-  void long_at_put(int which, jlong l) {
+  
+  void long_at_put(int which, jlong l) { 
     tag_at_put(which, JVM_CONSTANT_Long);
-    // *long_at_addr(which) = l;
+    // *long_at_addr(which) = l; 
     Bytes::put_native_u8((address)long_at_addr(which), *((u8*) &l));
   }
 
-  void float_at_put(int which, jfloat f) {
+  void float_at_put(int which, jfloat f) { 
     tag_at_put(which, JVM_CONSTANT_Float);
-    *float_at_addr(which) = f;
+    *float_at_addr(which) = f; 
   }
 
-  void double_at_put(int which, jdouble d) {
+  void double_at_put(int which, jdouble d) { 
     tag_at_put(which, JVM_CONSTANT_Double);
-    // *double_at_addr(which) = d;
+    // *double_at_addr(which) = d; 
     // u8 temp = *(u8*) &d;
     Bytes::put_native_u8((address) double_at_addr(which), *((u8*) &d));
   }
@@ -174,7 +177,7 @@ class constantPoolOopDesc : public arrayOopDesc {
   // For temporary use while constructing constant pool
   void string_index_at_put(int which, int string_index) {
     tag_at_put(which, JVM_CONSTANT_StringIndex);
-    *int_at_addr(which) = string_index;
+    *int_at_addr(which) = string_index; 
   }
 
   void field_at_put(int which, int class_index, int name_and_type_index) {
@@ -196,7 +199,7 @@ class constantPoolOopDesc : public arrayOopDesc {
     tag_at_put(which, JVM_CONSTANT_NameAndType);
     *int_at_addr(which) = ((jint) signature_index<<16) | name_index;  // Not so nice
   }
-
+  
   // Tag query
 
   constantTag tag_at(int which) const { return (constantTag)tags()->byte_at_acquire(which); }
@@ -213,14 +216,14 @@ class constantPoolOopDesc : public arrayOopDesc {
 
   // Fetching constants
 
-  klassOop klass_at(int which, TRAPS) {
+  klassOop klass_at(int which, TRAPS) { 
     constantPoolHandle h_this(THREAD, this);
-    return klass_at_impl(h_this, which, CHECK_NULL);
-  }
-
+    return klass_at_impl(h_this, which, CHECK_NULL); 
+  }  
+    
   symbolOop klass_name_at(int which);  // Returns the name, w/o resolving.
 
-  klassOop resolved_klass_at(int which) {  // Used by Compiler
+  klassOop resolved_klass_at(int which) {  // Used by Compiler 
     guarantee(tag_at(which).is_klass(), "Corrupted constant pool");
     // Must do an acquire here in case another thread resolved the klass
     // behind our back, lest we later load stale values thru the oop.
@@ -268,7 +271,7 @@ class constantPoolOopDesc : public arrayOopDesc {
 
   oop string_at(int which, TRAPS) {
     constantPoolHandle h_this(THREAD, this);
-    return string_at_impl(h_this, which, CHECK_NULL);
+    return string_at_impl(h_this, which, CHECK_NULL); 
   }
 
   // only called when we are sure a string entry is already resolved (via an
@@ -310,7 +313,7 @@ class constantPoolOopDesc : public arrayOopDesc {
   symbolOop klass_ref_at_noresolve(int which);
   symbolOop name_ref_at(int which);
   symbolOop signature_ref_at(int which);    // the type descriptor
-
+  
   int klass_ref_index_at(int which);
   int name_and_type_ref_index_at(int which);
 
@@ -323,7 +326,7 @@ class constantPoolOopDesc : public arrayOopDesc {
   // Resolve string constants (to prevent allocation during compilation)
   void resolve_string_constants(TRAPS) {
     constantPoolHandle h_this(THREAD, this);
-    resolve_string_constants_impl(h_this, CHECK);
+    resolve_string_constants_impl(h_this, CHECK); 
   }
 
   // Klass name matches name at offset
@@ -338,11 +341,11 @@ class constantPoolOopDesc : public arrayOopDesc {
   friend class ClassFileParser;
   friend class SystemDictionary;
 
-  // Used by compiler to prevent classloading.
-  static klassOop klass_at_if_loaded          (constantPoolHandle this_oop, int which);
+  // Used by compiler to prevent classloading. 
+  static klassOop klass_at_if_loaded          (constantPoolHandle this_oop, int which);  
   static klassOop klass_ref_at_if_loaded      (constantPoolHandle this_oop, int which);
   // Same as above - but does LinkResolving.
-  static klassOop klass_ref_at_if_loaded_check(constantPoolHandle this_oop, int which, TRAPS);
+  static klassOop klass_ref_at_if_loaded_check(constantPoolHandle this_oop, int which, TRAPS);  
 
   // Routines currently used for annotations (only called by jvm.cpp) but which might be used in the
   // future by other Java code. These take constant pool indices rather than possibly-byte-swapped
@@ -392,7 +395,7 @@ class constantPoolOopDesc : public arrayOopDesc {
   // Performs the LinkResolver checks
   static void verify_constant_pool_resolve(constantPoolHandle this_oop, KlassHandle klass, TRAPS);
 
-  // Implementation of methods that needs an exposed 'this' pointer, in order to
+  // Implementation of methods that needs an exposed 'this' pointer, in order to 
   // handle GC while executing the method
   static klassOop klass_at_impl(constantPoolHandle this_oop, int which, TRAPS);
   static oop string_at_impl(constantPoolHandle this_oop, int which, TRAPS);
@@ -520,7 +523,7 @@ class SymbolHashMap: public CHeapObj {
     for (int i = 0; i < _table_size; i++) {
       for (SymbolHashMapEntry* cur = bucket(i); cur != NULL; cur = next) {
         next = cur->next();
-        delete(cur);
+        delete(cur); 
       }
     }
     delete _buckets;

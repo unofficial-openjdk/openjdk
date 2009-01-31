@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -53,7 +56,7 @@ void JvmtiExtensions::register_extensions() {
 
   // register our extension function
   static jvmtiParamInfo func_params[] = {
-    { (char*)"IsClassUnloadingEnabled", JVMTI_KIND_OUT,  JVMTI_TYPE_JBOOLEAN, JNI_FALSE }
+    { (char*)"IsClassUnloadingEnabled", JVMTI_KIND_OUT,  JVMTI_TYPE_JBOOLEAN, JNI_FALSE } 
   };
   static jvmtiExtensionFunctionInfo ext_func = {
     (jvmtiExtensionFunction)IsClassUnloadingEnabled,
@@ -61,7 +64,7 @@ void JvmtiExtensions::register_extensions() {
     (char*)"Tell if class unloading is enabled (-noclassgc)",
     sizeof(func_params)/sizeof(func_params[0]),
     func_params,
-    0,              // no non-universal errors
+    0,		    // no non-universal errors
     NULL
   };
   _ext_functions->append(&ext_func);
@@ -87,21 +90,21 @@ void JvmtiExtensions::register_extensions() {
 // return the list of extension functions
 
 jvmtiError JvmtiExtensions::get_functions(JvmtiEnv* env,
-                                          jint* extension_count_ptr,
-                                          jvmtiExtensionFunctionInfo** extensions)
+					  jint* extension_count_ptr, 
+					  jvmtiExtensionFunctionInfo** extensions)
 {
   guarantee(_ext_functions != NULL, "registration not done");
 
   ResourceTracker rt(env);
-
+  
   jvmtiExtensionFunctionInfo* ext_funcs;
-  jvmtiError err = rt.allocate(_ext_functions->length() *
-                               sizeof(jvmtiExtensionFunctionInfo),
-                               (unsigned char**)&ext_funcs);
+  jvmtiError err = rt.allocate(_ext_functions->length() * 
+			       sizeof(jvmtiExtensionFunctionInfo),
+			       (unsigned char**)&ext_funcs);
   if (err != JVMTI_ERROR_NONE) {
     return err;
   }
-
+  
   for (int i=0; i<_ext_functions->length(); i++ ) {
     ext_funcs[i].func = _ext_functions->at(i)->func;
 
@@ -113,8 +116,8 @@ jvmtiError JvmtiExtensions::get_functions(JvmtiEnv* env,
     strcpy(ext_funcs[i].id, id);
 
     char *desc = _ext_functions->at(i)->short_description;
-    err = rt.allocate(strlen(desc)+1,
-                      (unsigned char**)&(ext_funcs[i].short_description));
+    err = rt.allocate(strlen(desc)+1, 
+		      (unsigned char**)&(ext_funcs[i].short_description));
     if (err != JVMTI_ERROR_NONE) {
       return err;
     }
@@ -127,30 +130,30 @@ jvmtiError JvmtiExtensions::get_functions(JvmtiEnv* env,
     ext_funcs[i].param_count = param_count;
     if (param_count == 0) {
       ext_funcs[i].params = NULL;
-    } else {
+    } else {    
       err = rt.allocate(param_count*sizeof(jvmtiParamInfo),
-                        (unsigned char**)&(ext_funcs[i].params));
+		        (unsigned char**)&(ext_funcs[i].params));
       if (err != JVMTI_ERROR_NONE) {
-        return err;
+	return err;
       }
       jvmtiParamInfo* src_params = _ext_functions->at(i)->params;
       jvmtiParamInfo* dst_params = ext_funcs[i].params;
 
       for (int j=0; j<param_count; j++) {
-        err = rt.allocate(strlen(src_params[j].name)+1,
-                          (unsigned char**)&(dst_params[j].name));
-        if (err != JVMTI_ERROR_NONE) {
-          return err;
-        }
-        strcpy(dst_params[j].name, src_params[j].name);
+	err = rt.allocate(strlen(src_params[j].name)+1, 	   
+			  (unsigned char**)&(dst_params[j].name));
+	if (err != JVMTI_ERROR_NONE) {
+	  return err;
+	}
+	strcpy(dst_params[j].name, src_params[j].name);
 
-        dst_params[j].kind = src_params[j].kind;
-        dst_params[j].base_type = src_params[j].base_type;
-        dst_params[j].null_ok = src_params[j].null_ok;
+	dst_params[j].kind = src_params[j].kind;
+	dst_params[j].base_type = src_params[j].base_type;
+	dst_params[j].null_ok = src_params[j].null_ok;
       }
     }
 
-    // errors
+    // errors    
 
     jint error_count = _ext_functions->at(i)->error_count;
     ext_funcs[i].error_count = error_count;
@@ -158,12 +161,12 @@ jvmtiError JvmtiExtensions::get_functions(JvmtiEnv* env,
       ext_funcs[i].errors = NULL;
     } else {
       err = rt.allocate(error_count*sizeof(jvmtiError),
-                        (unsigned char**)&(ext_funcs[i].errors));
+		        (unsigned char**)&(ext_funcs[i].errors));
       if (err != JVMTI_ERROR_NONE) {
-        return err;
+	return err;
       }
-      memcpy(ext_funcs[i].errors, _ext_functions->at(i)->errors,
-             error_count*sizeof(jvmtiError));
+      memcpy(ext_funcs[i].errors, _ext_functions->at(i)->errors, 
+	     error_count*sizeof(jvmtiError));
     }
   }
 
@@ -176,8 +179,8 @@ jvmtiError JvmtiExtensions::get_functions(JvmtiEnv* env,
 // return the list of extension events
 
 jvmtiError JvmtiExtensions::get_events(JvmtiEnv* env,
-                                       jint* extension_count_ptr,
-                                       jvmtiExtensionEventInfo** extensions)
+				       jint* extension_count_ptr, 
+				       jvmtiExtensionEventInfo** extensions)
 {
   guarantee(_ext_events != NULL, "registration not done");
 
@@ -185,11 +188,11 @@ jvmtiError JvmtiExtensions::get_events(JvmtiEnv* env,
 
   jvmtiExtensionEventInfo* ext_events;
   jvmtiError err = rt.allocate(_ext_events->length() * sizeof(jvmtiExtensionEventInfo),
-                               (unsigned char**)&ext_events);
+			       (unsigned char**)&ext_events);
   if (err != JVMTI_ERROR_NONE) {
     return err;
   }
-
+  
   for (int i=0; i<_ext_events->length(); i++ ) {
     ext_events[i].extension_event_index = _ext_events->at(i)->extension_event_index;
 
@@ -201,8 +204,8 @@ jvmtiError JvmtiExtensions::get_events(JvmtiEnv* env,
     strcpy(ext_events[i].id, id);
 
     char *desc = _ext_events->at(i)->short_description;
-    err = rt.allocate(strlen(desc)+1,
-                      (unsigned char**)&(ext_events[i].short_description));
+    err = rt.allocate(strlen(desc)+1, 
+		      (unsigned char**)&(ext_events[i].short_description));
     if (err != JVMTI_ERROR_NONE) {
       return err;
     }
@@ -215,27 +218,27 @@ jvmtiError JvmtiExtensions::get_events(JvmtiEnv* env,
     ext_events[i].param_count = param_count;
     if (param_count == 0) {
       ext_events[i].params = NULL;
-    } else {
+    } else {    
       err = rt.allocate(param_count*sizeof(jvmtiParamInfo),
-                        (unsigned char**)&(ext_events[i].params));
+		        (unsigned char**)&(ext_events[i].params));
       if (err != JVMTI_ERROR_NONE) {
-        return err;
+	return err;
       }
       jvmtiParamInfo* src_params = _ext_events->at(i)->params;
       jvmtiParamInfo* dst_params = ext_events[i].params;
 
       for (int j=0; j<param_count; j++) {
-        err = rt.allocate(strlen(src_params[j].name)+1,
-                          (unsigned char**)&(dst_params[j].name));
-        if (err != JVMTI_ERROR_NONE) {
-          return err;
-        }
-        strcpy(dst_params[j].name, src_params[j].name);
+	err = rt.allocate(strlen(src_params[j].name)+1, 	   
+			  (unsigned char**)&(dst_params[j].name));
+	if (err != JVMTI_ERROR_NONE) {
+	  return err;
+	}
+	strcpy(dst_params[j].name, src_params[j].name);
 
-        dst_params[j].kind = src_params[j].kind;
-        dst_params[j].base_type = src_params[j].base_type;
-        dst_params[j].null_ok = src_params[j].null_ok;
-      }
+	dst_params[j].kind = src_params[j].kind;
+	dst_params[j].base_type = src_params[j].base_type;
+	dst_params[j].null_ok = src_params[j].null_ok;
+      }    
     }
   }
 
@@ -247,12 +250,12 @@ jvmtiError JvmtiExtensions::get_events(JvmtiEnv* env,
 // set callback for an extension event and enable/disable it.
 
 jvmtiError JvmtiExtensions::set_event_callback(JvmtiEnv* env,
-                                               jint extension_event_index,
-                                               jvmtiExtensionEvent callback)
-{
+					       jint extension_event_index, 
+					       jvmtiExtensionEvent callback)
+{  
   guarantee(_ext_events != NULL, "registration not done");
-
-  jvmtiExtensionEventInfo* event = NULL;
+  
+  jvmtiExtensionEventInfo* event = NULL;  
 
   // if there are extension events registered then validate that the
   // extension_event_index matches one of the registered events.
@@ -270,8 +273,8 @@ jvmtiError JvmtiExtensions::set_event_callback(JvmtiEnv* env,
     return JVMTI_ERROR_ILLEGAL_ARGUMENT;
   }
 
-  JvmtiEventController::set_extension_event_callback(env, extension_event_index,
-                                                     callback);
+  JvmtiEventController::set_extension_event_callback(env, extension_event_index, 
+						     callback);
 
   return JVMTI_ERROR_NONE;
 }

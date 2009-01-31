@@ -1,4 +1,7 @@
-//
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
+// 
 // Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
 // DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 //
@@ -19,18 +22,18 @@
 // Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
 // CA 95054 USA or visit www.sun.com if you need additional information or
 // have any questions.
-//
+// 
 
 #include "incls/_precompiled.incl"
 #include "incls/_abstractCompiler.cpp.incl"
 
 void AbstractCompiler::initialize_runtimes(initializer f, volatile int* state) {
   if (*state != initialized) {
-
+    
     // We are thread in native here...
     CompilerThread* thread = CompilerThread::current();
     bool do_initialization = false;
-    {
+    { 
       ThreadInVMfromNative tv(thread);
       MutexLocker only_one(CompileThread_lock, thread);
       if ( *state == uninitialized) {

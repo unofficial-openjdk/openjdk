@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -68,7 +68,7 @@ abstract class MemoryInstructionDecoder extends InstructionDecoder {
         SPARCRegisterIndirectAddress addr = getRegisterIndirectAddress(instruction);
         SPARCRegister rd = getDestination(instruction);
         boolean isV9Okay = (factory instanceof SPARCV9InstructionFactory);
-        if ( (rd == null) || (! isV9Okay && rd.isV9Only()) )
+        if ( (rd == null) || (! isV9Okay && rd.isV9Only()) ) 
             return factory.newIllegalInstruction(instruction);
 
         return decodeMemoryInstruction(instruction, addr, rd, factory);
@@ -80,7 +80,7 @@ abstract class MemoryInstructionDecoder extends InstructionDecoder {
         return rd;
     }
 
-    abstract Instruction decodeMemoryInstruction(int instruction,
-                                   SPARCRegisterIndirectAddress addr,
+    abstract Instruction decodeMemoryInstruction(int instruction, 
+                                   SPARCRegisterIndirectAddress addr, 
                                    SPARCRegister rd, SPARCInstructionFactory factory);
 }

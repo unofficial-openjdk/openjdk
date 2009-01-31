@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Portions of code courtesy of Clifford Click
@@ -37,7 +40,7 @@
 
 //=============================================================================
 //------------------------------hash-------------------------------------------
-// Hash function over AddNodes.  Needs to be commutative; i.e., I swap
+// Hash function over AddNodes.  Needs to be commutative; i.e., I swap 
 // (commute) inputs to AddNodes willy-nilly so the hash function must return
 // the same value in the presence of edge swapping.
 uint AddNode::hash() const {
@@ -45,7 +48,7 @@ uint AddNode::hash() const {
 }
 
 //------------------------------Identity---------------------------------------
-// If either input is a constant 0, return the other input.
+// If either input is a constant 0, return the other input.  
 Node *AddNode::Identity( PhaseTransform *phase ) {
   const Type *zero = add_id();  // The additive identity
   if( phase->type( in(1) )->higher_equal( zero ) ) return in(2);
@@ -118,7 +121,7 @@ Node *AddNode::Ideal(PhaseGVN *phase, bool can_reshape) {
       add1_op == this_op ) { // Left input is an Add?
 
     // Type of left _in right input
-    const Type *t12 = phase->type( add1->in(2) );
+    const Type *t12 = phase->type( add1->in(2) ); 
     if( t12->singleton() && t12 != Type::TOP ) { // Left input is an add of a constant?
       // Check for rare case of closed data cycle which can happen inside
       // unreachable loops. In these cases the computation is undefined.
@@ -194,7 +197,7 @@ const Type *AddNode::Value( PhaseTransform *phase ) const {
   // Either input is BOTTOM ==> the result is the local BOTTOM
   const Type *bot = bottom_type();
   if( (t1 == bot) || (t2 == bot) ||
-      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) )
+      (t1 == Type::BOTTOM) || (t2 == Type::BOTTOM) ) 
     return bot;
 
   // Check for an addition involving the additive identity
@@ -230,7 +233,7 @@ Node *AddINode::Ideal(PhaseGVN *phase, bool can_reshape) {
     // Convert "(a-b)+(c-d)" into "(a+c)-(b+d)"
     if( op2 == Op_SubI ) {
       // Check for dead cycle: d = (a-b)+(c-d)
-      assert( in(1)->in(2) != this && in(2)->in(2) != this,
+      assert( in(1)->in(2) != this && in(2)->in(2) != this, 
               "dead loop in AddINode::Ideal" );
       Node *sub  = new (phase->C, 3) SubINode(NULL, NULL);
       sub->init_req(1, phase->transform(new (phase->C, 3) AddINode(in(1)->in(1), in(2)->in(1) ) ));
@@ -240,11 +243,11 @@ Node *AddINode::Ideal(PhaseGVN *phase, bool can_reshape) {
   }
 
   // Convert "x+(0-y)" into "(x-y)"
-  if( op2 == Op_SubI && phase->type(in(2)->in(1)) == TypeInt::ZERO )
+  if( op2 == Op_SubI && phase->type(in(2)->in(1)) == TypeInt::ZERO ) 
     return new (phase->C, 3) SubINode(in(1), in(2)->in(2) );
 
   // Convert "(0-y)+x" into "(x-y)"
-  if( op1 == Op_SubI && phase->type(in(1)->in(1)) == TypeInt::ZERO )
+  if( op1 == Op_SubI && phase->type(in(1)->in(1)) == TypeInt::ZERO ) 
     return new (phase->C, 3) SubINode( in(2), in(1)->in(2) );
 
   // Convert (x>>>z)+y into (x+(y<<z))>>>z for small constant z and y.
@@ -256,7 +259,7 @@ Node *AddINode::Ideal(PhaseGVN *phase, bool can_reshape) {
   // Transform works for small z and small negative y when the addition
   // (x + (y << z)) does not cross zero.
   // Implement support for negative y and (x >= -(y << z))
-  // Have not observed cases where type information exists to support
+  // Have not observed cases where type information exists to support 
   // positive y and (x <= -(y << z))
   if( op1 == Op_URShiftI && op2 == Op_ConI &&
       in(1)->in(2)->Opcode() == Op_ConI ) {
@@ -271,7 +274,7 @@ Node *AddINode::Ideal(PhaseGVN *phase, bool can_reshape) {
       }
     }
   }
-
+  
   return AddNode::Ideal(phase, can_reshape);
 }
 
@@ -295,7 +298,7 @@ Node *AddINode::Identity( PhaseTransform *phase ) {
 // pre-check.
 const Type *AddINode::add_ring( const Type *t0, const Type *t1 ) const {
   const TypeInt *r0 = t0->is_int(); // Handy access
-  const TypeInt *r1 = t1->is_int();
+  const TypeInt *r1 = t1->is_int();  
   int lo = r0->_lo + r1->_lo;
   int hi = r0->_hi + r1->_hi;
   if( !(r0->is_con() && r1->is_con()) ) {
@@ -333,7 +336,7 @@ Node *AddLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
     // Convert "(a-b)+(c-d)" into "(a+c)-(b+d)"
     if( op2 == Op_SubL ) {
       // Check for dead cycle: d = (a-b)+(c-d)
-      assert( in(1)->in(2) != this && in(2)->in(2) != this,
+      assert( in(1)->in(2) != this && in(2)->in(2) != this, 
               "dead loop in AddLNode::Ideal" );
       Node *sub  = new (phase->C, 3) SubLNode(NULL, NULL);
       sub->init_req(1, phase->transform(new (phase->C, 3) AddLNode(in(1)->in(1), in(2)->in(1) ) ));
@@ -343,14 +346,14 @@ Node *AddLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   }
 
   // Convert "x+(0-y)" into "(x-y)"
-  if( op2 == Op_SubL && phase->type(in(2)->in(1)) == TypeLong::ZERO )
+  if( op2 == Op_SubL && phase->type(in(2)->in(1)) == TypeLong::ZERO ) 
     return new (phase->C, 3) SubLNode(in(1), in(2)->in(2) );
 
   // Convert "X+X+X+X+X...+X+Y" into "k*X+Y" or really convert "X+(X+Y)"
   // into "(X<<1)+Y" and let shift-folding happen.
   if( op2 == Op_AddL &&
       in(2)->in(1) == in(1) &&
-      op1 != Op_ConL &&
+      op1 != Op_ConL && 
       0 ) {
     Node *shift = phase->transform(new (phase->C, 3) LShiftLNode(in(1),phase->intcon(1)));
     return new (phase->C, 3) AddLNode(shift,in(2)->in(2));
@@ -407,11 +410,11 @@ const Type *AddLNode::add_ring( const Type *t0, const Type *t1 ) const {
 // Check for addition of the identity
 const Type *AddFNode::add_of_identity( const Type *t1, const Type *t2 ) const {
   // x ADD 0  should return x unless 'x' is a -zero
-  //
+  // 
   // const Type *zero = add_id();     // The additive identity
   // jfloat f1 = t1->getf();
   // jfloat f2 = t2->getf();
-  //
+  // 
   // if( t1->higher_equal( zero ) ) return t2;
   // if( t2->higher_equal( zero ) ) return t1;
 
@@ -445,11 +448,11 @@ Node *AddFNode::Ideal(PhaseGVN *phase, bool can_reshape) {
 // Check for addition of the identity
 const Type *AddDNode::add_of_identity( const Type *t1, const Type *t2 ) const {
   // x ADD 0  should return x unless 'x' is a -zero
-  //
+  // 
   // const Type *zero = add_id();     // The additive identity
   // jfloat f1 = t1->getf();
   // jfloat f2 = t2->getf();
-  //
+  // 
   // if( t1->higher_equal( zero ) ) return t2;
   // if( t2->higher_equal( zero ) ) return t1;
 
@@ -493,7 +496,7 @@ Node *AddPNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   const Node *n = in(Address);
   if (n->is_AddP() && n->in(Base) == in(Base)) {
     const AddPNode *addp = n->as_AddP(); // Left input is an AddP
-    assert( !addp->in(Address)->is_AddP() ||
+    assert( !addp->in(Address)->is_AddP() || 
              addp->in(Address)->as_AddP() != addp,
             "dead loop in AddPNode::Ideal" );
     // Type of left input's right input
@@ -546,7 +549,7 @@ Node *AddPNode::Ideal(PhaseGVN *phase, bool can_reshape) {
 
 //------------------------------bottom_type------------------------------------
 // Bottom-type is the pointer-type with unknown offset.
-const Type *AddPNode::bottom_type() const {
+const Type *AddPNode::bottom_type() const { 
   if (in(Address) == NULL)  return TypePtr::BOTTOM;
   const TypePtr *tp = in(Address)->bottom_type()->isa_ptr();
   if( !tp ) return Type::TOP;   // TOP input means TOP output
@@ -720,7 +723,7 @@ Node *OrLNode::Identity( PhaseTransform *phase ) {
     return in(1);
   }
 
-  return AddNode::Identity(phase);
+  return AddNode::Identity(phase); 
 }
 
 //------------------------------add_ring---------------------------------------
@@ -747,8 +750,8 @@ const Type *XorINode::add_ring( const Type *t0, const Type *t1 ) const {
   const TypeInt *r1 = t1->is_int();
 
   // Complementing a boolean?
-  if( r0 == TypeInt::BOOL && ( r1 == TypeInt::ONE
-                               || r1 == TypeInt::BOOL))
+  if( r0 == TypeInt::BOOL && ( r1 == TypeInt::ONE 
+			       || r1 == TypeInt::BOOL))
     return TypeInt::BOOL;
 
   if( !r0->is_con() || !r1->is_con() ) // Not constants
@@ -843,12 +846,12 @@ Node *MinINode::Ideal(PhaseGVN *phase, bool can_reshape) {
       y = y->in(1);
     }
 
-    if( x->_idx > y->_idx )
+    if( x->_idx > y->_idx ) 
       return new (phase->C, 3) MinINode(r->in(1),phase->transform(new (phase->C, 3) MinINode(l,r->in(2))));
-
+    
     // See if covers: MIN2(x+c0,MIN2(y+c1,z))
     if( !phase->eqv(x,y) ) return NULL;
-    // If (y == x) transform MIN2(x+c0, MIN2(x+c1,z)) into
+    // If (y == x) transform MIN2(x+c0, MIN2(x+c1,z)) into 
     // MIN2(x+c0 or x+c1 which less, z).
     return new (phase->C, 3) MinINode(phase->transform(new (phase->C, 3) AddINode(x,phase->intcon(MIN2(x_off,y_off)))),r->in(2));
   } else {

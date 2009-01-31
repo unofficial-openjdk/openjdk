@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,17 +22,17 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
 # include "incls/_tenuredGeneration.cpp.incl"
 
 TenuredGeneration::TenuredGeneration(ReservedSpace rs,
-                                     size_t initial_byte_size, int level,
-                                     GenRemSet* remset) :
+				     size_t initial_byte_size, int level, 
+				     GenRemSet* remset) :
   OneContigSpaceCardGeneration(rs, initial_byte_size,
-                               MinHeapDeltaBytes, level, remset, NULL)
+			       MinHeapDeltaBytes, level, remset, NULL)
 {
   HeapWord* bottom = (HeapWord*) _virtual_space.low();
   HeapWord* end    = (HeapWord*) _virtual_space.high();
@@ -56,14 +59,14 @@ TenuredGeneration::TenuredGeneration(ReservedSpace rs,
   if (UseParNewGC && ParallelGCThreads > 0) {
     typedef ParGCAllocBufferWithBOT* ParGCAllocBufferWithBOTPtr;
     _alloc_buffers = NEW_C_HEAP_ARRAY(ParGCAllocBufferWithBOTPtr,
-                                      ParallelGCThreads);
-    if (_alloc_buffers == NULL)
+				      ParallelGCThreads);
+    if (_alloc_buffers == NULL) 
       vm_exit_during_initialization("Could not allocate alloc_buffers");
     for (uint i = 0; i < ParallelGCThreads; i++) {
       _alloc_buffers[i] =
-        new ParGCAllocBufferWithBOT(OldPLABSize, _bts);
-      if (_alloc_buffers[i] == NULL)
-        vm_exit_during_initialization("Could not allocate alloc_buffers");
+	new ParGCAllocBufferWithBOT(OldPLABSize, _bts);
+      if (_alloc_buffers[i] == NULL) 
+	vm_exit_during_initialization("Could not allocate alloc_buffers");
     }
   } else {
     _alloc_buffers = NULL;
@@ -94,7 +97,7 @@ void TenuredGeneration::compute_new_size() {
   size_t minimum_desired_capacity = (size_t)MIN2(min_tmp, double(max_uintx));
   // Don't shrink less than the initial generation size
   minimum_desired_capacity = MAX2(minimum_desired_capacity,
-                                  spec()->init_size());
+				  spec()->init_size());
   assert(used_after_gc <= minimum_desired_capacity, "sanity check");
 
   if (PrintGC && Verbose) {
@@ -135,7 +138,7 @@ void TenuredGeneration::compute_new_size() {
                     _min_heap_delta_bytes / (double) K);
     }
     return;
-  }
+  } 
 
   // No expansion, now see if we want to shrink
   size_t shrink_bytes = 0;
@@ -148,23 +151,23 @@ void TenuredGeneration::compute_new_size() {
     const double max_tmp = used_after_gc / minimum_used_percentage;
     size_t maximum_desired_capacity = (size_t)MIN2(max_tmp, double(max_uintx));
     maximum_desired_capacity = MAX2(maximum_desired_capacity,
-                                    spec()->init_size());
+				    spec()->init_size());
     if (PrintGC && Verbose) {
       gclog_or_tty->print_cr("  "
-                             "  maximum_free_percentage: %6.2f"
-                             "  minimum_used_percentage: %6.2f",
-                             maximum_free_percentage,
-                             minimum_used_percentage);
+			     "  maximum_free_percentage: %6.2f"
+			     "  minimum_used_percentage: %6.2f",
+			     maximum_free_percentage,
+			     minimum_used_percentage);
       gclog_or_tty->print_cr("  "
-                             "  _capacity_at_prologue: %6.1fK"
-                             "  minimum_desired_capacity: %6.1fK"
-                             "  maximum_desired_capacity: %6.1fK",
-                             _capacity_at_prologue / (double) K,
-                             minimum_desired_capacity / (double) K,
-                             maximum_desired_capacity / (double) K);
+			     "  _capacity_at_prologue: %6.1fK"
+			     "  minimum_desired_capacity: %6.1fK"
+			     "  maximum_desired_capacity: %6.1fK",
+			     _capacity_at_prologue / (double) K,
+			     minimum_desired_capacity / (double) K,
+			     maximum_desired_capacity / (double) K);
     }
     assert(minimum_desired_capacity <= maximum_desired_capacity,
-           "sanity check");
+	   "sanity check");
 
     if (capacity_after_gc > maximum_desired_capacity) {
       // Capacity too large, compute shrinking size
@@ -213,15 +216,15 @@ void TenuredGeneration::compute_new_size() {
     assert(shrink_bytes <= max_shrink_bytes, "invalid shrink size");
     if (PrintGC && Verbose) {
       gclog_or_tty->print_cr("  "
-                             "  aggressive shrinking:"
-                             "  _capacity_at_prologue: %.1fK"
-                             "  capacity_after_gc: %.1fK"
-                             "  expansion_for_promotion: %.1fK"
-                             "  shrink_bytes: %.1fK",
-                             capacity_after_gc / (double) K,
-                             _capacity_at_prologue / (double) K,
-                             expansion_for_promotion / (double) K,
-                             shrink_bytes / (double) K);
+			     "  aggressive shrinking:"
+			     "  _capacity_at_prologue: %.1fK"
+			     "  capacity_after_gc: %.1fK"
+			     "  expansion_for_promotion: %.1fK"
+			     "  shrink_bytes: %.1fK",
+			     capacity_after_gc / (double) K,
+			     _capacity_at_prologue / (double) K,
+			     expansion_for_promotion / (double) K,
+			     shrink_bytes / (double) K);
     }
   }
   // Don't shrink unless it's significant
@@ -229,7 +232,7 @@ void TenuredGeneration::compute_new_size() {
     shrink(shrink_bytes);
   }
   assert(used() == used_after_gc && used_after_gc <= capacity(),
-         "sanity check");
+	 "sanity check");
 }
 
 void TenuredGeneration::gc_prologue(bool full) {
@@ -251,9 +254,9 @@ void TenuredGeneration::gc_epilogue(bool full) {
 bool TenuredGeneration::should_collect(bool  full,
                                        size_t size,
                                        bool   is_tlab) {
-  // This should be one big conditional or (||), but I want to be able to tell
-  // why it returns what it returns (without re-evaluating the conditionals
-  // in case they aren't idempotent), so I'm doing it this way.
+  // This should be one big conditional or (||), but I want to be able to tell 
+  // why it returns what it returns (without re-evaluating the conditionals 
+  // in case they aren't idempotent), so I'm doing it this way.  
   // DeMorgan says it's okay.
   bool result = false;
   if (!result && full) {
@@ -294,16 +297,16 @@ bool TenuredGeneration::should_collect(bool  full,
 }
 
 void TenuredGeneration::collect(bool   full,
-                                bool   clear_all_soft_refs,
-                                size_t size,
-                                bool   is_tlab) {
-  retire_alloc_buffers_before_full_gc();
+				bool   clear_all_soft_refs,
+				size_t size,
+				bool   is_tlab) {
+  retire_alloc_buffers_before_full_gc();  
   OneContigSpaceCardGeneration::collect(full, clear_all_soft_refs,
-                                        size, is_tlab);
+					size, is_tlab);
 }
 
-void TenuredGeneration::update_gc_stats(int current_level,
-                                        bool full) {
+void TenuredGeneration::update_gc_stats(int current_level, 
+					bool full) {
   // If the next lower level(s) has been collected, gather any statistics
   // that are of interest at this point.
   if (!full && (current_level + 1) == level()) {
@@ -332,32 +335,32 @@ void TenuredGeneration::update_counters() {
 
 #ifndef SERIALGC
 oop TenuredGeneration::par_promote(int thread_num,
-                                   oop old, markOop m, size_t word_sz) {
+				   oop old, markOop m, size_t word_sz) {
 
   ParGCAllocBufferWithBOT* buf = _alloc_buffers[thread_num];
   HeapWord* obj_ptr = buf->allocate(word_sz);
   bool is_lab = true;
   if (obj_ptr == NULL) {
-#ifndef PRODUCT
+#ifndef	PRODUCT
     if (Universe::heap()->promotion_should_fail()) {
       return NULL;
     }
-#endif  // #ifndef PRODUCT
+#endif	// #ifndef PRODUCT
 
     // Slow path:
     if (word_sz * 100 < ParallelGCBufferWastePct * buf->word_sz()) {
       // Is small enough; abandon this buffer and start a new one.
       size_t buf_size = buf->word_sz();
       HeapWord* buf_space =
-        TenuredGeneration::par_allocate(buf_size, false);
+	TenuredGeneration::par_allocate(buf_size, false);
       if (buf_space == NULL) {
-        buf_space = expand_and_allocate(buf_size, false, true /* parallel*/);
+	buf_space = expand_and_allocate(buf_size, false, true /* parallel*/);
       }
       if (buf_space != NULL) {
-        buf->retire(false, false);
-        buf->set_buf(buf_space);
-        obj_ptr = buf->allocate(word_sz);
-        assert(obj_ptr != NULL, "Buffer was definitely big enough...");
+	buf->retire(false, false);
+	buf->set_buf(buf_space);
+	obj_ptr = buf->allocate(word_sz);
+	assert(obj_ptr != NULL, "Buffer was definitely big enough...");
       }
     };
     // Otherwise, buffer allocation failed; try allocating object
@@ -365,7 +368,7 @@ oop TenuredGeneration::par_promote(int thread_num,
     if (obj_ptr == NULL) {
       obj_ptr = TenuredGeneration::par_allocate(word_sz, false);
       if (obj_ptr == NULL) {
-        obj_ptr = expand_and_allocate(word_sz, false, true /* parallel */);
+	obj_ptr = expand_and_allocate(word_sz, false, true /* parallel */);
       }
     }
     if (obj_ptr == NULL) return NULL;
@@ -379,12 +382,12 @@ oop TenuredGeneration::par_promote(int thread_num,
 }
 
 void TenuredGeneration::par_promote_alloc_undo(int thread_num,
-                                               HeapWord* obj,
-                                               size_t word_sz) {
+					       HeapWord* obj,
+					       size_t word_sz) {
   ParGCAllocBufferWithBOT* buf = _alloc_buffers[thread_num];
   if (buf->contains(obj)) {
     guarantee(buf->contains(obj + word_sz - 1),
-              "should contain whole object");
+	      "should contain whole object");
     buf->undo_allocation(obj, word_sz);
   } else {
     SharedHeap::fill_region_with_object(MemRegion(obj, word_sz));
@@ -425,14 +428,14 @@ bool TenuredGeneration::promotion_attempt_is_safe(
   bool result = max_contiguous_available() >= max_promotion_in_bytes;
 
   if (younger_handles_promotion_failure && !result) {
-    result = max_contiguous_available() >=
+    result = max_contiguous_available() >= 
       (size_t) gc_stats()->avg_promoted()->padded_average();
     if (PrintGC && Verbose && result) {
       gclog_or_tty->print_cr("TenuredGeneration::promotion_attempt_is_safe"
                   " contiguous_available: " SIZE_FORMAT
                   " avg_promoted: " SIZE_FORMAT,
-                  max_contiguous_available(),
-                  gc_stats()->avg_promoted()->padded_average());
+                  max_contiguous_available(), 
+		  gc_stats()->avg_promoted()->padded_average());
     }
   } else {
     if (PrintGC && Verbose) {

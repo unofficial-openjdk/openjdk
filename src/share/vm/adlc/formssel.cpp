@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // FORMS.CPP - Definitions for ADL Parser Forms Classes
@@ -28,10 +31,10 @@
 //==============================Instructions===================================
 //------------------------------InstructForm-----------------------------------
 InstructForm::InstructForm(const char *id, bool ideal_only)
-  : _ident(id), _ideal_only(ideal_only),
+  : _ident(id), _ideal_only(ideal_only), 
     _localNames(cmpstr, hashstr, Form::arena),
     _effects(cmpstr, hashstr, Form::arena) {
-      _ftype = Form::INS;
+      _ftype = Form::INS; 
 
       _matrule   = NULL;
       _insencode = NULL;
@@ -56,10 +59,10 @@ InstructForm::InstructForm(const char *id, bool ideal_only)
 }
 
 InstructForm::InstructForm(const char *id, InstructForm *instr, MatchRule *rule)
-  : _ident(id), _ideal_only(false),
+  : _ident(id), _ideal_only(false), 
     _localNames(instr->_localNames),
     _effects(instr->_effects) {
-      _ftype = Form::INS;
+      _ftype = Form::INS; 
 
       _matrule   = rule;
       _insencode = instr->_insencode;
@@ -177,9 +180,9 @@ const char *InstructForm::ideal_Opcode( FormDict &globalNames )  const {
     return src_op->_matrule->_opType;
   }
   // Operand chain rules do not really have ideal Opcodes
-  if( _matrule->is_chain_rule(globalNames) )
+  if( _matrule->is_chain_rule(globalNames) ) 
     return "Node";
-  return strcmp(_matrule->_opType,"Set")
+  return strcmp(_matrule->_opType,"Set") 
     ? _matrule->_opType
     : _matrule->_rChild->_opType;
 }
@@ -339,11 +342,11 @@ bool InstructForm::is_ideal_goto() const {
 // Return 'true' if this instruction matches an ideal 'Jump' node
 bool InstructForm::is_ideal_jump() const {
   if( _matrule == NULL ) return false;
-
+  
   return _matrule->is_ideal_jump();
 }
 
-// Return 'true' if instruction matches ideal 'If' | 'Goto' |
+// Return 'true' if instruction matches ideal 'If' | 'Goto' | 
 //                    'CountedLoopEnd' | 'Jump'
 bool InstructForm::is_ideal_branch() const {
   if( _matrule == NULL ) return false;
@@ -443,7 +446,7 @@ uint InstructForm::two_address(FormDict &globals) {
     OperandForm *op       = form->is_operand();
     if( op ) {
       if( op->constrained_reg_class() != NULL &&
-          op->interface_type(globals) == Form::register_interface ) {
+	  op->interface_type(globals) == Form::register_interface ) {
         // Remember the local name for equality test later
         const char *def_name = comp->_name;
         // Check if a component has the same name and is a USE
@@ -466,15 +469,15 @@ Form::DataType InstructForm::is_chain_of_constant(FormDict &globals) {
   const char *dummy2 = NULL;
   return is_chain_of_constant(globals, dummy, dummy2);
 }
-Form::DataType InstructForm::is_chain_of_constant(FormDict &globals,
-                const char * &opTypeParam) {
+Form::DataType InstructForm::is_chain_of_constant(FormDict &globals, 
+		const char * &opTypeParam) {
   const char *result = NULL;
 
   return is_chain_of_constant(globals, opTypeParam, result);
 }
 
-Form::DataType InstructForm::is_chain_of_constant(FormDict &globals,
-                const char * &opTypeParam, const char * &resultParam) {
+Form::DataType InstructForm::is_chain_of_constant(FormDict &globals, 
+		const char * &opTypeParam, const char * &resultParam) {
   Form::DataType  data_type = Form::none;
   if ( ! _matrule)  return data_type;
 
@@ -517,11 +520,11 @@ bool InstructForm::rematerialize(FormDict &globals, RegisterForm *registers ) {
   bool   rematerialize = false;
 
   Form::DataType data_type = is_chain_of_constant(globals);
-  if( data_type != Form::none )
+  if( data_type != Form::none ) 
     rematerialize = true;
 
   // Constants
-  if( _components.count() == 1 && _components[0]->is(Component::USE_DEF) )
+  if( _components.count() == 1 && _components[0]->is(Component::USE_DEF) ) 
     rematerialize = true;
 
   // Pseudo-constants (values easily available to the runtime)
@@ -529,14 +532,14 @@ bool InstructForm::rematerialize(FormDict &globals, RegisterForm *registers ) {
     rematerialize = true;
 
   // 1-input, 1-output, such as copies or increments.
-  if( _components.count() == 2 &&
-      _components[0]->is(Component::DEF) &&
-      _components[1]->isa(Component::USE) )
+  if( _components.count() == 2 && 
+      _components[0]->is(Component::DEF) && 
+      _components[1]->isa(Component::USE) ) 
     rematerialize = true;
 
   // Check for an ideal 'Load?' and eliminate rematerialize option
   if ( is_ideal_load() != Form::none || // Ideal load?  Do not rematerialize
-       is_ideal_copy() != Form::none || // Ideal copy?  Do not rematerialize
+       is_ideal_copy() != Form::none ||	// Ideal copy?  Do not rematerialize
        is_expensive()  != Form::none) { // Expensive?   Do not rematerialize
     rematerialize = false;
   }
@@ -551,13 +554,13 @@ bool InstructForm::rematerialize(FormDict &globals, RegisterForm *registers ) {
       // Avoid the special stack_slots register classes
       const char *rc_name = opform->constrained_reg_class();
       if( rc_name ) {
-        if( strcmp(rc_name,"stack_slots") ) {
-          // Check for ideal_type of RegFlags
-          const char *type = opform->ideal_type( globals, registers );
-          if( !strcmp(type,"RegFlags") )
-            rematerialize = true;
-        } else
-          rematerialize = false; // Do not rematerialize things target stk
+	if( strcmp(rc_name,"stack_slots") ) {
+	  // Check for ideal_type of RegFlags
+	  const char *type = opform->ideal_type( globals, registers );
+	  if( !strcmp(type,"RegFlags") )
+	    rematerialize = true;
+	} else
+	  rematerialize = false; // Do not rematerialize things target stk
       }
     }
   }
@@ -571,12 +574,12 @@ bool InstructForm::needs_anti_dependence_check(FormDict &globals) const {
   if( is_ideal_load() != Form::none )  return true;
 
   // !!!!! !!!!! !!!!!
-  // TEMPORARY
+  // TEMPORARY 
   // if( is_simple_chain_rule(globals) )  return false;
 
   // String-compare uses many memorys edges, but writes none
   if( _matrule && _matrule->_rChild &&
-      strcmp(_matrule->_rChild->_opType,"StrComp")==0 )
+      strcmp(_matrule->_rChild->_opType,"StrComp")==0 ) 
     return true;
 
   // Check if instruction has a USE of a memory operand class, but no defs
@@ -625,7 +628,7 @@ int InstructForm::memory_operand(FormDict &globals) const {
   int DEF_of_memory  = 0;
   const char*    last_memory_DEF = NULL; // to test DEF/USE pairing in asserts
   Component     *unique          = NULL;
-  Component     *comp            = NULL;
+  Component     *comp 	         = NULL;
   ComponentList &components      = (ComponentList &)_components;
 
   components.reset();
@@ -637,19 +640,19 @@ int InstructForm::memory_operand(FormDict &globals) const {
     if( op->stack_slots_only(globals) )  continue;
     if( form->interface_type(globals) == Form::memory_interface ) {
       if( comp->isa(Component::DEF) ) {
-        last_memory_DEF = comp->_name;
-        DEF_of_memory++;
-        unique = comp;
+	last_memory_DEF = comp->_name;
+	DEF_of_memory++;
+	unique = comp;
       } else if( comp->isa(Component::USE) ) {
-        if( last_memory_DEF != NULL ) {
-          assert(0 == strcmp(last_memory_DEF, comp->_name), "every memory DEF is followed by a USE of the same name");
-          last_memory_DEF = NULL;
-        }
-        USE_of_memory++;
-        if (DEF_of_memory == 0)  // defs take precedence
-          unique = comp;
+	if( last_memory_DEF != NULL ) {
+	  assert(0 == strcmp(last_memory_DEF, comp->_name), "every memory DEF is followed by a USE of the same name");
+	  last_memory_DEF = NULL;
+	}
+	USE_of_memory++;
+	if (DEF_of_memory == 0)  // defs take precedence
+	  unique = comp;
       } else {
-        assert(last_memory_DEF == NULL, "unpaired memory DEF");
+	assert(last_memory_DEF == NULL, "unpaired memory DEF");
       }
     }
   }
@@ -669,10 +672,10 @@ int InstructForm::memory_operand(FormDict &globals) const {
     if( DEF_of_memory == 1 ) {
       assert(unique != NULL, "");
       if( USE_of_memory == 0 ) {
-        // unique def, no uses
+	// unique def, no uses
       } else {
-        // // unique def, some uses
-        // // must return bottom unless all uses match def
+	// // unique def, some uses
+	// // must return bottom unless all uses match def
         // unique = NULL;
       }
     } else if( DEF_of_memory > 0 ) {
@@ -693,7 +696,7 @@ int InstructForm::memory_operand(FormDict &globals) const {
     } else {
       int pos = components.operand_position(unique->_name);
       if( unique->isa(Component::DEF) ) {
-        pos += 1;                // get corresponding USE from DEF
+	pos += 1;                // get corresponding USE from DEF
       }
       assert(pos >= 1, "I was just looking at it!");
       return pos;
@@ -723,10 +726,10 @@ int InstructForm::memory_operand(FormDict &globals) const {
 // This instruction captures the machine-independent bottom_type
 // Expected use is for pointer vs oop determination for LoadP
 bool InstructForm::captures_bottom_type() const {
-  if( _matrule && _matrule->_rChild &&
+  if( _matrule && _matrule->_rChild && 
        (!strcmp(_matrule->_rChild->_opType,"CastPP")     ||  // new result type
         !strcmp(_matrule->_rChild->_opType,"CastX2P")    ||  // new result type
-        !strcmp(_matrule->_rChild->_opType,"CreateEx")   ||  // type of exception
+        !strcmp(_matrule->_rChild->_opType,"CreateEx")   ||  // type of exception 
         !strcmp(_matrule->_rChild->_opType,"CheckCastPP")) ) return true;
   else if ( is_ideal_load() == Form::idealP )                return true;
   else if ( is_ideal_store() != Form::none  )                return true;
@@ -750,7 +753,7 @@ uint InstructForm::num_opnds() {
   int  num_opnds = _components.num_operands();
 
   // Need special handling for matching some ideal nodes
-  // i.e. Matching a return node
+  // i.e. Matching a return node 
   /*
   if( _matrule ) {
     if( strcmp(_matrule->_opType,"Return"   )==0 ||
@@ -801,7 +804,7 @@ uint InstructForm::oper_input_base(FormDict &globals) {
   if( !_matrule ) return 1;     // Skip control for most nodes
 
   // Need special handling for matching some ideal nodes
-  // i.e. Matching a return node
+  // i.e. Matching a return node 
   if( strcmp(_matrule->_opType,"Return"    )==0 ||
       strcmp(_matrule->_opType,"Rethrow"   )==0 ||
       strcmp(_matrule->_opType,"TailCall"  )==0 ||
@@ -811,8 +814,8 @@ uint InstructForm::oper_input_base(FormDict &globals) {
     return AdlcVMDeps::Parms;   // Skip the machine-state edges
 
   if( _matrule->_rChild &&
-          strcmp(_matrule->_rChild->_opType,"StrComp")==0 ) {
-        // String compare takes 1 control and 4 memory edges.
+	  strcmp(_matrule->_rChild->_opType,"StrComp")==0 ) {
+	// String compare takes 1 control and 4 memory edges.
     return 5;
   }
 
@@ -915,7 +918,7 @@ void InstructForm::build_components() {
       }
       // Component positions are zero based.
       int  pos  = _components.operand_position(name);
-      assert( ! (component->isa(Component::DEF) && (pos >= 1)),
+      assert( ! (component->isa(Component::DEF) && (pos >= 1)), 
               "Component::DEF can only occur in the first position");
     }
   }
@@ -966,16 +969,16 @@ uint  InstructForm::reloc(FormDict &globals) {
     while (_matrule->base_operand(position, globals, result, name, opType)) {
       if ( strcmp(opType,"ConP") == 0 ) {
 #ifdef SPARC
-        reloc_entries += 2; // 1 for sethi + 1 for setlo
+	reloc_entries += 2; // 1 for sethi + 1 for setlo
 #else
-        ++reloc_entries;
+	++reloc_entries;
 #endif
       }
       ++position;
     }
   }
 
-  // Above is only a conservative estimate
+  // Above is only a conservative estimate 
   // because it did not check contents of operand classes.
   // !!!!! !!!!!
   // Add 1 to reloc info for each operand class in the component list.
@@ -1003,7 +1006,7 @@ uint  InstructForm::reloc(FormDict &globals) {
   // Check for any component being an immediate float or double.
   Form::DataType data_type = is_chain_of_constant(globals);
   if( data_type==idealD || data_type==idealF ) {
-#ifdef SPARC
+#ifdef SPARC 
     // sparc required more relocation entries for floating constants
     // (expires 9/98)
     reloc_entries += 6;
@@ -1026,7 +1029,7 @@ const char *InstructForm::reduce_result() {
   if (comp != NULL && comp->isa(Component::DEF)) {
     result = comp->_type;
     // Override this if the rule is a store operation:
-    if (_matrule && _matrule->_rChild &&
+    if (_matrule && _matrule->_rChild && 
         is_store_to_memory(_matrule->_rChild->_opType))
       result = "Universe";
   }
@@ -1135,7 +1138,7 @@ bool InstructForm::cisc_spills_to(ArchDesc &AD, InstructForm *instr) {
         fprintf(stderr, "   using operand %s %s at index %d\n", reg_type, op_name, cisc_spill_operand);
       }
       // Record that a stack-version of the reg_mask is needed
-      // !!!!!
+      // !!!!! 
       OperandForm *oper = (OperandForm*)(globals[reg_type]->is_operand());
       assert( oper != NULL, "cisc-spilling non operand");
       const char *reg_class_name = oper->constrained_reg_class();
@@ -1149,7 +1152,7 @@ bool InstructForm::cisc_spills_to(ArchDesc &AD, InstructForm *instr) {
   } else {
     cisc_spill_operand = Not_cisc_spillable;
   }
-
+      
   set_cisc_spill_operand(cisc_spill_operand);
   return (cisc_spill_operand != Not_cisc_spillable);
 }
@@ -1160,7 +1163,7 @@ bool InstructForm::check_branch_variant(ArchDesc &AD, InstructForm *short_branch
   if (_matrule != NULL &&
       this != short_branch &&   // Don't match myself
       !is_short_branch() &&     // Don't match another short branch variant
-      reduce_result() != NULL &&
+      reduce_result() != NULL &&       
       strcmp(reduce_result(), short_branch->reduce_result()) == 0 &&
       _matrule->equivalent(AD.globalNames(), short_branch->_matrule)) {
     // The instructions are equivalent.
@@ -1175,7 +1178,7 @@ bool InstructForm::check_branch_variant(ArchDesc &AD, InstructForm *short_branch
 
 
 // --------------------------- FILE *output_routines
-//
+// 
 // Generate the format call for the replacement variable
 void InstructForm::rep_var_format(FILE *fp, const char *rep_var) {
   // Find replacement variable's type
@@ -1206,10 +1209,10 @@ void InstructForm::rep_var_format(FILE *fp, const char *rep_var) {
   } else {
     // Output the format call for this operand
     fprintf(fp,"opnd_array(%d)->",idx);
-    if (idx == 0)
-      fprintf(fp,"int_format(ra, this, st); // %s\n", rep_var);
+    if (idx == 0) 
+      fprintf(fp,"int_format(ra, this); // %s\n", rep_var);
     else
-      fprintf(fp,"ext_format(ra, this,idx%d, st); // %s\n", idx, rep_var );
+      fprintf(fp,"ext_format(ra, this,idx%d); // %s\n", idx, rep_var );
   }
 }
 
@@ -1233,7 +1236,7 @@ void InstructForm::set_unique_opnds() {
     const char *name;
     uint count;
     bool has_dupl_use = false;
-
+    
     _parameters.reset();
     while( (name = _parameters.iter()) != NULL ) {
       count = 0;
@@ -1247,7 +1250,7 @@ void InstructForm::set_unique_opnds() {
       }
       // The next code is copied from the method operand_position().
       for (; (comp = _components.iter()) != NULL; ++position) {
-        // When the first component is not a DEF,
+        // When the first component is not a DEF, 
         // leave space for the result operand!
         if ( position==0 && (! comp->isa(Component::DEF)) ) {
           ++position;
@@ -1360,7 +1363,7 @@ Predicate *InstructForm::build_predicate() {
   char buf[1024], *s=buf;
   Dict names(cmpstr,hashstr,Form::arena);       // Map Names to counts
 
-  MatchNode *mnode =
+  MatchNode *mnode = 
     strcmp(_matrule->_opType, "Set") ? _matrule : _matrule->_rChild;
   mnode->count_instr_names(names);
 
@@ -1380,7 +1383,7 @@ Predicate *InstructForm::build_predicate() {
       // Handle many pairs
       if( first ) first=0;
       else {                    // All tests must pass, so use '&&'
-        strcpy(s," && ");
+        strcpy(s," && ");  
         s += strlen(s);
       }
       // Add predicate to working buffer
@@ -1404,7 +1407,7 @@ Predicate *InstructForm::build_predicate() {
 
 //------------------------------EncodeForm-------------------------------------
 // Constructor
-EncodeForm::EncodeForm()
+EncodeForm::EncodeForm() 
   : _encClass(cmpstr,hashstr, Form::arena) {
 }
 EncodeForm::~EncodeForm() {
@@ -1435,14 +1438,14 @@ const char *EncodeForm::encClassBody(const char *className) {
   encClass->_code.reset();
   const char *code = (const char*)encClass->_code.iter();
   assert( code != NULL, "Found an empty encode class body.");
-
+  
   return code;
 }
 
 // Lookup the function body for an encoding class
 const char *EncodeForm::encClassPrototype(const char *className) {
   assert( className != NULL, "Encode class name must be non NULL.");
-
+  
   return className;
 }
 
@@ -1458,9 +1461,9 @@ void EncodeForm::output(FILE *fp) {          // Write info to output files
     ((EncClass*)_encClass[name])->output(fp);
   }
   fprintf(fp,"-------------------- end  EncodeForm --------------------\n");
-}
+} 
 //------------------------------EncClass---------------------------------------
-EncClass::EncClass(const char *name)
+EncClass::EncClass(const char *name) 
   : _localNames(cmpstr,hashstr, Form::arena), _name(name) {
 }
 EncClass::~EncClass() {
@@ -1518,7 +1521,7 @@ void EncClass::dump() {
 
 // Write info to output files
 void EncClass::output(FILE *fp) {
-  fprintf(fp,"EncClass: %s", (_name ? _name : ""));
+  fprintf(fp,"EncClass: %s", (_name ? _name : "")); 
 
   // Output the parameter list
   _parameter_type.reset();
@@ -1550,7 +1553,7 @@ void EncClass::output(FILE *fp) {
 }
 
 //------------------------------Opcode-----------------------------------------
-Opcode::Opcode(char *primary, char *secondary, char *tertiary)
+Opcode::Opcode(char *primary, char *secondary, char *tertiary) 
   : _primary(primary), _secondary(secondary), _tertiary(tertiary) {
 }
 
@@ -1626,7 +1629,7 @@ NameAndList *InsEncode::add_encode(char *encoding) {
   return encode;
 }
 
-// Access the list of encodings
+// Access the list of encodings 
 void InsEncode::reset() {
   _encoding.reset();
   // _parameter.reset();
@@ -1644,7 +1647,7 @@ const char *InsEncode::rep_var_name(InstructForm &inst, uint param_no) {
   // Remove '$' if parser placed it there.
   return ( param != NULL && *param == '$') ? (param+1) : param;
 }
-
+  
 void InsEncode::dump() {
   output(stderr);
 }
@@ -1716,7 +1719,7 @@ void Effect::dump() {
 }
 
 void Effect::output(FILE *fp) {          // Write info to output files
-  fprintf(fp,"Effect: %s\n", (_name?_name:""));
+  fprintf(fp,"Effect: %s\n", (_name?_name:"")); 
 }
 
 //------------------------------ExpandRule-------------------------------------
@@ -1761,10 +1764,10 @@ void ExpandRule::output(FILE *fp) {         // Write info to output files
     }
     fprintf(fp,");\n");
   }
-}
+} 
 
 //------------------------------RewriteRule------------------------------------
-RewriteRule::RewriteRule(char* params, char* block)
+RewriteRule::RewriteRule(char* params, char* block) 
   : _tempParams(params), _tempBlock(block) { };  // Constructor
 RewriteRule::~RewriteRule() {                 // Destructor
 }
@@ -1774,7 +1777,7 @@ void RewriteRule::dump() {
 }
 
 void RewriteRule::output(FILE *fp) {         // Write info to output files
-  fprintf(fp,"\nRewrite Rule:\n%s\n%s\n",
+  fprintf(fp,"\nRewrite Rule:\n%s\n%s\n", 
           (_tempParams?_tempParams:""),
           (_tempBlock?_tempBlock:""));
 }
@@ -1865,7 +1868,7 @@ void OpClassForm::output(FILE *fp) {
 //==============================Operands=======================================
 //------------------------------OperandForm------------------------------------
 OperandForm::OperandForm(const char* id)
-  : OpClassForm(id), _ideal_only(false),
+  : OpClassForm(id), _ideal_only(false), 
     _localNames(cmpstr, hashstr, Form::arena) {
       _ftype = Form::OPER;
 
@@ -1878,7 +1881,7 @@ OperandForm::OperandForm(const char* id)
       _format    = NULL;
 }
 OperandForm::OperandForm(const char* id, bool ideal_only)
-  : OpClassForm(id), _ideal_only(ideal_only),
+  : OpClassForm(id), _ideal_only(ideal_only), 
     _localNames(cmpstr, hashstr, Form::arena) {
       _ftype = Form::OPER;
 
@@ -1984,7 +1987,7 @@ uint OperandForm::num_edges(FormDict &globals) const {
 
   return edges;
 }
-
+  
 
 // Check if this operand is usable for cisc-spilling
 bool  OperandForm::is_cisc_reg(FormDict &globals) const {
@@ -2017,7 +2020,7 @@ Form::DataType OperandForm::is_user_name_for_sReg() const {
     else if( strcmp(_ident,"stackSlotL") == 0 ) data_type = Form::idealL;
   }
   assert((data_type == none) || (_matrule == NULL), "No match-rule for stackSlotX");
-
+  
   return data_type;
 }
 
@@ -2031,7 +2034,7 @@ const char *OperandForm::ideal_type(FormDict &globals, RegisterForm *registers) 
     const char *rc_name = constrained_reg_class();
     // !!!!!
     if (rc_name == NULL) return NULL;
-    // !!!!! !!!!!
+    // !!!!! !!!!! 
     // Check constraints on result's register class
     if( registers ) {
       RegClass *reg_class  = registers->getRegClass(rc_name);
@@ -2065,7 +2068,7 @@ const char *OperandForm::ideal_type(FormDict &globals, RegisterForm *registers) 
 
 
 // If there is a single ideal type for this interface field, return it.
-const char *OperandForm::interface_ideal_type(FormDict &globals,
+const char *OperandForm::interface_ideal_type(FormDict &globals, 
                                               const char *field) const {
   const char  *ideal_type = NULL;
   const char  *value      = NULL;
@@ -2141,7 +2144,7 @@ const char *OperandForm::in_reg_class(uint leaf, FormDict &globals) {
   const char *result   = NULL;
   const char *name     = NULL;
   const char *type     = NULL;
-  // iterate through all base operands
+  // iterate through all base operands 
   // until we reach the register that corresponds to "leaf"
   // This function is not looking for an ideal type.  It needs the first
   // level user type associated with the leaf.
@@ -2152,7 +2155,7 @@ const char *OperandForm::in_reg_class(uint leaf, FormDict &globals) {
       reg_class = oper->constrained_reg_class();
       if( reg_class ) {
         reg_class = reg_class;
-      } else {
+      } else { 
         // ShouldNotReachHere();
       }
     } else {
@@ -2237,7 +2240,7 @@ int OperandForm::register_position(FormDict &globals, const char *reg_name) {
   uint  position = 0;
   Component *comp;
   _components.reset();
-  while( (comp = _components.iter()) != NULL
+  while( (comp = _components.iter()) != NULL  
          && (strcmp(comp->_name,reg_name) != 0) ) {
     // Special case for operands that take a single user-defined operand
     // Skip the initial definition in the component list.
@@ -2275,7 +2278,7 @@ const char *OperandForm::reduce_left(FormDict &globals)   const {
 
 
 // --------------------------- FILE *output_routines
-//
+// 
 // Output code for disp_is_oop, if true.
 void OperandForm::disp_is_oop(FILE *fp, FormDict &globals) {
   //  Check it is a memory interface with a non-user-constant disp field
@@ -2306,9 +2309,9 @@ void OperandForm::disp_is_oop(FILE *fp, FormDict &globals) {
 }
 
 // Generate code for internal and external format methods
-//
+// 
 // internal access to reg# node->_idx
-// access to subsumed constant _c0, _c1,
+// access to subsumed constant _c0, _c1, 
 void  OperandForm::int_format(FILE *fp, FormDict &globals, uint index) {
   Form::DataType dtype;
   if (_matrule && (_matrule->is_base_register(globals) ||
@@ -2333,10 +2336,10 @@ void  OperandForm::int_format(FILE *fp, FormDict &globals, uint index) {
     dump();
     assert( false,"Internal error:\n  output_internal_operand() attempting to output other than a Register or Constant");
   }
-}
+}    
 
 // Similar to "int_format" but for cases where data is external to operand
-// external access to reg# node->in(idx)->_idx,
+// external access to reg# node->in(idx)->_idx, 
 void  OperandForm::ext_format(FILE *fp, FormDict &globals, uint index) {
   Form::DataType dtype;
   if (_matrule && (_matrule->is_base_register(globals) ||
@@ -2365,11 +2368,11 @@ void  OperandForm::ext_format(FILE *fp, FormDict &globals, uint index) {
 
 void OperandForm::format_constant(FILE *fp, uint const_index, uint const_type) {
   switch(const_type) {
-  case Form::idealI: fprintf(fp,"st->print(\"#%%d\", _c%d);\n", const_index); break;
-  case Form::idealP: fprintf(fp,"_c%d->dump_on(st);\n",         const_index); break;
-  case Form::idealL: fprintf(fp,"st->print(\"#%%lld\", _c%d);\n", const_index); break;
-  case Form::idealF: fprintf(fp,"st->print(\"#%%f\", _c%d);\n", const_index); break;
-  case Form::idealD: fprintf(fp,"st->print(\"#%%f\", _c%d);\n", const_index); break;
+  case Form::idealI: fprintf(fp,"tty->print(\"#%%d\", _c%d);\n", const_index); break;
+  case Form::idealP: fprintf(fp,"_c%d->dump();\n",               const_index); break;
+  case Form::idealL: fprintf(fp,"tty->print(\"#%%lld\", _c%d);\n", const_index); break;
+  case Form::idealF: fprintf(fp,"tty->print(\"#%%f\", _c%d);\n", const_index); break;
+  case Form::idealD: fprintf(fp,"tty->print(\"#%%f\", _c%d);\n", const_index); break;
   default:
     assert( false, "ShouldNotReachHere()");
   }
@@ -2438,8 +2441,8 @@ bool  OperandForm::swallowed(FormDict &globals) const {
   return false;
 }
 
-// Output code to access the value of the index'th constant
-void OperandForm::access_constant(FILE *fp, FormDict &globals,
+// Output code to access the value of the index'th constant 
+void OperandForm::access_constant(FILE *fp, FormDict &globals, 
                                   uint const_index) {
   OperandForm *oper = constant_operand(globals, const_index);
   assert( oper, "Index exceeds number of constants in operand");
@@ -2490,12 +2493,12 @@ void Constraint::dump() {
 
 void Constraint::output(FILE *fp) {           // Write info to output files
   assert((_func != NULL && _arg != NULL),"missing constraint function or arg");
-  fprintf(fp,"Constraint: %s ( %s )\n", _func, _arg);
+  fprintf(fp,"Constraint: %s ( %s )\n", _func, _arg); 
 }
 
 //------------------------------Predicate--------------------------------------
 Predicate::Predicate(char *pr)
-  : _pred(pr) {
+  : _pred(pr) { 
 }
 Predicate::~Predicate() {
 }
@@ -2552,7 +2555,7 @@ void Interface::output(FILE *fp) {
 }
 
 //------------------------------RegInterface-----------------------------------
-RegInterface::RegInterface() : Interface("REG_INTER") {
+RegInterface::RegInterface() : Interface("REG_INTER") { 
 }
 RegInterface::~RegInterface() {
 }
@@ -2567,7 +2570,7 @@ void RegInterface::output(FILE *fp) {
 }
 
 //------------------------------ConstInterface---------------------------------
-ConstInterface::ConstInterface() : Interface("CONST_INTER") {
+ConstInterface::ConstInterface() : Interface("CONST_INTER") { 
 }
 ConstInterface::~ConstInterface() {
 }
@@ -2582,7 +2585,7 @@ void ConstInterface::output(FILE *fp) {
 }
 
 //------------------------------MemInterface-----------------------------------
-MemInterface::MemInterface(char *base, char *index, char *scale, char *disp)
+MemInterface::MemInterface(char *base, char *index, char *scale, char *disp) 
   : Interface("MEMORY_INTER"), _base(base), _index(index), _scale(scale), _disp(disp) {
 }
 MemInterface::~MemInterface() {
@@ -2604,14 +2607,14 @@ void MemInterface::output(FILE *fp) {
 }
 
 //------------------------------CondInterface----------------------------------
-CondInterface::CondInterface(char *equal,      char *not_equal,
-                             char *less,       char *greater_equal,
-                             char *less_equal, char *greater)
-  : Interface("COND_INTER"),
-    _equal(equal), _not_equal(not_equal),
+CondInterface::CondInterface(char *equal,      char *not_equal, 
+                             char *less,       char *greater_equal, 
+                             char *less_equal, char *greater) 
+  : Interface("COND_INTER"), 
+    _equal(equal), _not_equal(not_equal), 
     _less(less), _greater_equal(greater_equal),
     _less_equal(less_equal), _greater(greater) {
-      //
+      // 
 }
 CondInterface::~CondInterface() {
   // not owner of any character arrays
@@ -2635,7 +2638,7 @@ void CondInterface::output(FILE *fp) {
 
 //------------------------------ConstructRule----------------------------------
 ConstructRule::ConstructRule(char *cnstr)
-  : _construct(cnstr) {
+  : _construct(cnstr) { 
 }
 ConstructRule::~ConstructRule() {
 }
@@ -2696,7 +2699,7 @@ void AttributeForm::output(FILE *fp) {
 //------------------------------Component--------------------------------------
 Component::Component(const char *name, const char *type, int usedef)
   : _name(name), _type(type), _usedef(usedef) {
-    _ftype = Form::COMP;
+    _ftype = Form::COMP; 
 }
 Component::~Component() {
 }
@@ -2764,8 +2767,8 @@ void   ComponentList::insert(Component *component, bool mflag) {
   NameList::addName((char *)component);
   if(mflag) _matchcnt++;
 }
-void   ComponentList::insert(const char *name, const char *opType, int usedef,
-                             bool mflag) {
+void   ComponentList::insert(const char *name, const char *opType, int usedef, 
+			     bool mflag) {
   Component * component = new Component(name, opType, usedef);
   insert(component, mflag);
 }
@@ -2847,7 +2850,7 @@ int ComponentList::operand_position(const char *name, int usedef) {
   Component* preceding_non_use = NULL;
   Component* first_def = NULL;
   for (reset(); (component = iter()) != NULL; ++position) {
-    // When the first component is not a DEF,
+    // When the first component is not a DEF, 
     // leave space for the result operand!
     if ( position==0 && (! component->isa(Component::DEF)) ) {
       ++position;
@@ -2856,18 +2859,18 @@ int ComponentList::operand_position(const char *name, int usedef) {
     if (strcmp(name, component->_name)==0 && (component->isa(usedef))) {
       // When the first entry in the component list is a DEF and a USE
       // Treat them as being separate, a DEF first, then a USE
-      if( position==0
+      if( position==0 
           && usedef==Component::USE && component->isa(Component::DEF) ) {
-        assert(position+1 < num_opnds, "advertised index in bounds");
+	assert(position+1 < num_opnds, "advertised index in bounds");
         return position+1;
       } else {
-        if( preceding_non_use && strcmp(component->_name, preceding_non_use->_name) ) {
-          fprintf(stderr, "the name '%s' should not precede the name '%s'\n", preceding_non_use->_name, name);
-        }
-        if( position >= num_opnds ) {
-          fprintf(stderr, "the name '%s' is too late in its name list\n", name);
-        }
-        assert(position < num_opnds, "advertised index in bounds");
+	if( preceding_non_use && strcmp(component->_name, preceding_non_use->_name) ) {
+	  fprintf(stderr, "the name '%s' should not precede the name '%s'\n", preceding_non_use->_name, name);
+	}
+	if( position >= num_opnds ) {
+	  fprintf(stderr, "the name '%s' is too late in its name list\n", name);
+	}
+	assert(position < num_opnds, "advertised index in bounds");
         return position;
       }
     }
@@ -2894,12 +2897,12 @@ int ComponentList::operand_position(const char *name) {
   int position = 0;
   Component *component;
   for (reset(); (component = iter()) != NULL; ++position) {
-    // When the first component is not a DEF,
+    // When the first component is not a DEF, 
     // leave space for the result operand!
     if ( position==0 && (! component->isa(Component::DEF)) ) {
       ++position;
     }
-    if (strcmp(name, component->_name)==0) {
+    if (strcmp(name, component->_name)==0) { 
       return position;
     }
     if( component->isa(Component::DEF)
@@ -2924,12 +2927,12 @@ int ComponentList::label_position() {
   int position = 0;
   reset();
   for( Component *comp; (comp = iter()) != NULL; ++position) {
-    // When the first component is not a DEF,
+    // When the first component is not a DEF, 
     // leave space for the result operand!
     if ( position==0 && (! comp->isa(Component::DEF)) ) {
       ++position;
     }
-    if (strcmp(comp->_type, "label")==0) {
+    if (strcmp(comp->_type, "label")==0) { 
       return position;
     }
     if( comp->isa(Component::DEF)
@@ -2947,12 +2950,12 @@ int ComponentList::method_position() {
   int position = 0;
   reset();
   for( Component *comp; (comp = iter()) != NULL; ++position) {
-    // When the first component is not a DEF,
+    // When the first component is not a DEF, 
     // leave space for the result operand!
     if ( position==0 && (! comp->isa(Component::DEF)) ) {
       ++position;
     }
-    if (strcmp(comp->_type, "method")==0) {
+    if (strcmp(comp->_type, "method")==0) { 
       return position;
     }
     if( comp->isa(Component::DEF)
@@ -2981,23 +2984,23 @@ void ComponentList::output(FILE *fp) {
 MatchNode::MatchNode(ArchDesc &ad, const char *result, const char *mexpr,
                      const char *opType, MatchNode *lChild, MatchNode *rChild)
   : _AD(ad), _result(result), _name(mexpr), _opType(opType),
-    _lChild(lChild), _rChild(rChild), _internalop(0), _numleaves(0),
+    _lChild(lChild), _rChild(rChild), _internalop(0), _numleaves(0), 
     _commutative_id(0) {
-  _numleaves = (lChild ? lChild->_numleaves : 0)
+  _numleaves = (lChild ? lChild->_numleaves : 0) 
                + (rChild ? rChild->_numleaves : 0);
 }
 
-MatchNode::MatchNode(ArchDesc &ad, MatchNode& mnode)
+MatchNode::MatchNode(ArchDesc &ad, MatchNode& mnode) 
   : _AD(ad), _result(mnode._result), _name(mnode._name),
-    _opType(mnode._opType), _lChild(mnode._lChild), _rChild(mnode._rChild),
-    _internalop(0), _numleaves(mnode._numleaves),
+    _opType(mnode._opType), _lChild(mnode._lChild), _rChild(mnode._rChild), 
+    _internalop(0), _numleaves(mnode._numleaves), 
     _commutative_id(mnode._commutative_id) {
 }
 
-MatchNode::MatchNode(ArchDesc &ad, MatchNode& mnode, int clone)
+MatchNode::MatchNode(ArchDesc &ad, MatchNode& mnode, int clone) 
   : _AD(ad), _result(mnode._result), _name(mnode._name),
     _opType(mnode._opType),
-    _internalop(0), _numleaves(mnode._numleaves),
+    _internalop(0), _numleaves(mnode._numleaves), 
     _commutative_id(mnode._commutative_id) {
   if (mnode._lChild) {
     _lChild = new MatchNode(ad, *mnode._lChild, clone);
@@ -3031,7 +3034,7 @@ bool  MatchNode::find_type(const char *type, int &position) const {
 
 // Recursive call collecting info on top-level operands, not transitive.
 // Implementation does not modify state of internal structures.
-void MatchNode::append_components(FormDict &locals, ComponentList &components,
+void MatchNode::append_components(FormDict &locals, ComponentList &components, 
                                   bool deflag) const {
   int   usedef = deflag ? Component::DEF : Component::USE;
   FormDict &globals = _AD.globalNames();
@@ -3042,12 +3045,12 @@ void MatchNode::append_components(FormDict &locals, ComponentList &components,
     // If _opType is not an operation, do not build a component for it #####
     const Form *f = globals[_opType];
     if( f != NULL ) {
-      // Add non-ideals that are operands, operand-classes,
+      // Add non-ideals that are operands, operand-classes, 
       if( ! f->ideal_only()
           && (f->is_opclass() || f->is_operand()) ) {
         components.insert(_name, _opType, usedef, true);
       }
-    }
+    } 
     return;
   }
   // Promote results of "Set" to DEF
@@ -3057,14 +3060,14 @@ void MatchNode::append_components(FormDict &locals, ComponentList &components,
   if (_rChild) _rChild->append_components(locals, components, def_flag);
 }
 
-// Find the n'th base-operand in the match node,
+// Find the n'th base-operand in the match node, 
 // recursively investigates match rules of user-defined operands.
-//
+// 
 // Implementation does not modify state of internal structures since they
 // can be shared.
-bool MatchNode::base_operand(uint &position, FormDict &globals,
-                             const char * &result, const char * &name,
-                             const char * &opType) const {
+bool MatchNode::base_operand(uint &position, FormDict &globals, 
+			     const char * &result, const char * &name, 
+			     const char * &opType) const {
   assert (_name != NULL, "MatchNode::base_operand encountered empty node\n");
   // Base case
   if (_lChild==NULL && _rChild==NULL) {
@@ -3094,7 +3097,7 @@ bool MatchNode::base_operand(uint &position, FormDict &globals,
         matchNode = (MatchNode*)inForm->_matrule;
       }
     }
-    // if this is user-defined, recurse on match rule
+    // if this is user-defined, recurse on match rule 
     // User-defined operand and instruction forms have a match-rule.
     if (matchNode) {
       return (matchNode->base_operand(position,globals,result,name,opType));
@@ -3117,7 +3120,7 @@ bool MatchNode::base_operand(uint &position, FormDict &globals,
       if (_lChild->base_operand(position, globals, result, name, opType))
         return 1;
     }
-
+    
     if (_rChild) {
       if (_rChild->base_operand(position, globals, result, name, opType))
         return 1;
@@ -3135,7 +3138,7 @@ uint  MatchNode::num_consts(FormDict &globals) const {
   const char *name;
   const char *opType;
 
-  for (uint position = index;
+  for (uint position = index; 
        base_operand(position,globals,result,name,opType); position = index) {
     ++index;
     if( ideal_to_const_type(opType) )        num_consts++;
@@ -3153,7 +3156,7 @@ uint  MatchNode::num_consts(FormDict &globals, Form::DataType type) const {
   const char *name;
   const char *opType;
 
-  for (uint position = index;
+  for (uint position = index; 
        base_operand(position,globals,result,name,opType); position = index) {
     ++index;
     if( ideal_to_const_type(opType) == type ) num_consts++;
@@ -3176,15 +3179,15 @@ const char *MatchNode::reduce_right(FormDict &globals) const {
   const char      *rightStr    = NULL;
 
   // If we are a "Set", start from the right child.
-  const MatchNode *const mnode = sets_result() ?
-    (const MatchNode *const)this->_rChild :
+  const MatchNode *const mnode = sets_result() ? 
+    (const MatchNode *const)this->_rChild : 
     (const MatchNode *const)this;
 
   // If our right child exists, it is the right reduction
   if ( mnode->_rChild ) {
     rightStr = mnode->_rChild->_internalop ? mnode->_rChild->_internalop
       : mnode->_rChild->_opType;
-  }
+  } 
   // Else, May be simple chain rule: (Set dst operand_form), rightStr=NULL;
   return rightStr;
 }
@@ -3194,8 +3197,8 @@ const char *MatchNode::reduce_left(FormDict &globals) const {
   const char  *leftStr  = NULL;
 
   // If we are a "Set", start from the right child.
-  const MatchNode *const mnode = sets_result() ?
-    (const MatchNode *const)this->_rChild :
+  const MatchNode *const mnode = sets_result() ? 
+    (const MatchNode *const)this->_rChild : 
     (const MatchNode *const)this;
 
   // If our left child exists, it is the left reduction
@@ -3260,9 +3263,9 @@ void MatchNode::build_internalop( ) {
   // Build string representation of subtree
   // Operation lchildType rchildType
   int len = (int)strlen(_opType) + 4;
-  lstr = (_lChild) ? ((_lChild->_internalop) ?
+  lstr = (_lChild) ? ((_lChild->_internalop) ? 
                        _lChild->_internalop : _lChild->_opType) : "";
-  rstr = (_rChild) ? ((_rChild->_internalop) ?
+  rstr = (_rChild) ? ((_rChild->_internalop) ? 
                        _rChild->_internalop : _rChild->_opType) : "";
   len += (int)strlen(lstr) + (int)strlen(rstr);
   subtree = (char *)malloc(len);
@@ -3289,7 +3292,7 @@ void MatchNode::dump() {
 void MatchNode::output(FILE *fp) {
   if (_lChild==0 && _rChild==0) {
     fprintf(fp," %s",_name);    // operand
-  }
+  } 
   else {
     fprintf(fp," (%s ",_name);  // " (opcodeName "
     if(_lChild) _lChild->output(fp); //               left operand
@@ -3303,7 +3306,7 @@ int MatchNode::needs_ideal_memory_edge(FormDict &globals) const {
     "StoreI","StoreL","StoreP","StoreD","StoreF" ,
     "StoreB","StoreC","Store" ,"StoreFP",
     "LoadI" ,"LoadL", "LoadP" ,"LoadD" ,"LoadF"  ,
-    "LoadB" ,"LoadC" ,"LoadS" ,"Load"   ,
+    "LoadB" ,"LoadC" ,"LoadS" ,"Load"   , 
     "Store4I","Store2I","Store2L","Store2D","Store4F","Store2F","Store16B",
     "Store8B","Store4B","Store8C","Store4C","Store2C",
     "Load4I" ,"Load2I" ,"Load2L" ,"Load2D" ,"Load4F" ,"Load2F" ,"Load16B" ,
@@ -3311,7 +3314,7 @@ int MatchNode::needs_ideal_memory_edge(FormDict &globals) const {
     "LoadRange", "LoadKlass", "LoadL_unaligned", "LoadD_unaligned",
     "LoadPLocked", "LoadLLocked",
     "StorePConditional", "StoreLConditional",
-    "CompareAndSwapI", "CompareAndSwapL", "CompareAndSwapP",
+    "CompareAndSwapI", "CompareAndSwapL", "CompareAndSwapP", 
     "StoreCM",
     "ClearArray"
   };
@@ -3334,7 +3337,7 @@ int MatchNode::needs_ideal_memory_edge(FormDict &globals) const {
     if( _rChild->needs_ideal_memory_edge(globals) )
       return 1;
   }
-
+  
   return 0;
 }
 
@@ -3352,8 +3355,8 @@ int InstructForm::needs_base_oop_edge(FormDict &globals) const {
     OperandForm *src_op = globals[src]->is_operand();
     assert( src_op, "Not operand class of chain rule" );
     return src_op->_matrule ? src_op->_matrule->needs_base_oop_edge() : 0;
-  }                             // Else check instruction
-
+  }                             // Else check instruction 
+    
   return _matrule ? _matrule->needs_base_oop_edge() : 0;
 }
 
@@ -3408,7 +3411,7 @@ int  MatchNode::cisc_spill_match(FormDict &globals, RegisterForm *registers, Mat
   int right_spillable = Maybe_cisc_spillable;
 
   // Check that each has same number of operands at this level
-  if( (_lChild && !(mRule2->_lChild)) || (_rChild && !(mRule2->_rChild)) )
+  if( (_lChild && !(mRule2->_lChild)) || (_rChild && !(mRule2->_rChild)) ) 
     return Not_cisc_spillable;
 
   // Base Case: check that the current operands/operations match
@@ -3424,8 +3427,8 @@ int  MatchNode::cisc_spill_match(FormDict &globals, RegisterForm *registers, Mat
     const char *name_left  = mRule2->_lChild ? mRule2->_lChild->_opType : NULL;
     const char *name_right = mRule2->_rChild ? mRule2->_rChild->_opType : NULL;
     // Detect reg vs (loadX memory)
-    if( form->is_cisc_reg(globals)
-        && form2_inst
+    if( form->is_cisc_reg(globals) 
+        && form2_inst 
         && (is_load_from_memory(mRule2->_opType) != Form::none) // reg vs. (load memory)
         && (name_left != NULL)       // NOT (load)
         && (name_right == NULL) ) {  // NOT (load memory foo)
@@ -3478,11 +3481,11 @@ int  MatchNode::cisc_spill_match(FormDict &globals, RegisterForm *registers, Mat
 
 //---------------------------cisc_spill_match----------------------------------
 // Recursively check two MatchRules for legal conversion via cisc-spilling
-// This method handles the root of Match tree,
+// This method handles the root of Match tree, 
 // general recursive checks done in MatchNode
-int  MatchRule::cisc_spill_match(FormDict &globals, RegisterForm *registers,
-                                 MatchRule *mRule2, const char * &operand,
-                                 const char * &reg_type) {
+int  MatchRule::cisc_spill_match(FormDict &globals, RegisterForm *registers, 
+				 MatchRule *mRule2, const char * &operand, 
+				 const char * &reg_type) {
   int cisc_spillable  = Maybe_cisc_spillable;
   int left_spillable  = Maybe_cisc_spillable;
   int right_spillable = Maybe_cisc_spillable;
@@ -3536,14 +3539,14 @@ bool MatchRule::equivalent(FormDict &globals, MatchRule *mRule2) {
   }
 
   if (_lChild ) {
-    if( !_lChild->equivalent(globals, mRule2->_lChild) )
+    if( !_lChild->equivalent(globals, mRule2->_lChild) ) 
       return false;
   } else if (mRule2->_lChild) {
     return false; // I have NULL left child, mRule2 has non-NULL left child.
   }
 
   if (_rChild ) {
-    if( !_rChild->equivalent(globals, mRule2->_rChild) )
+    if( !_rChild->equivalent(globals, mRule2->_rChild) ) 
       return false;
   } else if (mRule2->_rChild) {
     return false; // I have NULL right child, mRule2 has non-NULL right child.
@@ -3614,7 +3617,7 @@ void MatchNode::count_commutative_op(int& count) {
 // Recursively swap specified commutative operation with subtree operands.
 void MatchNode::swap_commutative_op(bool atroot, int id) {
   if( _commutative_id == id ) { // id should be > 0
-    assert(_lChild && _rChild && (_lChild->_lChild || _rChild->_lChild ),
+    assert(_lChild && _rChild && (_lChild->_lChild || _rChild->_lChild ), 
             "not swappable operation");
     MatchNode* tmp = _lChild;
     _lChild = _rChild;
@@ -3661,7 +3664,7 @@ MatchRule::MatchRule(ArchDesc &ad)
 }
 
 MatchRule::MatchRule(ArchDesc &ad, MatchRule* mRule)
-  : MatchNode(ad, *mRule, 0), _depth(mRule->_depth),
+  : MatchNode(ad, *mRule, 0), _depth(mRule->_depth), 
     _construct(mRule->_construct), _numchilds(mRule->_numchilds) {
     _next = NULL;
 }
@@ -3685,7 +3688,7 @@ MatchRule::~MatchRule() {
 void MatchRule::append_components(FormDict &locals, ComponentList &components) const {
   assert (_name != NULL, "MatchNode::build_components encountered empty node\n");
 
-  MatchNode::append_components(locals, components,
+  MatchNode::append_components(locals, components, 
                                false /* not necessarily a def */);
 }
 
@@ -3695,7 +3698,7 @@ void MatchRule::append_components(FormDict &locals, ComponentList &components) c
 // The MatchNode that is called first treats its
 bool MatchRule::base_operand(uint &position0, FormDict &globals,
                              const char *&result, const char * &name,
-                             const char * &opType)const{
+			     const char * &opType)const{
   uint position = position0;
 
   return (MatchNode::base_operand( position, globals, result, name, opType));
@@ -3709,12 +3712,12 @@ bool MatchRule::is_base_register(FormDict &globals) const {
   const char  *opType   = NULL;
   if (!base_operand(position, globals, result, name, opType)) {
     position = 0;
-    if( base_operand(position, globals, result, name, opType) &&
-        (strcmp(opType,"RegI")==0 ||
-         strcmp(opType,"RegP")==0 ||
-         strcmp(opType,"RegL")==0 ||
-         strcmp(opType,"RegF")==0 ||
-         strcmp(opType,"RegD")==0 ||
+    if( base_operand(position, globals, result, name, opType) && 
+        (strcmp(opType,"RegI")==0 || 
+         strcmp(opType,"RegP")==0 || 
+         strcmp(opType,"RegL")==0 || 
+         strcmp(opType,"RegF")==0 || 
+         strcmp(opType,"RegD")==0 || 
          strcmp(opType,"Reg" )==0) ) {
       return 1;
     }
@@ -3750,17 +3753,21 @@ bool MatchRule::is_chain_rule(FormDict &globals) const {
   if (_rChild) {
     const char *rch = _rChild->_opType;
     const Form *form = globals[rch];
-    if ((!strcmp(_opType,"Set") &&
+    if ((!strcmp(_opType,"Set") && 
          ((form) && form->is_operand()))) {
       return true;
     }
   }
   return false;
-}
+}  
 
 int MatchRule::is_ideal_copy() const {
   if( _rChild ) {
     const char  *opType = _rChild->_opType;
+    if( strcmp(opType,"CastX2P")==0 )
+      return 1;
+    if( strcmp(opType,"CastP2X")==0 )
+      return 1;
     if( strcmp(opType,"CastII")==0 )
       return 1;
     // Do not treat *CastPP this way, because it
@@ -3770,15 +3777,6 @@ int MatchRule::is_ideal_copy() const {
     //if( strcmp(opType,"CastPP")==0 )
     //  return 1;
     //if( strcmp(opType,"CheckCastPP")==0 )
-    //  return 1;
-    //
-    // Do not treat CastX2P or CastP2X this way, because
-    // raw pointers and int types are treated differently
-    // when saving local & stack info for safepoints in
-    // Output().
-    //if( strcmp(opType,"CastX2P")==0 )
-    //  return 1;
-    //if( strcmp(opType,"CastP2X")==0 )
     //  return 1;
   }
   if( is_chain_rule(_AD.globalNames()) &&
@@ -3792,16 +3790,16 @@ int MatchRule::is_expensive() const {
   if( _rChild ) {
     const char  *opType = _rChild->_opType;
     if( strcmp(opType,"AtanD")==0 ||
-        strcmp(opType,"CosD")==0 ||
-        strcmp(opType,"DivD")==0 ||
-        strcmp(opType,"DivF")==0 ||
-        strcmp(opType,"DivI")==0 ||
+        strcmp(opType,"CosD")==0 || 
+        strcmp(opType,"DivD")==0 || 
+        strcmp(opType,"DivF")==0 || 
+        strcmp(opType,"DivI")==0 || 
         strcmp(opType,"ExpD")==0 ||
         strcmp(opType,"LogD")==0 ||
         strcmp(opType,"Log10D")==0 ||
-        strcmp(opType,"ModD")==0 ||
-        strcmp(opType,"ModF")==0 ||
-        strcmp(opType,"ModI")==0 ||
+        strcmp(opType,"ModD")==0 || 
+        strcmp(opType,"ModF")==0 || 
+        strcmp(opType,"ModI")==0 || 
         strcmp(opType,"PowD")==0 ||
         strcmp(opType,"SinD")==0 ||
         strcmp(opType,"SqrtD")==0 ||
@@ -3835,7 +3833,7 @@ int MatchRule::is_expensive() const {
         strcmp(opType,"Replicate4F")==0 ||
         strcmp(opType,"Replicate2F")==0 ||
         strcmp(opType,"Replicate2D")==0 ||
-        0 /* 0 to line up columns nicely */ )
+        0 /* 0 to line up columns nicely */ ) 
       return 1;
   }
   return 0;
@@ -3856,8 +3854,8 @@ bool MatchRule::is_ideal_call_leaf() const {
 
 bool MatchRule::is_ideal_if() const {
   if( !_opType ) return false;
-  return
-    !strcmp(_opType,"If"            ) ||
+  return 
+    !strcmp(_opType,"If"            ) || 
     !strcmp(_opType,"CountedLoopEnd");
 }
 
@@ -3870,11 +3868,11 @@ bool MatchRule::is_ideal_fastlock() const {
 
 bool MatchRule::is_ideal_membar() const {
   if( !_opType ) return false;
-  return
-    !strcmp(_opType,"MemBarAcquire"  ) ||
-    !strcmp(_opType,"MemBarRelease"  ) ||
-    !strcmp(_opType,"MemBarVolatile" ) ||
-    !strcmp(_opType,"MemBarCPUOrder" ) ;
+  return 
+    !strcmp(_opType,"MemBarAcquire"  ) || 
+    !strcmp(_opType,"MemBarRelease"  ) || 
+    !strcmp(_opType,"MemBarVolatile" ) || 
+    !strcmp(_opType,"MemBarCPUOrder" ) ; 
 }
 
 bool MatchRule::is_ideal_loadPC() const {
@@ -3957,7 +3955,7 @@ void MatchRule::output(FILE *fp) {
 
 //------------------------------Attribute--------------------------------------
 Attribute::Attribute(char *id, char* val, int type)
-  : _ident(id), _val(val), _atype(type) {
+  : _ident(id), _val(val), _atype(type) { 
 }
 Attribute::~Attribute() {
 }
@@ -3967,13 +3965,13 @@ int Attribute::int_val(ArchDesc &ad) {
   int result = 0;
   if (!_val || !ADLParser::is_int_token(_val, result)) {
     ad.syntax_err(0, "Attribute %s must have an integer value: %s",
-                  _ident, _val ? _val : "");
+		  _ident, _val ? _val : "");
   }
   return result;
 }
 
 void Attribute::dump() {
-  output(stderr);
+  output(stderr); 
 } // Debug printer
 
 // Write to output files
@@ -3983,7 +3981,7 @@ void Attribute::output(FILE *fp) {
 
 //------------------------------FormatRule----------------------------------
 FormatRule::FormatRule(char *temp)
-  : _temp(temp) {
+  : _temp(temp) { 
 }
 FormatRule::~FormatRule() {
 }
@@ -3997,3 +3995,4 @@ void FormatRule::output(FILE *fp) {
   fprintf(fp,"\nFormat Rule: \n%s", (_temp?_temp:""));
   fprintf(fp,"\n");
 }
+

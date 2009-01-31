@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.oops;
@@ -73,7 +73,7 @@ public class Array extends Oop {
 
   public static long baseOffsetInBytes(BasicType type) {
     if (Universe.elementTypeShouldBeAligned(type)) {
-      return (VM.getVM().isLP64()) ?  alignObjectSize(headerSize)
+      return (VM.getVM().isLP64()) ?  alignObjectSize(headerSize) 
                                    : VM.getVM().alignUp(headerSize, 8);
     } else {
       return headerSize;

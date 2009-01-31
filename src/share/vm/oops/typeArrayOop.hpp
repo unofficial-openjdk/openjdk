@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A typeArrayOop is an array containing basic types (non oop elements).
@@ -83,7 +86,7 @@ class typeArrayOopDesc : public arrayOopDesc {
   jdouble* double_at_addr(int which) const {
     assert(is_within_bounds(which), "index out of bounds");
     return &double_base()[which];
-  }
+  }  
 
   jbyte byte_at(int which) const                  { return *byte_at_addr(which); }
   void byte_at_put(int which, jbyte contents)     { *byte_at_addr(which) = contents; }
@@ -133,7 +136,7 @@ class typeArrayOopDesc : public arrayOopDesc {
     assert(size_in_words <= (julong)max_jint, "no overflow");
 
     return align_object_size((intptr_t)size_in_words);
-  }
+  }     
 
  public:
   int object_size() {

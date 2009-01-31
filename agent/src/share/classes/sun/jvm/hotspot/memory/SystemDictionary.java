@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.memory;
@@ -55,14 +55,14 @@ public class SystemDictionary {
 
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("SystemDictionary");
-
+    
     dictionaryField = type.getAddressField("_dictionary");
     sharedDictionaryField = type.getAddressField("_shared_dictionary");
     placeholdersField = type.getAddressField("_placeholders");
     loaderConstraintTableField = type.getAddressField("_loader_constraints");
     javaSystemLoaderField = type.getOopField("_java_system_loader");
     nofBuckets = db.lookupIntConstant("SystemDictionary::_nof_buckets").intValue();
-
+    
     objectKlassField = type.getOopField("_object_klass");
     classLoaderKlassField = type.getOopField("_classloader_klass");
     stringKlassField = type.getOopField("_string_klass");
@@ -85,7 +85,7 @@ public class SystemDictionary {
     Address tmp = placeholdersField.getValue();
     return (PlaceholderTable) VMObjectFactory.newObject(PlaceholderTable.class, tmp);
   }
-
+    
   public LoaderConstraintTable constraints() {
     Address tmp = placeholdersField.getValue();
     return (LoaderConstraintTable) VMObjectFactory.newObject(LoaderConstraintTable.class, tmp);
@@ -121,7 +121,7 @@ public class SystemDictionary {
     return (InstanceKlass) find("java/util/concurrent/locks/AbstractOwnableSynchronizer",
                                 null, null);
   }
-
+ 
   public static Oop javaSystemLoader() {
     return newOop(javaSystemLoaderField.getValue());
   }

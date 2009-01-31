@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -94,13 +97,13 @@ void check_basic_types() {
       case T_ADDRESS:   // random raw pointer
       case T_CONFLICT:  // might as well support a bottom type
       case T_VOID:      // padding or other unaddressed word
-        // layout type must map to itself
-        assert(vt == ft, "");
-        break;
+	// layout type must map to itself
+	assert(vt == ft, "");
+	break;
       default:
-        // non-layout type must map to a (different) layout type
-        assert(vt != ft, "");
-        assert(ft == type2field[ft], "");
+	// non-layout type must map to a (different) layout type
+	assert(vt != ft, "");
+	assert(ft == type2field[ft], "");
       }
       // every type must map to same-sized layout type:
       assert(type2size[vt] == type2size[ft], "");
@@ -177,14 +180,14 @@ BasicType type2field[T_CONFLICT+1] = {
   (BasicType)0,            // 1,
   (BasicType)0,            // 2,
   (BasicType)0,            // 3,
-  T_BOOLEAN,               // T_BOOLEAN  =  4,
-  T_CHAR,                  // T_CHAR     =  5,
-  T_FLOAT,                 // T_FLOAT    =  6,
-  T_DOUBLE,                // T_DOUBLE   =  7,
-  T_BYTE,                  // T_BYTE     =  8,
-  T_SHORT,                 // T_SHORT    =  9,
-  T_INT,                   // T_INT      = 10,
-  T_LONG,                  // T_LONG     = 11,
+  T_BOOLEAN,     	   // T_BOOLEAN  =  4,
+  T_CHAR,     	  	   // T_CHAR     =  5,
+  T_FLOAT,   		   // T_FLOAT    =  6,
+  T_DOUBLE,  		   // T_DOUBLE   =  7,
+  T_BYTE,     		   // T_BYTE     =  8,
+  T_SHORT,     		   // T_SHORT    =  9,
+  T_INT,     		   // T_INT      = 10,
+  T_LONG,    		   // T_LONG     = 11,
   T_OBJECT,                // T_OBJECT   = 12,
   T_OBJECT,                // T_ARRAY    = 13,
   T_VOID,                  // T_VOID     = 14,
@@ -230,7 +233,7 @@ int type2aelembytes[T_CONFLICT+1] = {
   T_OBJECT_aelem_bytes,   // T_OBJECT   = 12,
   T_ARRAY_aelem_bytes,    // T_ARRAY    = 13,
   0,                      // T_VOID     = 14,
-  T_INT_aelem_bytes,      // T_ADDRESS  = 15,
+  T_INT_aelem_bytes,   	  // T_ADDRESS  = 15,	
   0                       // T_CONFLICT = 16,
 };
 
@@ -278,18 +281,18 @@ jlong double2long(jdouble f) {
 // least common multiple
 size_t lcm(size_t a, size_t b) {
     size_t cur, div, next;
-
-    cur = MAX2(a, b);
+   
+    cur = MAX2(a, b); 
     div = MIN2(a, b);
-
+    
     assert(div != 0, "lcm requires positive arguments");
-
-
+    
+    
     while ((next = cur % div) != 0) {
-        cur = div; div = next;
+	cur = div; div = next;
     }
-
-
+ 
+    
     julong result = julong(a) * b / div;
     assert(result <= (size_t)max_uintx, "Integer overflow in lcm");
 

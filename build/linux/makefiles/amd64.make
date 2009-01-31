@@ -23,7 +23,7 @@
 #
 
 # Not included in includeDB because it has no dependencies
-Obj_Files += linux_x86_64.o
+Obj_Files += linux_amd64.o
 
 # The copied fdlibm routines in sharedRuntimeTrig.o must not be optimized
 OPT_CFLAGS/sharedRuntimeTrig.o = $(OPT_CFLAGS/NOOPT)

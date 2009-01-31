@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -66,7 +69,7 @@ ciInstanceKlass::ciInstanceKlass(KlassHandle h_k) : ciKlass(h_k) {
     _protection_domain = JNIHandles::make_global(h_protection_domain);
     _is_shared = true;
   }
-
+  
   // Lazy fields get filled in only upon request.
   _super  = NULL;
   _java_mirror = NULL;
@@ -203,7 +206,7 @@ ciInstanceKlass* ciInstanceKlass::get_canonical_holder(int offset) {
     // All header offsets belong properly to java/lang/Object.
     return CURRENT_ENV->Object_klass();
   }
-
+  
   ciInstanceKlass* self = this;
   for (;;) {
     assert(self->is_loaded(), "must be loaded to have size");
@@ -235,27 +238,27 @@ bool ciInstanceKlass::uses_default_loader() {
 // ciInstanceKlass::print_impl
 //
 // Implementation of the print method.
-void ciInstanceKlass::print_impl(outputStream* st) {
-  ciKlass::print_impl(st);
-  GUARDED_VM_ENTRY(st->print(" loader=0x%x", (address)loader());)
+void ciInstanceKlass::print_impl() {
+  ciKlass::print_impl();
+  GUARDED_VM_ENTRY(tty->print(" loader=0x%x", (address)loader());)
   if (is_loaded()) {
-    st->print(" loaded=true initialized=%s finalized=%s subklass=%s size=%d flags=",
-              bool_to_str(is_initialized()),
-              bool_to_str(has_finalizer()),
-              bool_to_str(has_subklass()),
-              layout_helper());
+    tty->print(" loaded=true initialized=%s finalized=%s subklass=%s size=%d flags=",
+               bool_to_str(is_initialized()),
+               bool_to_str(has_finalizer()),
+               bool_to_str(has_subklass()),
+               layout_helper());
 
     _flags.print_klass_flags();
 
     if (_super) {
-      st->print(" super=");
+      tty->print(" super=");
       _super->print_name();
     }
     if (_java_mirror) {
-      st->print(" mirror=PRESENT");
+      tty->print(" mirror=PRESENT");
     }
   } else {
-    st->print(" loaded=false");
+    tty->print(" loaded=false");
   }
 }
 

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -80,12 +83,12 @@ bool DictionaryEntry::contains_protection_domain(oop protection_domain) const {
   if (protection_domain == instanceKlass::cast(klass())->protection_domain()) {
     // Ensure this doesn't show up in the pd_set (invariant)
     bool in_pd_set = false;
-    for (ProtectionDomainEntry* current = _pd_set;
-                                current != NULL;
+    for (ProtectionDomainEntry* current = _pd_set; 
+                                current != NULL; 
                                 current = current->next()) {
       if (current->protection_domain() == protection_domain) {
-        in_pd_set = true;
-        break;
+	in_pd_set = true;
+	break;
       }
     }
     if (in_pd_set) {
@@ -100,8 +103,8 @@ bool DictionaryEntry::contains_protection_domain(oop protection_domain) const {
     return true;
   }
 
-  for (ProtectionDomainEntry* current = _pd_set;
-                              current != NULL;
+  for (ProtectionDomainEntry* current = _pd_set; 
+                              current != NULL; 
                               current = current->next()) {
     if (current->protection_domain() == protection_domain) return true;
   }
@@ -164,7 +167,7 @@ bool Dictionary::do_unloading(BoolObjectClosure* is_alive) {
             // do anything special with the index.
             continue;  // robustness
           }
-
+      
           constantPoolOop pvcp = (constantPoolOop)JNIHandles::resolve(cp_ref);
           if (pvcp == NULL) {
             // this entry has been GC'ed so remove it
@@ -182,7 +185,7 @@ bool Dictionary::do_unloading(BoolObjectClosure* is_alive) {
               guarantee(false, "sanity check");
             }
           }
-
+      
           GrowableArray<jweak>* method_refs = pv_node->prev_EMCP_methods();
           if (method_refs != NULL) {
             RC_TRACE(0x00000200, ("unload: previous methods length=%d",
@@ -196,7 +199,7 @@ bool Dictionary::do_unloading(BoolObjectClosure* is_alive) {
                 // do anything special with the index.
                 continue;  // robustness
               }
-
+            
               methodOop method = (methodOop)JNIHandles::resolve(method_ref);
               if (method == NULL) {
                 // this method entry has been GC'ed so remove it
@@ -294,7 +297,7 @@ void Dictionary::always_strong_classes_do(OopClosure* blk) {
                           probe != NULL;
                           probe = probe->next()) {
       oop e = probe->klass();
-      oop class_loader = probe->loader();
+      oop class_loader = probe->loader();            
       if (is_strongly_reachable(class_loader, e)) {
         blk->do_oop((oop*)probe->klass_addr());
         if (class_loader != NULL) {
@@ -444,8 +447,8 @@ DictionaryEntry* Dictionary::get_entry(int index, unsigned int hash,
   symbolOop name_ = class_name();
   oop loader_ = class_loader();
   debug_only(_lookup_count++);
-  for (DictionaryEntry* entry = bucket(index);
-                        entry != NULL;
+  for (DictionaryEntry* entry = bucket(index); 
+                        entry != NULL; 
                         entry = entry->next()) {
     if (entry->hash() == hash && entry->equals(name_, loader_)) {
       return entry;
@@ -497,12 +500,12 @@ void Dictionary::add_protection_domain(int index, unsigned int hash,
   DictionaryEntry* entry = get_entry(index, hash, klass_name, loader);
 
   assert(entry != NULL,"entry must be present, we just created it");
-  assert(protection_domain() != NULL,
+  assert(protection_domain() != NULL, 
          "real protection domain should be present");
 
   entry->add_protection_domain(protection_domain());
 
-  assert(entry->contains_protection_domain(protection_domain()),
+  assert(entry->contains_protection_domain(protection_domain()), 
          "now protection domain should be present");
 }
 
@@ -561,16 +564,16 @@ void Dictionary::print() {
   tty->print_cr("^ indicates that initiating loader is different from "
                 "defining loader");
 
-  for (int index = 0; index < table_size(); index++) {
+  for (int index = 0; index < table_size(); index++) {    
     for (DictionaryEntry* probe = bucket(index);
                           probe != NULL;
                           probe = probe->next()) {
       if (Verbose) tty->print("%4d: ", index);
       klassOop e = probe->klass();
       oop class_loader =  probe->loader();
-      bool is_defining_class =
+      bool is_defining_class = 
          (class_loader == instanceKlass::cast(e)->class_loader());
-      tty->print("%s%s", is_defining_class ? " " : "^",
+      tty->print("%s%s", is_defining_class ? " " : "^", 
                    Klass::cast(e)->external_name());
       if (class_loader != NULL) {
         tty->print(", loader ");
@@ -592,15 +595,15 @@ void Dictionary::verify() {
                           probe = probe->next()) {
       klassOop e = probe->klass();
       oop class_loader = probe->loader();
-      guarantee(Klass::cast(e)->oop_is_instance(),
+      guarantee(Klass::cast(e)->oop_is_instance(), 
                               "Verify of system dictionary failed");
       // class loader must be present;  a null class loader is the
       // boostrap loader
-      guarantee(class_loader == NULL || class_loader->is_instance(),
+      guarantee(class_loader == NULL || class_loader->is_instance(), 
                 "checking type of class_loader");
       e->verify();
       probe->verify_protection_domain_set();
-      element_count++;
+      element_count++; 
     }
   }
   guarantee(number_of_entries() == element_count,

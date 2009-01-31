@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -30,12 +33,12 @@ OptoReg::Name OptoReg::c_frame_pointer;
 
 
 const int Matcher::base2reg[Type::lastype] = {
-  Node::NotAMachineReg,0,0, Op_RegI, Op_RegL, 0,
+  Node::NotAMachineReg,0,0, Op_RegI, Op_RegL, 0, 
   Node::NotAMachineReg, Node::NotAMachineReg, /* tuple, array */
   Op_RegP, Op_RegP, Op_RegP, Op_RegP, Op_RegP, Op_RegP, /* the pointers */
   0, 0/*abio*/,
   Op_RegP /* Return address */, 0, /* the memories */
-  Op_RegF, Op_RegF, Op_RegF, Op_RegD, Op_RegD, Op_RegD,
+  Op_RegF, Op_RegF, Op_RegF, Op_RegD, Op_RegD, Op_RegD, 
   0  /*bottom*/
 };
 
@@ -53,15 +56,15 @@ Matcher::Matcher( Node_List &proj_list ) :
   _old2new_map(C->comp_arena()),
 #endif
   _shared_constants(C->comp_arena()),
-  _reduceOp(reduceOp), _leftOp(leftOp), _rightOp(rightOp),
-  _swallowed(swallowed),
-  _begin_inst_chain_rule(_BEGIN_INST_CHAIN_RULE),
-  _end_inst_chain_rule(_END_INST_CHAIN_RULE),
+  _reduceOp(reduceOp), _leftOp(leftOp), _rightOp(rightOp), 
+  _swallowed(swallowed), 
+  _begin_inst_chain_rule(_BEGIN_INST_CHAIN_RULE), 
+  _end_inst_chain_rule(_END_INST_CHAIN_RULE), 
   _must_clone(must_clone), _proj_list(proj_list),
   _register_save_policy(register_save_policy),
   _c_reg_save_policy(c_reg_save_policy),
   _register_save_type(register_save_type),
-  _ruleName(ruleName),
+  _ruleName(ruleName), 
   _allocation_started(false),
   _states_arena(Chunk::medium_size),
   _visited(&_states_arena),
@@ -136,7 +139,7 @@ void Matcher::verify_new_nodes_only(Node* xroot) {
 
 
 //---------------------------match---------------------------------------------
-void Matcher::match( ) {
+void Matcher::match( ) { 
   // One-time initialization of some register masks.
   init_spill_mask( C->root()->in(1) );
   _return_addr_mask = return_addr();
@@ -183,7 +186,7 @@ void Matcher::match( ) {
   const StartNode *start = C->start();
   start->calling_convention( sig_bt, vm_parm_regs, argcnt );
 #ifdef ASSERT
-  // Sanity check users' calling convention.  Real handy while trying to
+  // Sanity check users' calling convention.  Real handy while trying to 
   // get the initial port correct.
   { for (uint i = 0; i<argcnt; i++) {
       if( !vm_parm_regs[i].first()->is_valid() && !vm_parm_regs[i].second()->is_valid() ) {
@@ -201,7 +204,7 @@ void Matcher::match( ) {
                "parameters in register must be preserved by runtime stubs");
       }
       for (uint j = 0; j < i; j++) {
-        assert(parm_reg != vm_parm_regs[j].first(),
+        assert(parm_reg != vm_parm_regs[j].first(), 
                "calling conv. must produce distinct regs");
       }
     }
@@ -243,10 +246,10 @@ void Matcher::match( ) {
   }
 
   // Finally, make sure the incoming arguments take up an even number of
-  // words, in case the arguments or locals need to contain doubleword stack
-  // slots.  The rest of the system assumes that stack slot pairs (in
-  // particular, in the spill area) which look aligned will in fact be
-  // aligned relative to the stack pointer in the target machine.  Double
+  // words, in case the arguments or locals need to contain doubleword stack 
+  // slots.  The rest of the system assumes that stack slot pairs (in 
+  // particular, in the spill area) which look aligned will in fact be 
+  // aligned relative to the stack pointer in the target machine.  Double 
   // stack slots will always be allocated aligned.
   _new_SP = OptoReg::Name(round_to(_in_arg_limit, RegMask::SlotsPerLong));
 
@@ -269,9 +272,7 @@ void Matcher::match( ) {
   find_shared( C->root() );
   find_shared( C->top() );
 
-  C->print_method("Before Matching", 2);
-
-  // Swap out to old-space; emptying new-space
+  // Swap out to old-space; emptying new-space 
   Arena *old = C->node_arena()->move_contents(C->old_arena());
 
   // Save debug and profile information for nodes in old space:
@@ -340,11 +341,11 @@ void Matcher::match( ) {
 
 
 //------------------------------Fixup_Save_On_Entry----------------------------
-// The stated purpose of this routine is to take care of save-on-entry
+// The stated purpose of this routine is to take care of save-on-entry 
 // registers.  However, the overall goal of the Match phase is to convert into
 // machine-specific instructions which have RegMasks to guide allocation.
 // So what this procedure really does is put a valid RegMask on each input
-// to the machine-specific variations of all Return, TailCall and Halt
+// to the machine-specific variations of all Return, TailCall and Halt 
 // instructions.  It also adds edgs to define the save-on-entry values (and of
 // course gives them a mask).
 
@@ -399,15 +400,15 @@ void Matcher::init_first_stack_mask() {
   C->FIRST_STACK_mask().set_AllStack();
 
   // Make spill masks.  Registers for their class, plus FIRST_STACK_mask.
-  *idealreg2spillmask[Op_RegI] = *idealreg2regmask[Op_RegI];
+  *idealreg2spillmask[Op_RegI] = *idealreg2regmask[Op_RegI]; 
    idealreg2spillmask[Op_RegI]->OR(C->FIRST_STACK_mask());
-  *idealreg2spillmask[Op_RegL] = *idealreg2regmask[Op_RegL];
+  *idealreg2spillmask[Op_RegL] = *idealreg2regmask[Op_RegL]; 
    idealreg2spillmask[Op_RegL]->OR(C->FIRST_STACK_mask());
-  *idealreg2spillmask[Op_RegF] = *idealreg2regmask[Op_RegF];
+  *idealreg2spillmask[Op_RegF] = *idealreg2regmask[Op_RegF]; 
    idealreg2spillmask[Op_RegF]->OR(C->FIRST_STACK_mask());
-  *idealreg2spillmask[Op_RegD] = *idealreg2regmask[Op_RegD];
+  *idealreg2spillmask[Op_RegD] = *idealreg2regmask[Op_RegD]; 
    idealreg2spillmask[Op_RegD]->OR(C->FIRST_STACK_mask());
-  *idealreg2spillmask[Op_RegP] = *idealreg2regmask[Op_RegP];
+  *idealreg2spillmask[Op_RegP] = *idealreg2regmask[Op_RegP]; 
    idealreg2spillmask[Op_RegP]->OR(C->FIRST_STACK_mask());
 
   // Make up debug masks.  Any spill slot plus callee-save registers.
@@ -424,22 +425,22 @@ void Matcher::init_first_stack_mask() {
   bool exclude_soe = !Compile::current()->is_method_compilation();
 
   for( i=OptoReg::Name(0); i<OptoReg::Name(_last_Mach_Reg); i = OptoReg::add(i,1) ) {
-    // registers the caller has to save do not work
-    if( _register_save_policy[i] == 'C' ||
+    // registers the caller has to save do not work 
+    if( _register_save_policy[i] == 'C' ||  
         _register_save_policy[i] == 'A' ||
         (_register_save_policy[i] == 'E' && exclude_soe) ) {
-      idealreg2debugmask[Op_RegI]->Remove(i); // Exclude save-on-call
+      idealreg2debugmask[Op_RegI]->Remove(i); // Exclude save-on-call 
       idealreg2debugmask[Op_RegL]->Remove(i); // registers from debug
       idealreg2debugmask[Op_RegF]->Remove(i); // masks
       idealreg2debugmask[Op_RegD]->Remove(i);
-      idealreg2debugmask[Op_RegP]->Remove(i);
+      idealreg2debugmask[Op_RegP]->Remove(i); 
     }
   }
 }
 
 //---------------------------is_save_on_entry----------------------------------
 bool Matcher::is_save_on_entry( int reg ) {
-  return
+  return 
     _register_save_policy[reg] == 'E' ||
     _register_save_policy[reg] == 'A' || // Save-on-entry register?
     // Also save argument registers in the trampolining stubs
@@ -450,19 +451,19 @@ bool Matcher::is_save_on_entry( int reg ) {
 void Matcher::Fixup_Save_On_Entry( ) {
   init_first_stack_mask();
 
-  Node *root = C->root();       // Short name for root
-  // Count number of save-on-entry registers.
+  Node *root = C->root();       // Short name for root  
+  // Count number of save-on-entry registers.  
   uint soe_cnt = number_of_saved_registers();
   uint i;
 
   // Find the procedure Start Node
   StartNode *start = C->start();
   assert( start, "Expect a start node" );
-
+  
   // Save argument registers in the trampolining stubs
-  if( C->save_argument_registers() )
-    for( i = 0; i < _last_Mach_Reg; i++ )
-      if( is_spillable_arg(i) )
+  if( C->save_argument_registers() ) 
+    for( i = 0; i < _last_Mach_Reg; i++ ) 
+      if( is_spillable_arg(i) ) 
         soe_cnt++;
 
   // Input RegMask array shared by all Returns.
@@ -470,11 +471,11 @@ void Matcher::Fixup_Save_On_Entry( ) {
   // there is only 1 returned value
   uint ret_edge_cnt = TypeFunc::Parms + ((C->tf()->range()->cnt() == TypeFunc::Parms) ? 0 : 1);
   RegMask *ret_rms  = init_input_masks( ret_edge_cnt + soe_cnt, _return_addr_mask, c_frame_ptr_mask );
-  // Returns have 0 or 1 returned values depending on call signature.
-  // Return register is specified by return_value in the AD file.
+  // Returns have 0 or 1 returned values depending on call signature. 
+  // Return register is specified by return_value in the AD file.  
   if (ret_edge_cnt > TypeFunc::Parms)
     ret_rms[TypeFunc::Parms+0] = _return_value_mask;
-
+  
   // Input RegMask array shared by all Rethrows.
   uint reth_edge_cnt = TypeFunc::Parms+1;
   RegMask *reth_rms  = init_input_masks( reth_edge_cnt + soe_cnt, _return_addr_mask, c_frame_ptr_mask );
@@ -484,7 +485,7 @@ void Matcher::Fixup_Save_On_Entry( ) {
   // Need two slots for ptrs in 64-bit land
   reth_rms[TypeFunc::Parms].Insert(OptoReg::add(OptoReg::Name(find_receiver(false)),1));
 #endif
-
+  
   // Input RegMask array shared by all TailCalls
   uint tail_call_edge_cnt = TypeFunc::Parms+2;
   RegMask *tail_call_rms = init_input_masks( tail_call_edge_cnt + soe_cnt, _return_addr_mask, c_frame_ptr_mask );
@@ -537,10 +538,10 @@ void Matcher::Fixup_Save_On_Entry( ) {
   }
 
   // Next unused projection number from Start.
-  int proj_cnt = C->tf()->domain()->cnt();
-
-  // Do all the save-on-entry registers.  Make projections from Start for
-  // them, and give them a use at the exit points.  To the allocator, they
+  int proj_cnt = C->tf()->domain()->cnt();  
+  
+  // Do all the save-on-entry registers.  Make projections from Start for 
+  // them, and give them a use at the exit points.  To the allocator, they 
   // look like incoming register arguments.
   for( i = 0; i < _last_Mach_Reg; i++ ) {
     if( is_save_on_entry(i) ) {
@@ -570,7 +571,7 @@ void Matcher::Fixup_Save_On_Entry( ) {
         halt_rms     [     halt_edge_cnt].Insert(OptoReg::Name(i+1));
         mproj = new (C, 1) MachProjNode( start, proj_cnt, ret_rms[ret_edge_cnt], Op_RegD );
         proj_cnt += 2;          // Skip 2 for doubles
-      }
+      } 
       else if( (i&1) == 1 &&    // Else check for high half of double
                _register_save_type[i-1] == Op_RegF &&
                _register_save_type[i  ] == Op_RegF &&
@@ -581,7 +582,7 @@ void Matcher::Fixup_Save_On_Entry( ) {
         tail_jump_rms[tail_jump_edge_cnt] = RegMask::Empty;
         halt_rms     [     halt_edge_cnt] = RegMask::Empty;
         mproj = C->top();
-      }
+      } 
       // Is this a RegI low half of a RegL?  Double up 2 adjacent RegI's
       // into a single RegL.
       else if( (i&1) == 0 &&
@@ -596,7 +597,7 @@ void Matcher::Fixup_Save_On_Entry( ) {
         halt_rms     [     halt_edge_cnt].Insert(OptoReg::Name(i+1));
         mproj = new (C, 1) MachProjNode( start, proj_cnt, ret_rms[ret_edge_cnt], Op_RegL );
         proj_cnt += 2;          // Skip 2 for longs
-      }
+      } 
       else if( (i&1) == 1 &&    // Else check for high half of long
                _register_save_type[i-1] == Op_RegI &&
                _register_save_type[i  ] == Op_RegI &&
@@ -619,8 +620,8 @@ void Matcher::Fixup_Save_On_Entry( ) {
       halt_edge_cnt ++;
 
       // Add a use of the SOE register to all exit paths
-      for( uint j=1; j < root->req(); j++ )
-        root->in(j)->add_req(mproj);
+      for( uint j=1; j < root->req(); j++ ) 
+        root->in(j)->add_req(mproj); 
     } // End of if a save-on-entry register
   } // End of for all machine registers
 }
@@ -666,8 +667,8 @@ void Matcher::init_spill_mask( Node *ret ) {
   MachNode *spillF  = match_tree(new (C, 3) LoadFNode(NULL,mem,fp,atp));
   MachNode *spillD  = match_tree(new (C, 3) LoadDNode(NULL,mem,fp,atp));
   MachNode *spillP  = match_tree(new (C, 3) LoadPNode(NULL,mem,fp,atp,TypeInstPtr::BOTTOM));
-  assert(spillI != NULL && spillL != NULL && spillF != NULL &&
-         spillD != NULL && spillP != NULL, "");
+  assert(spillI != NULL && spillL != NULL && spillF != NULL && 
+	 spillD != NULL && spillP != NULL, "");
 
   // Get the ADLC notion of the right regmask, for each basic type.
   idealreg2regmask[Op_RegI] = &spillI->out_RegMask();
@@ -879,7 +880,7 @@ Node *Matcher::xform( Node *n, int max_stack ) {
       // And now walk his children, and convert his inputs to new-space.
       for( ; i >= 0; --i ) { // For all normal inputs do
         Node *m = n->in(i);  // Get input
-        if(m != NULL)
+        if(m != NULL) 
           mstack.push(m, Visit, n, i);
       }
 
@@ -916,7 +917,7 @@ OptoReg::Name Matcher::warp_outgoing_stk_arg( VMReg reg, OptoReg::Name begin_out
     // Keep track of the largest numbered stack slot used for an arg.
     // Largest used slot per call-site indicates the amount of stack
     // that is killed by the call.
-    if( warped >= out_arg_limit_per_call )
+    if( warped >= out_arg_limit_per_call ) 
       out_arg_limit_per_call = OptoReg::add(warped,1);
     if (!RegMask::can_represent(warped)) {
       C->record_method_not_compilable_all_tiers("unsupported calling sequence");
@@ -956,21 +957,21 @@ MachNode *Matcher::match_sfpt( SafePointNode *sfpt ) {
     mcall->set_tf(         call->tf());
     mcall->set_entry_point(call->entry_point());
     mcall->set_cnt(        call->cnt());
-
+  
     if( mcall->is_MachCallJava() ) {
       MachCallJavaNode *mcall_java  = mcall->as_MachCallJava();
       const CallJavaNode *call_java =  call->as_CallJava();
       method = call_java->method();
       mcall_java->_method = method;
       mcall_java->_bci = call_java->_bci;
-      mcall_java->_optimized_virtual = call_java->is_optimized_virtual();
-      if( mcall_java->is_MachCallStaticJava() )
-        mcall_java->as_MachCallStaticJava()->_name =
+      mcall_java->_optimized_virtual = call_java->is_optimized_virtual(); 
+      if( mcall_java->is_MachCallStaticJava() ) 
+        mcall_java->as_MachCallStaticJava()->_name = 
          call_java->as_CallStaticJava()->_name;
-      if( mcall_java->is_MachCallDynamicJava() )
-        mcall_java->as_MachCallDynamicJava()->_vtable_index =
+      if( mcall_java->is_MachCallDynamicJava() ) 
+        mcall_java->as_MachCallDynamicJava()->_vtable_index = 
          call_java->as_CallDynamicJava()->_vtable_index;
-    }
+    } 
     else if( mcall->is_MachCallRuntime() ) {
       mcall->as_MachCallRuntime()->_name = call->as_CallRuntime()->_name;
     }
@@ -1001,7 +1002,7 @@ MachNode *Matcher::match_sfpt( SafePointNode *sfpt ) {
   // Place first outgoing argument can possibly be put.
   OptoReg::Name begin_out_arg_area = OptoReg::add(_new_SP, C->out_preserve_stack_slots());
   assert( is_even(begin_out_arg_area), "" );
-  // Compute max outgoing register number per call site.
+  // Compute max outgoing register number per call site.  
   OptoReg::Name out_arg_limit_per_call = begin_out_arg_area;
   // Calls to C may hammer extra stack slots above and beyond any arguments.
   // These are usually backing store for register arguments for varargs.
@@ -1022,7 +1023,7 @@ MachNode *Matcher::match_sfpt( SafePointNode *sfpt ) {
     call->calling_convention( sig_bt, parm_regs, argcnt );
 
 #ifdef ASSERT
-    // Sanity check users' calling convention.  Really handy during
+    // Sanity check users' calling convention.  Really handy during 
     // the initial porting effort.  Fairly expensive otherwise.
     { for (int i = 0; i<argcnt; i++) {
       if( !parm_regs[i].first()->is_valid() &&
@@ -1077,10 +1078,10 @@ MachNode *Matcher::match_sfpt( SafePointNode *sfpt ) {
     mcall->_argsize = out_arg_limit_per_call - begin_out_arg_area;
   }
 
-  // Compute the max stack slot killed by any call.  These will not be
-  // available for debug info, and will be used to adjust FIRST_STACK_mask
+  // Compute the max stack slot killed by any call.  These will not be 
+  // available for debug info, and will be used to adjust FIRST_STACK_mask 
   // after all call sites have been visited.
-  if( _out_arg_limit < out_arg_limit_per_call)
+  if( _out_arg_limit < out_arg_limit_per_call) 
     _out_arg_limit = out_arg_limit_per_call;
 
   if (mcall) {
@@ -1146,14 +1147,14 @@ MachNode *Matcher::match_tree( const Node *n ) {
   // Label the input tree, allocating labels from top-level arena
   Label_Root( n, s, n->in(0), mem );
   if (C->failing())  return NULL;
-
+  
   // The minimum cost match for the whole tree is found at the root State
   uint mincost = max_juint;
   uint cost = max_juint;
   uint i;
   for( i = 0; i < NUM_OPERANDS; i++ ) {
     if( s->valid(i) &&                // valid entry and
-        s->_cost[i] < cost &&         // low cost and
+        s->_cost[i] < cost &&         // low cost and 
         s->_rule[i] >= NUM_OPERANDS ) // not an operand
       cost = s->_cost[mincost=i];
   }
@@ -1170,7 +1171,7 @@ MachNode *Matcher::match_tree( const Node *n ) {
 #ifdef ASSERT
   _old2new_map.map(n->_idx, m);
 #endif
-
+  
   // Add any Matcher-ignored edges
   uint cnt = n->req();
   uint start = 1;
@@ -1184,7 +1185,7 @@ MachNode *Matcher::match_tree( const Node *n ) {
       if( i < m->req() )
         m->ins_req( i, n->in(i) );
       else
-        m->add_req( n->in(i) );
+        m->add_req( n->in(i) ); 
     }
   }
 
@@ -1211,7 +1212,7 @@ static bool match_into_reg( const Node *n, Node *m, Node *control, int i, bool s
     if( control && m->in(0) && control != m->in(0) ) {
 
       // Actually, we can live with the most conservative control we
-      // find, if it post-dominates the others.  This allows us to
+      // find, if it post-dominates the others.  This allows us to 
       // pick up load/op/store trees where the load can float a little
       // above the store.
       Node *x = control;
@@ -1238,16 +1239,16 @@ static bool match_into_reg( const Node *n, Node *m, Node *control, int i, bool s
 // Label method walks a "tree" of nodes, using the ADLC generated DFA to match
 // ideal nodes to machine instructions.  Trees are delimited by shared Nodes,
 // things the Matcher does not match (e.g., Memory), and things with different
-// Controls (hence forced into different blocks).  We pass in the Control
+// Controls (hence forced into different blocks).  We pass in the Control 
 // selected for this entire State tree.
 
 // The Matcher works on Trees, but an Intel add-to-memory requires a DAG: the
-// Store and the Load must have identical Memories (as well as identical
-// pointers).  Since the Matcher does not have anything for Memory (and
+// Store and the Load must have identical Memories (as well as identical 
+// pointers).  Since the Matcher does not have anything for Memory (and 
 // does not handle DAGs), I have to match the Memory input myself.  If the
 // Tree root is a Store, I require all Loads to have the identical memory.
 Node *Matcher::Label_Root( const Node *n, State *svec, Node *control, const Node *mem){
-  // Since Label_Root is a recursive function, its possible that we might run
+  // Since Label_Root is a recursive function, its possible that we might run 
   // out of stack space.  See bugs 6272980 & 6227033 for more info.
   LabelRootDepth++;
   if (LabelRootDepth > MaxLabelRootDepth) {
@@ -1260,17 +1261,17 @@ Node *Matcher::Label_Root( const Node *n, State *svec, Node *control, const Node
 
   // Examine children for memory state
   // Can only subsume a child into your match-tree if that child's memory state
-  // is not modified along the path to another input.
+  // is not modified along the path to another input.  
   // It is unsafe even if the other inputs are separate roots.
   Node *input_mem = NULL;
-  for( i = 1; i < cnt; i++ ) {
+  for( i = 1; i < cnt; i++ ) { 
     if( !n->match_edge(i) ) continue;
     Node *m = n->in(i);         // Get ith input
     assert( m, "expect non-null children" );
     if( m->is_Load() ) {
       if( input_mem == NULL ) {
         input_mem = m->in(MemNode::Memory);
-      } else if( input_mem != m->in(MemNode::Memory) ) {
+      } else if( input_mem != m->in(MemNode::Memory) ) { 
         input_mem = NodeSentinel;
       }
     }
@@ -1289,11 +1290,11 @@ Node *Matcher::Label_Root( const Node *n, State *svec, Node *control, const Node
     s->_kids[1] = NULL;
     s->_leaf = m;
 
-    // Check for leaves of the State Tree; things that cannot be a part of
-    // the current tree.  If it finds any, that value is matched as a
+    // Check for leaves of the State Tree; things that cannot be a part of 
+    // the current tree.  If it finds any, that value is matched as a 
     // register operand.  If not, then the normal matching is used.
     if( match_into_reg(n, m, control, i, is_shared(m)) ||
-        //
+        // 
         // Stop recursion if this is LoadNode and the root of this tree is a
         // StoreNode and the load & store have different memories.
         ((mem!=(Node*)1) && m->is_Load() && m->in(MemNode::Memory) != mem) ||
@@ -1302,15 +1303,15 @@ Node *Matcher::Label_Root( const Node *n, State *svec, Node *control, const Node
         (input_mem == NodeSentinel) ) {
 #ifndef PRODUCT
       // Print when we exclude matching due to different memory states at input-loads
-      if( PrintOpto && (Verbose && WizardMode) && (input_mem == NodeSentinel)
-        && !((mem!=(Node*)1) && m->is_Load() && m->in(MemNode::Memory) != mem) ) {
-        tty->print_cr("invalid input_mem");
+      if( PrintOpto && (Verbose && WizardMode) && (input_mem == NodeSentinel) 
+        && !((mem!=(Node*)1) && m->is_Load() && m->in(MemNode::Memory) != mem) ) { 
+        tty->print_cr("invalid input_mem"); 
       }
 #endif
       // Switch to a register-only opcode; this value must be in a register
       // and cannot be subsumed as part of a larger instruction.
       s->DFA( m->ideal_reg(), m );
-
+    
     } else {
       // If match tree has no control and we do, adopt it for entire tree
       if( control == NULL && m->in(0) != NULL && m->req() > 1 )
@@ -1321,7 +1322,7 @@ Node *Matcher::Label_Root( const Node *n, State *svec, Node *control, const Node
     }
   }
 
-
+  
   // Call DFA to match this node, and return
   svec->DFA( n->Opcode(), n );
 
@@ -1378,15 +1379,15 @@ MachNode* Matcher::find_shared_constant(Node* leaf, uint rule) {
 
 //------------------------------ReduceInst-------------------------------------
 // Reduce a State tree (with given Control) into a tree of MachNodes.
-// This routine (and it's cohort ReduceOper) convert Ideal Nodes into
+// This routine (and it's cohort ReduceOper) convert Ideal Nodes into 
 // complicated machine Nodes.  Each MachNode covers some tree of Ideal Nodes.
-// Each MachNode has a number of complicated MachOper operands; each
-// MachOper also covers a further tree of Ideal Nodes.
+// Each MachNode has a number of complicated MachOper operands; each 
+// MachOper also covers a further tree of Ideal Nodes.  
 
 // The root of the Ideal match tree is always an instruction, so we enter
 // the recursion here.  After building the MachNode, we need to recurse
 // the tree checking for these cases:
-// (1) Child is an instruction -
+// (1) Child is an instruction - 
 //     Build the instruction (recursively), add it as an edge.
 //     Build a simple operand (register) to hold the result of the instruction.
 // (2) Child is an interior part of an instruction -
@@ -1498,7 +1499,7 @@ uint Matcher::ReduceInst_Interior( State *s, int rule, Node *&mem, MachNode *mac
     mem = mem2;
   }
   if( s->_leaf->in(0) != NULL && s->_leaf->req() > 1) {
-    if( mach->in(0) == NULL )
+    if( mach->in(0) == NULL ) 
       mach->set_req(0, s->_leaf->in(0));
   }
 
@@ -1557,7 +1558,7 @@ uint Matcher::ReduceInst_Interior( State *s, int rule, Node *&mem, MachNode *mac
 //     and instruction as an input to the MachNode
 void Matcher::ReduceOper( State *s, int rule, Node *&mem, MachNode *mach ) {
   assert( rule < _LAST_MACH_OPER, "called with operand rule" );
-  State *kid = s->_kids[0];
+  State *kid = s->_kids[0]; 
   assert( kid == NULL || s->_leaf->in(0) == NULL, "internal operands have no control" );
 
   // Leaf?  And not subsumed?
@@ -1571,7 +1572,7 @@ void Matcher::ReduceOper( State *s, int rule, Node *&mem, MachNode *mach ) {
     mem = s->_leaf->in(MemNode::Memory);
   }
   if( s->_leaf->in(0) && s->_leaf->req() > 1) {
-    if( !mach->in(0) )
+    if( !mach->in(0) ) 
       mach->set_req(0,s->_leaf->in(0));
     else {
       assert( s->_leaf->in(0) == mach->in(0), "same instruction, differing controls?" );
@@ -1623,14 +1624,14 @@ OptoReg::Name Matcher::find_receiver( bool is_outgoing ) {
 // Set bits if Node is shared or otherwise a root
 void Matcher::find_shared( Node *n ) {
   // Allocate stack of size C->unique() * 2 to avoid frequent realloc
-  MStack mstack(C->unique() * 2);
+  MStack mstack(C->unique() * 2); 
   mstack.push(n, Visit);     // Don't need to pre-visit root node
   while (mstack.is_nonempty()) {
     n = mstack.node();       // Leave node on stack
     Node_State nstate = mstack.state();
     if (nstate == Pre_Visit) {
       if (is_visited(n)) {   // Visited already?
-        // Node is shared and has no reason to clone.  Flag it as shared.
+        // Node is shared and has no reason to clone.  Flag it as shared.  
         // This causes it to match into a register for the sharing.
         set_shared(n);       // Flag as shared and
         mstack.pop();        // remove node from stack
@@ -1657,7 +1658,7 @@ void Matcher::find_shared( Node *n ) {
         // with matching cmp/branch in 1 instruction.  The Matcher needs the
         // Bool and CmpX side-by-side, because it can only get at constants
         // that are at the leaves of Match trees, and the Bool's condition acts
-        // as a constant here.
+        // as a constant here.  
         mstack.push(n->in(1), Visit);         // Clone the Bool
         mstack.push(n->in(0), Pre_Visit);     // Visit control input
         continue; // while (mstack.is_nonempty())
@@ -1690,7 +1691,7 @@ void Matcher::find_shared( Node *n ) {
       case Op_Jump:
         mstack.push(n->in(1), Visit);         // Switch Value
         mstack.push(n->in(0), Pre_Visit);     // Visit Control input
-        continue;                             // while (mstack.is_nonempty())
+        continue;                             // while (mstack.is_nonempty())                   
       case Op_StrComp:
         set_shared(n); // Force result into register (it will be anyways)
         break;
@@ -1781,7 +1782,7 @@ void Matcher::find_shared( Node *n ) {
         if( _must_clone[mop] ) {
           mstack.push(m, Visit);
           continue; // for(int i = ...)
-        }
+        } 
 
         // Clone addressing expressions as they are "free" in most instructions
         if( mem_op && i == MemNode::Address && mop == Op_AddP ) {
@@ -1798,20 +1799,10 @@ void Matcher::find_shared( Node *n ) {
               set_visited(adr);  // Flag as visited now
               Node *shift = adr->in(AddPNode::Offset);
               // Check for shift by small constant as well
-              if( shift->Opcode() == Op_LShiftX && shift->in(2)->is_Con() &&
-                  shift->in(2)->get_int() <= 3 ) {
+              if( shift->Opcode() == Op_LShiftX && shift->in(2)->is_Con() && 
+                  shift->in(2)->get_int() <= 3 ) { 
                 set_visited(shift);  // Flag as visited now
                 mstack.push(shift->in(2), Visit);
-#ifdef _LP64
-                // Allow Matcher to match the rule which bypass
-                // ConvI2L operation for an array index on LP64
-                // if the index value is positive.
-                if( shift->in(1)->Opcode() == Op_ConvI2L &&
-                    shift->in(1)->as_Type()->type()->is_long()->_lo >= 0 ) {
-                  set_visited(shift->in(1));  // Flag as visited now
-                  mstack.push(shift->in(1)->in(1), Pre_Visit);
-                } else
-#endif
                 mstack.push(shift->in(1), Pre_Visit);
               } else {
                 mstack.push(shift, Pre_Visit);
@@ -1835,7 +1826,7 @@ void Matcher::find_shared( Node *n ) {
       mstack.pop(); // Remove node from stack
       // We cannot remove the Cmp input from the Bool here, as the Bool may be
       // shared and all users of the Bool need to move the Cmp in parallel.
-      // This leaves both the Bool and the If pointing at the Cmp.  To
+      // This leaves both the Bool and the If pointing at the Cmp.  To 
       // prevent the Matcher from trying to Match the Cmp along both paths
       // BoolNode::match_edge always returns a zero.
 
@@ -1935,7 +1926,7 @@ void Matcher::validate_null_checks( ) {
     Node *test = _null_check_tests[i];
     Node *val = _null_check_tests[i+1];
     if (has_new_node(val)) {
-      // Is a match-tree root, so replace with the matched value
+      // Is a match-tree root, so replace with the matched value 
       _null_check_tests.map(i+1, new_node(val));
     } else {
       // Yank from candidate list
@@ -1945,7 +1936,7 @@ void Matcher::validate_null_checks( ) {
       _null_check_tests.pop();
       i-=2;
     }
-  }
+  }  
 }
 
 
@@ -1971,7 +1962,7 @@ bool Matcher::post_fast_unlock( const Node *rel ) {
   Compile *C = Compile::current();
   assert( rel->Opcode() == Op_MemBarRelease, "" );
   const MemBarReleaseNode *mem = (const MemBarReleaseNode*)rel;
-  DUIterator_Fast imax, i = mem->fast_outs(imax);
+  DUIterator_Fast imax, i = mem->fast_outs(imax); 
   Node *ctrl = NULL;
   while( true ) {
     ctrl = mem->fast_out(i);            // Throw out-of-bounds if proj not found
@@ -1984,8 +1975,8 @@ bool Matcher::post_fast_unlock( const Node *rel ) {
   }
   Node *iff = NULL;
   for( DUIterator_Fast jmax, j = ctrl->fast_outs(jmax); j < jmax; j++ ) {
-    Node *x = ctrl->fast_out(j);
-    if( x->is_If() && x->req() > 1 &&
+    Node *x = ctrl->fast_out(j); 
+    if( x->is_If() && x->req() > 1 && 
         !C->node_arena()->contains(x) ) { // Unmatched old-space only
       iff = x;
       break;
@@ -2011,29 +2002,29 @@ bool Matcher::post_store_load_barrier(const Node *vmb) {
 
   // Get the Proj node, ctrl, that can be used to iterate forward
   Node *ctrl = NULL;
-  DUIterator_Fast imax, i = mem->fast_outs(imax);
+  DUIterator_Fast imax, i = mem->fast_outs(imax); 
   while( true ) {
-    ctrl = mem->fast_out(i);            // Throw out-of-bounds if proj not found
+    ctrl = mem->fast_out(i);		// Throw out-of-bounds if proj not found
     assert( ctrl->is_Proj(), "only projections here" );
     ProjNode *proj = (ProjNode*)ctrl;
     if( proj->_con == TypeFunc::Control &&
-        !C->node_arena()->contains(ctrl) ) // Unmatched old-space only
+	!C->node_arena()->contains(ctrl) ) // Unmatched old-space only
       break;
     i++;
   }
 
   for( DUIterator_Fast jmax, j = ctrl->fast_outs(jmax); j < jmax; j++ ) {
-    Node *x = ctrl->fast_out(j);
+    Node *x = ctrl->fast_out(j); 
     int xop = x->Opcode();
 
     // We don't need current barrier if we see another or a lock
-    // before seeing volatile load.
+    // before seeing volatile load. 
     //
     // Op_Fastunlock previously appeared in the Op_* list below.
     // With the advent of 1-0 lock operations we're no longer guaranteed
-    // that a monitor exit operation contains a serializing instruction.
-
-    if (xop == Op_MemBarVolatile ||
+    // that a monitor exit operation contains a serializing instruction. 
+    
+    if (xop == Op_MemBarVolatile || 
         xop == Op_FastLock ||
         xop == Op_CompareAndSwapL ||
         xop == Op_CompareAndSwapP ||
@@ -2043,17 +2034,17 @@ bool Matcher::post_store_load_barrier(const Node *vmb) {
     if (x->is_MemBar()) {
       // We must retain this membar if there is an upcoming volatile
       // load, which will be preceded by acquire membar.
-      if (xop == Op_MemBarAcquire)
+      if (xop == Op_MemBarAcquire) 
         return false;
       // For other kinds of barriers, check by pretending we
       // are them, and seeing if we can be removed.
-      else
+      else 
         return post_store_load_barrier((const MemBarNode*)x);
     }
 
     // Delicate code to detect case of an upcoming fastlock block
-    if( x->is_If() && x->req() > 1 &&
-        !C->node_arena()->contains(x) ) { // Unmatched old-space only
+    if( x->is_If() && x->req() > 1 && 
+	!C->node_arena()->contains(x) ) { // Unmatched old-space only
       Node *iff = x;
       Node *bol = iff->in(1);
       // The iff might be some random subclass of If or bol might be Con-Top
@@ -2093,12 +2084,12 @@ State::~State() {
 
 #ifndef PRODUCT
 //---------------------------dump----------------------------------------------
-void State::dump() {
+void State::dump() { 
   tty->print("\n");
-  dump(0);
+  dump(0); 
 }
 
-void State::dump(int depth) {
+void State::dump(int depth) { 
   for( int j = 0; j < depth; j++ )
     tty->print("   ");
   tty->print("--N: ");
@@ -2111,7 +2102,7 @@ void State::dump(int depth) {
         tty->print("   ");
         assert(_cost[i] != max_juint, "cost must be a valid value");
         assert(_rule[i] < _last_Mach_Node, "rule[i] must be valid rule");
-        tty->print_cr("%s  %d  %s",
+        tty->print_cr("%s  %d  %s", 
                       ruleName[i], _cost[i], ruleName[_rule[i]] );
       }
   tty->print_cr("");
@@ -2121,3 +2112,4 @@ void State::dump(int depth) {
       _kids[i]->dump(depth+1);
 }
 #endif
+

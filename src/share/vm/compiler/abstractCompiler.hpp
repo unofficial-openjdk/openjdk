@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 typedef void (*initializer)(void);
@@ -44,18 +47,18 @@ class AbstractCompiler : public CHeapObj {
 
   // Missing feature tests
   virtual bool supports_native()                 { return true; }
-  virtual bool supports_osr   ()                 { return true; }
+  virtual bool supports_osr   ()                 { return true; } 
 #if defined(TIERED) || ( !defined(COMPILER1) && !defined(COMPILER2))
-  virtual bool is_c1   ()                        { return false; }
-  virtual bool is_c2   ()                        { return false; }
+  virtual bool is_c1   ()                        { return false; } 
+  virtual bool is_c2   ()                        { return false; } 
 #else
 #ifdef COMPILER1
-  bool is_c1   ()                                { return true; }
-  bool is_c2   ()                                { return false; }
+  bool is_c1   ()                                { return true; } 
+  bool is_c2   ()                                { return false; } 
 #endif // COMPILER1
 #ifdef COMPILER2
-  bool is_c1   ()                                { return false; }
-  bool is_c2   ()                                { return true; }
+  bool is_c1   ()                                { return false; } 
+  bool is_c2   ()                                { return true; } 
 #endif // COMPILER2
 #endif // TIERED
 
@@ -69,11 +72,11 @@ class AbstractCompiler : public CHeapObj {
 
   // Compilation entry point for methods
   virtual void compile_method(ciEnv* env,
-                              ciMethod* target,
-                              int entry_bci) {
+			      ciMethod* target,
+			      int entry_bci) {
     ShouldNotReachHere();
   }
-
+  
 
   // Print compilation timers and statistics
   virtual void print_timers() {

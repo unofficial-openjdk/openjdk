@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class  CodeComments;
@@ -44,7 +47,7 @@ public:
   // always dangerous and suspect.
 
   enum { frame_never_safe = -1 };
-
+     
 private:
   int _values[max_Entries];
 
@@ -164,9 +167,9 @@ class CodeSection VALUE_OBJ_CLASS_SPEC {
   bool allocates2(address pc) const { return pc >= _start && pc <= _limit; }
 
   void    set_end(address pc)       { assert(allocates2(pc),""); _end = pc; }
-  void    set_mark(address pc)      { assert(contains2(pc),"not in codeBuffer");
+  void    set_mark(address pc)      { assert(contains2(pc),"not in codeBuffer"); 
                                       _mark = pc; }
-  void    set_mark_off(int offset)  { assert(contains2(offset+_start),"not in codeBuffer");
+  void    set_mark_off(int offset)  { assert(contains2(offset+_start),"not in codeBuffer"); 
                                       _mark = offset + _start; }
   void    set_mark()                { _mark = _end; }
   void    clear_mark()              { _mark = NULL; }
@@ -279,7 +282,7 @@ class CodeBuffer: public StackObj {
   typedef int csize_t;  // code size type; would be size_t except for history
   enum {
     // Here is the list of all possible sections, in order of ascending address.
-    SECT_INSTS,               // Executable instructions.
+    SECT_INSTS,		      // Executable instructions.
     SECT_STUBS,               // Outbound trampolines for supporting call sites.
     SECT_CONSTS,              // Non-instruction data:  Floats, jump tables, etc.
     SECT_LIMIT, SECT_NONE = -1
@@ -299,7 +302,7 @@ class CodeBuffer: public StackObj {
 
   CodeBuffer*  _before_expand;  // dead buffer, from before the last expansion
 
-  BufferBlob*  _blob;           // optional buffer in CodeCache for generated code
+  BufferBlob*  _blob;		// optional buffer in CodeCache for generated code
   address      _total_start;    // first address of combined memory buffer
   csize_t      _total_size;     // size in bytes of combined memory buffer
 
@@ -308,7 +311,7 @@ class CodeBuffer: public StackObj {
   OopRecorder  _default_oop_recorder;  // override with initialize_oop_recorder
   Arena*       _overflow_arena;
 
-  address      _decode_begin;   // start address for decode
+  address      _decode_begin;	// start address for decode
   address      decode_begin();
 
   void initialize_misc(const char * name) {
@@ -445,13 +448,13 @@ class CodeBuffer: public StackObj {
   bool    is_pure() const               { return code_size() == total_code_size(); }
 
   // size in bytes of output so far in the insts sections
-  csize_t code_size() const             { return _insts.size(); }
+  csize_t code_size() const             { return _insts.size(); } 
 
   // same as code_size(), except that it asserts there is no non-code here
   csize_t pure_code_size() const        { assert(is_pure(), "no non-code");
                                           return code_size(); }
   // capacity in bytes of the insts sections
-  csize_t code_capacity() const         { return _insts.capacity(); }
+  csize_t code_capacity() const         { return _insts.capacity(); } 
 
   // number of bytes remaining in the insts section
   csize_t code_remaining() const        { return _insts.remaining(); }
@@ -520,9 +523,9 @@ class CodeBuffer: public StackObj {
  public:
   // Printing / Decoding
   // decodes from decode_begin() to code_end() and sets decode_begin to end
-  void    decode();
-  void    decode_all();         // decodes all the code
-  void    skip_decode();        // sets decode_begin to code_end();
+  void    decode();		
+  void    decode_all();		// decodes all the code
+  void    skip_decode();	// sets decode_begin to code_end();
   void    print();
 #endif
 
@@ -540,3 +543,4 @@ inline bool CodeSection::maybe_expand_to_ensure_remaining(csize_t amount) {
   if (remaining() < amount) { _outer->expand(this, amount); return true; }
   return false;
 }
+

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // The resource area holds temporary data structures in the VM.
@@ -39,20 +42,20 @@ class ResourceArea: public Arena {
   friend class ResourceMark;
   friend class DeoptResourceMark;
   debug_only(int _nesting;)             // current # of nested ResourceMarks
-  debug_only(static int _warned;)       // to suppress multiple warnings
-
+  debug_only(static int _warned;)  	// to suppress multiple warnings
+  	
 public:
   ResourceArea() {
-    debug_only(_nesting = 0;)
+    debug_only(_nesting = 0;)    
   }
 
   ResourceArea(size_t init_size) : Arena(init_size) {
-    debug_only(_nesting = 0;);
+    debug_only(_nesting = 0;);    
   }
 
   char* allocate_bytes(size_t size) {
 #ifdef ASSERT
-    if (_nesting < 1 && !_warned++)
+    if (_nesting < 1 && !_warned++) 
       fatal("memory leak: allocating without ResourceMark");
     if (UseMallocOnly) {
       // use malloc, but save pointer in res. area for later freeing
@@ -63,7 +66,7 @@ public:
     return (char*)Amalloc(size);
   }
 
-  debug_only(int nesting() const { return _nesting; });
+  debug_only(int nesting() const { return _nesting; });  
 };
 
 
@@ -72,8 +75,8 @@ public:
 // when the destructor is called.  Typically used as a local variable.
 class ResourceMark: public StackObj {
 protected:
-  ResourceArea *_area;          // Resource area to stack allocate
-  Chunk *_chunk;                // saved arena chunk
+  ResourceArea *_area;		// Resource area to stack allocate
+  Chunk *_chunk;		// saved arena chunk
   char *_hwm, *_max;
   NOT_PRODUCT(size_t _size_in_bytes;)
 
@@ -84,7 +87,7 @@ protected:
     _max= _area->_max;
     NOT_PRODUCT(_size_in_bytes = _area->size_in_bytes();)
     debug_only(_area->_nesting++;)
-    assert( _area->_nesting > 0, "must stack allocate RMs" );
+    assert( _area->_nesting > 0, "must stack allocate RMs" ); 
   }
 
  public:
@@ -100,19 +103,19 @@ protected:
 
   ResourceMark()               { initialize(Thread::current()); }
 
-  ResourceMark( ResourceArea *r ) :
+  ResourceMark( ResourceArea *r ) : 
     _area(r), _chunk(r->_chunk), _hwm(r->_hwm), _max(r->_max) {
     NOT_PRODUCT(_size_in_bytes = _area->size_in_bytes();)
     debug_only(_area->_nesting++;)
-    assert( _area->_nesting > 0, "must stack allocate RMs" );
+    assert( _area->_nesting > 0, "must stack allocate RMs" ); 
   }
 
-  void reset_to_mark() {
+  void reset_to_mark() { 
     if (UseMallocOnly) free_malloced_objects();
 
-    if( _chunk->next() )        // Delete later chunks
+    if( _chunk->next() ) 	// Delete later chunks
       _chunk->next_chop();
-    _area->_chunk = _chunk;     // Roll back arena to saved chunk
+    _area->_chunk = _chunk;	// Roll back arena to saved chunk
     _area->_hwm = _hwm;
     _area->_max = _max;
 
@@ -121,13 +124,13 @@ protected:
     _area->set_size_in_bytes(size_in_bytes());
   }
 
-  ~ResourceMark() {
+  ~ResourceMark() { 
     assert( _area->_nesting > 0, "must stack allocate RMs" );
     debug_only(_area->_nesting--;)
-    reset_to_mark();
+    reset_to_mark(); 
   }
 
-
+  
  private:
   void free_malloced_objects()                                         PRODUCT_RETURN;
   size_t size_in_bytes()       NOT_PRODUCT({ return _size_in_bytes; }) PRODUCT_RETURN0;
@@ -164,8 +167,8 @@ protected:
 
 class DeoptResourceMark: public CHeapObj {
 protected:
-  ResourceArea *_area;          // Resource area to stack allocate
-  Chunk *_chunk;                // saved arena chunk
+  ResourceArea *_area;		// Resource area to stack allocate
+  Chunk *_chunk;		// saved arena chunk
   char *_hwm, *_max;
   NOT_PRODUCT(size_t _size_in_bytes;)
 
@@ -176,7 +179,7 @@ protected:
     _max= _area->_max;
     NOT_PRODUCT(_size_in_bytes = _area->size_in_bytes();)
     debug_only(_area->_nesting++;)
-    assert( _area->_nesting > 0, "must stack allocate RMs" );
+    assert( _area->_nesting > 0, "must stack allocate RMs" ); 
   }
 
  public:
@@ -192,19 +195,19 @@ protected:
 
   DeoptResourceMark()               { initialize(Thread::current()); }
 
-  DeoptResourceMark( ResourceArea *r ) :
+  DeoptResourceMark( ResourceArea *r ) : 
     _area(r), _chunk(r->_chunk), _hwm(r->_hwm), _max(r->_max) {
     NOT_PRODUCT(_size_in_bytes = _area->size_in_bytes();)
     debug_only(_area->_nesting++;)
-    assert( _area->_nesting > 0, "must stack allocate RMs" );
+    assert( _area->_nesting > 0, "must stack allocate RMs" ); 
   }
 
-  void reset_to_mark() {
+  void reset_to_mark() { 
     if (UseMallocOnly) free_malloced_objects();
 
-    if( _chunk->next() )        // Delete later chunks
+    if( _chunk->next() ) 	// Delete later chunks
       _chunk->next_chop();
-    _area->_chunk = _chunk;     // Roll back arena to saved chunk
+    _area->_chunk = _chunk;	// Roll back arena to saved chunk
     _area->_hwm = _hwm;
     _area->_max = _max;
 
@@ -213,13 +216,13 @@ protected:
     _area->set_size_in_bytes(size_in_bytes());
   }
 
-  ~DeoptResourceMark() {
+  ~DeoptResourceMark() { 
     assert( _area->_nesting > 0, "must stack allocate RMs" );
     debug_only(_area->_nesting--;)
-    reset_to_mark();
+    reset_to_mark(); 
   }
 
-
+  
  private:
   void free_malloced_objects()                                         PRODUCT_RETURN;
   size_t size_in_bytes()       NOT_PRODUCT({ return _size_in_bytes; }) PRODUCT_RETURN0;

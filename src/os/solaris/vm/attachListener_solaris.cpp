@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -40,9 +43,9 @@
 
 // The attach mechanism on Solaris is implemented using the Doors IPC
 // mechanism. The first tool to attempt to attach causes the attach
-// listener thread to startup. This thread creats a door that is
+// listener thread to startup. This thread creats a door that is 
 // associated with a function that enqueues an operation to the attach
-// listener. The door is attached to a file in the file system so that
+// listener. The door is attached to a file in the file system so that 
 // client (tools) can locate it. To enqueue an operation to the VM the
 // client calls through the door which invokes the enqueue function in
 // this process. The credentials of the client are checked and if the
@@ -74,12 +77,12 @@ class SolarisAttachListener: AllStatic {
       _has_door_path = false;
     } else {
       strncpy(_door_path, path, PATH_MAX);
-      _door_path[PATH_MAX] = '\0';      // ensure it's nul terminated
+      _door_path[PATH_MAX] = '\0';	// ensure it's nul terminated
       _has_door_path = true;
     }
   }
 
-  static void set_door_descriptor(int dd)               { _door_descriptor = dd; }
+  static void set_door_descriptor(int dd) 		{ _door_descriptor = dd; }
 
   // mutex to protect operation list
   static mutex_t _mutex;
@@ -87,40 +90,40 @@ class SolarisAttachListener: AllStatic {
   // semaphore to wakeup listener thread
   static sema_t _wakeup;
 
-  static mutex_t* mutex()                               { return &_mutex; }
-  static sema_t* wakeup()                               { return &_wakeup; }
+  static mutex_t* mutex()				{ return &_mutex; }
+  static sema_t* wakeup()				{ return &_wakeup; }
 
   // enqueued operation list
   static SolarisAttachOperation* _head;
   static SolarisAttachOperation* _tail;
 
-  static SolarisAttachOperation* head()                 { return _head; }
-  static void set_head(SolarisAttachOperation* head)    { _head = head; }
+  static SolarisAttachOperation* head()			{ return _head; }
+  static void set_head(SolarisAttachOperation* head) 	{ _head = head; }
 
   static SolarisAttachOperation* tail()                 { return _tail; }
   static void set_tail(SolarisAttachOperation* tail)    { _tail = tail; }
 
-  // create the door
+  // create the door 
   static int create_door();
 
  public:
   enum {
-    ATTACH_PROTOCOL_VER = 1                             // protocol version
+    ATTACH_PROTOCOL_VER	= 1				// protocol version
   };
   enum {
-    ATTACH_ERROR_BADREQUEST     = 100,                  // error code returned by
-    ATTACH_ERROR_BADVERSION     = 101,                  // the door call
-    ATTACH_ERROR_RESOURCE       = 102,
-    ATTACH_ERROR_INTERNAL       = 103,
-    ATTACH_ERROR_DENIED         = 104
+    ATTACH_ERROR_BADREQUEST 	= 100,			// error code returned by
+    ATTACH_ERROR_BADVERSION	= 101,			// the door call
+    ATTACH_ERROR_RESOURCE	= 102,
+    ATTACH_ERROR_INTERNAL	= 103,
+    ATTACH_ERROR_DENIED		= 104
   };
 
   // initialize the listener
   static int init();
 
-  static bool has_door_path()                           { return _has_door_path; }
-  static char* door_path()                              { return _door_path; }
-  static int door_descriptor()                          { return _door_descriptor; }
+  static bool has_door_path() 				{ return _has_door_path; }
+  static char* door_path()				{ return _door_path; }
+  static int door_descriptor()				{ return _door_descriptor; }
 
   // enqueue an operation
   static void enqueue(SolarisAttachOperation* op);
@@ -142,15 +145,15 @@ class SolarisAttachOperation: public AttachOperation {
   int _socket;
 
   // linked list support
-  SolarisAttachOperation* _next;
+  SolarisAttachOperation* _next;	
 
   SolarisAttachOperation* next()                         { return _next; }
   void set_next(SolarisAttachOperation* next)            { _next = next; }
-
+ 
  public:
   void complete(jint res, bufferedStream* st);
 
-  int socket() const                                     { return _socket; }
+  int socket() const					 { return _socket; }
   void set_socket(int s)                                 { _socket = s; }
 
   SolarisAttachOperation(char* name) : AttachOperation(name) {
@@ -196,7 +199,7 @@ class ArgumentIterator : public StackObj {
 // match this process. Returns 0 if credentials okay, otherwise -1.
 static int check_credentials() {
   door_cred_t cred_info;
-
+      
   // get client credentials
   if (door_cred(&cred_info) == -1) {
     return -1; // unable to get them
@@ -230,7 +233,7 @@ static SolarisAttachOperation* create_operation(char* argp, size_t arg_size, int
     return NULL;   // no ver or not null terminated
   }
 
-  // Use supporting class to iterate over the buffer
+  // Use supporting class to iterate over the buffer 
   ArgumentIterator args(argp, arg_size);
 
   // First check the protocol version
@@ -240,7 +243,7 @@ static SolarisAttachOperation* create_operation(char* argp, size_t arg_size, int
   }
   if (atoi(ver) != SolarisAttachListener::ATTACH_PROTOCOL_VER) {
     *err = SolarisAttachListener::ATTACH_ERROR_BADVERSION;
-    return NULL;
+    return NULL; 
   }
 
   // Get command name and create the operation
@@ -257,7 +260,7 @@ static SolarisAttachOperation* create_operation(char* argp, size_t arg_size, int
       op->set_arg(i, NULL);
     } else {
       if (strlen(arg) > AttachOperation::arg_length_max) {
-        delete op;
+ 	delete op;
         return NULL;
       }
       op->set_arg(i, arg);
@@ -265,7 +268,7 @@ static SolarisAttachOperation* create_operation(char* argp, size_t arg_size, int
   }
 
   // return operation
-  *err = 0;
+  *err = 0;	
   return op;
 }
 
@@ -282,7 +285,7 @@ extern "C" {
     int return_fd = -1;
     SolarisAttachOperation* op = NULL;
 
-    // no listener
+    // no listener 
     jint res = 0;
     if (!AttachListener::is_initialized()) {
       // how did we get here?
@@ -293,7 +296,7 @@ extern "C" {
     // check client credentials
     if (res == 0) {
       if (check_credentials() != 0) {
-        res = (jint)SolarisAttachListener::ATTACH_ERROR_DENIED;
+	res = (jint)SolarisAttachListener::ATTACH_ERROR_DENIED;
       }
     }
 
@@ -301,11 +304,11 @@ extern "C" {
     // load a diagnostic library
     if (res == 0 && is_error_reported()) {
       if (ShowMessageBoxOnError) {
-        // TBD - support loading of diagnostic library here
+	// TBD - support loading of diagnostic library here
       }
 
       // can't enqueue operation after fatal error
-      res = (jint)SolarisAttachListener::ATTACH_ERROR_RESOURCE;
+      res = (jint)SolarisAttachListener::ATTACH_ERROR_RESOURCE; 
     }
 
     // create the operation
@@ -316,17 +319,17 @@ extern "C" {
     }
 
     // create a pair of connected sockets. Store the file descriptor
-    // for one end in the operation and enqueue the operation. The
+    // for one end in the operation and enqueue the operation. The 
     // file descriptor for the other end wil be returned to the client.
     if (res == 0) {
       int s[2];
       if (socketpair(PF_UNIX, SOCK_STREAM, 0, s) < 0) {
-        delete op;
-        res = (jint)SolarisAttachListener::ATTACH_ERROR_RESOURCE;
+	delete op;
+	res = (jint)SolarisAttachListener::ATTACH_ERROR_RESOURCE;
       } else {
-        op->set_socket(s[0]);
+	op->set_socket(s[0]);
         return_fd = s[1];
-        SolarisAttachListener::enqueue(op);
+	SolarisAttachListener::enqueue(op);
       }
     }
 
@@ -393,7 +396,7 @@ int SolarisAttachListener::create_door() {
       ::fdetach(door_path);
       res = ::fattach(dd, door_path);
     }
-    if (res == -1) {
+    if (res == -1) {	
       ::door_revoke(dd);
       dd = -1;
     }
@@ -450,7 +453,7 @@ SolarisAttachOperation* SolarisAttachListener::dequeue() {
     if (op != NULL) {
       set_head(op->next());
       if (head() == NULL) {
-        set_tail(NULL);
+	set_tail(NULL);
       }
     }
 
@@ -460,7 +463,7 @@ SolarisAttachOperation* SolarisAttachListener::dequeue() {
     // if we got an operation when return it.
     if (op != NULL) {
       return op;
-    }
+    } 
   }
 }
 
@@ -481,7 +484,7 @@ void SolarisAttachListener::enqueue(SolarisAttachOperation* op) {
 
   // wakeup the attach listener
   RESTARTABLE(::sema_post(wakeup()), res);
-  assert(res == 0, "sema_post failed");
+  assert(res == 0, "sema_post failed"); 
 
   // unlock
   os::Solaris::mutex_unlock(mutex());
@@ -502,7 +505,7 @@ static int write_fully(int s, char* buf, int len) {
   while (len > 0);
   return 0;
 }
-
+            
 // Complete an operation by sending the operation result and any result
 // output to the client. At this time the socket is in blocking mode so
 // potentially we can block if there is a lot of data and the client is
@@ -525,7 +528,7 @@ void SolarisAttachOperation::complete(jint res, bufferedStream* st) {
     sprintf(msg, "%d\n", res);
     int rc = write_fully(this->socket(), msg, strlen(msg));
 
-    // write any result data
+    // write any result data 
     if (rc == 0) {
       write_fully(this->socket(), (char*) st->base(), st->size());
       ::shutdown(this->socket(), 2);
@@ -576,7 +579,7 @@ int AttachListener::pd_init() {
 }
 
 // Attach Listener is started lazily except in the case when
-// +ReduseSignalUsage is used
+// +ReduseSignalUsage is used 
 bool AttachListener::init_at_startup() {
   if (ReduceSignalUsage) {
     return true;
@@ -589,7 +592,7 @@ bool AttachListener::init_at_startup() {
 // or /tmp then this is the trigger to start the attach mechanism
 bool AttachListener::is_init_trigger() {
   if (init_at_startup() || is_initialized()) {
-    return false;               // initialized at startup or already initialized
+    return false;		// initialized at startup or already initialized
   }
   char fn[32];
   sprintf(fn, ".attach_pid%d", os::current_process_id());
@@ -653,7 +656,7 @@ AttachOperationFunctionInfo* AttachListener::pd_find_operation(const char* name)
   return NULL;
 }
 
-// Solaris specific global flag set. Currently, we support only
+// Solaris specific global flag set. Currently, we support only 
 // changing ExtendedDTraceProbes flag.
 jint AttachListener::pd_set_flag(AttachOperation* op, outputStream* out) {
   const char* name = op->arg(0);

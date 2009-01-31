@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // these inline functions are in a separate file to break include cycles
@@ -32,7 +35,7 @@
 
 inline jlong JvmtiEventEnabled::bit_for(jvmtiEvent event_type) {
   assert(JvmtiEventController::is_valid_event_type(event_type), "invalid event type");
-  return ((jlong)1) << (event_type - TOTAL_MIN_EVENT_TYPE_VAL);
+  return ((jlong)1) << (event_type - TOTAL_MIN_EVENT_TYPE_VAL);  
 }
 
 inline jlong JvmtiEventEnabled::get_bits() {
@@ -55,13 +58,13 @@ inline bool JvmtiEventEnabled::is_enabled(jvmtiEvent event_type) {
 // JvmtiEnvThreadEventEnable
 //
 
-inline bool JvmtiEnvThreadEventEnable::is_enabled(jvmtiEvent event_type) {
+inline bool JvmtiEnvThreadEventEnable::is_enabled(jvmtiEvent event_type) { 
   assert(JvmtiUtil::event_threaded(event_type), "Only thread filtered events should be tested here");
-  return _event_enabled.is_enabled(event_type);
+  return _event_enabled.is_enabled(event_type); 
 }
 
-inline void JvmtiEnvThreadEventEnable::set_user_enabled(jvmtiEvent event_type, bool enabled) {
-  _event_user_enabled.set_enabled(event_type, enabled);
+inline void JvmtiEnvThreadEventEnable::set_user_enabled(jvmtiEvent event_type, bool enabled) { 
+  _event_user_enabled.set_enabled(event_type, enabled);  
 }
 
 
@@ -70,9 +73,9 @@ inline void JvmtiEnvThreadEventEnable::set_user_enabled(jvmtiEvent event_type, b
 // JvmtiThreadEventEnable
 //
 
-inline bool JvmtiThreadEventEnable::is_enabled(jvmtiEvent event_type) {
+inline bool JvmtiThreadEventEnable::is_enabled(jvmtiEvent event_type) { 
   assert(JvmtiUtil::event_threaded(event_type), "Only thread filtered events should be tested here");
-  return _event_enabled.is_enabled(event_type);
+  return _event_enabled.is_enabled(event_type); 
 }
 
 
@@ -81,16 +84,16 @@ inline bool JvmtiThreadEventEnable::is_enabled(jvmtiEvent event_type) {
 // JvmtiEnvEventEnable
 //
 
-inline bool JvmtiEnvEventEnable::is_enabled(jvmtiEvent event_type) {
+inline bool JvmtiEnvEventEnable::is_enabled(jvmtiEvent event_type) { 
   assert(!JvmtiUtil::event_threaded(event_type), "Only non thread filtered events should be tested here");
   return _event_enabled.is_enabled(event_type);
 }
 
-inline void JvmtiEnvEventEnable::set_user_enabled(jvmtiEvent event_type, bool enabled) {
-  _event_user_enabled.set_enabled(event_type, enabled);
+inline void JvmtiEnvEventEnable::set_user_enabled(jvmtiEvent event_type, bool enabled) { 
+  _event_user_enabled.set_enabled(event_type, enabled);  
 }
 
-
+ 
 ///////////////////////////////////////////////////////////////
 //
 // JvmtiEventController
@@ -99,3 +102,4 @@ inline void JvmtiEnvEventEnable::set_user_enabled(jvmtiEvent event_type, bool en
 inline bool JvmtiEventController::is_enabled(jvmtiEvent event_type) {
   return _universal_global_event_enabled.is_enabled(event_type);
 }
+

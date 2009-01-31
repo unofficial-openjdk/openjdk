@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 /*
@@ -101,7 +104,7 @@ inline void* index_oop_from_field_offset_long(oop p, jlong field_offset) {
     if (byte_offset == (jint)byte_offset) {
       void* ptr_plus_disp = (address)p + byte_offset;
       assert((void*)p->obj_field_addr((jint)byte_offset) == ptr_plus_disp,
-             "raw [ptr+disp] must be consistent with oop::field_base");
+	     "raw [ptr+disp] must be consistent with oop::field_base");
     }
   }
 #endif
@@ -208,7 +211,7 @@ UNSAFE_ENTRY(jlong, Unsafe_GetLongVolatile(JNIEnv *env, jobject unsafe, jobject 
   {
     if (VM_Version::supports_cx8()) {
       GET_FIELD_VOLATILE(obj, offset, jlong, v);
-      return v;
+      return v; 
     }
     else {
       Handle p (THREAD, JNIHandles::resolve(obj));
@@ -305,7 +308,7 @@ DEFINE_GETSETOOP_VOLATILE(jdouble, Double);
 UNSAFE_ENTRY(void, Unsafe_SetOrderedInt(JNIEnv *env, jobject unsafe, jobject obj, jlong offset, jint x)) \
   UnsafeWrapper("Unsafe_SetOrderedInt"); \
   SET_FIELD_VOLATILE(obj, offset, jint, x); \
-UNSAFE_END
+UNSAFE_END 
 
 UNSAFE_ENTRY(void, Unsafe_SetOrderedObject(JNIEnv *env, jobject unsafe, jobject obj, jlong offset, jobject x_h))
   UnsafeWrapper("Unsafe_SetOrderedObject");
@@ -389,7 +392,7 @@ UNSAFE_ENTRY(jlong, Unsafe_GetNativeLong(JNIEnv *env, jobject unsafe, jlong addr
   t->set_doing_unsafe_access(false);
   return x;
 UNSAFE_END
-
+ 
 UNSAFE_ENTRY(void, Unsafe_SetNativeLong(JNIEnv *env, jobject unsafe, jlong addr, jlong x))
   UnsafeWrapper("Unsafe_SetNativeLong");
   JavaThread* t = JavaThread::current();
@@ -711,8 +714,8 @@ static jclass Unsafe_DefineClass(JNIEnv *env, jstring name, jbyteArray data, int
     }
 
     if (data == NULL) {
-        throw_new(env, "NullPointerException");
-        return 0;
+	throw_new(env, "NullPointerException");
+	return 0;
     }
 
     /* Work around 4153825. malloc crashes on Solaris when passed a
@@ -720,14 +723,14 @@ static jclass Unsafe_DefineClass(JNIEnv *env, jstring name, jbyteArray data, int
      */
     if (length < 0) {
         throw_new(env, "ArrayIndexOutOfBoundsException");
-        return 0;
+	return 0;
     }
 
     body = NEW_C_HEAP_ARRAY(jbyte, length);
 
     if (body == 0) {
         throw_new(env, "OutOfMemoryError");
-        return 0;
+	return 0;
     }
 
     env->GetByteArrayRegion(data, offset, length, body);
@@ -737,7 +740,7 @@ static jclass Unsafe_DefineClass(JNIEnv *env, jstring name, jbyteArray data, int
 
     if (name != NULL) {
         uint len = env->GetStringUTFLength(name);
-        int unicode_len = env->GetStringLength(name);
+	int unicode_len = env->GetStringLength(name);
         if (len >= sizeof(buf)) {
             utfName = NEW_C_HEAP_ARRAY(char, len + 1);
             if (utfName == NULL) {
@@ -747,18 +750,18 @@ static jclass Unsafe_DefineClass(JNIEnv *env, jstring name, jbyteArray data, int
         } else {
             utfName = buf;
         }
-        env->GetStringUTFRegion(name, 0, unicode_len, utfName);
-        //VerifyFixClassname(utfName);
-        for (uint i = 0; i < len; i++) {
-          if (utfName[i] == '.')   utfName[i] = '/';
-        }
+    	env->GetStringUTFRegion(name, 0, unicode_len, utfName);
+	//VerifyFixClassname(utfName);
+	for (uint i = 0; i < len; i++) {
+	  if (utfName[i] == '.')   utfName[i] = '/';
+	}
     } else {
-        utfName = NULL;
+	utfName = NULL;
     }
 
     result = JVM_DefineClass(env, utfName, loader, body, length, pd);
 
-    if (utfName && utfName != buf)
+    if (utfName && utfName != buf) 
         FREE_C_HEAP_ARRAY(char, utfName);
 
  free_body:
@@ -842,8 +845,8 @@ UNSAFE_END
 
 UNSAFE_ENTRY(jboolean, Unsafe_CompareAndSwapObject(JNIEnv *env, jobject unsafe, jobject obj, jlong offset, jobject e_h, jobject x_h))
   UnsafeWrapper("Unsafe_CompareAndSwapObject");
-  oop x = JNIHandles::resolve(x_h);
-  oop e = JNIHandles::resolve(e_h);
+  oop x = JNIHandles::resolve(x_h); 
+  oop e = JNIHandles::resolve(e_h); 
   oop p = JNIHandles::resolve(obj);
   intptr_t* addr = (intptr_t *)index_oop_from_field_offset_long(p, offset);
   intptr_t res = Atomic::cmpxchg_ptr((intptr_t)x, addr, (intptr_t)e);
@@ -893,14 +896,14 @@ UNSAFE_ENTRY(void, Unsafe_Unpark(JNIEnv *env, jobject unsafe, jobject jthread))
         // always be zero anyway and the value set is always the same
         p = (Parker*)addr_from_java(lp);
       } else {
-        // Grab lock if apparently null or using older version of library
-        MutexLocker mu(Threads_lock);
+        // Grab lock if apparently null or using older version of library 
+        MutexLocker mu(Threads_lock);  
         java_thread = JNIHandles::resolve_non_null(jthread);
         if (java_thread != NULL) {
           JavaThread* thr = java_lang_Thread::thread(java_thread);
           if (thr != NULL) {
             p = thr->parker();
-            if (p != NULL) { // Bind to Java thread for next time.
+            if (p != NULL) { // Bind to Java thread for next time. 
               java_lang_Thread::set_park_event(java_thread, addr_to_java(p));
             }
           }

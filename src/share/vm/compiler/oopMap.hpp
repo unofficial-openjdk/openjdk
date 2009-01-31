@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,10 +22,10 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
-// Interface for generating the frame map for compiled code.  A frame map
+// Interface for generating the frame map for compiled code.  A frame map 
 // describes for a specific pc whether each register and frame stack slot is:
 //   Oop         - A GC root for current frame
 //   Value       - Live non-oop, non-float value: int, either half of double
@@ -48,7 +51,7 @@ public:
   // Constants
   enum { type_bits                = 6,
          register_bits            = BitsPerShort - type_bits };
-
+ 
   enum { type_shift               = 0,
          register_shift           = type_bits };
 
@@ -88,18 +91,18 @@ public:
   }
 
   // Querying
-  bool is_oop()               { return mask_bits(value(), type_mask_in_place) == oop_value; }
-  bool is_value()             { return mask_bits(value(), type_mask_in_place) == value_value; }
-  bool is_dead()              { return mask_bits(value(), type_mask_in_place) == dead_value; }
-  bool is_callee_saved()      { return mask_bits(value(), type_mask_in_place) == callee_saved_value; }
-  bool is_derived_oop()       { return mask_bits(value(), type_mask_in_place) == derived_oop_value; }
+  bool is_oop()               { return mask_bits(value(), type_mask_in_place) == oop_value; } 
+  bool is_value()             { return mask_bits(value(), type_mask_in_place) == value_value; } 
+  bool is_dead()              { return mask_bits(value(), type_mask_in_place) == dead_value; } 
+  bool is_callee_saved()      { return mask_bits(value(), type_mask_in_place) == callee_saved_value; } 
+  bool is_derived_oop()       { return mask_bits(value(), type_mask_in_place) == derived_oop_value; } 
   bool is_stack_obj()         { return mask_bits(value(), type_mask_in_place) == stack_obj; }
 
-  void set_oop()              { set_value((value() & register_mask_in_place) | oop_value); }
-  void set_value()            { set_value((value() & register_mask_in_place) | value_value); }
-  void set_dead()             { set_value((value() & register_mask_in_place) | dead_value); }
-  void set_callee_saved()     { set_value((value() & register_mask_in_place) | callee_saved_value); }
-  void set_derived_oop()      { set_value((value() & register_mask_in_place) | derived_oop_value); }
+  void set_oop()              { set_value((value() & register_mask_in_place) | oop_value); } 
+  void set_value()            { set_value((value() & register_mask_in_place) | value_value); } 
+  void set_dead()             { set_value((value() & register_mask_in_place) | dead_value); } 
+  void set_callee_saved()     { set_value((value() & register_mask_in_place) | callee_saved_value); } 
+  void set_derived_oop()      { set_value((value() & register_mask_in_place) | derived_oop_value); } 
   void set_stack_obj()        { set_value((value() & register_mask_in_place) | stack_obj); }
 
   VMReg reg() const { return VMRegImpl::as_VMReg(mask_bits(value(), register_mask_in_place) >> register_shift); }
@@ -109,7 +112,7 @@ public:
     return (p->value()  == (p->value() & register_mask));
   }
 
-  void set_reg_type(VMReg p, oop_types t) {
+  void set_reg_type(VMReg p, oop_types t) { 
     set_value((p->value() << register_shift) | t);
     assert(reg() == p, "sanity check" );
     assert(type() == t, "sanity check" );
@@ -137,7 +140,7 @@ class OopMap: public ResourceObj {
   friend class OopMapStream;
   friend class VMStructs;
  private:
-  int  _pc_offset;
+  int  _pc_offset; 
   int  _omv_count;
   int  _omv_data_size;
   unsigned char* _omv_data;
@@ -169,7 +172,7 @@ class OopMap: public ResourceObj {
 
   // Check to avoid double insertion
   debug_only(OopMapValue::oop_types locs_used( int indx ) { return _locs_used[indx]; })
-
+  
   // Construction
   // frame_size units are stack-slots (4 bytes) NOT intptr_t; we can name odd
   // slots to hold 4-byte values like ints and floats in the LP64 build.
@@ -192,8 +195,7 @@ class OopMap: public ResourceObj {
   }
 
   // Printing
-  void print_on(outputStream* st) const PRODUCT_RETURN;
-  void print() const { print_on(tty); }
+  void print() const PRODUCT_RETURN;
 };
 
 
@@ -225,30 +227,29 @@ class OopMapSet : public ResourceObj {
   // Collect OopMaps.
   void add_gc_map(int pc, OopMap* map);
 
-  // Returns the only oop map. Used for reconstructing
+  // Returns the only oop map. Used for reconstructing 
   // Adapter frames during deoptimization
   OopMap* singular_oop_map();
 
   // returns OopMap in that is anchored to the pc
-  OopMap* find_map_at_offset(int pc_offset) const;
+  OopMap* find_map_at_offset(int pc_offset) const; 
 
   int heap_size() const;
   void copy_to(address addr);
 
   // Iterates through frame for a compiled method
   static void oops_do            (const frame* fr,
-                                  const RegisterMap* reg_map, OopClosure* f);
+				  const RegisterMap* reg_map, OopClosure* f); 
   static void update_register_map(const frame* fr, RegisterMap *reg_map);
 
   // Iterates through frame for a compiled method for dead ones and values, too
   static void all_do(const frame* fr, const RegisterMap* reg_map,
                      OopClosure* oop_fn,
-                     void derived_oop_fn(oop* base, oop* derived),
+		     void derived_oop_fn(oop* base, oop* derived),
                      OopClosure* value_fn, OopClosure* dead_fn);
 
   // Printing
-  void print_on(outputStream* st) const PRODUCT_RETURN;
-  void print() const { print_on(tty); }
+  void print() const PRODUCT_RETURN;
 };
 
 
@@ -280,12 +281,12 @@ class OopMapStream : public StackObj {
 class DerivedPointerTable : public AllStatic {
   friend class VMStructs;
  private:
-   static GrowableArray<DerivedPointerEntry*>* _list;
+   static GrowableArray<DerivedPointerEntry*>* _list; 
    static bool _active;                      // do not record pointers for verify pass etc.
- public:
+ public:  
   static void clear();                       // Called before scavenge/GC
   static void add(oop *derived, oop *base);  // Called during scavenge/GC
-  static void update_pointers();             // Called after  scavenge/GC
+  static void update_pointers();             // Called after  scavenge/GC  
   static bool is_empty()                     { return _list == NULL || _list->is_empty(); }
   static bool is_active()                    { return _active; }
   static void set_active(bool value)         { _active = value; }

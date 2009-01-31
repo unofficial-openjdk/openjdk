@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This is the source code for the subprocess forked by the Simple
@@ -589,7 +592,7 @@ main(int argc, char **argv)
     if (!readMessage(&msg)) {
       endProcess();
     }
-
+    
 #ifdef DEBUGGING
     cerr << "Main thread read message: " << msg.type << endl;
 #endif
@@ -843,7 +846,7 @@ main(int argc, char **argv)
               ioBuf->writeSpace();
               ioBuf->writeAddress((void*) curDebugEvent->u.Exception.ExceptionRecord.ExceptionInformation[1]);
               break;
-
+              
             default:
               break;
             }

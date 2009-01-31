@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.remote;
@@ -65,7 +65,7 @@ public interface RemoteDebugger extends Remote {
   public long      getJIntSize() throws RemoteException;
   public long      getJLongSize() throws RemoteException;
   public long      getJShortSize() throws RemoteException;
-  public boolean   areThreadsEqual(long addrOrId1, boolean isAddress1,
+  public boolean   areThreadsEqual(long addrOrId1, boolean isAddress1, 
                                    long addrOrId2, boolean isAddress2) throws RemoteException;
   public int       getThreadHashCode(long addrOrId, boolean isAddress) throws RemoteException;
   public long[]    getThreadIntegerRegisterSet(long addrOrId, boolean isAddress) throws RemoteException;

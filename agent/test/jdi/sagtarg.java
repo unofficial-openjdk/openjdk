@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This is the target debuggee for sagtest.java.
@@ -51,7 +51,7 @@ class sagtarg extends MySuper {
         }
         System.out.println("Goodbye from sagtarg!");
     }
-
+    
     public void myMethod() {
     }
 }

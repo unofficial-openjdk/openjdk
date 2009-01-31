@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -30,7 +33,7 @@ inline const char* PSOldGen::select_name() {
 }
 
 PSOldGen::PSOldGen(ReservedSpace rs, size_t alignment,
-                   size_t initial_size, size_t min_size, size_t max_size,
+		   size_t initial_size, size_t min_size, size_t max_size,
                    const char* perf_data_name, int level):
   _name(select_name()), _init_gen_size(initial_size), _min_gen_size(min_size),
   _max_gen_size(max_size)
@@ -46,7 +49,7 @@ PSOldGen::PSOldGen(size_t initial_size,
 {}
 
 void PSOldGen::initialize(ReservedSpace rs, size_t alignment,
-                          const char* perf_data_name, int level) {
+			  const char* perf_data_name, int level) {
   initialize_virtual_space(rs, alignment);
   initialize_work(perf_data_name, level);
   // The old gen can grow to gen_size_limit().  _reserve reflects only
@@ -70,7 +73,7 @@ void PSOldGen::initialize_work(const char* perf_data_name, int level) {
 
   MemRegion limit_reserved((HeapWord*)virtual_space()->low_boundary(),
     heap_word_size(_max_gen_size));
-  assert(limit_reserved.byte_size() == _max_gen_size,
+  assert(limit_reserved.byte_size() == _max_gen_size, 
     "word vs bytes confusion");
   //
   // Object start stuff
@@ -86,7 +89,7 @@ void PSOldGen::initialize_work(const char* perf_data_name, int level) {
   //
 
   MemRegion cmr((HeapWord*)virtual_space()->low(),
-                (HeapWord*)virtual_space()->high());
+		(HeapWord*)virtual_space()->high());
   Universe::heap()->barrier_set()->resize_covered_region(cmr);
 
   CardTableModRefBS* _ct = (CardTableModRefBS*)Universe::heap()->barrier_set();
@@ -108,7 +111,7 @@ void PSOldGen::initialize_work(const char* perf_data_name, int level) {
   //
 
   _object_space = new MutableSpace();
-
+  
   if (_object_space == NULL)
     vm_exit_during_initialization("Could not allocate an old gen space");
 
@@ -124,7 +127,7 @@ void PSOldGen::initialize_work(const char* perf_data_name, int level) {
 
   // Generation Counters, generation 'level', 1 subspace
   _gen_counters = new PSGenerationCounters(perf_data_name, level, 1,
-                                           virtual_space());
+					   virtual_space());
   _space_counters = new SpaceCounters(perf_data_name, 0,
                                       virtual_space()->reserved_size(),
                                       _object_space, _gen_counters);
@@ -242,8 +245,8 @@ bool PSOldGen::expand_by(size_t bytes) {
   if (result && Verbose && PrintGC) {
     size_t new_mem_size = virtual_space()->committed_size();
     size_t old_mem_size = new_mem_size - bytes;
-    gclog_or_tty->print_cr("Expanding %s from " SIZE_FORMAT "K by "
-                                       SIZE_FORMAT "K to "
+    gclog_or_tty->print_cr("Expanding %s from " SIZE_FORMAT "K by " 
+                                       SIZE_FORMAT "K to " 
                                        SIZE_FORMAT "K",
                     name(), old_mem_size/K, bytes/K, new_mem_size/K);
   }
@@ -277,8 +280,8 @@ void PSOldGen::shrink(size_t bytes) {
     if (Verbose && PrintGC) {
       size_t new_mem_size = virtual_space()->committed_size();
       size_t old_mem_size = new_mem_size + bytes;
-      gclog_or_tty->print_cr("Shrinking %s from " SIZE_FORMAT "K by "
-                                         SIZE_FORMAT "K to "
+      gclog_or_tty->print_cr("Shrinking %s from " SIZE_FORMAT "K by " 
+                                         SIZE_FORMAT "K to " 
                                          SIZE_FORMAT "K",
                       name(), old_mem_size/K, bytes/K, new_mem_size/K);
     }
@@ -341,7 +344,7 @@ void PSOldGen::resize(size_t desired_free_space) {
 // all heap related data structures, we may cause program failures.
 void PSOldGen::post_resize() {
   // First construct a memregion representing the new size
-  MemRegion new_memregion((HeapWord*)virtual_space()->low(),
+  MemRegion new_memregion((HeapWord*)virtual_space()->low(), 
     (HeapWord*)virtual_space()->high());
   size_t new_word_size = new_memregion.word_size();
 
@@ -356,7 +359,7 @@ void PSOldGen::post_resize() {
     // This cannot be safely tested for, as allocation may be taking
     // place.
     MemRegion mangle_region(object_space()->end(), virtual_space_high);
-    object_space()->mangle_region(mangle_region);
+    object_space()->mangle_region(mangle_region); 
   }
 
   // ALWAYS do this last!!
@@ -366,7 +369,7 @@ void PSOldGen::post_resize() {
     "Sanity");
 }
 
-size_t PSOldGen::gen_size_limit() {
+size_t PSOldGen::gen_size_limit() { 
   return _max_gen_size;
 }
 
@@ -389,16 +392,16 @@ void PSOldGen::print() const { print_on(tty);}
 void PSOldGen::print_on(outputStream* st) const {
   st->print(" %-15s", name());
   if (PrintGCDetails && Verbose) {
-    st->print(" total " SIZE_FORMAT ", used " SIZE_FORMAT,
+    st->print(" total " SIZE_FORMAT ", used " SIZE_FORMAT, 
                 capacity_in_bytes(), used_in_bytes());
   } else {
-    st->print(" total " SIZE_FORMAT "K, used " SIZE_FORMAT "K",
+    st->print(" total " SIZE_FORMAT "K, used " SIZE_FORMAT "K", 
                 capacity_in_bytes()/K, used_in_bytes()/K);
   }
   st->print_cr(" [" INTPTR_FORMAT ", " INTPTR_FORMAT ", " INTPTR_FORMAT ")",
-                virtual_space()->low_boundary(),
-                virtual_space()->high(),
-                virtual_space()->high_boundary());
+		virtual_space()->low_boundary(),
+		virtual_space()->high(),
+		virtual_space()->high_boundary());
 
   st->print("  object"); object_space()->print_on(st);
 }
@@ -423,17 +426,17 @@ void PSOldGen::update_counters() {
 #ifndef PRODUCT
 
 void PSOldGen::space_invariants() {
-  assert(object_space()->end() == (HeapWord*) virtual_space()->high(),
+  assert(object_space()->end() == (HeapWord*) virtual_space()->high(), 
     "Space invariant");
-  assert(object_space()->bottom() == (HeapWord*) virtual_space()->low(),
+  assert(object_space()->bottom() == (HeapWord*) virtual_space()->low(), 
     "Space invariant");
-  assert(virtual_space()->low_boundary() <= virtual_space()->low(),
+  assert(virtual_space()->low_boundary() <= virtual_space()->low(), 
     "Space invariant");
-  assert(virtual_space()->high_boundary() >= virtual_space()->high(),
+  assert(virtual_space()->high_boundary() >= virtual_space()->high(), 
     "Space invariant");
-  assert(virtual_space()->low_boundary() == (char*) _reserved.start(),
+  assert(virtual_space()->low_boundary() == (char*) _reserved.start(), 
     "Space invariant");
-  assert(virtual_space()->high_boundary() == (char*) _reserved.end(),
+  assert(virtual_space()->high_boundary() == (char*) _reserved.end(), 
     "Space invariant");
   assert(virtual_space()->committed_size() <= virtual_space()->reserved_size(),
     "Space invariant");

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,34 +22,20 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
 #include "incls/_loopnode.cpp.incl"
 
 //=============================================================================
-//------------------------------is_loop_iv-------------------------------------
-// Determine if a node is Counted loop induction variable.
-// The method is declared in node.hpp.
-const Node* Node::is_loop_iv() const {
-  if (this->is_Phi() && !this->as_Phi()->is_copy() &&
-      this->as_Phi()->region()->is_CountedLoop() &&
-      this->as_Phi()->region()->as_CountedLoop()->phi() == this) {
-    return this;
-  } else {
-    return NULL;
-  }
-}
-
-//=============================================================================
 //------------------------------dump_spec--------------------------------------
 // Dump special per-node info
 #ifndef PRODUCT
-void LoopNode::dump_spec(outputStream *st) const {
-  if( is_inner_loop () ) st->print( "inner " );
-  if( is_partial_peel_loop () ) st->print( "partial_peel " );
-  if( partial_peel_has_failed () ) st->print( "partial_peel_failed " );
+void LoopNode::dump_spec() const {
+  if( is_inner_loop () ) tty->print( "inner " );
+  if( is_partial_peel_loop () ) tty->print( "partial_peel " );
+  if( partial_peel_has_failed () ) tty->print( "partial_peel_failed " );
 }
 #endif
 
@@ -278,8 +267,6 @@ Node *PhaseIdealLoop::is_counted_loop( Node *x, IdealLoopTree *loop ) {
   // '>' for count-down loops.  If the condition is inverted and we will
   // be rolling through MININT to MAXINT, then bail out.
 
-  C->print_method("Before CountedLoop", 3);
-
   // Check for SafePoint on backedge and remove
   Node *sfpt = x->in(LoopNode::LoopBackControl);
   if( sfpt->Opcode() == Op_SafePoint && is_deleteable_safept(sfpt)) {
@@ -478,9 +465,6 @@ Node *PhaseIdealLoop::is_counted_loop( Node *x, IdealLoopTree *loop ) {
 
   // Free up intermediate goo
   _igvn.remove_dead_node(hook);
-
-  C->print_method("After CountedLoop", 3);
-
   // Return trip counter
   return trip_count;
 }
@@ -508,16 +492,16 @@ Node *CountedLoopNode::Ideal(PhaseGVN *phase, bool can_reshape) {
 //------------------------------dump_spec--------------------------------------
 // Dump special per-node info
 #ifndef PRODUCT
-void CountedLoopNode::dump_spec(outputStream *st) const {
-  LoopNode::dump_spec(st);
+void CountedLoopNode::dump_spec() const {
+  LoopNode::dump_spec();
   if( stride_is_con() ) {
-    st->print("stride: %d ",stride_con());
+    tty->print("stride: %d ",stride_con());
   } else {
-    st->print("stride: not constant ");
+    tty->print("stride: not constant ");
   }
-  if( is_pre_loop () ) st->print("pre of N%d" , _main_idx );
-  if( is_main_loop() ) st->print("main of N%d", _idx );
-  if( is_post_loop() ) st->print("post of N%d", _main_idx );
+  if( is_pre_loop () ) tty->print("pre of N%d" , _main_idx );
+  if( is_main_loop() ) tty->print("main of N%d", _idx );
+  if( is_post_loop() ) tty->print("post of N%d", _main_idx );
 }
 #endif
 
@@ -730,16 +714,16 @@ const TypeInt* PhaseIdealLoop::filtered_type_at_if( Node* val, Node *if_proj) {
 //------------------------------dump_spec--------------------------------------
 // Dump special per-node info
 #ifndef PRODUCT
-void CountedLoopEndNode::dump_spec(outputStream *st) const {
+void CountedLoopEndNode::dump_spec() const {
   if( in(TestValue)->is_Bool() ) {
     BoolTest bt( test_trip()); // Added this for g++.
 
-    st->print("[");
-    bt.dump_on(st);
-    st->print("]");
+    tty->print("[");
+    bt.dump();
+    tty->print("]");
   }
-  st->print(" ");
-  IfNode::dump_spec(st);
+  tty->print(" ");
+  IfNode::dump_spec();
 }
 #endif
 
@@ -1060,8 +1044,6 @@ bool IdealLoopTree::beautify_loops( PhaseIdealLoop *phase ) {
   // Cache parts in locals for easy
   PhaseIterGVN &igvn = phase->_igvn;
 
-  phase->C->print_method("Before beautify loops", 3);
-
   igvn.hash_delete(_head);      // Yank from hash before hacking edges
 
   // Check for multiple fall-in paths.  Peel off a landing pad if need be.
@@ -1125,8 +1107,6 @@ bool IdealLoopTree::beautify_loops( PhaseIdealLoop *phase ) {
       phase->_igvn.add_users_to_worklist(l->fast_out(i));
   }
 
-  phase->C->print_method("After beautify loops", 3);
-
   // Now recursively beautify nested loops
   if( _child ) result |= _child->beautify_loops( phase );
   if( _next  ) result |= _next ->beautify_loops( phase );
@@ -1169,7 +1149,7 @@ void IdealLoopTree::allpaths_check_safepts(VectorSet &visited, Node_List &stack)
 // Given dominators, try to find loops with calls that must always be
 // executed (call dominates loop tail).  These loops do not need non-call
 // safepoints (ncsfpt).
-//
+// 
 // A complication is that a safepoint in a inner loop may be needed
 // by an outer loop. In the following, the inner loop sees it has a
 // call (block 3) on every path from the head (block 2) to the
@@ -1190,7 +1170,7 @@ void IdealLoopTree::allpaths_check_safepts(VectorSet &visited, Node_List &stack)
 //              v    +--+
 //        exit  4
 //
-//
+// 
 // This method creates a list (_required_safept) of ncsfpt nodes that must
 // be protected is created for each loop. When a ncsfpt maybe deleted, it
 // is first looked for in the lists for the outer loops of the current loop.
@@ -1226,7 +1206,7 @@ void IdealLoopTree::check_safepts(VectorSet &visited, Node_List &stack) {
     ch->check_safepts(visited, stack);
     ch = ch->_next;
   }
-
+  
   if (!_head->is_CountedLoop() && !_has_sfpt && _parent != NULL && !_irreducible) {
     bool  has_call         = false; // call on dom-path
     bool  has_local_ncsfpt = false; // ncsfpt on dom-path at this loop depth
@@ -1258,7 +1238,7 @@ void IdealLoopTree::check_safepts(VectorSet &visited, Node_List &stack) {
             // If inner loop has call on dom-path, so does outer loop
             if (nlpt->_has_sfpt) {
               has_call = true;
-              _has_sfpt = 1;
+              _has_sfpt = 1; 
               break;
             }
             // Skip to head of inner loop
@@ -1394,7 +1374,7 @@ void IdealLoopTree::counted_loop( PhaseIdealLoop *phase ) {
       }
     }
   } else if (_parent != NULL && !_irreducible) {
-    // Not a counted loop.
+    // Not a counted loop. 
     // Look for a safepoint on the idom-path to remove, preserving the first one
     bool found = false;
     Node* n = tail();
@@ -1608,7 +1588,7 @@ PhaseIdealLoop::PhaseIdealLoop( PhaseIterGVN &igvn, const PhaseIdealLoop *verify
       if (!lpt->is_counted() || !lpt->is_inner()) continue;
 
       lpt->reassociate_invariants(this);
-
+      
       // Because RCE opportunities can be masked by split_thru_phi,
       // look for RCE candidates and inhibit split_thru_phi
       // on just their loop-phi's for this pass of loop opts
@@ -2874,7 +2854,7 @@ void LoopTreeIterator::next() {
   } else {
     while (_curnt != _root && _curnt->_next == NULL) {
       _curnt = _curnt->_parent;
-    }
+    }      
     if (_curnt == _root) {
       _curnt = NULL;
       assert(done(), "must be done.");
@@ -2884,3 +2864,4 @@ void LoopTreeIterator::next() {
     }
   }
 }
+

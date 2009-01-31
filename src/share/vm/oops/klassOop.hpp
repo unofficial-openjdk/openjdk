@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,11 +22,11 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A klassOop is the C++ equivalent of a Java class.
-// Part of a klassOopDesc is a Klass which handle the
+// Part of a klassOopDesc is a Klass which handle the 
 // dispatching for the C++ method calls.
 
 //  klassOop object layout:
@@ -42,3 +45,6 @@ class klassOopDesc : public oopDesc {
   // returns the Klass part containing dispatching behavior
   Klass* klass_part()                            { return (Klass*)((address)this + klass_part_offset_in_bytes()); }
 };
+
+
+

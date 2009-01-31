@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "@(#)psCompactionManager.cpp	1.17 06/07/10 23:27:02 JVM"
+#endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -29,7 +32,7 @@ PSOldGen*            ParCompactionManager::_old_gen = NULL;
 ParCompactionManager**  ParCompactionManager::_manager_array = NULL;
 OopTaskQueueSet*     ParCompactionManager::_stack_array = NULL;
 ObjectStartArray*    ParCompactionManager::_start_array = NULL;
-ParMarkBitMap*       ParCompactionManager::_mark_bitmap = NULL;
+ParMarkBitMap*	     ParCompactionManager::_mark_bitmap = NULL;
 ChunkTaskQueueSet*   ParCompactionManager::_chunk_array = NULL;
 
 ParCompactionManager::ParCompactionManager() :
@@ -40,7 +43,7 @@ ParCompactionManager::ParCompactionManager() :
 
   _old_gen = heap->old_gen();
   _start_array = old_gen()->start_array();
-
+    
 
   marking_stack()->initialize();
 
@@ -52,13 +55,13 @@ ParCompactionManager::ParCompactionManager() :
   chunk_stack()->initialize();
 
   // We want the overflow stack to be permanent
-  _chunk_overflow_stack =
+  _chunk_overflow_stack = 
     new (ResourceObj::C_HEAP) GrowableArray<size_t>(10, true);
 #endif
 
   // Note that _revisit_klass_stack is allocated out of the
   // C heap (as opposed to out of ResourceArena).
-  int size =
+  int size = 
     (SystemDictionary::number_of_classes() * 2) * 2 / ParallelGCThreads;
   _revisit_klass_stack = new (ResourceObj::C_HEAP) GrowableArray<Klass*>(size, true);
 
@@ -73,7 +76,7 @@ ParCompactionManager::~ParCompactionManager() {
 }
 
 void ParCompactionManager::initialize(ParMarkBitMap* mbm) {
-  assert(PSParallelCompact::gc_task_manager() != NULL,
+  assert(PSParallelCompact::gc_task_manager() != NULL, 
     "Needed for initialization");
 
   _mark_bitmap = mbm;
@@ -83,7 +86,7 @@ void ParCompactionManager::initialize(ParMarkBitMap* mbm) {
   assert(_manager_array == NULL, "Attempt to initialize twice");
   _manager_array = NEW_C_HEAP_ARRAY(ParCompactionManager*, parallel_gc_threads+1 );
   guarantee(_manager_array != NULL, "Could not initialize promotion manager");
-
+  
   _stack_array = new OopTaskQueueSet(parallel_gc_threads);
   guarantee(_stack_array != NULL, "Count not initialize promotion manager");
   _chunk_array = new ChunkTaskQueueSet(parallel_gc_threads);
@@ -102,9 +105,9 @@ void ParCompactionManager::initialize(ParMarkBitMap* mbm) {
   }
 
   // The VMThread gets its own ParCompactionManager, which is not available
-  // for work stealing.
+  // for work stealing. 
   _manager_array[parallel_gc_threads] = new ParCompactionManager();
-  guarantee(_manager_array[parallel_gc_threads] != NULL,
+  guarantee(_manager_array[parallel_gc_threads] != NULL, 
     "Could not create ParCompactionManager");
   assert(PSParallelCompact::gc_task_manager()->workers() != 0,
     "Not initialized?");
@@ -112,14 +115,14 @@ void ParCompactionManager::initialize(ParMarkBitMap* mbm) {
 
 bool ParCompactionManager::should_update() {
   assert(action() != NotValid, "Action is not set");
-  return (action() == ParCompactionManager::Update) ||
+  return (action() == ParCompactionManager::Update) || 
          (action() == ParCompactionManager::CopyAndUpdate) ||
          (action() == ParCompactionManager::UpdateAndCopy);
 }
 
 bool ParCompactionManager::should_copy() {
   assert(action() != NotValid, "Action is not set");
-  return (action() == ParCompactionManager::Copy) ||
+  return (action() == ParCompactionManager::Copy) || 
          (action() == ParCompactionManager::CopyAndUpdate) ||
          (action() == ParCompactionManager::UpdateAndCopy);
 }
@@ -143,7 +146,7 @@ void ParCompactionManager::stack_push(oop obj) {
 
   if(!marking_stack()->push(obj)) {
     overflow_stack()->push(obj);
-  }
+  } 
 }
 
 oop ParCompactionManager::retrieve_for_scanning() {
@@ -171,7 +174,7 @@ void ParCompactionManager::chunk_stack_push(size_t chunk_index) {
 #else
   if(!chunk_stack()->push(chunk_index)) {
     chunk_overflow_stack()->push(chunk_index);
-  }
+  } 
 #endif
 }
 
@@ -185,7 +188,7 @@ bool ParCompactionManager::retrieve_for_processing(size_t& chunk_index) {
 #endif
 }
 
-ParCompactionManager*
+ParCompactionManager* 
 ParCompactionManager::gc_thread_compaction_manager(int index) {
   assert(index >= 0 && index < (int)ParallelGCThreads, "index out of range");
   assert(_manager_array != NULL, "Sanity");
@@ -206,7 +209,7 @@ void ParCompactionManager::drain_marking_stacks(OopClosure* blk) {
   MutableSpace* old_space = heap->old_gen()->object_space();
   MutableSpace* perm_space = heap->perm_gen()->object_space();
 #endif /* ASSERT */
-
+  
 
   do {
 
@@ -245,7 +248,7 @@ void ParCompactionManager::drain_chunk_stacks() {
   MutableSpace* old_space = heap->old_gen()->object_space();
   MutableSpace* perm_space = heap->perm_gen()->object_space();
 #endif /* ASSERT */
-
+  
 #if 1 // def DO_PARALLEL - the serial code hasn't been updated
   do {
 
@@ -276,8 +279,8 @@ void ParCompactionManager::drain_chunk_stacks() {
       // pop, but they can come from anywhere, unfortunately.
       PSParallelCompact::fill_and_update_chunk(this, chunk_index);
     }
-  } while((chunk_stack()->size() != 0) ||
-          (chunk_overflow_stack()->length() != 0));
+  } while((chunk_stack()->size() != 0) || 
+	  (chunk_overflow_stack()->length() != 0));
 #endif
 
 #ifdef USE_ChunkTaskQueueWithOverflow

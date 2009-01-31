@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class VoidClosure;
@@ -47,7 +47,7 @@ class SuspendibleThreadSet {
   SuspendibleThreadSet() : _initialized(false) {}
 
   // Add the current thread to the set.  May block if a suspension
-  // is in progress.
+  // is in progress.    
   void join();
   // Removes the current thread from the set.
   void leave();
@@ -112,7 +112,7 @@ public:
 
   ConcurrentGCThread();
   ~ConcurrentGCThread() {} // Exists to call NamedThread destructor.
-
+  
   // Tester
   bool is_ConcurrentGC_thread() const          { return true;       }
 
@@ -152,7 +152,7 @@ class SurrogateLockerThread: public JavaThread {
   SLT_msg_type  _buffer;  // communication buffer
   Monitor       _monitor; // monitor controlling buffer
   BasicLock     _basicLock; // used for PLL locking
-
+  
  public:
   static SurrogateLockerThread* make(TRAPS);
 

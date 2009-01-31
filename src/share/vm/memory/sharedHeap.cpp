@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -83,17 +86,17 @@ static AssertIsPermClosure assert_is_perm_closure;
 void SharedHeap::change_strong_roots_parity() {
   // Also set the new collection parity.
   assert(_strong_roots_parity >= 0 && _strong_roots_parity <= 2,
-         "Not in range.");
+	 "Not in range.");
   _strong_roots_parity++;
   if (_strong_roots_parity == 3) _strong_roots_parity = 1;
   assert(_strong_roots_parity >= 1 && _strong_roots_parity <= 2,
-         "Not in range.");
+	 "Not in range.");
 }
 
 void SharedHeap::process_strong_roots(bool collecting_perm_gen,
-                                      ScanningOption so,
-                                      OopClosure* roots,
-                                      OopsInGenClosure* perm_blk) {
+				      ScanningOption so,
+				      OopClosure* roots,
+				      OopsInGenClosure* perm_blk) {
   // General strong roots.
   if (n_par_threads() == 0) change_strong_roots_parity();
   if (!_process_strong_tasks->is_task_claimed(SH_PS_Universe_oops_do)) {
@@ -118,7 +121,7 @@ void SharedHeap::process_strong_roots(bool collecting_perm_gen,
   if (!_process_strong_tasks->is_task_claimed(SH_PS_Management_oops_do))
     Management::oops_do(roots);
   if (!_process_strong_tasks->is_task_claimed(SH_PS_jvmti_oops_do))
-    JvmtiExport::oops_do(roots);
+    JvmtiExport::oops_do(roots); 
 
   if (!_process_strong_tasks->is_task_claimed(SH_PS_SystemDictionary_oops_do)) {
     if (so & SO_AllClasses) {
@@ -163,7 +166,7 @@ void SharedHeap::process_strong_roots(bool collecting_perm_gen,
     }
     if (blk != NULL) {
       if (!_process_strong_tasks->is_task_claimed(SH_PS_vmSymbols_oops_do))
-        vmSymbols::oops_do(blk);
+	vmSymbols::oops_do(blk);
     }
   }
 
@@ -209,7 +212,7 @@ public:
 // just skip adjusting any shared entries in the string table.
 
 void SharedHeap::process_weak_roots(OopClosure* root_closure,
-                                    OopClosure* non_root_closure) {
+				    OopClosure* non_root_closure) {
   // Global (weak) JNI handles
   JNIHandles::weak_oops_do(&always_true, root_closure);
 
@@ -241,8 +244,8 @@ void SharedHeap::fill_region_with_object(MemRegion mr) {
   // Disable the posting of JVMTI VMObjectAlloc events as we
   // don't want the filling of tlabs with filler arrays to be
   // reported to the profiler.
-  NoJvmtiVMObjectAllocMark njm;
-
+  NoJvmtiVMObjectAllocMark njm;    
+  
   // Disable low memory detector because there is no real allocation.
   LowMemoryDetectorDisabler lmd_dis;
 
@@ -262,9 +265,9 @@ void SharedHeap::fill_region_with_object(MemRegion mr) {
     const size_t array_length_words =
       array_length * (HeapWordSize/sizeof(jint));
     post_allocation_setup_array(Universe::intArrayKlassObj(),
-                                mr.start(),
-                                mr.word_size(),
-                                (int)array_length_words);
+				mr.start(),
+				mr.word_size(),
+				(int)array_length_words);
 #ifdef ASSERT
     HeapWord* elt_words = (mr.start() + typeArrayOopDesc::header_size(T_INT));
     Copy::fill_to_words(elt_words, array_length, 0xDEAFBABE);
@@ -272,20 +275,20 @@ void SharedHeap::fill_region_with_object(MemRegion mr) {
   } else {
     assert(word_size == (size_t)oopDesc::header_size(), "Unaligned?");
     post_allocation_setup_obj(SystemDictionary::object_klass(),
-                              mr.start(),
-                              mr.word_size());
+			      mr.start(),
+			      mr.word_size());
   }
 }
 
 // Some utilities.
 void SharedHeap::print_size_transition(size_t bytes_before,
-                                       size_t bytes_after,
-                                       size_t capacity) {
+				       size_t bytes_after,
+				       size_t capacity) {
   tty->print(" %d%s->%d%s(%d%s)",
-             byte_size_in_proper_unit(bytes_before),
-             proper_unit_for_byte_size(bytes_before),
-             byte_size_in_proper_unit(bytes_after),
-             proper_unit_for_byte_size(bytes_after),
-             byte_size_in_proper_unit(capacity),
-             proper_unit_for_byte_size(capacity));
+	     byte_size_in_proper_unit(bytes_before),
+	     proper_unit_for_byte_size(bytes_before),
+	     byte_size_in_proper_unit(bytes_after),
+	     proper_unit_for_byte_size(bytes_after),
+	     byte_size_in_proper_unit(capacity),
+	     proper_unit_for_byte_size(capacity));  
 }

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.win32;
@@ -164,7 +164,7 @@ public class Win32DebuggerLocal extends DebuggerBase implements Win32Debugger {
       loadObjects = null;
     }
     catch (IOException e) {
-        throw new DebuggerException(e);
+	throw new DebuggerException(e);
     }
   }
 
@@ -288,7 +288,7 @@ public class Win32DebuggerLocal extends DebuggerBase implements Win32Debugger {
     utils.checkAlignment(address, jintSize);
     byte[] data = readBytes(address, jlongSize);
     return utils.dataToJLong(data, jlongSize);
-  }
+  }  
 
   //--------------------------------------------------------------------------------
   // Internal routines (for implementation of Win32Address).
@@ -340,7 +340,7 @@ public class Win32DebuggerLocal extends DebuggerBase implements Win32Debugger {
         printlnToOutput("duphandle 0x" + Integer.toHexString(threadHandleValue));
         if (!in.parseBoolean()) {
           throw new DebuggerException("Error duplicating thread handle 0x" + threadHandleValue);
-        }
+        } 
         handle = (int) in.parseAddress(); // Must close to avoid leaks
       }
       printlnToOutput("getcontext 0x" + Integer.toHexString(handle));
@@ -413,7 +413,7 @@ public class Win32DebuggerLocal extends DebuggerBase implements Win32Debugger {
         printlnToOutput("duphandle 0x" + Integer.toHexString(threadHandleValue));
         if (!in.parseBoolean()) {
           throw new DebuggerException("Error duplicating thread handle 0x" + threadHandleValue);
-        }
+        } 
         handle = (int) in.parseAddress(); // Must close to avoid leaks
       }
       // Change order of registers to match that of debug server
@@ -482,7 +482,7 @@ public class Win32DebuggerLocal extends DebuggerBase implements Win32Debugger {
         printlnToOutput("duphandle 0x" + Integer.toHexString(threadHandleValue));
         if (!in.parseBoolean()) {
           throw new DebuggerException("Error duplicating thread handle 0x" + threadHandleValue);
-        }
+        } 
         handle = (int) in.parseAddress(); // Must close to avoid leaks
       }
       printlnToOutput("selectorentry 0x" + Integer.toHexString(handle) + " " + selector);
@@ -579,7 +579,7 @@ public class Win32DebuggerLocal extends DebuggerBase implements Win32Debugger {
       throw new DebuggerException(e);
     }
   }
-
+  
   public synchronized void suspend() throws DebuggerException {
     try {
       if (suspended) {
@@ -610,7 +610,7 @@ public class Win32DebuggerLocal extends DebuggerBase implements Win32Debugger {
   public synchronized boolean isSuspended() throws DebuggerException {
     return suspended;
   }
-
+  
   public synchronized void setBreakpoint(Address addr) throws DebuggerException {
     if (!suspended) {
       throw new DebuggerException("Process not suspended");
@@ -747,7 +747,7 @@ public class Win32DebuggerLocal extends DebuggerBase implements Win32Debugger {
       // the breakpoint back.
       //                                                               //
       ///////////////////////////////////////////////////////////////////
-
+      
       DebugEvent.Type t = curDebugEvent.getType();
       boolean shouldPassOn = true;
       if (t == DebugEvent.Type.BREAKPOINT) {
@@ -793,7 +793,7 @@ public class Win32DebuggerLocal extends DebuggerBase implements Win32Debugger {
       // Other kinds of debug events are either ignored if passed on
       // or probably should be passed on so the program exits
       // FIXME: generate process exiting events (should be easy)
-
+      
       int val = (shouldPassOn ? 1 : 0);
       printlnToOutput("continueevent " + val);
       if (!in.parseBoolean()) {

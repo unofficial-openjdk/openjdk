@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -27,7 +30,7 @@
 
 void RegisterMap::pd_clear() {
   if (_thread->has_last_Java_frame()) {
-    frame fr = _thread->last_frame();
+    frame fr = _thread->last_frame(); 
     _window = fr.sp();
   } else {
     _window = NULL;
@@ -160,7 +163,7 @@ void RegisterMap::shift_individual_registers() {
 
 bool frame::safe_for_sender(JavaThread *thread) {
   address   sp = (address)_sp;
-  if (sp != NULL &&
+  if (sp != NULL && 
       (sp <= thread->stack_base() && sp >= thread->stack_base() - thread->stack_size())) {
       // Unfortunately we can only check frame complete for runtime stubs and nmethod
       // other generic buffer blobs are more problematic so we just assume they are
@@ -180,7 +183,7 @@ bool frame::safe_for_sender(JavaThread *thread) {
 // Construct an unpatchable, deficient frame
 frame::frame(intptr_t* sp, unpatchable_t, address pc, CodeBlob* cb) {
 #ifdef _LP64
-  assert( (((intptr_t)sp & (wordSize-1)) == 0), "frame constructor passed an invalid sp");
+  assert( (((intptr_t)sp & (wordSize-1)) == 0), "frame constructor passed an invalid sp");   
 #endif
   _sp = sp;
   _younger_sp = NULL;
@@ -200,7 +203,7 @@ frame::frame(intptr_t* sp, unpatchable_t, address pc, CodeBlob* cb) {
 #endif // ASSERT
 }
 
-frame::frame(intptr_t* sp, intptr_t* younger_sp, bool younger_frame_adjusted_stack) {
+frame::frame(intptr_t* sp, intptr_t* younger_sp, bool younger_frame_adjusted_stack) { 
   _sp = sp;
   _younger_sp = younger_sp;
   if (younger_sp == NULL) {
@@ -212,7 +215,7 @@ frame::frame(intptr_t* sp, intptr_t* younger_sp, bool younger_frame_adjusted_sta
     assert( (intptr_t*)younger_sp[FP->sp_offset_in_saved_window()] == (intptr_t*)((intptr_t)sp - STACK_BIAS), "younger_sp must be valid");
     // Any frame we ever build should always "safe" therefore we should not have to call
     // find_blob_unsafe
-    // In case of native stubs, the pc retrieved here might be
+    // In case of native stubs, the pc retrieved here might be 
     // wrong.  (the _last_native_pc will have the right value)
     // So do not put add any asserts on the _pc here.
   }
@@ -298,7 +301,7 @@ frame frame::sender_for_entry_frame(RegisterMap *map) const {
     jfa->capture_last_Java_pc(_sp);
   }
   assert(jfa->last_Java_pc() != NULL, "No captured pc!");
-  map->clear();
+  map->clear();  
   map->make_integer_regs_unsaved();
   map->shift_window(last_Java_sp, NULL);
   assert(map->include_argument_oops(), "should be set by clear");
@@ -310,7 +313,7 @@ frame frame::sender_for_interpreter_frame(RegisterMap *map) const {
   return sender(map);
 }
 
-frame frame::sender_for_compiled_frame(RegisterMap *map) const {
+frame frame::sender_for_compiled_frame(RegisterMap *map) const {  
   ShouldNotCallThis();
   return sender(map);
 }
@@ -322,7 +325,7 @@ frame frame::sender(RegisterMap* map) const {
 
   // Default is not to follow arguments; update it accordingly below
   map->set_include_argument_oops(false);
-
+  
   if (is_entry_frame()) return sender_for_entry_frame(map);
 
   intptr_t* younger_sp     = sp();
@@ -344,7 +347,7 @@ frame frame::sender(RegisterMap* map) const {
   // The constructor of the sender must know whether this frame is interpreted so it can set the
   // sender's _sp_adjustment_by_callee field.  An osr adapter frame was originally
   // interpreted but its pc is in the code cache (for c1 -> osr_frame_return_id stub), so it must be
-  // explicitly recognized.
+  // explicitly recognized. 
 
   adjusted_stack = is_interpreted_frame();
   if (adjusted_stack) {
@@ -373,7 +376,7 @@ frame frame::sender(RegisterMap* map) const {
 void frame::patch_pc(Thread* thread, address pc) {
   if(thread == Thread::current()) {
    StubRoutines::Sparc::flush_callers_register_windows_func()();
-  }
+  } 
   if (TracePcPatching) {
     // QQQ this assert is invalid (or too strong anyway) sice _pc could
     // be original pc and frame could have the deopt pc.
@@ -394,8 +397,8 @@ void frame::patch_pc(Thread* thread, address pc) {
 
 
 static bool sp_is_valid(intptr_t* old_sp, intptr_t* young_sp, intptr_t* sp) {
-  return (((intptr_t)sp & (2*wordSize-1)) == 0 &&
-          sp <= old_sp &&
+  return (((intptr_t)sp & (2*wordSize-1)) == 0 && 
+          sp <= old_sp && 
           sp >= young_sp);
 }
 
@@ -412,9 +415,9 @@ intptr_t* frame::next_younger_sp_or_null(intptr_t* old_sp, intptr_t* sp) {
   int max_frames = (old_sp - sp) / 16; // Minimum frame size is 16
   int max_frame2 = max_frames;
   while(sp != old_sp && sp_is_valid(old_sp, orig_sp, sp)) {
-    if (max_frames-- <= 0)
-      // too many frames have gone by; invalid parameters given to this function
-      break;
+    if (max_frames-- <= 0) 
+      // too many frames have gone by; invalid parameters given to this function 
+      break; 
     previous_sp = sp;
     sp = (intptr_t*)sp[FP->sp_offset_in_saved_window()];
     sp = (intptr_t*)((intptr_t)sp + STACK_BIAS);
@@ -480,10 +483,10 @@ bool frame::is_interpreted_frame_valid() const {
 
 
 // Windows have been flushed on entry (but not marked). Capture the pc that
-// is the return address to the frame that contains "sp" as its stack pointer.
-// This pc resides in the called of the frame corresponding to "sp".
+// is the return address to the frame that contains "sp" as its stack pointer. 
+// This pc resides in the called of the frame corresponding to "sp". 
 // As a side effect we mark this JavaFrameAnchor as having flushed the windows.
-// This side effect lets us mark stacked JavaFrameAnchors (stacked in the
+// This side effect lets us mark stacked JavaFrameAnchors (stacked in the 
 // call_helper) as flushed when we have flushed the windows for the most
 // recent (i.e. current) JavaFrameAnchor. This saves useless flushing calls
 // and lets us find the pc just once rather than multiple times as it did
@@ -527,7 +530,7 @@ BasicType frame::interpreter_frame_result(oop* oop_result, jvalue* value_result)
   assert(is_interpreted_frame(), "interpreted frame expected");
   methodOop method = interpreter_frame_method();
   BasicType type = method->result_type();
-
+  
   if (method->is_native()) {
     // Prior to notifying the runtime of the method_exit the possible result
     // value is saved to l_scratch and d_scratch.
@@ -552,13 +555,13 @@ BasicType frame::interpreter_frame_result(oop* oop_result, jvalue* value_result)
       case T_OBJECT:
       case T_ARRAY: {
 #ifdef CC_INTERP
-        *oop_result = istate->_oop_temp;
+	*oop_result = istate->_oop_temp;
 #else
-        oop obj = (oop) at(interpreter_frame_oop_temp_offset);
-        assert(obj == NULL || Universe::heap()->is_in(obj), "sanity check");
-        *oop_result = obj;
+	oop obj = (oop) at(interpreter_frame_oop_temp_offset);
+	assert(obj == NULL || Universe::heap()->is_in(obj), "sanity check");
+	*oop_result = obj;
 #endif // CC_INTERP
-        break;
+	break;
       }
 
       case T_BOOLEAN : { jint* p = (jint*)l_addr; value_result->z = (jboolean)((*p) & 0x1); break; }
@@ -572,16 +575,16 @@ BasicType frame::interpreter_frame_result(oop* oop_result, jvalue* value_result)
       case T_VOID    : /* Nothing to do */ break;
       default        : ShouldNotReachHere();
     }
-  } else {
+  } else {  
     intptr_t* tos_addr = interpreter_frame_tos_address();
 
     switch(type) {
       case T_OBJECT:
       case T_ARRAY: {
-        oop obj = (oop)*tos_addr;
-        assert(obj == NULL || Universe::heap()->is_in(obj), "sanity check");
-        *oop_result = obj;
-        break;
+	oop obj = (oop)*tos_addr;
+ 	assert(obj == NULL || Universe::heap()->is_in(obj), "sanity check");	
+	*oop_result = obj;
+	break;
       }
       case T_BOOLEAN : { jint* p = (jint*)tos_addr; value_result->z = (jboolean)((*p) & 0x1); break; }
       case T_BYTE    : { jint* p = (jint*)tos_addr; value_result->b = (jbyte)((*p) & 0xff); break; }
@@ -600,7 +603,7 @@ BasicType frame::interpreter_frame_result(oop* oop_result, jvalue* value_result)
 }
 
 // Lesp pointer is one word lower than the top item on the stack.
-intptr_t* frame::interpreter_frame_tos_at(jint offset) const {
+intptr_t* frame::interpreter_frame_tos_at(jint offset) const { 
   int index = (Interpreter::expr_offset_in_bytes(offset)/wordSize) - 1;
   return &interpreter_frame_tos_address()[index];
 }

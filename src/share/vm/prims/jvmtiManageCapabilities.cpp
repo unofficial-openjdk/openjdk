@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,20 +22,20 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 # include "incls/_precompiled.incl"
 # include "incls/_jvmtiManageCapabilities.cpp.incl"
 
-static const jint CAPA_SIZE = (JVMTI_INTERNAL_CAPABILITY_COUNT + 7) / 8;
+static const jint CAPA_SIZE = (JVMTI_INTERNAL_CAPABILITY_COUNT + 7) / 8; 
 
-  // capabilities which are always potentially available
+  // capabilities which are always potentially available 
 jvmtiCapabilities JvmtiManageCapabilities::always_capabilities;
 
   // capabilities which are potentially available during OnLoad
 jvmtiCapabilities JvmtiManageCapabilities::onload_capabilities;
 
-  // capabilities which are always potentially available
+  // capabilities which are always potentially available 
   // but to only one environment
 jvmtiCapabilities JvmtiManageCapabilities::always_solo_capabilities;
 
@@ -40,7 +43,7 @@ jvmtiCapabilities JvmtiManageCapabilities::always_solo_capabilities;
   // but to only one environment
 jvmtiCapabilities JvmtiManageCapabilities::onload_solo_capabilities;
 
-  // remaining capabilities which are always potentially available
+  // remaining capabilities which are always potentially available 
   // but to only one environment
 jvmtiCapabilities JvmtiManageCapabilities::always_solo_remaining_capabilities;
 
@@ -79,9 +82,9 @@ void JvmtiManageCapabilities::recompute_always_capabilities() {
 
 
 // corresponding init functions
-jvmtiCapabilities JvmtiManageCapabilities::init_always_capabilities() {
+jvmtiCapabilities JvmtiManageCapabilities::init_always_capabilities() { 
   jvmtiCapabilities jc;
-
+  
   memset(&jc, 0, sizeof(jc));
   jc.can_get_bytecodes = 1;
   jc.can_signal_thread = 1;
@@ -109,11 +112,11 @@ jvmtiCapabilities JvmtiManageCapabilities::init_always_capabilities() {
   jc.can_generate_resource_exhaustion_heap_events = 1;
   jc.can_generate_resource_exhaustion_threads_events = 1;
   return jc;
-}
+} 
 
 jvmtiCapabilities JvmtiManageCapabilities::init_onload_capabilities() {
   jvmtiCapabilities jc;
-
+  
   memset(&jc, 0, sizeof(jc));
   jc.can_pop_frame = 1;
   jc.can_force_early_return = 1;
@@ -138,7 +141,7 @@ jvmtiCapabilities JvmtiManageCapabilities::init_onload_capabilities() {
 
 jvmtiCapabilities JvmtiManageCapabilities::init_always_solo_capabilities() {
   jvmtiCapabilities jc;
-
+  
   memset(&jc, 0, sizeof(jc));
   jc.can_suspend = 1;
   return jc;
@@ -147,7 +150,7 @@ jvmtiCapabilities JvmtiManageCapabilities::init_always_solo_capabilities() {
 
 jvmtiCapabilities JvmtiManageCapabilities::init_onload_solo_capabilities() {
   jvmtiCapabilities jc;
-
+  
   memset(&jc, 0, sizeof(jc));
   jc.can_generate_field_modification_events = 1;
   jc.can_generate_field_access_events = 1;
@@ -170,7 +173,7 @@ jvmtiCapabilities *JvmtiManageCapabilities::either(const jvmtiCapabilities *a, c
 }
 
 
-jvmtiCapabilities *JvmtiManageCapabilities::both(const jvmtiCapabilities *a, const jvmtiCapabilities *b,
+jvmtiCapabilities *JvmtiManageCapabilities::both(const jvmtiCapabilities *a, const jvmtiCapabilities *b, 
                                                     jvmtiCapabilities *result) {
   char *ap = (char *)a;
   char *bp = (char *)b;
@@ -184,7 +187,7 @@ jvmtiCapabilities *JvmtiManageCapabilities::both(const jvmtiCapabilities *a, con
 }
 
 
-jvmtiCapabilities *JvmtiManageCapabilities::exclude(const jvmtiCapabilities *a, const jvmtiCapabilities *b,
+jvmtiCapabilities *JvmtiManageCapabilities::exclude(const jvmtiCapabilities *a, const jvmtiCapabilities *b, 
                                                     jvmtiCapabilities *result) {
   char *ap = (char *)a;
   char *bp = (char *)b;
@@ -221,8 +224,8 @@ void JvmtiManageCapabilities::copy_capabilities(const jvmtiCapabilities *from, j
 }
 
 
-void JvmtiManageCapabilities::get_potential_capabilities(const jvmtiCapabilities *current,
-                                                         const jvmtiCapabilities *prohibited,
+void JvmtiManageCapabilities::get_potential_capabilities(const jvmtiCapabilities *current, 
+                                                         const jvmtiCapabilities *prohibited, 
                                                          jvmtiCapabilities *result) {
   // exclude prohibited capabilities, must be before adding current
   exclude(&always_capabilities, prohibited, result);
@@ -230,7 +233,7 @@ void JvmtiManageCapabilities::get_potential_capabilities(const jvmtiCapabilities
   // must include current since it may possess solo capabilities and now prohibited
   either(result, current, result);
 
-  // add other remaining
+  // add other remaining 
   either(result, &always_solo_remaining_capabilities, result);
 
   // if this is during OnLoad more capabilities are available
@@ -241,8 +244,8 @@ void JvmtiManageCapabilities::get_potential_capabilities(const jvmtiCapabilities
 }
 
 jvmtiError JvmtiManageCapabilities::add_capabilities(const jvmtiCapabilities *current,
-                                                     const jvmtiCapabilities *prohibited,
-                                                     const jvmtiCapabilities *desired,
+                                                     const jvmtiCapabilities *prohibited, 
+                                                     const jvmtiCapabilities *desired, 
                                                      jvmtiCapabilities *result) {
   // check that the capabilities being added are potential capabilities
   jvmtiCapabilities temp;
@@ -278,7 +281,7 @@ jvmtiError JvmtiManageCapabilities::add_capabilities(const jvmtiCapabilities *cu
 
 
 void JvmtiManageCapabilities::relinquish_capabilities(const jvmtiCapabilities *current,
-                                                      const jvmtiCapabilities *unwanted,
+                                                      const jvmtiCapabilities *unwanted, 
                                                       jvmtiCapabilities *result) {
   jvmtiCapabilities to_trash;
   jvmtiCapabilities temp;
@@ -287,7 +290,7 @@ void JvmtiManageCapabilities::relinquish_capabilities(const jvmtiCapabilities *c
   both(current, unwanted, &to_trash);
 
   // restore solo capabilities but only those that belong
-  either(&always_solo_remaining_capabilities, both(&always_solo_capabilities, &to_trash, &temp),
+  either(&always_solo_remaining_capabilities, both(&always_solo_capabilities, &to_trash, &temp), 
          &always_solo_remaining_capabilities);
   either(&onload_solo_remaining_capabilities, both(&onload_solo_capabilities, &to_trash, &temp),
          &onload_solo_remaining_capabilities);
@@ -305,14 +308,14 @@ void JvmtiManageCapabilities::update() {
   // all capabilities
   either(&always_capabilities, &always_solo_capabilities, &avail);
 
-  bool interp_events =
+  bool interp_events = 
     avail.can_generate_field_access_events ||
     avail.can_generate_field_modification_events ||
     avail.can_generate_single_step_events ||
     avail.can_generate_frame_pop_events ||
     avail.can_generate_method_entry_events ||
     avail.can_generate_method_exit_events;
-  bool enter_all_methods =
+  bool enter_all_methods = 
     interp_events ||
     avail.can_generate_breakpoint_events;
   UseFastEmptyMethods = !enter_all_methods;
@@ -324,7 +327,7 @@ void JvmtiManageCapabilities::update() {
 
   // If can_redefine_classes is enabled in the onload phase then we know that the
   // dependency information recorded by the compiler is complete.
-  if ((avail.can_redefine_classes || avail.can_retransform_classes) &&
+  if ((avail.can_redefine_classes || avail.can_retransform_classes) && 
       JvmtiEnv::get_phase() == JVMTI_PHASE_ONLOAD) {
     JvmtiExport::set_all_dependencies_are_recorded(true);
   }
@@ -332,7 +335,7 @@ void JvmtiManageCapabilities::update() {
   JvmtiExport::set_can_get_source_debug_extension(avail.can_get_source_debug_extension);
   JvmtiExport::set_can_examine_or_deopt_anywhere(
     avail.can_generate_breakpoint_events ||
-    interp_events ||
+    interp_events || 
     avail.can_redefine_classes ||
     avail.can_retransform_classes ||
     avail.can_access_local_variables ||
@@ -374,84 +377,86 @@ void JvmtiManageCapabilities::update() {
 
 void JvmtiManageCapabilities:: print(const jvmtiCapabilities* cap) {
   tty->print_cr("----- capabilities -----");
-  if (cap->can_tag_objects)
+  if (cap->can_tag_objects)				    
     tty->print_cr("can_tag_objects");
-  if (cap->can_generate_field_modification_events)
+  if (cap->can_generate_field_modification_events)	    
     tty->print_cr("can_generate_field_modification_events");
-  if (cap->can_generate_field_access_events)
+  if (cap->can_generate_field_access_events)		    
     tty->print_cr("can_generate_field_access_events");
-  if (cap->can_get_bytecodes)
+  if (cap->can_get_bytecodes)				    
     tty->print_cr("can_get_bytecodes");
-  if (cap->can_get_synthetic_attribute)
+  if (cap->can_get_synthetic_attribute)			    
     tty->print_cr("can_get_synthetic_attribute");
-  if (cap->can_get_owned_monitor_info)
+  if (cap->can_get_owned_monitor_info)			    
     tty->print_cr("can_get_owned_monitor_info");
-  if (cap->can_get_current_contended_monitor)
+  if (cap->can_get_current_contended_monitor)		    
     tty->print_cr("can_get_current_contended_monitor");
-  if (cap->can_get_monitor_info)
+  if (cap->can_get_monitor_info)			    
     tty->print_cr("can_get_monitor_info");
-  if (cap->can_get_constant_pool)
+  if (cap->can_get_constant_pool)	    
     tty->print_cr("can_get_constant_pool");
-  if (cap->can_pop_frame)
+  if (cap->can_pop_frame)				    
     tty->print_cr("can_pop_frame");
-  if (cap->can_force_early_return)
+  if (cap->can_force_early_return)				    
     tty->print_cr("can_force_early_return");
-  if (cap->can_redefine_classes)
+  if (cap->can_redefine_classes)			    
     tty->print_cr("can_redefine_classes");
-  if (cap->can_retransform_classes)
+  if (cap->can_retransform_classes)			    
     tty->print_cr("can_retransform_classes");
-  if (cap->can_signal_thread)
+  if (cap->can_signal_thread)				    
     tty->print_cr("can_signal_thread");
-  if (cap->can_get_source_file_name)
+  if (cap->can_get_source_file_name)			    
     tty->print_cr("can_get_source_file_name");
-  if (cap->can_get_line_numbers)
+  if (cap->can_get_line_numbers)			    
     tty->print_cr("can_get_line_numbers");
-  if (cap->can_get_source_debug_extension)
+  if (cap->can_get_source_debug_extension)		    
     tty->print_cr("can_get_source_debug_extension");
-  if (cap->can_access_local_variables)
+  if (cap->can_access_local_variables)			    
     tty->print_cr("can_access_local_variables");
-  if (cap->can_maintain_original_method_order)
+  if (cap->can_maintain_original_method_order)		    
     tty->print_cr("can_maintain_original_method_order");
-  if (cap->can_generate_single_step_events)
+  if (cap->can_generate_single_step_events)		    
     tty->print_cr("can_generate_single_step_events");
-  if (cap->can_generate_exception_events)
+  if (cap->can_generate_exception_events)		    
     tty->print_cr("can_generate_exception_events");
-  if (cap->can_generate_frame_pop_events)
+  if (cap->can_generate_frame_pop_events)		    
     tty->print_cr("can_generate_frame_pop_events");
-  if (cap->can_generate_breakpoint_events)
+  if (cap->can_generate_breakpoint_events)		    
     tty->print_cr("can_generate_breakpoint_events");
-  if (cap->can_suspend)
+  if (cap->can_suspend)					    
     tty->print_cr("can_suspend");
-  if (cap->can_redefine_any_class )
+  if (cap->can_redefine_any_class )			    
     tty->print_cr("can_redefine_any_class");
-  if (cap->can_retransform_any_class )
+  if (cap->can_retransform_any_class )			    
     tty->print_cr("can_retransform_any_class");
-  if (cap->can_get_current_thread_cpu_time)
+  if (cap->can_get_current_thread_cpu_time)		    
     tty->print_cr("can_get_current_thread_cpu_time");
-  if (cap->can_get_thread_cpu_time)
+  if (cap->can_get_thread_cpu_time)			    
     tty->print_cr("can_get_thread_cpu_time");
-  if (cap->can_generate_method_entry_events)
+  if (cap->can_generate_method_entry_events)		    
     tty->print_cr("can_generate_method_entry_events");
-  if (cap->can_generate_method_exit_events)
+  if (cap->can_generate_method_exit_events)		    
     tty->print_cr("can_generate_method_exit_events");
-  if (cap->can_generate_all_class_hook_events)
+  if (cap->can_generate_all_class_hook_events)		    
     tty->print_cr("can_generate_all_class_hook_events");
-  if (cap->can_generate_compiled_method_load_events)
+  if (cap->can_generate_compiled_method_load_events)	    
     tty->print_cr("can_generate_compiled_method_load_events");
-  if (cap->can_generate_monitor_events)
+  if (cap->can_generate_monitor_events)			    
     tty->print_cr("can_generate_monitor_events");
-  if (cap->can_generate_vm_object_alloc_events)
+  if (cap->can_generate_vm_object_alloc_events)		    
     tty->print_cr("can_generate_vm_object_alloc_events");
-  if (cap->can_generate_native_method_bind_events)
+  if (cap->can_generate_native_method_bind_events)	    
     tty->print_cr("can_generate_native_method_bind_events");
-  if (cap->can_generate_garbage_collection_events)
+  if (cap->can_generate_garbage_collection_events)	    
     tty->print_cr("can_generate_garbage_collection_events");
-  if (cap->can_generate_object_free_events)
+  if (cap->can_generate_object_free_events)		    
     tty->print_cr("can_generate_object_free_events");
-  if (cap->can_generate_resource_exhaustion_heap_events)
+  if (cap->can_generate_resource_exhaustion_heap_events)		    
     tty->print_cr("can_generate_resource_exhaustion_heap_events");
-  if (cap->can_generate_resource_exhaustion_threads_events)
+  if (cap->can_generate_resource_exhaustion_threads_events)		    
     tty->print_cr("can_generate_resource_exhaustion_threads_events");
 }
 
 #endif
+
+

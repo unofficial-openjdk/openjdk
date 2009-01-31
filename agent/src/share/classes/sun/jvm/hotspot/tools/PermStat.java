@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.tools;
@@ -80,7 +80,7 @@ public class PermStat extends Tool {
             // String has a field named 'value' of type 'char[]'.
             stringValueField = (OopField) strKlass.findField("value", "[C");
          }
-
+ 
          private long stringSize(Instance instance) {
             // We include String content in size calculation.
             return instance.getObjectSize() +
@@ -93,7 +93,7 @@ public class PermStat extends Tool {
          }
 
          public void print() {
-            System.out.println(count +
+            System.out.println(count + 
                   " intern Strings occupying " + size + " bytes.");
          }
       }
@@ -101,7 +101,7 @@ public class PermStat extends Tool {
       StringStat stat = new StringStat();
       StringTable strTable = VM.getVM().getStringTable();
       strTable.stringsDo(stat);
-      stat.print();
+      stat.print(); 
    }
 
    private void printClassLoaderStatistics() {
@@ -118,12 +118,12 @@ public class PermStat extends Tool {
       ObjectHeap heap = vm.getObjectHeap();
       Klass classLoaderKlass = vm.getSystemDictionary().getClassLoaderKlass();
       try {
-         heap.iterateObjectsOfKlass(new DefaultHeapVisitor() {
-                         public boolean doObj(Oop oop) {
+	 heap.iterateObjectsOfKlass(new DefaultHeapVisitor() {
+			 public boolean doObj(Oop oop) {
                             loaderMap.put(oop, new LoaderData());
-                                                        return false;
+							return false;
                          }
-                      }, classLoaderKlass);
+	              }, classLoaderKlass);
       } catch (Exception se) {
          se.printStackTrace();
       }
@@ -139,13 +139,13 @@ public class PermStat extends Tool {
                            if (! (k instanceof InstanceKlass)) {
                               return;
                            }
-                           LoaderData ld = (loader != null) ? (LoaderData)loaderMap.get(loader)
+                           LoaderData ld = (loader != null) ? (LoaderData)loaderMap.get(loader) 
                                                             : bootstrapLoaderData;
                            if (ld != null) {
                               ld.numClasses++;
                               long size = computeSize((InstanceKlass)k);
                               ld.classDetail.add(new ClassData(k, size));
-                              ld.classSize += size;
+                              ld.classSize += size;                               
                            }
                         }
                      });
@@ -174,7 +174,7 @@ public class PermStat extends Tool {
          analysis.run();
       } catch (Exception e) {
          // e.printStackTrace();
-         if (verbose)
+         if (verbose) 
            err.println("liveness analysis may be inaccurate ...");
       }
       ReversePtrs liveness = VM.getVM().getRevPtrs();
@@ -260,7 +260,7 @@ public class PermStat extends Tool {
       out.print("alive=");
       out.print(numAliveLoaders);
       out.print(", dead=");
-      out.print(numDeadLoaders);
+      out.print(numDeadLoaders); 
       out.print('\t');
       out.print("    N/A    ");
       out.println();
@@ -291,7 +291,7 @@ public class PermStat extends Tool {
       size += innerClasses.getObjectSize();
 
       // add fields size
-      size += k.getFields().getObjectSize();
+      size += k.getFields().getObjectSize(); 
 
       // add methods size
       ObjArray methods = k.getMethods();

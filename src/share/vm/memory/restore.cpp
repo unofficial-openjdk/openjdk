@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -170,23 +173,23 @@ void CompactingPermGenGen::initialize_oops() {
   // are always added at the beginning of the linked lists, THESE LINKED
   // LIST ELEMENTS ARE READ-ONLY.
 
-  int len = *(intptr_t*)buffer; // skip over symbol table entries
+  int len = *(intptr_t*)buffer;	// skip over symbol table entries
   buffer += sizeof(intptr_t);
   buffer += len;
 
-  len = *(intptr_t*)buffer;     // skip over string table entries
+  len = *(intptr_t*)buffer;	// skip over string table entries
   buffer += sizeof(intptr_t);
   buffer += len;
 
-  len = *(intptr_t*)buffer;     // skip over shared dictionary entries
+  len = *(intptr_t*)buffer;	// skip over shared dictionary entries
   buffer += sizeof(intptr_t);
   buffer += len;
 
-  len = *(intptr_t*)buffer;     // skip over package info table entries
+  len = *(intptr_t*)buffer;	// skip over package info table entries
   buffer += sizeof(intptr_t);
   buffer += len;
 
-  len = *(intptr_t*)buffer;     // skip over package info table char[] arrays.
+  len = *(intptr_t*)buffer;	// skip over package info table char[] arrays.
   buffer += sizeof(intptr_t);
   buffer += len;
 

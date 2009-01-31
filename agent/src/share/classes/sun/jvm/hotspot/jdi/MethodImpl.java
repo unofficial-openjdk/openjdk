@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.jdi;
@@ -37,7 +37,7 @@ import java.util.Collections;
 public abstract class MethodImpl extends TypeComponentImpl implements Method {
     private JNITypeParser signatureParser;
     protected sun.jvm.hotspot.oops.Method saMethod;
-
+    
     abstract int argSlotCount() throws AbsentInformationException;
     abstract List allLineLocations(SDE.Stratum stratum,
                                    String sourceName)
@@ -53,8 +53,8 @@ public abstract class MethodImpl extends TypeComponentImpl implements Method {
         if (saMethod.isNative() || saMethod.isAbstract()) {
             return new NonConcreteMethodImpl(vm, declaringType, saMethod);
         } else {
-            return new ConcreteMethodImpl(vm, declaringType, saMethod);
-        }
+	    return new ConcreteMethodImpl(vm, declaringType, saMethod);
+	}
     }
 
     MethodImpl(VirtualMachine vm, ReferenceTypeImpl declaringType,
@@ -79,8 +79,8 @@ public abstract class MethodImpl extends TypeComponentImpl implements Method {
     }
 
     public String genericSignature() {
-        Symbol genSig = saMethod.getGenericSignature();
-        return (genSig != null)? genSig.asString() : null;
+	Symbol genSig = saMethod.getGenericSignature();
+	return (genSig != null)? genSig.asString() : null;
     }
 
     public String returnTypeName() {
@@ -91,8 +91,8 @@ public abstract class MethodImpl extends TypeComponentImpl implements Method {
         return findType(getParser().signature());
     }
 
-    private Type findType(String signature) throws ClassNotLoadedException {
-        ReferenceTypeImpl enclosing = (ReferenceTypeImpl)declaringType();
+    private Type findType(String signature) throws ClassNotLoadedException { 
+        ReferenceTypeImpl enclosing = (ReferenceTypeImpl)declaringType(); 
         return enclosing.findType(signature);
     }
 
@@ -105,7 +105,7 @@ public abstract class MethodImpl extends TypeComponentImpl implements Method {
     }
 
     Type argumentType(int index) throws ClassNotLoadedException {
-        ReferenceTypeImpl enclosing = (ReferenceTypeImpl)declaringType();
+        ReferenceTypeImpl enclosing = (ReferenceTypeImpl)declaringType(); 
         String signature = (String)argumentSignatures().get(index);
         return enclosing.findType(signature);
     }
@@ -140,15 +140,15 @@ public abstract class MethodImpl extends TypeComponentImpl implements Method {
         return saMethod.isVarArgs();
     }
 
-    public boolean isConstructor() {
+    public boolean isConstructor() { 
         return saMethod.isConstructor();
     }
 
-    public boolean isStaticInitializer() {
+    public boolean isStaticInitializer() { 
         return saMethod.isStaticInitializer();
     }
 
-    public boolean isObsolete() {
+    public boolean isObsolete() { 
         return saMethod.isObsolete();
     }
 
@@ -156,7 +156,7 @@ public abstract class MethodImpl extends TypeComponentImpl implements Method {
                            throws AbsentInformationException {
         return allLineLocations(vm.getDefaultStratum(), null);
     }
-
+   
     public List allLineLocations(String stratumID,
                                  String sourceName)
                            throws AbsentInformationException {
@@ -205,7 +205,7 @@ public abstract class MethodImpl extends TypeComponentImpl implements Method {
         ReferenceTypeImpl declaringType = (ReferenceTypeImpl)declaringType();
          int rc = declaringType.compareTo(method.declaringType());
          if (rc == 0) {
-           rc = declaringType.indexOf(this) -
+           rc = declaringType.indexOf(this) - 
                declaringType.indexOf(method);
          }
          return rc;

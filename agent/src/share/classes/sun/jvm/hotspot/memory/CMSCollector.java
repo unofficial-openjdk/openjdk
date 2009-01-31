@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.memory;
@@ -55,8 +55,8 @@ public class CMSCollector extends VMObject {
    return (CMSBitMap) VMObjectFactory.newObject(
                                 CMSBitMap.class,
                                 addr.addOffsetTo(markBitMapFieldOffset));
-  }
-
+  }  
+  
   public long blockSizeUsingPrintezisBits(Address addr) {
     CMSBitMap markBitMap = markBitMap();
     long addressSize = VM.getVM().getAddressSize();
@@ -71,6 +71,6 @@ public class CMSCollector extends VMObject {
      System.err.println("Missing Printszis marks...");
      return -1;
     }
-
+  
   }
 }

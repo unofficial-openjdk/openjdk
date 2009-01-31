@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Inline allocation implementations.
@@ -32,7 +35,7 @@ void CollectedHeap::post_allocation_setup_common(KlassHandle klass,
 }
 
 void CollectedHeap::post_allocation_setup_no_klass_install(KlassHandle klass,
-                                                           HeapWord* objPtr,
+						           HeapWord* objPtr,
                                                            size_t size) {
 
   oop obj = (oop)objPtr;
@@ -51,7 +54,7 @@ void CollectedHeap::post_allocation_setup_no_klass_install(KlassHandle klass,
 
 void CollectedHeap::post_allocation_install_obj_klass(KlassHandle klass,
                                                    oop obj,
-                                                   int size) {
+						   int size) {
   // These asserts are kind of complicated because of klassKlass
   // and the beginning of the world.
   assert(klass() != NULL || !Universe::is_fully_initialized(), "NULL klass");
@@ -61,8 +64,8 @@ void CollectedHeap::post_allocation_install_obj_klass(KlassHandle klass,
   obj->set_klass(klass());
   assert(!Universe::is_fully_initialized() || obj->blueprint() != NULL,
          "missing blueprint");
-
-  // support for JVMTI VMObjectAlloc event (no-op if not enabled)
+ 
+  // support for JVMTI VMObjectAlloc event (no-op if not enabled) 
   JvmtiExport::vm_object_alloc_event_collector(obj);
 
   if (DTraceAllocProbes) {
@@ -79,13 +82,13 @@ void CollectedHeap::post_allocation_setup_obj(KlassHandle klass,
   post_allocation_setup_common(klass, obj, size);
   assert(Universe::is_bootstrapping() ||
          !((oop)obj)->blueprint()->oop_is_array(), "must not be an array");
-}
+} 
 
 void CollectedHeap::post_allocation_setup_array(KlassHandle klass,
                                                 HeapWord* obj,
                                                 size_t size,
                                                 int length) {
-  // Set array length before posting jvmti object alloc event
+  // Set array length before posting jvmti object alloc event 
   // in post_allocation_setup_common()
   assert(length >= 0, "length should be non-negative");
   ((arrayOop)obj)->set_length(length);
@@ -98,7 +101,7 @@ HeapWord* CollectedHeap::common_mem_allocate_noinit(size_t size, bool is_noref, 
   // Clear unhandled oops for memory allocation.  Memory allocation might
   // not take out a lock if from tlab, so clear here.
   CHECK_UNHANDLED_OOPS_ONLY(THREAD->clear_unhandled_oops();)
-
+  
   if (HAS_PENDING_EXCEPTION) {
     NOT_PRODUCT(guarantee(false, "Should not allocate with exception pending"));
     return NULL;  // caller does a CHECK_0 too
@@ -115,10 +118,10 @@ HeapWord* CollectedHeap::common_mem_allocate_noinit(size_t size, bool is_noref, 
     }
   }
   bool gc_overhead_limit_was_exceeded;
-  result = Universe::heap()->mem_allocate(size,
-                                          is_noref,
-                                          false,
-                                          &gc_overhead_limit_was_exceeded);
+  result = Universe::heap()->mem_allocate(size, 
+					  is_noref, 
+					  false, 
+					  &gc_overhead_limit_was_exceeded);
   if (result != NULL) {
     NOT_PRODUCT(Universe::heap()->
       check_for_non_bad_heap_word_value(result, size));
@@ -134,7 +137,7 @@ HeapWord* CollectedHeap::common_mem_allocate_noinit(size_t size, bool is_noref, 
 
     if (JvmtiExport::should_post_resource_exhausted()) {
       JvmtiExport::post_resource_exhausted(
-        JVMTI_RESOURCE_EXHAUSTED_OOM_ERROR | JVMTI_RESOURCE_EXHAUSTED_JAVA_HEAP,
+        JVMTI_RESOURCE_EXHAUSTED_OOM_ERROR | JVMTI_RESOURCE_EXHAUSTED_JAVA_HEAP, 
         "Java heap space");
     }
 
@@ -189,7 +192,7 @@ HeapWord* CollectedHeap::common_permanent_mem_allocate_noinit(size_t size, TRAPS
 
   if (JvmtiExport::should_post_resource_exhausted()) {
     JvmtiExport::post_resource_exhausted(
-        JVMTI_RESOURCE_EXHAUSTED_OOM_ERROR,
+        JVMTI_RESOURCE_EXHAUSTED_OOM_ERROR, 
         "PermGen space");
   }
 
@@ -227,7 +230,7 @@ oop CollectedHeap::obj_allocate(KlassHandle klass, int size, TRAPS) {
   HeapWord* obj = common_mem_allocate_init(size, false, CHECK_NULL);
   post_allocation_setup_obj(klass, obj, size);
   NOT_PRODUCT(Universe::heap()->check_for_bad_heap_word_value(obj, size));
-  return (oop)obj;
+  return (oop)obj;  
 }
 
 oop CollectedHeap::array_allocate(KlassHandle klass,
@@ -240,7 +243,7 @@ oop CollectedHeap::array_allocate(KlassHandle klass,
   HeapWord* obj = common_mem_allocate_init(size, false, CHECK_NULL);
   post_allocation_setup_array(klass, obj, size, length);
   NOT_PRODUCT(Universe::heap()->check_for_bad_heap_word_value(obj, size));
-  return (oop)obj;
+  return (oop)obj;  
 }
 
 oop CollectedHeap::large_typearray_allocate(KlassHandle klass,
@@ -253,27 +256,27 @@ oop CollectedHeap::large_typearray_allocate(KlassHandle klass,
   HeapWord* obj = common_mem_allocate_init(size, true, CHECK_NULL);
   post_allocation_setup_array(klass, obj, size, length);
   NOT_PRODUCT(Universe::heap()->check_for_bad_heap_word_value(obj, size));
-  return (oop)obj;
+  return (oop)obj;  
 }
 
 oop CollectedHeap::permanent_obj_allocate(KlassHandle klass, int size, TRAPS) {
   oop obj = permanent_obj_allocate_no_klass_install(klass, size, CHECK_NULL);
   post_allocation_install_obj_klass(klass, obj, size);
-  NOT_PRODUCT(Universe::heap()->check_for_bad_heap_word_value((HeapWord*) obj,
-                                                              size));
-  return obj;
+  NOT_PRODUCT(Universe::heap()->check_for_bad_heap_word_value((HeapWord*) obj, 
+							      size));
+  return obj;  
 }
 
 oop CollectedHeap::permanent_obj_allocate_no_klass_install(KlassHandle klass,
-                                                           int size,
-                                                           TRAPS) {
+							   int size, 
+							   TRAPS) {
   debug_only(check_for_valid_allocation_state());
   assert(!Universe::heap()->is_gc_active(), "Allocation during gc not allowed");
   assert(size >= 0, "int won't convert to size_t");
   HeapWord* obj = common_permanent_mem_allocate_init(size, CHECK_NULL);
   post_allocation_setup_no_klass_install(klass, obj, size);
   NOT_PRODUCT(Universe::heap()->check_for_bad_heap_word_value(obj, size));
-  return (oop)obj;
+  return (oop)obj;  
 }
 
 oop CollectedHeap::permanent_array_allocate(KlassHandle klass,
@@ -286,48 +289,10 @@ oop CollectedHeap::permanent_array_allocate(KlassHandle klass,
   HeapWord* obj = common_permanent_mem_allocate_init(size, CHECK_NULL);
   post_allocation_setup_array(klass, obj, size, length);
   NOT_PRODUCT(Universe::heap()->check_for_bad_heap_word_value(obj, size));
-  return (oop)obj;
+  return (oop)obj;  
 }
 
-// Returns "TRUE" if "p" is a method oop in the
-// current heap with high probability. NOTE: The main
-// current consumers of this interface are Forte::
-// and ThreadProfiler::. In these cases, the
-// interpreter frame from which "p" came, may be
-// under construction when sampled asynchronously, so
-// the clients want to check that it represents a
-// valid method before using it. Nonetheless since
-// the clients do not typically lock out GC, the
-// predicate is_valid_method() is not stable, so
-// it is possible that by the time "p" is used, it
-// is no longer valid.
-inline bool CollectedHeap::is_valid_method(oop p) const {
-  return
-    p != NULL &&
-
-    // Check whether it is aligned at a HeapWord boundary.
-    Space::is_aligned(p) &&
-
-    // Check whether "method" is in the allocated part of the
-    // permanent generation -- this needs to be checked before
-    // p->klass() below to avoid a SEGV (but see below
-    // for a potential window of vulnerability).
-    is_permanent((void*)p) &&
-
-    // See if GC is active; however, there is still an
-    // apparently unavoidable window after this call
-    // and before the client of this interface uses "p".
-    // If the client chooses not to lock out GC, then
-    // it's a risk the client must accept.
-    !is_gc_active() &&
-
-    // Check that p is a methodOop.
-    p->klass() == Universe::methodKlassObj();
-}
-
-
-#ifndef PRODUCT
-
+#ifndef	PRODUCT
 inline bool
 CollectedHeap::promotion_should_fail(volatile size_t* count) {
   // Access to count is not atomic; the value does not have to be exact.
@@ -337,8 +302,8 @@ CollectedHeap::promotion_should_fail(volatile size_t* count) {
     if (elapsed_gcs >= PromotionFailureALotInterval) {
       // Test for unsigned arithmetic wrap-around.
       if (++*count >= PromotionFailureALotCount) {
-        *count = 0;
-        return true;
+	*count = 0;
+	return true;
       }
     }
   }
@@ -359,4 +324,4 @@ inline void CollectedHeap::reset_promotion_should_fail(volatile size_t* count) {
 inline void CollectedHeap::reset_promotion_should_fail() {
   reset_promotion_should_fail(&_promotion_failure_alot_count);
 }
-#endif  // #ifndef PRODUCT
+#endif	// #ifndef PRODUCT

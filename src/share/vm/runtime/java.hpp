@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Register function to be called by before_exit
@@ -32,7 +35,7 @@ extern void before_exit(JavaThread * thread);
 extern void vm_exit(int code);
 
 // Wrapper for ::exit()
-extern void vm_direct_exit(int code);
+extern void vm_direct_exit(int code); 
 
 // Shutdown the VM but do not exit the process
 extern void vm_shutdown();
@@ -51,7 +54,7 @@ extern void vm_shutdown_during_initialization(const char* error, const char* mes
 class JDK_Version : AllStatic {
   friend class VMStructs;
  private:
-  static jdk_version_info _version_info;
+  static jdk_version_info _version_info; 
   static bool             _pre_jdk16_version;
   static int              _jdk_version;  // JDK version number representing the release
                                          //  i.e. n in 1.n.x (= jdk_minor_version())

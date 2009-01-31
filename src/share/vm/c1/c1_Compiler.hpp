@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // There is one instance of the Compiler per CompilerThread.
@@ -50,7 +53,7 @@ class Compiler: public AbstractCompiler {
 
   // Missing feature tests
   virtual bool supports_native()                 { return true; }
-  virtual bool supports_osr   ()                 { return true; }
+  virtual bool supports_osr   ()                 { return true; } 
 
   // Customization
   virtual bool needs_adapters         ()         { return false; }
@@ -65,3 +68,4 @@ class Compiler: public AbstractCompiler {
   // Print compilation timers and statistics
   virtual void print_timers();
 };
+

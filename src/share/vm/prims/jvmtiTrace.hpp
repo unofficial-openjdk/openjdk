@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 ///////////////////////////////////////////////////////////////
@@ -87,10 +90,10 @@ public:
 
   // return a valid string no matter what state the thread is in
   static const char *safe_get_thread_name(Thread *thread);
-
+    
   // return the name of the current thread
   static const char *safe_get_current_thread_name();
-
+       
   // return a valid string no matter what the state of k_mirror
   static const char *get_class_name(oop k_mirror);
 };

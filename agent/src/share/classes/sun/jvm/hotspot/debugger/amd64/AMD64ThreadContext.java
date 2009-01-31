@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.amd64;
@@ -32,12 +32,12 @@ import sun.jvm.hotspot.debugger.*;
 
 public abstract class AMD64ThreadContext implements ThreadContext {
     // Taken from /usr/include/sys/regset.h on Solaris/AMD64.
-
+    
     // NOTE: the indices for the various registers must be maintained as
     // listed across various operating systems. However, only a small
     // subset of the registers' values are guaranteed to be present (and
     // must be present for the SA's stack walking to work)
-
+    
     public static final int R15 = 0;
     public static final int R14 = 1;
     public static final int R13 = 2;
@@ -66,42 +66,42 @@ public abstract class AMD64ThreadContext implements ThreadContext {
     public static final int DS = 25;
     public static final int FSBASE = 26;
     public static final int GSBASE = 27;
-
+    
     public static final int NPRGREG = 28;
-
+    
     private static final String[] regNames = {
         "r15",  "r14", "r13", "r12", "r11", "r10", "r9", "r8",
         "rdi",  "rsi", "rbp", "rbx", "rdx", "rcx", "rax", "trapno",
         "err",  "rip", "cs",  "rfl", "rsp", "ss",  "fs", "gs",
         "es",   "ds",  "fsbase", "gsbase"
     };
-
+    
     private long[] data;
-
+    
     public AMD64ThreadContext() {
         data = new long[NPRGREG];
     }
-
+    
     public int getNumRegisters() {
         return NPRGREG;
     }
-
+    
     public String getRegisterName(int index) {
         return regNames[index];
     }
-
+    
     public void setRegister(int index, long value) {
         data[index] = value;
     }
-
+    
     public long getRegister(int index) {
         return data[index];
     }
-
+    
     /** This can't be implemented in this class since we would have to
      * tie the implementation to, for example, the debugging system */
     public abstract void setRegisterAsAddress(int index, Address value);
-
+    
     /** This can't be implemented in this class since we would have to
      * tie the implementation to, for example, the debugging system */
     public abstract Address getRegisterAsAddress(int index);

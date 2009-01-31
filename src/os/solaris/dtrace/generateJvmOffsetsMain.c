@@ -19,9 +19,12 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 
 #include "generateJvmOffsets.h"
 
@@ -33,7 +36,7 @@ int main(int argc, const char *argv[]) {
 
     if (argc != 2) {
         printf("%s", HELP);
-        return 1;
+	return 1; 
     }
 
     if (0 == strcmp(argv[1], "-header")) {
@@ -47,7 +50,7 @@ int main(int argc, const char *argv[]) {
     }
     else {
         printf("%s", HELP);
-        return 1;
+	return 1; 
     }
     return generateJvmOffsets(gen_var);
 }

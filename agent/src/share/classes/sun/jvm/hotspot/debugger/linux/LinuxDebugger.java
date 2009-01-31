@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.linux;
@@ -50,7 +50,7 @@ public interface LinuxDebugger extends JVMDebugger {
   public long         getAddressValue(Address addr) throws DebuggerException;
   public Address      newAddress(long value) throws DebuggerException;
 
-  // For LinuxCDebugger
+  // For LinuxCDebugger 
   public List         getThreadList();
   public List         getLoadObjectList();
   public ClosestSymbol lookup(long address);
@@ -78,3 +78,4 @@ public interface LinuxDebugger extends JVMDebugger {
   // From the ThreadAccess interface via Debugger and JVMDebugger
   //   public ThreadProxy getThreadForIdentifierAddress(Address addr);
 }
+

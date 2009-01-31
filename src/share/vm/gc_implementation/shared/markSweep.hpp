@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class ReferenceProcessor;
@@ -55,7 +58,7 @@ class MarkSweep : AllStatic {
   // In line closure decls
   //
 
-  class FollowRootClosure: public OopsInGenClosure{
+  class FollowRootClosure: public OopsInGenClosure{ 
    public:
     void do_oop(oop* p) { follow_root(p); }
     virtual const bool do_nmethods() const { return true; }
@@ -105,17 +108,17 @@ class MarkSweep : AllStatic {
   //
  protected:
   // Traversal stack used during phase1
-  static GrowableArray<oop>*             _marking_stack;
+  static GrowableArray<oop>*             _marking_stack;   
   // Stack for live klasses to revisit at end of marking phase
-  static GrowableArray<Klass*>*          _revisit_klass_stack;
+  static GrowableArray<Klass*>*          _revisit_klass_stack;   
 
   // Space for storing/restoring mark word
   static GrowableArray<markOop>*         _preserved_mark_stack;
   static GrowableArray<oop>*             _preserved_oop_stack;
-  static size_t                          _preserved_count;
-  static size_t                          _preserved_count_max;
+  static size_t			         _preserved_count;
+  static size_t			         _preserved_count_max;
   static PreservedMark*                  _preserved_marks;
-
+  
   // Reference processing (used in ...follow_contents)
   static ReferenceProcessor*             _ref_processor;
 
@@ -176,11 +179,11 @@ class MarkSweep : AllStatic {
 
   static void mark_and_follow(oop* p);    // Mark pointer and follow contents.
   static void _mark_and_push(oop* p);     // Mark pointer and push obj on
-                                          // marking stack.
+					  // marking stack.
 
-
+  
   static void mark_and_push(oop* p) {     // Check mark and maybe push on
-                                          // marking stack
+					  // marking stack
     // assert(Universe::is_reserved_heap((oop)p), "we should only be traversing objects here");
     oop m = *p;
     if (m != NULL && !m->mark()->is_marked()) {
@@ -196,7 +199,7 @@ class MarkSweep : AllStatic {
   static void restore_marks();            // Restore the marks that we saved in preserve_mark
 
   static void _adjust_pointer(oop* p, bool isroot);
-
+  
   static void adjust_root_pointer(oop* p) { _adjust_pointer(p, true); }
   static void adjust_pointer(oop* p)      { _adjust_pointer(p, false); }
 

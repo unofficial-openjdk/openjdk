@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -27,7 +30,7 @@
 
 // Free list.  A FreeList is used to access a linked list of chunks
 // of space in the heap.  The head and tail are maintained so that
-// items can be (as in the current implementation) added at the
+// items can be (as in the current implementation) added at the 
 // at the tail of the list and removed from the head of the list to
 // maintain a FIFO queue.
 
@@ -37,9 +40,9 @@ FreeList::FreeList() :
   , _protecting_lock(NULL)
 #endif
 {
-  _size         = 0;
-  _count        = 0;
-  _hint         = 0;
+  _size		= 0;
+  _count	= 0;
+  _hint		= 0;
   init_statistics();
 }
 
@@ -49,9 +52,9 @@ FreeList::FreeList(FreeChunk* fc) :
   , _protecting_lock(NULL)
 #endif
 {
-  _size         = fc->size();
-  _count        = 1;
-  _hint         = 0;
+  _size		= fc->size();
+  _count	= 1;
+  _hint		= 0;
   init_statistics();
 #ifndef PRODUCT
   _allocation_stats.set_returnedBytes(size() * HeapWordSize);
@@ -66,8 +69,8 @@ FreeList::FreeList(HeapWord* addr, size_t size) :
 {
   assert(size > sizeof(FreeChunk), "size is too small");
   head()->setSize(size);
-  _size         = size;
-  _count        = 1;
+  _size		= size;
+  _count	= 1;
   init_statistics();
 #ifndef PRODUCT
   _allocation_stats.set_returnedBytes(_size * HeapWordSize);
@@ -119,7 +122,7 @@ void FreeList::getFirstNChunksFromList(size_t n, FreeList* fl) {
       tl = tl->next(); n--; k++;
     }
     assert(tl != NULL, "Loop Inv.");
-
+    
     // First, fix up the list we took from.
     FreeChunk* new_head = tl->next();
     set_head(new_head);
@@ -157,7 +160,7 @@ void FreeList::removeChunk(FreeChunk*fc) {
    }
    if (prevFC == NULL) { // removed head of list
      link_head(nextFC);
-     assert(nextFC == NULL || nextFC->prev() == NULL,
+     assert(nextFC == NULL || nextFC->prev() == NULL, 
        "Prev of head should be NULL");
    } else {
      prevFC->linkNext(nextFC);
@@ -191,7 +194,7 @@ void FreeList::returnChunkAtHead(FreeChunk* chunk, bool record_return) {
   assert(size() == chunk->size(), "Wrong size");
   assert(head() == NULL || head()->prev() == NULL, "list invariant");
   assert(tail() == NULL || tail()->next() == NULL, "list invariant");
-
+  
   FreeChunk* oldHead = head();
   assert(chunk != oldHead, "double insertion");
   chunk->linkAfter(oldHead);

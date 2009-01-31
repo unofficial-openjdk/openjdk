@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -48,7 +51,7 @@ enum {
   JMM_VERSION_1_0 = 0x20010000,
   JMM_VERSION_1_1 = 0x20010100, // JDK 6
   JMM_VERSION_1_2 = 0x20010200, // JDK 7
-  JMM_VERSION     = 0x20010200
+  JMM_VERSION     = 0x20010200 
 };
 
 typedef struct {
@@ -110,8 +113,8 @@ typedef enum {
 
 
 enum {
-  JMM_THREAD_STATE_FLAG_SUSPENDED = 0x00100000,
-  JMM_THREAD_STATE_FLAG_NATIVE    = 0x00400000
+  JMM_THREAD_STATE_FLAG_SUSPENDED = 0x00100000, 
+  JMM_THREAD_STATE_FLAG_NATIVE    = 0x00400000 
 };
 
 #define JMM_THREAD_STATE_FLAG_MASK  0xFFF00000
@@ -126,8 +129,8 @@ typedef enum {
 } jmmStatisticType;
 
 typedef enum {
-  JMM_USAGE_THRESHOLD_HIGH            = 901,
-  JMM_USAGE_THRESHOLD_LOW             = 902,
+  JMM_USAGE_THRESHOLD_HIGH	      = 901,
+  JMM_USAGE_THRESHOLD_LOW	      = 902,
   JMM_COLLECTION_USAGE_THRESHOLD_HIGH = 903,
   JMM_COLLECTION_USAGE_THRESHOLD_LOW  = 904
 } jmmThresholdType;
@@ -157,7 +160,7 @@ typedef struct {
   jmmVMGlobalOrigin origin;         /* Default or non-default value */
   unsigned int      writeable : 1;  /* dynamically writeable */
   unsigned int      external  : 1;  /* external supported interface */
-  unsigned int      reserved  : 30;
+  unsigned int      reserved  : 30; 
   void *reserved1;
   void *reserved2;
 } jmmVMGlobal;
@@ -192,7 +195,7 @@ typedef struct jmmInterface_1_ {
 
   jint         (JNICALL *GetVersion)             (JNIEnv *env);
 
-  jint         (JNICALL *GetOptionalSupport)     (JNIEnv *env,
+  jint         (JNICALL *GetOptionalSupport)     (JNIEnv *env, 
                                                   jmmOptionalSupport* support_ptr);
 
   /* This is used by JDK 6 and earlier.
@@ -200,8 +203,8 @@ typedef struct jmmInterface_1_ {
    */
   jobject      (JNICALL *GetInputArguments)      (JNIEnv *env);
 
-  jint         (JNICALL *GetThreadInfo)          (JNIEnv *env,
-                                                  jlongArray ids,
+  jint         (JNICALL *GetThreadInfo)          (JNIEnv *env, 
+                                                  jlongArray ids, 
                                                   jint maxDepth,
                                                   jobjectArray infoArray);
   jobjectArray (JNICALL *GetInputArgumentArray)  (JNIEnv *env);
@@ -221,61 +224,61 @@ typedef struct jmmInterface_1_ {
   jboolean     (JNICALL *GetBoolAttribute)       (JNIEnv *env, jmmBoolAttribute att);
   jboolean     (JNICALL *SetBoolAttribute)       (JNIEnv *env, jmmBoolAttribute att, jboolean flag);
 
-  jint         (JNICALL *GetLongAttributes)      (JNIEnv *env,
-                                                  jobject obj,
-                                                  jmmLongAttribute* atts,
-                                                  jint count,
+  jint         (JNICALL *GetLongAttributes)      (JNIEnv *env, 
+                                                  jobject obj, 
+                                                  jmmLongAttribute* atts, 
+                                                  jint count, 
                                                   jlong* result);
 
   jobjectArray (JNICALL *FindCircularBlockedThreads) (JNIEnv *env);
   jlong        (JNICALL *GetThreadCpuTime)       (JNIEnv *env, jlong thread_id);
 
   jobjectArray (JNICALL *GetVMGlobalNames)       (JNIEnv *env);
-  jint         (JNICALL *GetVMGlobals)           (JNIEnv *env,
+  jint         (JNICALL *GetVMGlobals)           (JNIEnv *env, 
                                                   jobjectArray names,
                                                   jmmVMGlobal *globals,
                                                   jint count);
 
   jint         (JNICALL *GetInternalThreadTimes) (JNIEnv *env,
-                                                  jobjectArray names,
-                                                  jlongArray times);
+						  jobjectArray names,
+						  jlongArray times);
 
   jboolean     (JNICALL *ResetStatistic)         (JNIEnv *env,
                                                   jvalue obj,
                                                   jmmStatisticType type);
 
-  void         (JNICALL *SetPoolSensor)          (JNIEnv *env,
-                                                  jobject pool,
-                                                  jmmThresholdType type,
+  void         (JNICALL *SetPoolSensor)          (JNIEnv *env, 
+                                                  jobject pool, 
+						  jmmThresholdType type,
                                                   jobject sensor);
 
-  jlong        (JNICALL *SetPoolThreshold)       (JNIEnv *env,
-                                                  jobject pool,
-                                                  jmmThresholdType type,
+  jlong        (JNICALL *SetPoolThreshold)       (JNIEnv *env, 
+                                                  jobject pool, 
+						  jmmThresholdType type,
                                                   jlong threshold);
   jobject      (JNICALL *GetPoolCollectionUsage) (JNIEnv* env, jobject pool);
 
-  jint         (JNICALL *GetGCExtAttributeInfo)  (JNIEnv *env,
-                                                  jobject mgr,
+  jint         (JNICALL *GetGCExtAttributeInfo)  (JNIEnv *env, 
+                                                  jobject mgr, 
                                                   jmmExtAttributeInfo *ext_info,
                                                   jint count);
-  void         (JNICALL *GetLastGCStat)          (JNIEnv *env,
+  void         (JNICALL *GetLastGCStat)          (JNIEnv *env, 
                                                   jobject mgr,
                                                   jmmGCStat *gc_stat);
-  jlong        (JNICALL *GetThreadCpuTimeWithKind) (JNIEnv *env,
-                                                    jlong thread_id,
+  jlong        (JNICALL *GetThreadCpuTimeWithKind) (JNIEnv *env, 
+                                                    jlong thread_id, 
                                                     jboolean user_sys_cpu_time);
   void*        reserved5;
   jint         (JNICALL *DumpHeap0)              (JNIEnv *env,
                                                   jstring outputfile,
                                                   jboolean live);
   jobjectArray (JNICALL *FindDeadlocks)             (JNIEnv *env, jboolean object_monitors_only);
-  void         (JNICALL *SetVMGlobal)            (JNIEnv *env,
+  void         (JNICALL *SetVMGlobal)            (JNIEnv *env, 
                                                   jstring flag_name,
                                                   jvalue  new_value);
   void*        reserved6;
   jobjectArray (JNICALL *DumpThreads)            (JNIEnv *env,
-                                                  jlongArray ids,
+                                                  jlongArray ids, 
                                                   jboolean lockedMonitors,
                                                   jboolean lockedSynchronizers);
 } JmmInterface;
@@ -285,3 +288,4 @@ typedef struct jmmInterface_1_ {
 #endif /* __cplusplus */
 
 #endif /* !_JAVA_JMM_H_ */
+

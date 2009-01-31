@@ -34,7 +34,7 @@ JvmtiOutDir=jvmtifiles
 !include $(WorkSpace)/build/windows/makefiles/sa.make
 
 !if ("$(Variant)" == "compiler2") || ("$(Variant)" == "tiered")
-default:: includeDB.current Dependencies incls/ad_$(Platform_arch_model).cpp incls/dfa_$(Platform_arch_model).cpp $(JvmtiGeneratedFiles)
+default:: includeDB.current Dependencies incls/ad_$(ARCH).cpp incls/dfa_$(ARCH).cpp $(JvmtiGeneratedFiles)
 !else
 default:: includeDB.current Dependencies $(JvmtiGeneratedFiles)
 !endif
@@ -83,7 +83,7 @@ includeDB.current Dependencies: classes/MakeDeps.class $(IncludeDBs)
 	cat $(IncludeDBs) > includeDB
 	if exist incls rmdir /s /q incls
 	mkdir incls
-	$(RUN_JAVA) -Djava.class.path=classes MakeDeps WinGammaPlatform$(VcVersion) $(WorkSpace)/build/windows/platform_$(BUILDARCH) includeDB $(MakeDepsOptions)
+	$(RUN_JAVA) -Djava.class.path=classes MakeDeps WinGammaPlatform$(VcVersion) $(WorkSpace)/build/windows/platform_$(ARCH) includeDB $(MakeDepsOptions)
 	rm -f includeDB.current
 	cp includeDB includeDB.current
 

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -29,7 +32,7 @@
 void LIR_Assembler::patching_epilog(PatchingStub* patch, LIR_PatchCode patch_code, Register obj, CodeEmitInfo* info) {
   // we must have enough patching space so that call can be inserted
   while ((intx) _masm->pc() - (intx) patch->pc_start() < NativeCall::instruction_size) {
-    _masm->nop();
+    _masm->nop(); 
   }
   patch->install(_masm, patch_code, obj, info);
   append_patching_stub(patch);
@@ -71,7 +74,7 @@ void LIR_Assembler::patching_epilog(PatchingStub* patch, LIR_PatchCode patch_cod
 //---------------------------------------------------------------
 
 
-LIR_Assembler::LIR_Assembler(Compilation* c):
+LIR_Assembler::LIR_Assembler(Compilation* c): 
    _compilation(c)
  , _masm(c->masm())
  , _frame_map(c->frame_map())
@@ -127,7 +130,7 @@ void LIR_Assembler::emit_stubs(CodeStubList* stub_list) {
 }
 
 
-void LIR_Assembler::emit_slow_case_stubs() {
+void LIR_Assembler::emit_slow_case_stubs() { 
   emit_stubs(_slow_case_stubs);
 }
 
@@ -196,7 +199,7 @@ void LIR_Assembler::emit_code(BlockList* hir) {
 
 void LIR_Assembler::emit_block(BlockBegin* block) {
   if (block->is_set(BlockBegin::backward_branch_target_flag)) {
-    align_backward_branch_target();
+    align_backward_branch_target(); 
   }
 
   // if this block is the start of an exception handler, record the
@@ -420,10 +423,10 @@ void LIR_Assembler::emit_call(LIR_OpJavaCall* op) {
   emit_static_call_stub();
 
   switch (op->code()) {
-  case lir_static_call:
+  case lir_static_call:  
     call(op->addr(), relocInfo::static_call_type, op->info());
     break;
-  case lir_optvirtual_call:
+  case lir_optvirtual_call: 
     call(op->addr(), relocInfo::opt_virtual_call_type, op->info());
     break;
   case lir_icvirtual_call:
@@ -456,7 +459,7 @@ void LIR_Assembler::emit_opLabel(LIR_OpLabel* op) {
 
 void LIR_Assembler::emit_op1(LIR_Op1* op) {
   switch (op->code()) {
-    case lir_move:
+    case lir_move:   
       if (op->move_kind() == lir_move_volatile) {
         assert(op->patch_code() == lir_patch_none, "can't patch volatiles");
         volatile_move_op(op->in_opr(), op->result_opr(), op->type(), op->info());
@@ -481,9 +484,9 @@ void LIR_Assembler::emit_op1(LIR_Op1* op) {
     }
 
     case lir_return:
-      return_op(op->in_opr());
+      return_op(op->in_opr()); 
       break;
-
+    
     case lir_safepoint:
       if (compilation()->debug_info_recorder()->last_pc_offset() == code_offset()) {
         _masm->nop();
@@ -517,11 +520,11 @@ void LIR_Assembler::emit_op1(LIR_Op1* op) {
     case lir_neg:
       negate(op->in_opr(), op->result_opr());
       break;
-
+    
     case lir_leal:
       leal(op->in_opr(), op->result_opr());
       break;
-
+    
     case lir_null_check:
       if (GenerateCompilerNullChecks) {
         add_debug_info_for_null_check_here(op->info());
@@ -617,7 +620,7 @@ void LIR_Assembler::emit_op0(LIR_Op0* op) {
       get_thread(op->result_opr());
       break;
 
-    default:
+    default: 
       ShouldNotReachHere();
       break;
   }
@@ -634,7 +637,7 @@ void LIR_Assembler::emit_op2(LIR_Op2* op) {
       }
       comp_op(op->condition(), op->in_opr1(), op->in_opr2(), op);
       break;
-
+    
     case lir_cmp_l2i:
     case lir_cmp_fd2i:
     case lir_ucmp_fd2i:
@@ -671,7 +674,7 @@ void LIR_Assembler::emit_op2(LIR_Op2* op) {
         op->info(),
         op->fpu_pop_count() == 1);
       break;
-
+    
     case lir_abs:
     case lir_sqrt:
     case lir_sin:
@@ -756,7 +759,7 @@ void LIR_Assembler::move_op(LIR_Opr src, LIR_Opr dest, BasicType type, LIR_Patch
     }
 
   } else if (src->is_address()) {
-    mem2reg(src, dest, type, patch_code, info, unaligned);
+    mem2reg(src, dest, type, patch_code, info, unaligned); 
 
   } else {
     ShouldNotReachHere();
@@ -792,3 +795,6 @@ void LIR_Assembler::verify_oop_map(CodeEmitInfo* info) {
   }
 #endif
 }
+
+
+

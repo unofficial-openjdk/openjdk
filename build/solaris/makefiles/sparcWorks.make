@@ -91,7 +91,6 @@ $(shell uname -r | awk -F. '{ if ($$2 >= 7) print "-DSOLARIS_7_OR_LATER"; }')
 CFLAGS += ${SOLARIS_7_OR_LATER}
 
 ARCHFLAG         = $(ARCHFLAG/$(BUILDARCH))
-# set ARCHFLAG/BUILDARCH which will ultimately be ARCHFLAG
 ifeq ($(TYPE),COMPILER2)
 ARCHFLAG/sparc   = -xarch=v8plus
 else
@@ -102,8 +101,8 @@ ARCHFLAG/sparc   = -xarch=v8
 endif
 endif
 ARCHFLAG/sparcv9 = -xarch=v9
-ARCHFLAG/i486  =
-ARCHFLAG/amd64  = -xarch=amd64
+ARCHFLAG/i486    =
+ARCHFLAG/amd64   = -xarch=amd64
 
 # Optional sub-directory in /usr/lib where BUILDARCH libraries are kept.
 ISA_DIR=$(ISA_DIR/$(BUILDARCH))
@@ -155,32 +154,26 @@ OPT_CFLAGS=-xO4 $(EXTRA_OPT_CFLAGS)
 
 endif # sparc
 
-ifeq ("${Platform_arch_model}", "x86_32")
+ifeq ("${Platform_arch}", "i486")
 
 OPT_CFLAGS=-xtarget=pentium $(EXTRA_OPT_CFLAGS)
 
 # UBE (CC 5.5) has bug 4923569 with -xO4
 OPT_CFLAGS+=-xO3
 
-endif # 32bit x86
+endif # i486
 
-ifeq ("${Platform_arch_model}", "x86_64")
+ifeq ("${Platform_arch}", "amd64")
 
-ASFLAGS += -xarch=amd64
-CFLAGS  += -xarch=amd64
-# this one seemed useless
-LFLAGS_VM  += -xarch=amd64
-# this one worked
-LFLAGS  += -xarch=amd64
-AOUT_FLAGS += -xarch=amd64
+ASFLAGS += $(ARCHFLAG)
 
 # -xO3 is faster than -xO4 on specjbb with SS10 compiler
 OPT_CFLAGS=-xO4 $(EXTRA_OPT_CFLAGS)
 
-endif # 64bit x86
+endif # amd64
 
 # Inline functions
-CFLAGS += $(GAMMADIR)/src/os_cpu/solaris_${Platform_arch}/vm/solaris_${Platform_arch_model}.il
+CFLAGS += $(GAMMADIR)/src/os_cpu/solaris_${Platform_arch}/vm/solaris_${Platform_arch}.il
 
 # no more exceptions
 CFLAGS/NOEX=-features=no%except
@@ -255,7 +248,7 @@ CFLAGS += $(GAMMADIR)/src/os_cpu/solaris_sparc/vm/solaris_sparc.il
 
 endif # sparc
 
-ifeq ("${Platform_arch_model}", "x86_32")
+ifeq ("${Platform_arch}", "i486")
 
 OPT_CFLAGS=-xtarget=pentium $(EXTRA_OPT_CFLAGS)
 
@@ -263,9 +256,9 @@ OPT_CFLAGS=-xtarget=pentium $(EXTRA_OPT_CFLAGS)
 # [phh] Is this still true for 6.1?
 OPT_CFLAGS+=-xO3
 
-CFLAGS += $(GAMMADIR)/src/os_cpu/solaris_x86/vm/solaris_x86_32.il
+CFLAGS += $(GAMMADIR)/src/os_cpu/solaris_i486/vm/solaris_i486.il
 
-endif # 32bit x86
+endif # i486
 
 # no more exceptions
 CFLAGS/NOEX=-noex
@@ -339,7 +332,7 @@ CFLAGS += $(GAMMADIR)/src/os_cpu/solaris_sparc/vm/atomic_solaris_sparc.il
 
 endif # sparc
 
-ifeq ("${Platform_arch_model}", "x86_32")
+ifeq ("${Platform_arch}", "i486")
 OPT_CFLAGS=-xtarget=pentium $(EXTRA_OPT_CFLAGS)
 ifeq ("${COMPILER_REV}", "5.0")
 # SC5.0 tools on x86 are flakey at -xO4
@@ -348,9 +341,9 @@ else
 OPT_CFLAGS+=-xO4
 endif
 
-CFLAGS += $(GAMMADIR)/src/os_cpu/solaris_x86/vm/solaris_x86_32.il
+CFLAGS += $(GAMMADIR)/src/os_cpu/solaris_i486/vm/solaris_i486.il
 
-endif  # 32bit x86
+endif  # i486
 
 # The following options run into misaligned ldd problem (raj)
 #OPT_CFLAGS = -fast -O4 -xarch=v8 -xchip=ultra
@@ -493,3 +486,7 @@ STRIP_LIB.CC/POST_HOOK = $(STRIP) -x $@ || exit 1;
 # STRIP_LIB.CC/POST_HOOK is incorporated into LINK_LIB.CC/POST_HOOK
 # in certain configurations, such as product.make.  Other configurations,
 # such as debug.make, do not include the strip operation.
+
+# Enable "#pragma ident" directives.  They are conditionally compiled because
+# redundant copies from header files can bloat the binaries on some platforms.
+SYSDEFS += -DUSE_PRAGMA_IDENT_HDR -DUSE_PRAGMA_IDENT_SRC

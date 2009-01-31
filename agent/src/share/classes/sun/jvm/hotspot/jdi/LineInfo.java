@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.jdi;
@@ -27,7 +27,7 @@ package sun.jvm.hotspot.jdi;
 import com.sun.jdi.*;
 
 interface LineInfo {
-
+    
     String liStratum();
 
     int liLineNumber();

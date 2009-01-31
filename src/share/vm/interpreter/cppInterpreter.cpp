@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -34,7 +37,7 @@ void CppInterpreter::initialize() {
 
   // generate interpreter
   { ResourceMark rm;
-    TraceTime timer("Interpreter generation", TraceStartupTime);
+    TraceTime timer("Interpreter generation", TraceStartupTime);    
     int code_size = InterpreterCodeSize;
     NOT_PRODUCT(code_size *= 4;)  // debug uses extra interpreter code space
     _code = new StubQueue(new InterpreterCodeletInterface, code_size, NULL,
@@ -90,16 +93,16 @@ void CppInterpreterGenerator::generate_all() {
     for (int i = 0; i < Interpreter::number_of_result_handlers; i++) {
       BasicType type = types[i];
       if (!is_generated[Interpreter::BasicType_as_index(type)]++) {
-        Interpreter::_native_abi_to_tosca[Interpreter::BasicType_as_index(type)] = generate_result_handler_for(type);
+	Interpreter::_native_abi_to_tosca[Interpreter::BasicType_as_index(type)] = generate_result_handler_for(type);
       }
       if (!_tosca_to_stack_is_generated[Interpreter::BasicType_as_index(type)]++) {
-        Interpreter::_tosca_to_stack[Interpreter::BasicType_as_index(type)] = generate_tosca_to_stack_converter(type);
+	Interpreter::_tosca_to_stack[Interpreter::BasicType_as_index(type)] = generate_tosca_to_stack_converter(type);
       }
       if (!_stack_to_stack_is_generated[Interpreter::BasicType_as_index(type)]++) {
-        Interpreter::_stack_to_stack[Interpreter::BasicType_as_index(type)] = generate_stack_to_stack_converter(type);
+	Interpreter::_stack_to_stack[Interpreter::BasicType_as_index(type)] = generate_stack_to_stack_converter(type);
       }
       if (!_stack_to_native_abi_is_generated[Interpreter::BasicType_as_index(type)]++) {
-        Interpreter::_stack_to_native_abi[Interpreter::BasicType_as_index(type)] = generate_stack_to_native_abi_converter(type);
+	Interpreter::_stack_to_native_abi[Interpreter::BasicType_as_index(type)] = generate_stack_to_native_abi_converter(type);
       }
     }
   }
@@ -108,7 +111,7 @@ void CppInterpreterGenerator::generate_all() {
 #define method_entry(kind) Interpreter::_entry_table[Interpreter::kind] = generate_method_entry(Interpreter::kind)
 
   { CodeletMark cm(_masm, "(kind = frame_manager)");
-    // all non-native method kinds
+    // all non-native method kinds  
     method_entry(zerolocals);
     method_entry(zerolocals_synchronized);
     method_entry(empty);
@@ -133,3 +136,4 @@ void CppInterpreterGenerator::generate_all() {
 }
 
 #endif // CC_INTERP
+

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -43,7 +46,7 @@ klassOop typeArrayKlass::create_klass(BasicType type, int scale, TRAPS) {
   // bootstrapping: don't create sym if symbolKlass not created yet
   if (Universe::symbolKlassObj() != NULL) {
     sym = oopFactory::new_symbol_handle(external_name(type), CHECK_NULL);
-  }
+  }   
   KlassHandle klassklass (THREAD, Universe::typeArrayKlassKlassObj());
 
   arrayKlassHandle k = base_create_array_klass(o.vtbl_value(), header_size(), klassklass, CHECK_NULL);
@@ -63,11 +66,11 @@ klassOop typeArrayKlass::create_klass(BasicType type, int scale, TRAPS) {
   return k();
 }
 
-typeArrayOop typeArrayKlass::allocate(int length, TRAPS) {
+typeArrayOop typeArrayKlass::allocate(int length, TRAPS) {  
   assert(log2_element_size() >= 0, "bad scale");
   if (length >= 0) {
     if (length <= max_length()) {
-      size_t size = typeArrayOopDesc::object_size(layout_helper(), length);
+      size_t size = typeArrayOopDesc::object_size(layout_helper(), length);    
       KlassHandle h_k(THREAD, as_klassOop());
       typeArrayOop t;
       CollectedHeap* ch = Universe::heap();
@@ -86,17 +89,17 @@ typeArrayOop typeArrayKlass::allocate(int length, TRAPS) {
   }
 }
 
-typeArrayOop typeArrayKlass::allocate_permanent(int length, TRAPS) {
+typeArrayOop typeArrayKlass::allocate_permanent(int length, TRAPS) {  
   if (length < 0) THROW_0(vmSymbols::java_lang_NegativeArraySizeException());
   int size = typeArrayOopDesc::object_size(layout_helper(), length);
-  KlassHandle h_k(THREAD, as_klassOop());
+  KlassHandle h_k(THREAD, as_klassOop());  
   typeArrayOop t = (typeArrayOop)
     CollectedHeap::permanent_array_allocate(h_k, size, length, CHECK_NULL);
   assert(t->is_parsable(), "Can't publish until parsable");
   return t;
 }
 
-oop typeArrayKlass::multi_allocate(int rank, jint* last_size, TRAPS) {
+oop typeArrayKlass::multi_allocate(int rank, jint* last_size, TRAPS) {  
   // For typeArrays this is only called for the last dimension
   assert(rank == 1, "just checking");
   int length = *last_size;
@@ -140,14 +143,14 @@ klassOop typeArrayKlass::array_klass_impl(bool or_null, int n, TRAPS) {
   return array_klass_impl(h_this, or_null, n, THREAD);
 }
 
-klassOop typeArrayKlass::array_klass_impl(typeArrayKlassHandle h_this, bool or_null, int n, TRAPS) {
+klassOop typeArrayKlass::array_klass_impl(typeArrayKlassHandle h_this, bool or_null, int n, TRAPS) {  
   int dimension = h_this->dimension();
   assert(dimension <= n, "check order of chain");
-    if (dimension == n)
+    if (dimension == n) 
       return h_this();
 
   objArrayKlassHandle  h_ak(THREAD, h_this->higher_dimension());
-  if (h_ak.is_null()) {
+  if (h_ak.is_null()) {    
     if (or_null)  return NULL;
 
     ResourceMark rm;
@@ -156,7 +159,7 @@ klassOop typeArrayKlass::array_klass_impl(typeArrayKlassHandle h_this, bool or_n
       MutexLocker mc(Compile_lock, THREAD);   // for vtables
       // Atomic create higher dimension and link into list
       MutexLocker mu(MultiArray_lock, THREAD);
-
+    
       h_ak = objArrayKlassHandle(THREAD, h_this->higher_dimension());
       if (h_ak.is_null()) {
         klassOop oak = objArrayKlassKlass::cast(
@@ -165,14 +168,14 @@ klassOop typeArrayKlass::array_klass_impl(typeArrayKlassHandle h_this, bool or_n
         h_ak = objArrayKlassHandle(THREAD, oak);
         h_ak->set_lower_dimension(h_this());
         h_this->set_higher_dimension(h_ak());
-        assert(h_ak->oop_is_objArray(), "incorrect initialization of objArrayKlass");
-      }
+        assert(h_ak->oop_is_objArray(), "incorrect initialization of objArrayKlass");    
+      }       
     }
   } else {
     CHECK_UNHANDLED_OOPS_ONLY(Thread::current()->clear_unhandled_oops());
   }
   if (or_null) {
-    return h_ak->array_klass_or_null(n);
+    return h_ak->array_klass_or_null(n); 
   }
   return h_ak->array_klass(n, CHECK_NULL);
 }
@@ -181,7 +184,7 @@ klassOop typeArrayKlass::array_klass_impl(bool or_null, TRAPS) {
   return array_klass_impl(or_null, dimension() +  1, THREAD);
 }
 
-int typeArrayKlass::oop_size(oop obj) const {
+int typeArrayKlass::oop_size(oop obj) const { 
   assert(obj->is_typeArray(),"must be a type array");
   typeArrayOop t = typeArrayOop(obj);
   return t->object_size();
@@ -189,14 +192,14 @@ int typeArrayKlass::oop_size(oop obj) const {
 
 void typeArrayKlass::oop_follow_contents(oop obj) {
   assert(obj->is_typeArray(),"must be a type array");
-  // Performance tweak: We skip iterating over the klass pointer since we
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::typeArrayKlass never moves.
 }
 
 #ifndef SERIALGC
 void typeArrayKlass::oop_follow_contents(ParCompactionManager* cm, oop obj) {
   assert(obj->is_typeArray(),"must be a type array");
-  // Performance tweak: We skip iterating over the klass pointer since we
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::typeArrayKlass never moves.
 }
 #endif // SERIALGC
@@ -204,7 +207,7 @@ void typeArrayKlass::oop_follow_contents(ParCompactionManager* cm, oop obj) {
 int typeArrayKlass::oop_adjust_pointers(oop obj) {
   assert(obj->is_typeArray(),"must be a type array");
   typeArrayOop t = typeArrayOop(obj);
-  // Performance tweak: We skip iterating over the klass pointer since we
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::typeArrayKlass never moves.
   return t->object_size();
 }
@@ -212,7 +215,7 @@ int typeArrayKlass::oop_adjust_pointers(oop obj) {
 int typeArrayKlass::oop_oop_iterate(oop obj, OopClosure* blk) {
   assert(obj->is_typeArray(),"must be a type array");
   typeArrayOop t = typeArrayOop(obj);
-  // Performance tweak: We skip iterating over the klass pointer since we
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::typeArrayKlass never moves.
   return t->object_size();
 }
@@ -220,7 +223,7 @@ int typeArrayKlass::oop_oop_iterate(oop obj, OopClosure* blk) {
 int typeArrayKlass::oop_oop_iterate_m(oop obj, OopClosure* blk, MemRegion mr) {
   assert(obj->is_typeArray(),"must be a type array");
   typeArrayOop t = typeArrayOop(obj);
-  // Performance tweak: We skip iterating over the klass pointer since we
+  // Performance tweak: We skip iterating over the klass pointer since we 
   // know that Universe::typeArrayKlass never moves.
   return t->object_size();
 }
@@ -242,7 +245,7 @@ typeArrayKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
 
 int
 typeArrayKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
-                                    HeapWord* beg_addr, HeapWord* end_addr) {
+				    HeapWord* beg_addr, HeapWord* end_addr) {
   assert(obj->is_typeArray(),"must be a type array");
   return typeArrayOop(obj)->object_size();
 }

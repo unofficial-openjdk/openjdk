@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -104,10 +107,10 @@ ThreadProfilerMark::~ThreadProfilerMark() {
 }
 
 // Random other statics
-static const int col1 = 2;      // position of output column 1
-static const int col2 = 11;     // position of output column 2
-static const int col3 = 25;     // position of output column 3
-static const int col4 = 55;     // position of output column 4
+static const int col1 = 2;	// position of output column 1
+static const int col2 = 11;	// position of output column 2
+static const int col3 = 25;	// position of output column 3
+static const int col4 = 55;	// position of output column 4
 
 
 // Used for detailed profiling of nmethods.
@@ -124,7 +127,7 @@ class PCRecorder : AllStatic {
     return ((int)CodeCache::max_capacity())/bucket_size * BytesPerWord;
   }
  public:
-  static address bucket_start_for(address pc) {
+  static address bucket_start_for(address pc) { 
     if (counters == NULL) return NULL;
     return pc_for(index_for(pc));
   }
@@ -175,7 +178,7 @@ void PCRecorder::print() {
 
 
   int s;
-  {
+  { 
     MutexLockerEx lm(CodeCache_lock, Mutex::_no_safepoint_check_flag);
     s = size();
   }
@@ -226,8 +229,8 @@ class tick_counter {            // holds tick info for one node
 
   void update(TickPosition where) {
     switch(where) {
-      case tp_code:     ticks_in_code++;       break;
-      case tp_native:   ticks_in_native++;      break;
+      case tp_code:	ticks_in_code++;       break;
+      case tp_native:	ticks_in_native++;      break;
     }
   }
 
@@ -235,7 +238,7 @@ class tick_counter {            // holds tick info for one node
     st->print("%5.1f%% %5d ", total() * 100.0 / total_ticks, ticks_in_code);
   }
 
-  void print_native(outputStream* st) {
+  void print_native(outputStream* st) {    
     st->print(" + %5d ", ticks_in_native);
   }
 };
@@ -268,7 +271,7 @@ class ProfilerNode {
 
   virtual bool is_interpreted() const { return false; }
   virtual bool is_compiled()    const { return false; }
-  virtual bool is_stub()        const { return false; }
+  virtual bool is_stub()	const { return false; }
   virtual bool is_runtime_stub() const{ return false; }
   virtual void oops_do(OopClosure* f) = 0;
 
@@ -297,7 +300,7 @@ class ProfilerNode {
   }
 
   virtual methodOop method()         = 0;
-
+  
   virtual void print_method_on(outputStream* st) {
     int limit;
     int i;
@@ -308,7 +311,7 @@ class ProfilerNode {
     for (i = 0 ; i < limit ; i += 1) {
       char c = (char) k->byte_at(i);
       if (c == '/') {
-        c = '.';
+	c = '.';
       }
       st->print("%c", c);
     }
@@ -343,15 +346,15 @@ class ProfilerNode {
       // out of the fields we can read without grabbing any locks
       // since the method may be locked when we need the hash.
       return (
-          method->code_size() ^
-          method->max_stack() ^
-          method->max_locals() ^
+          method->code_size() ^ 
+          method->max_stack() ^ 
+          method->max_locals() ^ 
           method->size_of_parameters());
   }
 
   // for sorting
-  static int compare(ProfilerNode** a, ProfilerNode** b) {
-    return (*b)->total_ticks() - (*a)->total_ticks();
+  static int compare(ProfilerNode** a, ProfilerNode** b) { 
+    return (*b)->total_ticks() - (*a)->total_ticks(); 
   }
 };
 
@@ -415,8 +418,8 @@ class compiledNode : public ProfilerNode {
   }
   bool is_compiled()    const { return true; }
 
-  bool compiled_match(methodOop m) const {
-    return _method == m;
+  bool compiled_match(methodOop m) const { 
+    return _method == m; 
   }
 
   methodOop method()         { return _method; }
@@ -524,7 +527,7 @@ class runtimeStubNode : public ProfilerNode {
   bool runtimeStub_match(const CodeBlob* stub, const char* name) const {
     assert(stub->is_runtime_stub(), "wrong code blob");
     return ((RuntimeStub*)_stub)->entry_point() == ((RuntimeStub*)stub)->entry_point() &&
-            (_symbol == name);
+	    (_symbol == name);
   }
 
   methodOop method() { return NULL; }
@@ -560,16 +563,16 @@ class unknown_compiledNode : public ProfilerNode {
  const char *_name;
  public:
    unknown_compiledNode(const CodeBlob* cb, TickPosition where) : ProfilerNode() {
-     if ( cb->is_buffer_blob() )
+     if ( cb->is_buffer_blob() ) 
        _name = ((BufferBlob*)cb)->name();
-     else
+     else 
        _name = ((SingletonBlob*)cb)->name();
      update(where);
   }
   bool is_compiled()    const { return true; }
 
   bool unknown_compiled_match(const CodeBlob* cb) const {
-     if ( cb->is_buffer_blob() )
+     if ( cb->is_buffer_blob() ) 
        return !strcmp(((BufferBlob*)cb)->name(), _name);
      else
        return !strcmp(((SingletonBlob*)cb)->name(), _name);
@@ -603,7 +606,7 @@ class vmNode : public ProfilerNode {
     _name = name;
     update(where);
   }
-
+  
   const char *name()    const { return _name; }
   bool is_compiled()    const { return true; }
 
@@ -611,15 +614,15 @@ class vmNode : public ProfilerNode {
 
   methodOop method()          { return NULL; }
 
-  static int hash(const char* name){
+  static int hash(const char* name){ 
     // Compute a simple hash
     const char* cp = name;
     int h = 0;
 
     if(name != NULL){
       while(*cp != '\0'){
-        h = (h << 1) ^ *cp;
-        cp++;
+	h = (h << 1) ^ *cp;
+	cp++;
       }
     }
     return h;
@@ -702,15 +705,15 @@ void ThreadProfiler::adapter_update(TickPosition where) {
     ProfilerNode* prev = table[index];
     for(ProfilerNode* node = prev; node; node = node->next()) {
       if (node->adapter_match()) {
-        node->update(where);
-        return;
-      }
+        node->update(where);  
+        return;  
+      }  
       prev = node;
     }
     prev->set_next(new (this) adapterNode(where));
   }
 }
-
+ 
 void ThreadProfiler::runtime_stub_update(const CodeBlob* stub, const char* name, TickPosition where) {
   int index = 0;
   if (!table[index]) {
@@ -719,9 +722,9 @@ void ThreadProfiler::runtime_stub_update(const CodeBlob* stub, const char* name,
     ProfilerNode* prev = table[index];
     for(ProfilerNode* node = prev; node; node = node->next()) {
       if (node->runtimeStub_match(stub, name)) {
-        node->update(where);
-        return;
-      }
+        node->update(where);  
+        return;  
+      }  
       prev = node;
     }
     prev->set_next(new (this) runtimeStubNode(stub, name, where));
@@ -737,9 +740,9 @@ void ThreadProfiler::unknown_compiled_update(const CodeBlob* cb, TickPosition wh
     ProfilerNode* prev = table[index];
     for(ProfilerNode* node = prev; node; node = node->next()) {
       if (node->unknown_compiled_match(cb)) {
-        node->update(where);
-        return;
-      }
+        node->update(where);  
+        return;  
+      }  
       prev = node;
     }
     prev->set_next(new (this) unknown_compiledNode(cb, where));
@@ -760,9 +763,9 @@ void ThreadProfiler::vm_update(const char* name, TickPosition where) {
     ProfilerNode* prev = table[index];
     for(ProfilerNode* node = prev; node; node = node->next()) {
       if (((vmNode *)node)->vm_match(name)) {
-        node->update(where);
-        return;
-      }
+        node->update(where);  
+        return;  
+      }  
       prev = node;
     }
     prev->set_next(new (this) vmNode(os::strdup(name), where));
@@ -800,11 +803,11 @@ void FlatProfiler::record_vm_tick() {
     const char *name = NULL;
     char buf[256];
     buf[0] = '\0';
-
+    
     vm_thread_profiler->inc_thread_ticks();
 
     // Get a snapshot of a current VMThread pc (and leave it running!)
-    // The call may fail if, for instance the VM thread is interrupted while
+    // The call may fail if, for instance the VM thread is interrupted while 
     // holding the Interrupt_lock or for other reasons.
     epc = os::get_thread_pc(VMThread::vm_thread());
     if(epc.pc() != NULL) {
@@ -824,7 +827,7 @@ void FlatProfiler::record_thread_ticks() {
   JavaThread** threadsList;
   bool interval_expired = false;
 
-  if (ProfileIntervals &&
+  if (ProfileIntervals && 
       (FlatProfiler::received_ticks >= interval_ticks_previous + ProfileIntervalsTicks)) {
     interval_expired = true;
     interval_ticks_previous = FlatProfiler::received_ticks;
@@ -924,6 +927,16 @@ void FlatProfilerTask::task() {
   FlatProfiler::record_thread_ticks();
 }
 
+inline bool is_valid_method(methodOop method) {
+  if (method == NULL || 
+      !method->is_perm() || 
+      oop(method)->klass() != Universe::methodKlassObj() ||
+      !method->is_method()) {
+    return false;   // doesn't look good
+  }
+  return true;      // hopefully this is a method indeed
+}
+
 void ThreadProfiler::record_interpreted_tick(frame fr, TickPosition where, int* ticks) {
   FlatProfiler::all_int_ticks++;
   if (!FlatProfiler::full_profile()) {
@@ -941,14 +954,14 @@ void ThreadProfiler::record_interpreted_tick(frame fr, TickPosition where, int* 
   if (fr.fp() != NULL) {
     method = *fr.interpreter_frame_method_addr();
   }
-  if (!Universe::heap()->is_valid_method(method)) {
+  if (!is_valid_method(method)) {
     // tick came at a bad time, stack frame not initialized correctly
     interpreter_ticks += 1;
     FlatProfiler::interpreter_ticks += 1;
     return;
   }
   interpreted_update(method, where);
-
+  
   // update byte code table
   InterpreterCodelet* desc = Interpreter::codelet_containing(fr.pc());
   if (desc != NULL && desc->bytecode() >= 0) {
@@ -972,8 +985,8 @@ void ThreadProfiler::record_compiled_tick(JavaThread* thread, frame fr, TickPosi
         cb = fr.cb();
         localwhere = tp_native;
   }
-  methodOop method = (cb->is_nmethod()) ? ((nmethod *)cb)->method() :
-                                          (methodOop)NULL;
+  methodOop method = (cb->is_nmethod()) ? ((nmethod *)cb)->method() : 
+                                          (methodOop)NULL;  
 
   if (method == NULL) {
     if (cb->is_runtime_stub())
@@ -1006,13 +1019,13 @@ void ThreadProfiler::record_tick_for_running_frame(JavaThread* thread, frame fr)
     PCRecorder::record(fr.pc());
     record_compiled_tick(thread, fr, tp_code);
     return;
-  }
+  } 
 
   if (VtableStubs::stub_containing(fr.pc()) != NULL) {
     unknown_ticks_array[ut_vtable_stubs] += 1;
     return;
   }
-
+  
   frame caller = fr.profile_find_Java_sender_frame(thread);
 
   if (caller.sp() != NULL && caller.pc() != NULL) {
@@ -1034,7 +1047,7 @@ void ThreadProfiler::record_tick_for_calling_frame(JavaThread* thread, frame fr)
   if (CodeCache::contains(fr.pc())) {
     record_compiled_tick(thread, fr, tp_native);
     return;
-  }
+  } 
 
   frame caller = fr.profile_find_Java_sender_frame(thread);
 
@@ -1054,12 +1067,12 @@ void ThreadProfiler::record_tick(JavaThread* thread) {
   // Here's another way to track global state changes.
   // When the class loader starts it marks the ThreadProfiler to tell it it is in the class loader
   // and we check that here.
-  // This is more direct, and more than one thread can be in the class loader at a time,
+  // This is more direct, and more than one thread can be in the class loader at a time, 
   // but it does mean the class loader has to know about the profiler.
   if (region_flag[ThreadProfilerMark::classLoaderRegion]) {
     class_loader_ticks += 1;
     FlatProfiler::class_loader_ticks += 1;
-    return;
+    return; 
   } else if (region_flag[ThreadProfilerMark::extraRegion]) {
     extra_ticks += 1;
     FlatProfiler::extra_ticks += 1;
@@ -1074,7 +1087,7 @@ void ThreadProfiler::record_tick(JavaThread* thread) {
     return;
   }
 
-  frame fr;
+  frame fr; 
 
   switch (thread->thread_state()) {
   case _thread_in_native:
@@ -1087,13 +1100,13 @@ void ThreadProfiler::record_tick(JavaThread* thread) {
         fr = fr.sender(&map);
       }
       record_tick_for_calling_frame(thread, fr);
-    } else {
+    } else {     
       unknown_ticks_array[ut_no_last_Java_frame] += 1;
       FlatProfiler::unknown_ticks += 1;
     }
     break;
   // handle_special_runtime_exit_condition self-suspends threads in Java
-  case _thread_in_Java:
+  case _thread_in_Java: 
   case _thread_in_Java_trans:
     if (thread->profile_last_Java_frame(&fr)) {
       if (fr.is_safepoint_blob_frame()) {
@@ -1175,7 +1188,7 @@ void ThreadProfiler::reset() {
   if (table != NULL) {
     for (int index = 0; index < table_size; index++) {
       ProfilerNode* n = table[index];
-      if (n != NULL) {
+      if (n != NULL) { 
         delete n;
       }
     }
@@ -1208,7 +1221,7 @@ void FlatProfiler::engage(JavaThread* mainThread, bool fullProfile) {
     vm_thread_profiler = new ThreadProfiler();
   }
   if (task == NULL) {
-    task = new FlatProfilerTask(WatcherThread::delay_interval);
+    task = new FlatProfilerTask(WatcherThread::delay_interval); 
     task->enroll();
   }
   timer.start();
@@ -1273,13 +1286,13 @@ bool FlatProfiler::is_active() {
 
 void FlatProfiler::print_byte_code_statistics() {
   GrowableArray <ProfilerNode*>* array = new GrowableArray<ProfilerNode*>(200);
-
+  
   tty->print_cr(" Bytecode ticks:");
   for (int index = 0; index < Bytecodes::number_of_codes; index++) {
     if (FlatProfiler::bytecode_ticks[index] > 0 || FlatProfiler::bytecode_ticks_stub[index] > 0) {
-      tty->print_cr("  %4d %4d = %s",
-        FlatProfiler::bytecode_ticks[index],
-        FlatProfiler::bytecode_ticks_stub[index],
+      tty->print_cr("  %4d %4d = %s", 
+        FlatProfiler::bytecode_ticks[index], 
+        FlatProfiler::bytecode_ticks_stub[index], 
         Bytecodes::name( (Bytecodes::Code) index));
     }
   }
@@ -1298,45 +1311,45 @@ void print_ticks(const char* title, int ticks, int total) {
 void ThreadProfiler::print(const char* thread_name) {
   ResourceMark rm;
   MutexLocker ppl(ProfilePrint_lock);
-  int index = 0; // Declared outside for loops for portability
+  int index = 0; // Declared outside for loops for portability 
 
   if (table == NULL) {
     return;
   }
-
+  
   if (thread_ticks <= 0) {
     return;
   }
 
   const char* title = "too soon to tell";
   double secs = timer.seconds();
-
+  
   GrowableArray <ProfilerNode*>* array = new GrowableArray<ProfilerNode*>(200);
   for(index = 0; index < table_size; index++) {
     for(ProfilerNode* node = table[index]; node; node = node->next())
       array->append(node);
   }
-
+  
   array->sort(&ProfilerNode::compare);
-
+  
   // compute total (sanity check)
-  int active =
-    class_loader_ticks +
-    compiler_ticks +
-    interpreter_ticks +
+  int active = 
+    class_loader_ticks + 
+    compiler_ticks + 
+    interpreter_ticks + 
     unknown_ticks();
   for (index = 0; index < array->length(); index++) {
     active += array->at(index)->ticks.total();
   }
   int total = active + blocked_ticks;
-
+  
   tty->cr();
   tty->print_cr("Flat profile of %3.2f secs (%d total ticks): %s", secs, total, thread_name);
   if (total != thread_ticks) {
     print_ticks("Lost ticks", thread_ticks-total, thread_ticks);
   }
   tty->cr();
-
+  
   // print interpreted methods
   tick_counter interpreted_ticks;
   bool has_interpreted_ticks = false;
@@ -1363,7 +1376,7 @@ void ThreadProfiler::print(const char* thread_name) {
     interpretedNode::print_total(tty, &interpreted_ticks, active, title);
     tty->cr();
   }
-
+  
   // print compiled methods
   tick_counter compiled_ticks;
   bool has_compiled_ticks = false;
@@ -1444,7 +1457,7 @@ void ThreadProfiler::print(const char* thread_name) {
     runtimeStubNode::print_total(tty, &runtime_stub_ticks, active, title);
     tty->cr();
   }
-
+  
   if (blocked_ticks + class_loader_ticks + interpreter_ticks + compiler_ticks + unknown_ticks() != 0) {
     tty->fill_to(col1);
     tty->print_cr("Thread-local ticks:");
@@ -1474,7 +1487,7 @@ ThreadProfiler::print_unknown(){
   if (table == NULL) {
     return;
   }
-
+  
   if (thread_ticks <= 0) {
     return;
   }
@@ -1519,11 +1532,11 @@ void FlatProfiler::print(int unused) {
   }
 
   PCRecorder::print();
-
+    
   if(ProfileVM){
     tty->cr();
     vm_thread_profiler->print("VM Thread");
-  }
+  }  
 }
 
 void IntervalData::print_header(outputStream* st) {

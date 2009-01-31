@@ -22,6 +22,7 @@
 # 
 
 #
+# %W% %E% %U%
 # 
 
 #
@@ -31,11 +32,14 @@
 #
 
 # Don't put quotes (fail windows build).
+HOTSPOT_VM_DISTRO=Java HotSpot(TM)
 HOTSPOT_VM_COPYRIGHT=Copyright 2007
+COMPANY_NAME=Sun Microsystems, Inc.
+PRODUCT_NAME=Java(TM) Platform SE
 
-HS_MAJOR_VER=12
+HS_MAJOR_VER=11
 HS_MINOR_VER=0
-HS_BUILD_NUMBER=01
+HS_BUILD_NUMBER=06
 
 JDK_MAJOR_VER=1
 JDK_MINOR_VER=7

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -27,7 +27,7 @@ package sun.jvm.hotspot.asm.sparc;
 import sun.jvm.hotspot.asm.*;
 import java.util.*;
 
-class V9FPop2Decoder extends FPopDecoder
+class V9FPop2Decoder extends FPopDecoder 
                      implements V9InstructionDecoder {
     static Map v9fpop2Decoders = new HashMap(); // Map<Integer, InstructionDecoder>
     static void addV9FPop2Decoder(int fpOpcode, InstructionDecoder decoder) {
@@ -64,7 +64,7 @@ class V9FPop2Decoder extends FPopDecoder
         addV9FPop2Decoder(FMOVRsNZ, new V9FMOVrDecoder(FMOVRsNZ, "fmovrsnz", RTLDT_FL_SINGLE));
         addV9FPop2Decoder(FMOVRsGZ, new V9FMOVrDecoder(FMOVRsGZ, "fmovrsgz", RTLDT_FL_SINGLE));
         addV9FPop2Decoder(FMOVRsGEZ, new V9FMOVrDecoder(FMOVRsGEZ, "fmovrsgez", RTLDT_FL_SINGLE));
-
+        
         addV9FPop2Decoder(FMOVRdZ, new V9FMOVrDecoder(FMOVRdZ, "fmovrdz", RTLDT_FL_DOUBLE));
         addV9FPop2Decoder(FMOVRdLEZ, new V9FMOVrDecoder(FMOVRdLEZ, "fmovrdlez", RTLDT_FL_DOUBLE));
         addV9FPop2Decoder(FMOVRdLZ, new V9FMOVrDecoder(FMOVRdLZ, "fmovrdlz", RTLDT_FL_DOUBLE));

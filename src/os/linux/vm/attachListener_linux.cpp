@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -37,9 +40,9 @@
 // the client tool. The attach listener creates a socket and binds it to a file
 // in the filesystem. The attach listener then acts as a simple (single-
 // threaded) server - tt waits for a client to connect, reads the request,
-// executes it, and returns the response to the client via the socket
+// executes it, and returns the response to the client via the socket 
 // connection.
-//
+// 
 // As the socket is a UNIX domain socket it means that only clients on the
 // local machine can connect. In addition there are two other aspects to
 // the security:
@@ -69,26 +72,26 @@ class LinuxAttachListener: AllStatic {
       _has_path = true;
     }
   }
-
-  static void set_listener(int s)               { _listener = s; }
+ 
+  static void set_listener(int s)		{ _listener = s; }
 
   // reads a request from the given connected socket
   static LinuxAttachOperation* read_request(int s);
 
  public:
   enum {
-    ATTACH_PROTOCOL_VER = 1                     // protocol version
+    ATTACH_PROTOCOL_VER = 1			// protocol version
   };
   enum {
-    ATTACH_ERROR_BADVERSION     = 101           // error codes
+    ATTACH_ERROR_BADVERSION     = 101		// error codes
   };
 
   // initialize the listener, returns 0 if okay
   static int init();
 
-  static char* path()                   { return _path; }
-  static bool has_path()                { return _has_path; }
-  static int listener()                 { return _listener; }
+  static char* path() 			{ return _path; }
+  static bool has_path()		{ return _has_path; }
+  static int listener()			{ return _listener; }
 
   // write the given buffer to a socket
   static int write_fully(int s, char* buf, int len);
@@ -99,13 +102,13 @@ class LinuxAttachListener: AllStatic {
 class LinuxAttachOperation: public AttachOperation {
  private:
   // the connection to the client
-  int _socket;
+  int _socket;	
 
  public:
   void complete(jint res, bufferedStream* st);
 
-  void set_socket(int s)                                { _socket = s; }
-  int socket() const                                    { return _socket; }
+  void set_socket(int s)				{ _socket = s; }
+  int socket() const					{ return _socket; }
 
   LinuxAttachOperation(char* name) : AttachOperation(name) {
     set_socket(-1);
@@ -151,7 +154,7 @@ extern "C" {
       cleanup_done = 1;
       int s = LinuxAttachListener::listener();
       if (s != -1) {
-        ::close(s);
+	::close(s);
       }
       if (LinuxAttachListener::has_path()) {
         ::unlink(LinuxAttachListener::path());
@@ -163,8 +166,8 @@ extern "C" {
 // Initialization - create a listener socket and bind it to a file
 
 int LinuxAttachListener::init() {
-  char path[PATH_MAX+1];        // socket file
-  int listener;                 // listener socket (file descriptor)
+  char path[PATH_MAX+1];	// socket file
+  int listener;			// listener socket (file descriptor)
 
   // register function to cleanup
   ::atexit(listener_cleanup);
@@ -195,7 +198,7 @@ int LinuxAttachListener::init() {
     sprintf(path, "%s/.java_pid%d", os::get_temp_directory(), os::current_process_id());
     strcpy(addr.sun_path, path);
     ::unlink(path);
-    res = ::bind(listener, (struct sockaddr*)&addr, sizeof(addr));
+    res = ::bind(listener, (struct sockaddr*)&addr, sizeof(addr)); 
   }
   if (res == -1) {
     RESTARTABLE(::close(listener), res);
@@ -203,7 +206,7 @@ int LinuxAttachListener::init() {
   }
   set_path(path);
 
-  // put in listen mode and set permission
+  // put in listen mode and set permission 
   if ((::listen(listener, 5) == -1) || (::chmod(path, S_IREAD|S_IWRITE) == -1)) {
     RESTARTABLE(::close(listener), res);
     ::unlink(path);
@@ -235,7 +238,7 @@ LinuxAttachOperation* LinuxAttachListener::read_request(int s) {
   int max_len = (strlen(ver_str) + 1) + (AttachOperation::name_length_max + 1) +
     AttachOperation::arg_count_max*(AttachOperation::arg_length_max + 1);
 
-  char buf[max_len];
+  char buf[max_len];	
   int str_count = 0;
 
   // Read until all (expected) strings have been read, the buffer is
@@ -246,29 +249,29 @@ LinuxAttachOperation* LinuxAttachListener::read_request(int s) {
 
   do {
     int n;
-    RESTARTABLE(read(s, buf+off, left), n);
+    RESTARTABLE(read(s, buf+off, left), n); 
     if (n == -1) {
-      return NULL;      // reset by peer or other error
-    }
+      return NULL;	// reset by peer or other error
+    } 
     if (n == 0) {
       break;
     }
     for (int i=0; i<n; i++) {
       if (buf[off+i] == 0) {
-        // EOS found
-        str_count++;
+	// EOS found
+ 	str_count++;
 
-        // The first string is <ver> so check it now to
-        // check for protocol mis-match
-        if (str_count == 1) {
-          if ((strlen(buf) != strlen(ver_str)) ||
+	// The first string is <ver> so check it now to
+	// check for protocol mis-match
+	if (str_count == 1) {
+	  if ((strlen(buf) != strlen(ver_str)) || 
               (atoi(buf) != ATTACH_PROTOCOL_VER)) {
             char msg[32];
             sprintf(msg, "%d\n", ATTACH_ERROR_BADVERSION);
             write_fully(s, msg, strlen(msg));
             return NULL;
-          }
-        }
+	  }
+	}
       }
     }
     off += n;
@@ -276,23 +279,23 @@ LinuxAttachOperation* LinuxAttachListener::read_request(int s) {
   } while (left > 0 && str_count < expected_str_count);
 
   if (str_count != expected_str_count) {
-    return NULL;        // incomplete request
+    return NULL;	// incomplete request
   }
 
   // parse request
-
+                                                                                                   
   ArgumentIterator args(buf, (max_len)-left);
 
   // version already checked
   char* v = args.next();
-
+                                                                                                   
   char* name = args.next();
   if (name == NULL || strlen(name) > AttachOperation::name_length_max) {
     return NULL;
   }
 
   LinuxAttachOperation* op = new LinuxAttachOperation(name);
-
+                                                                                                   
   for (int i=0; i<AttachOperation::arg_count_max; i++) {
     char* arg = args.next();
     if (arg == NULL) {
@@ -314,7 +317,7 @@ LinuxAttachOperation* LinuxAttachListener::read_request(int s) {
 // Dequeue an operation
 //
 // In the Linux implementation there is only a single operation and clients
-// cannot queue commands (except at the socket level).
+// cannot queue commands (except at the socket level). 
 //
 LinuxAttachOperation* LinuxAttachListener::dequeue() {
   for (;;) {
@@ -325,7 +328,7 @@ LinuxAttachOperation* LinuxAttachListener::dequeue() {
     socklen_t len = sizeof(addr);
     RESTARTABLE(::accept(listener(), &addr, &len), s);
     if (s == -1) {
-      return NULL;      // log a warning?
+      return NULL;	// log a warning?
     }
 
     // get the credentials of the peer and check the effective uid/guid
@@ -380,7 +383,7 @@ int LinuxAttachListener::write_fully(int s, char* buf, int len) {
 // default send buffer is sufficient to buffer everything. In the future
 // if there are operations that involves a very big reply then it the
 // socket could be made non-blocking and a timeout could be used.
-
+                                                                                                   
 void LinuxAttachOperation::complete(jint result, bufferedStream* st) {
   JavaThread* thread = JavaThread::current();
   ThreadBlockInVM tbivm(thread);
@@ -394,13 +397,13 @@ void LinuxAttachOperation::complete(jint result, bufferedStream* st) {
   sprintf(msg, "%d\n", result);
   int rc = LinuxAttachListener::write_fully(this->socket(), msg, strlen(msg));
 
-  // write any result data
+  // write any result data 
   if (rc == 0) {
     LinuxAttachListener::write_fully(this->socket(), (char*) st->base(), st->size());
     ::shutdown(this->socket(), 2);
   }
 
-  // done
+  // done 
   RESTARTABLE(::close(this->socket()), rc);
 
   // were we externally suspended while we were waiting?

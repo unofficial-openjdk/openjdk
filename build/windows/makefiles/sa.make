@@ -75,9 +75,9 @@ checkAndBuildSA:: $(SAWINDBG)
 # These do not need to be optimized (don't run a lot of code) and it
 # will be useful to have the assertion checks in place
 
-!if "$(BUILDARCH)" == "ia64"
+!if "$(ARCH)" == "ia64"
 SA_CFLAGS = /nologo $(MS_RUNTIME_OPTION) /W3 $(GX_OPTION) /Od /D "WIN32" /D "WIN64" /D "_WINDOWS" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
-!elseif "$(BUILDARCH)" == "amd64"
+!elseif "$(ARCH)" == "amd64"
 SA_CFLAGS = /nologo $(MS_RUNTIME_OPTION) /W3 $(GX_OPTION) /Od /D "WIN32" /D "WIN64" /D "_WINDOWS" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /YX /FD /c
 # On amd64, VS2005 compiler requires bufferoverflowU.lib on the link command line, 
 # otherwise we get missing __security_check_cookie externals at link time. 

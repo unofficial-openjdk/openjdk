@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -273,7 +276,7 @@ vmSymbols::SID vmSymbols::find_sid(symbolOop symbol) {
 
 
 #define VM_INTRINSIC_INITIALIZE(id, klass, name, sig, flags) #id "\0"
-static const char* vm_intrinsic_name_bodies =
+static const char* vm_intrinsic_name_bodies = 
   VM_INTRINSICS_DO(VM_INTRINSIC_INITIALIZE,
                    VM_SYMBOL_IGNORE, VM_SYMBOL_IGNORE, VM_SYMBOL_IGNORE, VM_ALIAS_IGNORE);
 

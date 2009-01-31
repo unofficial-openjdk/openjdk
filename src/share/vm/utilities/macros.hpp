@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Use this to mark code that needs to be cleaned up (for development only)
@@ -97,7 +100,7 @@
 #define CC_INTERP_ONLY(code) code
 #define NOT_CC_INTERP(code)
 #else
-#define CC_INTERP_ONLY(code)
+#define CC_INTERP_ONLY(code) 
 #define NOT_CC_INTERP(code) code
 #endif // CC_INTERP
 
@@ -179,3 +182,4 @@
 #define FIX_THIS(code) report_assertion_failure("FIX_THIS",__FILE__, __LINE__, "")
 
 #define define_pd_global(type, name, value) const type pd_##name = value;
+

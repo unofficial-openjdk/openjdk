@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.interpreter;
@@ -53,11 +53,11 @@ public class InterpreterCodelet extends Stub {
 
   private static synchronized void initialize(TypeDataBase db) {
     Type type = db.lookupType("InterpreterCodelet");
-
+    
     sizeField            = type.getCIntegerField("_size");
     descriptionField     = type.getAddressField("_description");
     bytecodeField        = type.getCIntegerField("_bytecode");
-
+    
     instanceSize = type.getSize();
   }
 
@@ -87,7 +87,7 @@ public class InterpreterCodelet extends Stub {
 
   public void verify() {
   }
-
+  
   public void printOn(PrintStream tty) {
     String desc = getDescription();
     if (desc != null) {

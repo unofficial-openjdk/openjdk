@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //
@@ -78,7 +81,7 @@ class ParCompactionManager : public CHeapObj {
   static ChunkTaskQueueSet*    _chunk_array;
   static PSOldGen*             _old_gen;
 
-  OopTaskQueue                 _marking_stack;
+  OopTaskQueue		       _marking_stack;
   GrowableArray<oop>*          _overflow_stack;
   // Is there a way to reuse the _marking_stack for the
   // saving empty chunks?  For now just create a different
@@ -87,7 +90,7 @@ class ParCompactionManager : public CHeapObj {
 #ifdef USE_ChunkTaskQueueWithOverflow
   ChunkTaskQueueWithOverflow   _chunk_stack;
 #else
-  ChunkTaskQueue               _chunk_stack;
+  ChunkTaskQueue	       _chunk_stack;
   GrowableArray<size_t>*       _chunk_overflow_stack;
 #endif
 

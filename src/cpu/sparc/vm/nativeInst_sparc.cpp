@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -30,9 +33,9 @@ void NativeInstruction::set_data64_sethi(address instaddr, intptr_t x) {
   ResourceMark rm;
   CodeBuffer buf(instaddr, 10 * BytesPerInstWord );
   MacroAssembler* _masm = new MacroAssembler(&buf);
-  Register destreg;
+  Register destreg; 
 
-  destreg = inv_rd(*(unsigned int *)instaddr);
+  destreg = inv_rd(*(unsigned int *)instaddr); 
   // Generate a the new sequence
   Address dest( destreg, (address)x );
   _masm->sethi( dest, true );
@@ -85,10 +88,10 @@ bool NativeInstruction::is_zero_test(Register &reg) {
       inv_immed(x) && inv_rd(x) == G0) {
       if (inv_rs1(x) == G0) {
         reg = inv_rs2(x);
-        return true;
+        return true;  
       } else if (inv_rs2(x) == G0) {
         reg = inv_rs1(x);
-        return true;
+        return true;  
       }
   }
   return false;
@@ -125,7 +128,7 @@ void NativeCall::print() {
 // harmlessly executed in the delay slot of the call.
 void NativeCall::replace_mt_safe(address instr_addr, address code_buffer) {
   assert(Patching_lock->is_locked() ||
-         SafepointSynchronize::is_at_safepoint(), "concurrent code patching");
+         SafepointSynchronize::is_at_safepoint(), "concurrent code patching"); 
    assert (instr_addr != NULL, "illegal address for code patching");
    NativeCall* n_call =  nativeCall_at (instr_addr); // checking that it is a call
    assert(NativeCall::instruction_size == 8, "wrong instruction size; must be 8");
@@ -133,7 +136,7 @@ void NativeCall::replace_mt_safe(address instr_addr, address code_buffer) {
    int i1 = ((int*)code_buffer)[1];
    int* contention_addr = (int*) n_call->addr_at(1*BytesPerInstWord);
    assert(inv_op(*contention_addr) == Assembler::arith_op ||
-          *contention_addr == nop_instruction() || !VM_Version::v9_instructions_work(),
+          *contention_addr == nop_instruction() || !VM_Version::v9_instructions_work(), 
           "must not interfere with original call");
    // The set_long_at calls do the ICacheInvalidate so we just need to do them in reverse order
    n_call->set_long_at(1*BytesPerInstWord, i1);
@@ -152,7 +155,7 @@ void NativeCall::replace_mt_safe(address instr_addr, address code_buffer) {
    // Make sure the first-patched instruction, which may co-exist
    // briefly with the call, will do something harmless.
    assert(inv_op(*contention_addr) == Assembler::arith_op ||
-          *contention_addr == nop_instruction() || !VM_Version::v9_instructions_work(),
+          *contention_addr == nop_instruction() || !VM_Version::v9_instructions_work(), 
           "must not interfere with original call");
 }
 
@@ -164,7 +167,7 @@ void NativeCall::replace_mt_safe(address instr_addr, address code_buffer) {
 // Used in the runtime linkage of calls; see class CompiledIC.
 void NativeCall::set_destination_mt_safe(address dest) {
   assert(Patching_lock->is_locked() ||
-         SafepointSynchronize::is_at_safepoint(), "concurrent code patching");
+         SafepointSynchronize::is_at_safepoint(), "concurrent code patching"); 
   // set_destination uses set_long_at which does the ICache::invalidate
   set_destination(dest);
 }
@@ -212,7 +215,7 @@ void NativeCall::test() {
 
 #ifdef _LP64
 
-void NativeFarCall::set_destination(address dest) {
+void NativeFarCall::set_destination(address dest) { 
   // Address materialized in the instruction stream, so nothing to do.
   return;
 #if 0 // What we'd do if we really did want to change the destination
@@ -227,7 +230,7 @@ void NativeFarCall::set_destination(address dest) {
   _masm->jumpl_to(dest, O7);
   ICache::invalidate_range(addr_at(0), instruction_size );
 #endif
-}
+} 
 
 void NativeFarCall::verify() {
   // make sure code pattern is actually a jumpl_to instruction
@@ -280,9 +283,9 @@ void NativeMovConstReg::verify() {
   Register rd = inv_rd(i0);
 #ifndef _LP64
   if (!(is_op2(i0, Assembler::sethi_op2) && rd != G0 &&
-        is_op3(i1, Assembler::add_op3, Assembler::arith_op) &&
-        inv_immed(i1) && (unsigned)get_simm13(i1) < (1 << 10) &&
-        rd == inv_rs1(i1) && rd == inv_rd(i1))) {
+	is_op3(i1, Assembler::add_op3, Assembler::arith_op) &&
+	inv_immed(i1) && (unsigned)get_simm13(i1) < (1 << 10) &&
+	rd == inv_rs1(i1) && rd == inv_rd(i1))) {
     fatal("not a set_oop");
   }
 #else
@@ -324,13 +327,13 @@ void NativeMovConstReg::set_data(intptr_t x) {
     oop* oop_addr = NULL;
     while (iter.next()) {
       if (iter.type() == relocInfo::oop_type) {
-        oop_Relocation *r = iter.oop_reloc();
-        if (oop_addr == NULL) {
-          oop_addr = r->oop_addr();
-          *oop_addr = (oop)x;
-        } else {
-          assert(oop_addr == r->oop_addr(), "must be only one set-oop here");
-        }
+	oop_Relocation *r = iter.oop_reloc();
+	if (oop_addr == NULL) {
+	  oop_addr = r->oop_addr();
+	  *oop_addr = (oop)x;
+	} else {
+	  assert(oop_addr == r->oop_addr(), "must be only one set-oop here");
+	}
       }
     }
   }
@@ -393,10 +396,10 @@ void NativeMovConstRegPatching::verify() {
   Register rd0 = inv_rd(i0);
   Register rd1 = inv_rd(i1);
   if (!(is_op2(i0, Assembler::sethi_op2) && rd0 != G0 &&
-        is_op2(i1, Assembler::sethi_op2) && rd1 == G0 &&        // nop is a special case of sethi
-        is_op3(i2, Assembler::add_op3, Assembler::arith_op) &&
-        inv_immed(i2) && (unsigned)get_simm13(i2) < (1 << 10) &&
-        rd0 == inv_rs1(i2) && rd0 == inv_rd(i2))) {
+	is_op2(i1, Assembler::sethi_op2) && rd1 == G0 &&	// nop is a special case of sethi
+	is_op3(i2, Assembler::add_op3, Assembler::arith_op) &&
+	inv_immed(i2) && (unsigned)get_simm13(i2) < (1 << 10) &&
+	rd0 == inv_rs1(i2) && rd0 == inv_rd(i2))) {
     fatal("not a set_oop");
   }
 }
@@ -431,13 +434,13 @@ void NativeMovConstRegPatching::set_data(int x) {
     oop* oop_addr = NULL;
     while (iter.next()) {
       if (iter.type() == relocInfo::oop_type) {
-        oop_Relocation *r = iter.oop_reloc();
-        if (oop_addr == NULL) {
-          oop_addr = r->oop_addr();
-          *oop_addr = (oop)x;
-        } else {
-          assert(oop_addr == r->oop_addr(), "must be only one set-oop here");
-        }
+	oop_Relocation *r = iter.oop_reloc();
+	if (oop_addr == NULL) {
+	  oop_addr = r->oop_addr();
+	  *oop_addr = (oop)x;
+	} else {
+	  assert(oop_addr == r->oop_addr(), "must be only one set-oop here");
+	}
       }
     }
   }
@@ -508,19 +511,19 @@ void NativeMovRegMem::verify() {
   assert((int)add_offset == NativeMovConstReg::add_offset, "sethi size ok");
 
   if (!(is_op(i0, Assembler::ldst_op) &&
-        inv_immed(i0) &&
-        0 != (op3 < op3_ldst_int_limit
-         ? (1 <<  op3                      ) & (op3_mask_ld  | op3_mask_st)
-         : (1 << (op3 - op3_ldst_int_limit)) & (op3_mask_ldf | op3_mask_stf))))
+	inv_immed(i0) &&
+	0 != (op3 < op3_ldst_int_limit
+	 ? (1 <<  op3                      ) & (op3_mask_ld  | op3_mask_st)
+	 : (1 << (op3 - op3_ldst_int_limit)) & (op3_mask_ldf | op3_mask_stf))))
   {
     int i1 = long_at(ldst_offset);
     Register rd = inv_rd(i0);
 
     op3 = inv_op3(i1);
-    if (!is_op(i1, Assembler::ldst_op) && rd == inv_rs2(i1) &&
-         0 != (op3 < op3_ldst_int_limit
-              ? (1 <<  op3                      ) & (op3_mask_ld  | op3_mask_st)
-               : (1 << (op3 - op3_ldst_int_limit)) & (op3_mask_ldf | op3_mask_stf))) {
+    if (!is_op(i1, Assembler::ldst_op) && rd == inv_rs2(i1) && 
+	 0 != (op3 < op3_ldst_int_limit
+	      ? (1 <<  op3                      ) & (op3_mask_ld  | op3_mask_st)
+	       : (1 << (op3 - op3_ldst_int_limit)) & (op3_mask_ldf | op3_mask_stf))) {
       fatal("not a ld* or st* op");
     }
   }
@@ -652,18 +655,18 @@ void NativeMovRegMemPatching::verify() {
   assert((int)nop_offset == (int)NativeMovConstReg::add_offset, "sethi size ok");
 
   if (!(is_op(i0, Assembler::ldst_op) &&
-        inv_immed(i0) &&
-        0 != (op3 < op3_ldst_int_limit
-         ? (1 <<  op3                      ) & (op3_mask_ld  | op3_mask_st)
-         : (1 << (op3 - op3_ldst_int_limit)) & (op3_mask_ldf | op3_mask_stf)))) {
+	inv_immed(i0) &&
+	0 != (op3 < op3_ldst_int_limit
+	 ? (1 <<  op3                      ) & (op3_mask_ld  | op3_mask_st)
+	 : (1 << (op3 - op3_ldst_int_limit)) & (op3_mask_ldf | op3_mask_stf)))) {
     int i1 = long_at(ldst_offset);
     Register rd = inv_rd(i0);
 
     op3 = inv_op3(i1);
-    if (!is_op(i1, Assembler::ldst_op) && rd == inv_rs2(i1) &&
-         0 != (op3 < op3_ldst_int_limit
-              ? (1 <<  op3                      ) & (op3_mask_ld  | op3_mask_st)
-              : (1 << (op3 - op3_ldst_int_limit)) & (op3_mask_ldf | op3_mask_stf))) {
+    if (!is_op(i1, Assembler::ldst_op) && rd == inv_rs2(i1) && 
+	 0 != (op3 < op3_ldst_int_limit
+	      ? (1 <<  op3                      ) & (op3_mask_ld  | op3_mask_st)
+	      : (1 << (op3 - op3_ldst_int_limit)) & (op3_mask_ldf | op3_mask_stf))) {
       fatal("not a ld* or st* op");
     }
   }
@@ -786,18 +789,18 @@ void NativeJump::verify() {
   Register rd = inv_rd(i0);
 #ifndef _LP64
   if (!(is_op2(i0, Assembler::sethi_op2) && rd != G0 &&
-        (is_op3(i1, Assembler::jmpl_op3, Assembler::arith_op) ||
-        (TraceJumps && is_op3(i1, Assembler::add_op3, Assembler::arith_op))) &&
-        inv_immed(i1) && (unsigned)get_simm13(i1) < (1 << 10) &&
-        rd == inv_rs1(i1))) {
-    fatal("not a jump_to instruction");
+	(is_op3(i1, Assembler::jmpl_op3, Assembler::arith_op) ||
+	(TraceJumps && is_op3(i1, Assembler::add_op3, Assembler::arith_op))) &&
+	inv_immed(i1) && (unsigned)get_simm13(i1) < (1 << 10) &&
+	rd == inv_rs1(i1))) {
+    fatal("not a jump_to instruction");  
   }
 #else
   // In LP64, the jump instruction location varies for non relocatable
   // jumps, for example is could be sethi, xor, jmp instead of the
   // 7 instructions for sethi.  So let's check sethi only.
   if (!is_op2(i0, Assembler::sethi_op2) && rd != G0 ) {
-    fatal("not a jump_to instruction");
+    fatal("not a jump_to instruction");  
   }
 #endif
 }
@@ -875,9 +878,9 @@ void NativeJump::patch_verified_entry(address entry, address verified_entry, add
   CodeBuffer cb(verified_entry, code_size + 1);
   MacroAssembler* a = new MacroAssembler(&cb);
   if (VM_Version::v9_instructions_work()) {
-    a->ldsw(G0, 0, O7); // "ld" must agree with code in the signal handler
+    a->ldsw(G0, 0, O7);	// "ld" must agree with code in the signal handler
   } else {
-    a->lduw(G0, 0, O7); // "ld" must agree with code in the signal handler
+    a->lduw(G0, 0, O7);	// "ld" must agree with code in the signal handler
   }
   ICache::invalidate_range(verified_entry, code_size);
 }
@@ -935,7 +938,7 @@ bool NativeInstruction::is_illegal() {
 
 void NativeGeneralJump::verify() {
   assert(((NativeInstruction *)this)->is_jump() ||
-         ((NativeInstruction *)this)->is_cond_jump(), "not a general jump instruction");
+	 ((NativeInstruction *)this)->is_cond_jump(), "not a general jump instruction");
 }
 
 
@@ -957,7 +960,7 @@ void NativeGeneralJump::insert_unconditional(address code_pos, address entry) {
 // harmlessly executed in the delay slot of the call.
 void NativeGeneralJump::replace_mt_safe(address instr_addr, address code_buffer) {
    assert(Patching_lock->is_locked() ||
-         SafepointSynchronize::is_at_safepoint(), "concurrent code patching");
+         SafepointSynchronize::is_at_safepoint(), "concurrent code patching"); 
    assert (instr_addr != NULL, "illegal address for code patching");
    NativeGeneralJump* h_jump =  nativeGeneralJump_at (instr_addr); // checking that it is a call
    assert(NativeGeneralJump::instruction_size == 8, "wrong instruction size; must be 8");
@@ -965,7 +968,7 @@ void NativeGeneralJump::replace_mt_safe(address instr_addr, address code_buffer)
    int i1 = ((int*)code_buffer)[1];
    int* contention_addr = (int*) h_jump->addr_at(1*BytesPerInstWord);
    assert(inv_op(*contention_addr) == Assembler::arith_op ||
-          *contention_addr == nop_instruction() || !VM_Version::v9_instructions_work(),
+          *contention_addr == nop_instruction() || !VM_Version::v9_instructions_work(), 
           "must not interfere with original call");
    // The set_long_at calls do the ICacheInvalidate so we just need to do them in reverse order
    h_jump->set_long_at(1*BytesPerInstWord, i1);
@@ -984,6 +987,7 @@ void NativeGeneralJump::replace_mt_safe(address instr_addr, address code_buffer)
    // Make sure the first-patched instruction, which may co-exist
    // briefly with the call, will do something harmless.
    assert(inv_op(*contention_addr) == Assembler::arith_op ||
-          *contention_addr == nop_instruction() || !VM_Version::v9_instructions_work(),
+          *contention_addr == nop_instruction() || !VM_Version::v9_instructions_work(), 
           "must not interfere with original call");
 }
+

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -45,21 +48,21 @@ void pd_ps(frame f) {
     if (WizardMode && Verbose) {
       // print register window contents also
       tty->print_cr("    L0..L7: {%#x %#x %#x %#x %#x %#x %#x %#x}",
-                    sp[0+0],sp[0+1],sp[0+2],sp[0+3],
-                    sp[0+4],sp[0+5],sp[0+6],sp[0+7]);
+		    sp[0+0],sp[0+1],sp[0+2],sp[0+3],
+		    sp[0+4],sp[0+5],sp[0+6],sp[0+7]);
       tty->print_cr("    I0..I7: {%#x %#x %#x %#x %#x %#x %#x %#x}",
-                    sp[8+0],sp[8+1],sp[8+2],sp[8+3],
-                    sp[8+4],sp[8+5],sp[8+6],sp[8+7]);
+		    sp[8+0],sp[8+1],sp[8+2],sp[8+3],
+		    sp[8+4],sp[8+5],sp[8+6],sp[8+7]);
       // (and print stack frame contents too??)
 
       CodeBlob *b = CodeCache::find_blob((address) pc);
       if (b != NULL) {
-        if (b->is_nmethod()) {
-          methodOop m = ((nmethod*)b)->method();
-          int nlocals = m->max_locals();
-          int nparams  = m->size_of_parameters();
-          tty->print_cr("compiled java method (locals = %d, params = %d)", nlocals, nparams);
-        }
+	if (b->is_nmethod()) {
+	  methodOop m = ((nmethod*)b)->method();
+	  int nlocals = m->max_locals();
+	  int nparams  = m->size_of_parameters();
+	  tty->print_cr("compiled java method (locals = %d, params = %d)", nlocals, nparams);
+	} 	
       }
     }
     prev_sp = sp;

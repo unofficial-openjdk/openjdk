@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -40,11 +40,11 @@ class FPArithmeticDecoder extends FloatDecoder {
                        SPARCRegister rs1, SPARCRegister rs2,
                        SPARCRegister rd,
                        SPARCInstructionFactory factory) {
-        if (Assert.ASSERTS_ENABLED)
+        if (Assert.ASSERTS_ENABLED) 
             Assert.that(rs1.isFloat() && rs2.isFloat() && rd.isFloat(), "rs1, rs2 and rd must be floats");
-        return factory.newFPArithmeticInstruction(name, opf, rtlOperation,
-                                                 (SPARCFloatRegister)rs1,
-                                                 (SPARCFloatRegister)rs2,
+        return factory.newFPArithmeticInstruction(name, opf, rtlOperation, 
+                                                 (SPARCFloatRegister)rs1, 
+                                                 (SPARCFloatRegister)rs2, 
                                                  (SPARCFloatRegister)rd);
     }
 }

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //
@@ -37,12 +40,13 @@
           "Use Multiple Page Size Support (Solaris 9 Only)")                   \
                                                                                \
   product(bool, UseExtendedFileIO, true,                                       \
-          "Enable workaround for limitations of stdio FILE structure")
-
+          "Enable workaround for limitations of stdio FILE structure") 
+ 
 //
 // Defines Solaris-specific default values. The flags are available on all
 // platforms, but they may have different default values on other platforms.
 //
 define_pd_global(bool, UseLargePages, true);
 define_pd_global(bool, UseOSErrorReporting, false);
-define_pd_global(bool, UseThreadPriorities, false);
+define_pd_global(bool, UseThreadPriorities, false); 
+

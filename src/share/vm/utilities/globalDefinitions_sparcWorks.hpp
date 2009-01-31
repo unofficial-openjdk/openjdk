@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This file holds compiler-dependent includes,
@@ -95,8 +98,8 @@ typedef unsigned int       uint32_t;
 typedef unsigned long long uint64_t;
 #endif
 // %%%% how to access definition of intptr_t portably in 5.5 onward?
-typedef int                     intptr_t;
-typedef unsigned int            uintptr_t;
+typedef int			intptr_t;
+typedef unsigned int		uintptr_t;
 // If this gets an error, figure out a symbol XXX that implies the
 // prior definition of intptr_t, and add "&& !defined(XXX)" above.
 #endif
@@ -138,11 +141,11 @@ const jlong max_jlong = CONST64(0x7fffffffffffffff);
 //
 // This also means that pointers to functions can no longer be "hidden"
 // in opaque types like void * because at the invokation point warnings
-// will be generated. While this makes perfect sense from a type safety
+// will be generated. While this makes perfect sense from a type safety 
 // point of view it causes a lot of warnings on old code using C header
 // files. Here are some typedefs to make the job of silencing warnings
 // a bit easier.
-//
+// 
 // The final kick in the teeth is that you can only have extern "C" linkage
 // specified at file scope. So these typedefs are here rather than in the
 // .hpp for the class (os:Solaris usually) that needs them.
@@ -200,7 +203,7 @@ int local_vsnprintf(char* buf, size_t count, const char* fmt, va_list argptr);
 
 
 // Portability macros
-#define PRAGMA_INTERFACE
+#define PRAGMA_INTERFACE      
 #define PRAGMA_IMPLEMENTATION
 #define PRAGMA_IMPLEMENTATION_(arg)
 #define VALUE_OBJ_CLASS_SPEC    : public _ValueObj

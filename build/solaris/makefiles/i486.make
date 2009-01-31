@@ -27,7 +27,7 @@ CFLAGS += -DVM_LITTLE_ENDIAN
 
 # TLS helper, assembled from .s file
 # Not included in includeDB because it has no dependencies
-Obj_Files += solaris_x86_32.o
+Obj_Files += solaris_i486.o
 
 #
 # Special case flags for compilers and compiler versions on i486.

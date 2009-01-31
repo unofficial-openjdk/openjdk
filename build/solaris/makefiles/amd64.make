@@ -26,8 +26,7 @@
 CFLAGS += -DVM_LITTLE_ENDIAN
 
 # Not included in includeDB because it has no dependencies
-# Obj_Files += solaris_amd64.o
-Obj_Files += solaris_x86_64.o
+Obj_Files += solaris_amd64.o
 
 #
 # Special case flags for compilers and compiler versions on amd64.
@@ -37,7 +36,7 @@ ifeq ("${Platform_compiler}", "sparcWorks")
 # Temporary until C++ compiler is fixed
 
 # _lwp_create_interpose must have a frame
-OPT_CFLAGS/os_solaris_x86_64.o = -xO1
+OPT_CFLAGS/os_solaris_amd64.o = -xO1
 # force C++ interpreter to be full optimization
 #OPT_CFLAGS/interpret.o = -fast -O4
 

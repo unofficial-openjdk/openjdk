@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -79,21 +82,21 @@ int SignatureIterator::parse_type() {
   switch(_signature->byte_at(_index)) {
     case 'B': do_byte  (); if (_parameter_index < 0 ) _return_type = T_BYTE;
               _index++; size = T_BYTE_size   ; break;
-    case 'C': do_char  (); if (_parameter_index < 0 ) _return_type = T_CHAR;
+    case 'C': do_char  (); if (_parameter_index < 0 ) _return_type = T_CHAR;    
               _index++; size = T_CHAR_size   ; break;
-    case 'D': do_double(); if (_parameter_index < 0 ) _return_type = T_DOUBLE;
+    case 'D': do_double(); if (_parameter_index < 0 ) _return_type = T_DOUBLE;  
               _index++; size = T_DOUBLE_size ; break;
-    case 'F': do_float (); if (_parameter_index < 0 ) _return_type = T_FLOAT;
+    case 'F': do_float (); if (_parameter_index < 0 ) _return_type = T_FLOAT;   
               _index++; size = T_FLOAT_size  ; break;
-    case 'I': do_int   (); if (_parameter_index < 0 ) _return_type = T_INT;
+    case 'I': do_int   (); if (_parameter_index < 0 ) _return_type = T_INT;     
               _index++; size = T_INT_size    ; break;
-    case 'J': do_long  (); if (_parameter_index < 0 ) _return_type = T_LONG;
+    case 'J': do_long  (); if (_parameter_index < 0 ) _return_type = T_LONG;    
               _index++; size = T_LONG_size   ; break;
-    case 'S': do_short (); if (_parameter_index < 0 ) _return_type = T_SHORT;
+    case 'S': do_short (); if (_parameter_index < 0 ) _return_type = T_SHORT;   
               _index++; size = T_SHORT_size  ; break;
-    case 'Z': do_bool  (); if (_parameter_index < 0 ) _return_type = T_BOOLEAN;
+    case 'Z': do_bool  (); if (_parameter_index < 0 ) _return_type = T_BOOLEAN; 
               _index++; size = T_BOOLEAN_size; break;
-    case 'V': do_void  (); if (_parameter_index < 0 ) _return_type = T_VOID;
+    case 'V': do_void  (); if (_parameter_index < 0 ) _return_type = T_VOID;    
               _index++; size = T_VOID_size;  ; break;
     case 'L':
       { int begin = ++_index;
@@ -164,7 +167,7 @@ void SignatureIterator::iterate_parameters( uint64_t fingerprint ) {
   uint64_t saved_fingerprint = fingerprint;
 
   // Check for too many arguments
-  if ( fingerprint == UCONST64(-1) ) {
+  if ( fingerprint == UCONST64(-1) ) { 
     SignatureIterator::iterate_parameters();
     return;
   }
@@ -176,23 +179,23 @@ void SignatureIterator::iterate_parameters( uint64_t fingerprint ) {
   while ( 1 ) {
     switch ( fingerprint & parameter_feature_mask ) {
       case bool_parm:
-        do_bool();
+ 	do_bool();
         _parameter_index += T_BOOLEAN_size;
         break;
       case byte_parm:
-        do_byte();
+ 	do_byte();
         _parameter_index += T_BYTE_size;
         break;
       case char_parm:
-        do_char();
+ 	do_char();
         _parameter_index += T_CHAR_size;
         break;
       case short_parm:
-        do_short();
+ 	do_short();
         _parameter_index += T_SHORT_size;
         break;
       case int_parm:
-        do_int();
+ 	do_int();
         _parameter_index += T_INT_size;
         break;
       case obj_parm:
@@ -331,7 +334,7 @@ symbolOop SignatureStream::as_symbol(TRAPS) {
 symbolOop SignatureStream::as_symbol_or_null() {
   // Create a symbol from for string _begin _end
   ResourceMark rm;
-
+ 
   int begin = _begin;
   int end   = _end;
 
@@ -387,7 +390,7 @@ bool SignatureVerifier::is_valid_method_signature(symbolHandle sig) {
 bool SignatureVerifier::is_valid_type_signature(symbolHandle sig) {
   const char* type_sig = (const char*)sig->bytes();
   ssize_t len = sig->utf8_length();
-  return (type_sig != NULL && len >= 1 &&
+  return (type_sig != NULL && len >= 1 && 
           (is_valid_type(type_sig, len) == len));
 }
 
@@ -403,10 +406,10 @@ ssize_t SignatureVerifier::is_valid_type(const char* type, ssize_t limit) {
     return -1;
   }
   switch (type[index]) {
-    case 'B': case 'C': case 'D': case 'F': case 'I':
-    case 'J': case 'S': case 'Z': case 'V':
+    case 'B': case 'C': case 'D': case 'F': case 'I': 
+    case 'J': case 'S': case 'Z': case 'V': 
       return index + 1;
-    case 'L':
+    case 'L': 
       for (index = index + 1; index < limit; ++index) {
         char c = type[index];
         if (c == ';') {
@@ -418,13 +421,13 @@ ssize_t SignatureVerifier::is_valid_type(const char* type, ssize_t limit) {
       }
       // fall through
     default: ; // fall through
-  }
+  } 
   return -1;
 }
 
 bool SignatureVerifier::invalid_name_char(char c) {
   switch (c) {
-    case '\0': case '.': case ';': case '[':
+    case '\0': case '.': case ';': case '[': 
       return true;
     default:
       return false;

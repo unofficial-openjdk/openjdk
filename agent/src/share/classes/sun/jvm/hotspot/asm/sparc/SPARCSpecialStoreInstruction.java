@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -27,7 +27,7 @@ package sun.jvm.hotspot.asm.sparc;
 import sun.jvm.hotspot.asm.*;
 import sun.jvm.hotspot.utilities.Assert;
 
-public class SPARCSpecialStoreInstruction
+public class SPARCSpecialStoreInstruction 
                         extends SPARCSpecialRegisterInstruction
                         implements /* imports */ SPARCSpecialRegisters {
     final private int specialReg;
@@ -42,7 +42,7 @@ public class SPARCSpecialStoreInstruction
         this.cregNum = cregNum;
     }
 
-    public SPARCSpecialStoreInstruction(String name, int specialReg,
+    public SPARCSpecialStoreInstruction(String name, int specialReg, 
                                              SPARCRegisterIndirectAddress addr) {
         this(name, specialReg, -1, addr);
     }
@@ -52,11 +52,11 @@ public class SPARCSpecialStoreInstruction
     }
 
     public int getCoprocessorRegister() {
-        if (Assert.ASSERTS_ENABLED)
+        if (Assert.ASSERTS_ENABLED) 
             Assert.that(specialReg == CREG, "not a special register");
         return cregNum;
     }
-
+ 
     public Address getDestination() {
         return addr;
     }
@@ -66,7 +66,7 @@ public class SPARCSpecialStoreInstruction
         buf.append(spaces);
         if (specialReg == CREG) {
             buf.append("creg" + cregNum);
-        } else {
+        } else { 
             buf.append(getSpecialRegisterName(specialReg));
         }
         buf.append(comma);

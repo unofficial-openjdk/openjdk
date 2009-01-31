@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.ui;
@@ -50,7 +50,7 @@ public class HighPrecisionJScrollBar extends JScrollBar {
   // The underlying scrollbar runs a range from 0..BIG_RANGE-1
   private static final int BIG_RANGE = 10000;
   // Do we need to scale HP values up/down to fit in 0..BIG_RANGE-1?
-  private boolean    down;
+  private boolean    down; 
   private java.util.List changeListeners = new ArrayList();
   // Number of digits after decimal point to use when scaling between
   // high and low precision
@@ -141,7 +141,7 @@ public class HighPrecisionJScrollBar extends JScrollBar {
     if (visibleAmount.compareTo(rangeHP) < 0) {
       lpVisAmt = scaleToUnderlying(visibleAmount);
       if (lpVisAmt == 0) {
-        lpVisAmt = 1;
+	lpVisAmt = 1;
       }
       setVisible(true);
     } else {
@@ -179,7 +179,7 @@ public class HighPrecisionJScrollBar extends JScrollBar {
   public void removeChangeListener(ChangeListener l) {
     changeListeners.remove(l);
   }
-
+  
   //----------------------------------------------------------------------
   // Programmatic access to scrollbar functionality
   // (Causes change events to be sent)
@@ -204,7 +204,7 @@ public class HighPrecisionJScrollBar extends JScrollBar {
     setValueHP(getValueHP().subtract(getBlockIncrementHP()));
     endUpdate();
   }
-
+  
   public void pageDownOrRight() {
     if (updating) return;
     beginUpdate();
@@ -350,7 +350,7 @@ public class HighPrecisionJScrollBar extends JScrollBar {
                 } else if (e.getValue() >= getMaximum() - 1) {
                   i = getMaximumHP();
                 } else {
-                  i = toHPRange(e.getValue());
+		  i = toHPRange(e.getValue());
                 }
                 setValueHP(i);
               }

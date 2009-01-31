@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Thread-Local Edens support
@@ -181,7 +184,7 @@ void ThreadLocalAllocBuffer::initialize() {
   initialize(NULL,                    // start
              NULL,                    // top
              NULL);                   // end
-
+  
   set_desired_size(initial_desired_size());
 
   // Following check is needed because at startup the main (primordial)

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Definitions for Error Flags
@@ -72,18 +75,18 @@ public:
   MatchList(MatchList *nxt, Predicate *prd): _next(nxt), _pred(prd), _cost(NULL){
     _resultStr = _lchild = _rchild = _opcode = NULL; }
 
-  MatchList(MatchList *nxt, Predicate *prd, const char *cost,
-            const char *opcode, const char *resultStr, const char *lchild,
-            const char *rchild)
-    : _next(nxt), _pred(prd), _cost(cost), _opcode(opcode),
+  MatchList(MatchList *nxt, Predicate *prd, const char *cost, 
+	    const char *opcode, const char *resultStr, const char *lchild, 
+	    const char *rchild)
+    : _next(nxt), _pred(prd), _cost(cost), _opcode(opcode), 
       _resultStr(resultStr), _lchild(lchild), _rchild(rchild) { }
 
   MatchList  *get_next(void)  { return _next; }
   char       *get_pred(void)  { return (_pred?_pred->_pred:NULL); }
   Predicate  *get_pred_obj(void)  { return _pred; }
   const char *get_cost(void) { return _cost == NULL ? "0" :_cost; }
-  bool        search(const char *opc, const char *res, const char *lch,
-                    const char *rch, Predicate *pr);
+  bool        search(const char *opc, const char *res, const char *lch, 
+		    const char *rch, Predicate *pr);
 
   void        dump();
   void        output(FILE *fp);
@@ -114,17 +117,17 @@ private:
 
   MatchList    *_mlistab[_last_opcode]; // Array of MatchLists
 
-  // The Architecture Description identifies which user-defined operand can be used
+  // The Architecture Description identifies which user-defined operand can be used 
   // to access [stack_pointer + offset]
   OperandForm  *_cisc_spill_operand;
 
   // Methods for outputting the DFA
   void gen_match(FILE *fp, MatchList &mlist, ProductionState &status, Dict &operands_chained_from);
-  void chain_rule(FILE *fp, const char *indent, const char *ideal,
-                  const Expr *icost, const char *irule,
+  void chain_rule(FILE *fp, const char *indent, const char *ideal, 
+		  const Expr *icost, const char *irule, 
                   Dict &operands_chained_from, ProductionState &status);
   void chain_rule_c(FILE *fp, char *indent, char *ideal, char *irule);  // %%%%% TODO: remove this
-  void expand_opclass(FILE *fp, const char *indent, const Expr *cost,
+  void expand_opclass(FILE *fp, const char *indent, const Expr *cost, 
                       const char *result_type, ProductionState &status);
   Expr *calc_cost(FILE *fp, const char *spaces, MatchList &mList, ProductionState &status);
   void prune_matchlist(Dict &minimize, MatchList &mlist);
@@ -147,7 +150,7 @@ public:
   int   _adlocation_debug;              // Debug Flag to use ad file locations
   bool  _cisc_spill_debug;              // Debug Flag to see cisc-spill-instructions
   bool  _short_branch_debug;            // Debug Flag to see short branch instructions
-
+  
   // Error/Warning Counts
   int _syntax_errs;                  // Count of syntax errors
   int _semantic_errs;                // Count of semantic errors
@@ -222,8 +225,8 @@ public:
   // Helper utility that gets MatchList components from inside MatchRule
   void check_optype(MatchRule *mrule);
   void build_chain_rule(OperandForm *oper);
-  void add_chain_rule_entry(const char *src, const char *cost,
-                            const char *result);
+  void add_chain_rule_entry(const char *src, const char *cost, 
+			    const char *result);
   const char *getMatchListIndex(MatchRule &mrule);
   void generateMatchLists();         // Build MatchList array and populate it
   void inspectOperands();            // Build MatchLists for all operands
@@ -270,10 +273,10 @@ public:
   void build_map(OutputMap &map);
   void buildReduceMaps(FILE *fp_hpp, FILE *fp_cpp);
   // build flags for signaling that our machine needs this instruction cloned
-  void buildMustCloneMap(FILE *fp_hpp, FILE *fp_cpp);
+  void buildMustCloneMap(FILE *fp_hpp, FILE *fp_cpp); 
 
   // output SUN copyright info
-  void addSunCopyright(char* legal, int size, FILE *fp);
+  void addSunCopyright(FILE *fp);
   // output #include declarations for machine specific files
   void machineDependentIncludes(ADLFILE &adlfile);
   // Output C preprocessor code to verify the backend compilation environment.
@@ -306,7 +309,7 @@ public:
 
   // Methods to construct the MachNode class hierarchy
   // Return the type signature for the ideal operation
-  const char *getIdealType(const char *idealOp);
+  const char *getIdealType(const char *idealOp); 
   // Declare and define the classes derived from MachOper and MachNode
   void declareClasses(FILE *fp_hpp);
   void defineClasses(FILE *fp_cpp);
@@ -314,7 +317,7 @@ public:
   // Emit an ADLC message
   void internal_err( const char *fmt, ...);
   void syntax_err  ( int lineno, const char *fmt, ...);
-  int  emit_msg(int quiet, int flag, int linenum, const char *fmt,
+  int  emit_msg(int quiet, int flag, int linenum, const char *fmt, 
        va_list args);
 
   // Generator for has_match_rule methods
@@ -335,10 +338,10 @@ public:
 
 protected:
   // build MatchList from MatchRule
-  void buildMatchList(MatchRule *mrule, const char *resultStr,
-                      const char *rootOp, Predicate *pred, const char *cost);
+  void buildMatchList(MatchRule *mrule, const char *resultStr, 
+		      const char *rootOp, Predicate *pred, const char *cost);
 
-  void buildMList(MatchNode *node, const char *rootOp, const char *resultOp,
+  void buildMList(MatchNode *node, const char *rootOp, const char *resultOp, 
                   Predicate *pred, const char *cost);
 
   friend class ADLParser;
@@ -358,16 +361,16 @@ protected:
   FormDict &_globals;
   ArchDesc &_AD;
 public:
-  OutputMap (FILE *decl_file, FILE *def_file, FormDict &globals, ArchDesc &AD)
+  OutputMap (FILE *decl_file, FILE *def_file, FormDict &globals, ArchDesc &AD) 
     : _hpp(decl_file), _cpp(def_file), _globals(globals), _AD(AD) {};
   // Access files used by this routine
   FILE        *decl_file() { return _hpp; }
   FILE        *def_file()  { return _cpp; }
   // Positions in iteration that derived class will be told about
-  enum position { BEGIN_OPERANDS,
+  enum position { BEGIN_OPERANDS, 
                   BEGIN_OPCLASSES,
                   BEGIN_INTERNALS,
-                  BEGIN_INSTRUCTIONS,
+                  BEGIN_INSTRUCTIONS, 
                   BEGIN_INST_CHAIN_RULES,
                   END_INST_CHAIN_RULES,
                   BEGIN_REMATERIALIZE,
@@ -387,3 +390,5 @@ public:
   // Allow derived class to output name and position specific info
   virtual void record_position(OutputMap::position place, int index) {}
 };
+
+

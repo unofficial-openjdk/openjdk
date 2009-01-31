@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.jdi;
@@ -42,8 +42,8 @@ public class NonConcreteMethodImpl extends MethodImpl {
 
     private Location location = null;
 
-    NonConcreteMethodImpl(VirtualMachine vm,
-                          ReferenceTypeImpl declaringType,
+    NonConcreteMethodImpl(VirtualMachine vm, 
+                          ReferenceTypeImpl declaringType, 
                           sun.jvm.hotspot.oops.Method saMethod) {
         super(vm, declaringType, saMethod);
     }
@@ -84,7 +84,7 @@ public class NonConcreteMethodImpl extends MethodImpl {
         return null;
     }
 
-    LineInfo codeIndexToLineInfo(SDE.Stratum stratum,
+    LineInfo codeIndexToLineInfo(SDE.Stratum stratum, 
                                  long codeIndex) {
 
         if (stratum.isJava()) {
@@ -106,7 +106,7 @@ public class NonConcreteMethodImpl extends MethodImpl {
     public List arguments() throws AbsentInformationException {
         throw new AbsentInformationException();
     }
-
+    
     public byte[] bytecodes() {
         return new byte[0];
     }

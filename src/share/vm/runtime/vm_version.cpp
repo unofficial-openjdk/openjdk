@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -46,7 +49,7 @@ unsigned int Abstract_VM_Version::_logical_processors_per_package = 1U;
   #define VM_RELEASE HOTSPOT_RELEASE_VERSION "-" HOTSPOT_BUILD_TARGET
 #endif
 
-// HOTSPOT_RELEASE_VERSION must follow the release version naming convention
+// HOTSPOT_RELEASE_VERSION must follow the release version naming convention 
 // <major_ver>.<minor_ver>-b<nn>[-<identifier>][-<debug_target>]
 int Abstract_VM_Version::_vm_major_version = 0;
 int Abstract_VM_Version::_vm_minor_version = 0;
@@ -59,7 +62,7 @@ void Abstract_VM_Version::initialize() {
   }
   char* vm_version = os::strdup(HOTSPOT_RELEASE_VERSION);
 
-  // Expecting the next vm_version format:
+  // Expecting the next vm_version format: 
   // <major_ver>.<minor_ver>-b<nn>[-<identifier>]
   char* vm_major_ver = vm_version;
   assert(isdigit(vm_major_ver[0]),"wrong vm major version number");
@@ -72,10 +75,10 @@ void Abstract_VM_Version::initialize() {
   vm_build_num[0] = '\0'; // terminate vm_minor_ver
   vm_build_num += 2;
 
-  _vm_major_version = atoi(vm_major_ver);
-  _vm_minor_version = atoi(vm_minor_ver);
+  _vm_major_version = atoi(vm_major_ver); 
+  _vm_minor_version = atoi(vm_minor_ver); 
   _vm_build_number  = atoi(vm_build_num);
-
+ 
   os::free(vm_version);
   _initialized = true;
 }
@@ -93,7 +96,7 @@ void Abstract_VM_Version::initialize() {
   #define VMTYPE "Server"
 #else
   #define VMTYPE COMPILER1_PRESENT("Client")   \
-                 COMPILER2_PRESENT("Server")
+                 COMPILER2_PRESENT("Server")   
 #endif // TIERED
 #endif // KERNEL
 
@@ -129,7 +132,7 @@ const char* Abstract_VM_Version::vm_info_string() {
   return "";
 }
 
-// NOTE: do *not* use stringStream. this function is called by
+// NOTE: do *not* use stringStream. this function is called by 
 //       fatal error handler. if the crash is in native thread,
 //       stringStream cannot get resource allocated and will SEGV.
 const char* Abstract_VM_Version::vm_release() {
@@ -190,7 +193,7 @@ const char* Abstract_VM_Version::internal_vm_info_string() {
 
 
   return VMNAME " (" VM_RELEASE ") for " OS "-" CPU
-         " JRE (" JRE_RELEASE_VERSION "), built on " __DATE__ " " __TIME__
+         " JRE (" JRE_RELEASE_VERSION "), built on " __DATE__ " " __TIME__ 
          " by " XSTR(HOTSPOT_BUILD_USER) " with " HOTSPOT_BUILD_COMPILER;
 }
 

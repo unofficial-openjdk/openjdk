@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -57,7 +60,7 @@ void AccessFlags::print_on(outputStream* st) const {
   if (is_synchronized()) st->print("synchronized ");
   if (is_volatile    ()) st->print("volatile "    );
   if (is_transient   ()) st->print("transient "   );
-  if (is_native      ()) st->print("native "      );
+  if (is_native      ()) st->print("native "      );	
   if (is_interface   ()) st->print("interface "   );
   if (is_abstract    ()) st->print("abstract "    );
   if (is_strict      ()) st->print("strict "      );

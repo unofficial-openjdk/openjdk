@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //------------------------------OptoRuntime------------------------------------
@@ -29,14 +32,14 @@
 // Java calling convention.  Internally they call C++.  They are made once at
 // startup time and Opto compiles calls to them later.
 // Things are broken up into quads: the signature they will be called with,
-// the address of the generated code, the corresponding C++ code and an
+// the address of the generated code, the corresponding C++ code and an 
 // nmethod.
 
-// The signature (returned by "xxx_Type()") is used at startup time by the
-// Generator to make the generated code "xxx_Java".  Opto compiles calls
-// to the generated code "xxx_Java".  When the compiled code gets executed,
-// it calls the C++ code "xxx_C".  The generated nmethod is saved in the
-// CodeCache.  Exception handlers use the nmethod to get the callee-save
+// The signature (returned by "xxx_Type()") is used at startup time by the 
+// Generator to make the generated code "xxx_Java".  Opto compiles calls 
+// to the generated code "xxx_Java".  When the compiled code gets executed, 
+// it calls the C++ code "xxx_C".  The generated nmethod is saved in the 
+// CodeCache.  Exception handlers use the nmethod to get the callee-save 
 // register OopMaps.
 class CallInfo;
 
@@ -104,11 +107,12 @@ class OptoRuntime : public AllStatic {
   // References to generated stubs
   static address _new_instance_Java;
   static address _new_array_Java;
+  static address _multianewarray1_Java;
   static address _multianewarray2_Java;
   static address _multianewarray3_Java;
   static address _multianewarray4_Java;
   static address _multianewarray5_Java;
-  static address _vtable_must_compile_Java;
+  static address _vtable_must_compile_Java;    
   static address _complete_monitor_locking_Java;
   static address _rethrow_Java;
 
@@ -116,18 +120,18 @@ class OptoRuntime : public AllStatic {
   static address _register_finalizer_Java;
 
 # ifdef ENABLE_ZAP_DEAD_LOCALS
-  static address _zap_dead_Java_locals_Java;
-  static address _zap_dead_native_locals_Java;
+  static address _zap_dead_Java_locals_Java; 
+  static address _zap_dead_native_locals_Java; 
 # endif
 
 
   //
   // Implementation of runtime methods
   // =================================
-
-  // Allocate storage for a Java instance.
+  
+  // Allocate storage for a Java instance.  
   static void new_instance_C(klassOopDesc* instance_klass, JavaThread *thread);
-
+  
   // Allocate storage for a objArray or typeArray
   static void new_array_C(klassOopDesc* array_klass, int len, JavaThread *thread);
 
@@ -135,19 +139,20 @@ class OptoRuntime : public AllStatic {
   static void do_eager_card_mark(JavaThread* thread);
 
   // Allocate storage for a multi-dimensional arrays
-  // Note: needs to be fixed for arbitrary number of dimensions
-  static void multianewarray2_C(klassOopDesc* klass, int len1, int len2, JavaThread *thread);
-  static void multianewarray3_C(klassOopDesc* klass, int len1, int len2, int len3, JavaThread *thread);
-  static void multianewarray4_C(klassOopDesc* klass, int len1, int len2, int len3, int len4, JavaThread *thread);
+  // Note: needs to be fixed for arbitrary number of dimensions  
+  static void multianewarray1_C(klassOopDesc* klass, int len1, JavaThread *thread);  
+  static void multianewarray2_C(klassOopDesc* klass, int len1, int len2, JavaThread *thread);  
+  static void multianewarray3_C(klassOopDesc* klass, int len1, int len2, int len3, JavaThread *thread);  
+  static void multianewarray4_C(klassOopDesc* klass, int len1, int len2, int len3, int len4, JavaThread *thread);  
   static void multianewarray5_C(klassOopDesc* klass, int len1, int len2, int len3, int len4, int len5, JavaThread *thread);
-
+  
 public:
-  // Slow-path Locking and Unlocking
-  static void complete_monitor_locking_C(oopDesc* obj, BasicLock* lock, JavaThread* thread);
+  // Slow-path Locking and Unlocking    
+  static void complete_monitor_locking_C(oopDesc* obj, BasicLock* lock, JavaThread* thread);  
   static void complete_monitor_unlocking_C(oopDesc* obj, BasicLock* lock);
 
 private:
-
+    
   // Implicit exception support
   static void throw_null_exception_C(JavaThread* thread);
 
@@ -176,7 +181,7 @@ private:
    static int ZapDeadCompiledLocals_count;
 
 # endif
-
+  
 
  public:
 
@@ -187,16 +192,17 @@ private:
 
   // Returns the name of a stub
   static const char* stub_name(address entry);
-
+  
   // access to runtime stubs entry points for java code
   static address new_instance_Java()                     { return _new_instance_Java; }
   static address new_array_Java()                        { return _new_array_Java; }
+  static address multianewarray1_Java()                  { return _multianewarray1_Java; }
   static address multianewarray2_Java()                  { return _multianewarray2_Java; }
   static address multianewarray3_Java()                  { return _multianewarray3_Java; }
   static address multianewarray4_Java()                  { return _multianewarray4_Java; }
   static address multianewarray5_Java()                  { return _multianewarray5_Java; }
-  static address vtable_must_compile_stub()              { return _vtable_must_compile_Java; }
-  static address complete_monitor_locking_Java()         { return _complete_monitor_locking_Java;   }
+  static address vtable_must_compile_stub()              { return _vtable_must_compile_Java; }  
+  static address complete_monitor_locking_Java()         { return _complete_monitor_locking_Java;   }  
 
   static address slow_arraycopy_Java()                   { return _slow_arraycopy_Java; }
   static address register_finalizer_Java()               { return _register_finalizer_Java; }
@@ -214,13 +220,13 @@ private:
   // Leaf routines helping with method data update
   static void profile_receiver_type_C(DataLayout* data, oopDesc* receiver);
 
-  // Implicit exception support
-  static void throw_div0_exception_C      (JavaThread* thread);
-  static void throw_stack_overflow_error_C(JavaThread* thread);
+  // Implicit exception support  
+  static void throw_div0_exception_C      (JavaThread* thread);  
+  static void throw_stack_overflow_error_C(JavaThread* thread);    
 
   // Exception handling
   static address rethrow_stub()             { return _rethrow_Java; }
-
+  
 
   // Type functions
   // ======================================================
@@ -228,6 +234,7 @@ private:
   static const TypeFunc* new_instance_Type(); // object allocation (slow case)
   static const TypeFunc* new_array_Type ();   // [a]newarray (slow case)
   static const TypeFunc* multianewarray_Type(int ndim); // multianewarray
+  static const TypeFunc* multianewarray1_Type(); // multianewarray
   static const TypeFunc* multianewarray2_Type(); // multianewarray
   static const TypeFunc* multianewarray3_Type(); // multianewarray
   static const TypeFunc* multianewarray4_Type(); // multianewarray

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //-----------------------------------------------------------------------------
@@ -44,7 +47,7 @@
 //
 // The numbers in square brackets refere to the kind of transition:
 // [1]: Initial fixup. Receiver it found from debug information
-// [2]: Compilation of a method
+// [2]: Compilation of a method 
 // [3]: Recompilation of a method (note: only entry is changed. The klassOop must stay the same)
 // [4]: Inline cache miss. We go directly to megamorphic call.
 //
@@ -84,31 +87,31 @@ class CompiledIC: public ResourceObj {
   // to change an inline-cache. These changes the underlying inline-cache directly. They *newer* make
   // changes to a transition stub.
   void set_ic_destination(address entry_point);
-  void set_cached_oop(oop cache);
+  void set_cached_oop(oop cache); 
 
   // Reads the location of the transition stub. This will fail with an assertion, if no transition stub is
   // associated with the inline cache.
   address stub_address() const;
   bool is_in_transition_state() const;  // Use InlineCacheBuffer
-
+  
  public:
   // conversion (machine PC to CompiledIC*)
   friend CompiledIC* CompiledIC_before(address return_addr);
   friend CompiledIC* CompiledIC_at(address call_site);
-  friend CompiledIC* CompiledIC_at(Relocation* call_site);
+  friend CompiledIC* CompiledIC_at(Relocation* call_site);   
 
   // Return the cached_oop/destination associated with this inline cache. If the cache currently points
-  // to a transition stub, it will read the values from the transition stub.
-  oop  cached_oop() const;
+  // to a transition stub, it will read the values from the transition stub. 
+  oop  cached_oop() const;  
   address ic_destination() const;
 
   bool is_optimized() const   { return _is_optimized; }
 
   // State
   bool is_clean() const;
-  bool is_megamorphic() const;
+  bool is_megamorphic() const;   
   bool is_call_to_compiled() const;
-  bool is_call_to_interpreted() const;
+  bool is_call_to_interpreted() const; 
 
   address end_of_call() { return  _ic_call->return_address(); }
 
@@ -118,13 +121,13 @@ class CompiledIC: public ResourceObj {
   // Note: We do not provide any direct access to the stub code, to prevent parts of the code
   // to manipulate the inline cache in MT-unsafe ways.
   //
-  // They all takes a TRAP argument, since they can cause a GC if the inline-cache buffer is full.
+  // They all takes a TRAP argument, since they can cause a GC if the inline-cache buffer is full.  
   //
   void set_to_clean();  // Can only be called during a safepoint operation
   void set_to_monomorphic(const CompiledICInfo& info);
   void set_to_megamorphic(CallInfo* call_info, Bytecodes::Code bytecode, TRAPS);
-
-  static void compute_monomorphic_entry(methodHandle method, KlassHandle receiver_klass,
+  
+  static void compute_monomorphic_entry(methodHandle method, KlassHandle receiver_klass, 
                                         bool is_optimized, bool static_bound, CompiledICInfo& info, TRAPS);
 
   // Location
@@ -136,20 +139,20 @@ class CompiledIC: public ResourceObj {
   void verify()            PRODUCT_RETURN;
 };
 
-inline CompiledIC* CompiledIC_before(address return_addr) {
-  CompiledIC* c_ic = new CompiledIC(nativeCall_before(return_addr));
-  c_ic->verify();
+inline CompiledIC* CompiledIC_before(address return_addr) { 
+  CompiledIC* c_ic = new CompiledIC(nativeCall_before(return_addr));    
+  c_ic->verify();    
   return c_ic;
 }
 
 inline CompiledIC* CompiledIC_at(address call_site) {
-  CompiledIC* c_ic = new CompiledIC(nativeCall_at(call_site));
+  CompiledIC* c_ic = new CompiledIC(nativeCall_at(call_site));    
   c_ic->verify();
   return c_ic;
 }
 
-inline CompiledIC* CompiledIC_at(Relocation* call_site) {
-  CompiledIC* c_ic = new CompiledIC(call_site);
+inline CompiledIC* CompiledIC_at(Relocation* call_site) {    
+  CompiledIC* c_ic = new CompiledIC(call_site);    
   c_ic->verify();
   return c_ic;
 }
@@ -198,40 +201,40 @@ class CompiledStaticCall: public NativeCall {
   friend CompiledStaticCall* compiledStaticCall_at(address native_call);
   friend CompiledStaticCall* compiledStaticCall_at(Relocation* call_site);
 
-  // State
+  // State 
   bool is_clean() const;
   bool is_call_to_compiled() const;
   bool is_call_to_interpreted() const;
-
+  
   // Clean static call (will force resolving on next use)
   void set_to_clean();
 
-  // Set state. The entry must be the same, as computed by compute_entry.
+  // Set state. The entry must be the same, as computed by compute_entry. 
   // Computation and setting is split up, since the actions are separate during
-  // a OptoRuntime::resolve_xxx.
+  // a OptoRuntime::resolve_xxx.  
   void set(const StaticCallInfo& info);
-
+  
   // Compute entry point given a method
   static void compute_entry(methodHandle m, StaticCallInfo& info);
 
   // Stub support
   address find_stub();
   static void set_stub_to_clean(static_stub_Relocation* static_stub);
-
+  
   // Misc.
   void print()  PRODUCT_RETURN;
-  void verify() PRODUCT_RETURN;
+  void verify() PRODUCT_RETURN;  
 };
 
 
 inline CompiledStaticCall* compiledStaticCall_before(address return_addr) {
-  CompiledStaticCall* st = (CompiledStaticCall*)nativeCall_before(return_addr);
+  CompiledStaticCall* st = (CompiledStaticCall*)nativeCall_before(return_addr);    
   st->verify();
   return st;
 }
 
 inline CompiledStaticCall* compiledStaticCall_at(address native_call) {
-  CompiledStaticCall* st = (CompiledStaticCall*)native_call;
+  CompiledStaticCall* st = (CompiledStaticCall*)native_call;    
   st->verify();
   return st;
 }
@@ -239,3 +242,5 @@ inline CompiledStaticCall* compiledStaticCall_at(address native_call) {
 inline CompiledStaticCall* compiledStaticCall_at(Relocation* call_site) {
   return compiledStaticCall_at(call_site->addr());
 }
+
+

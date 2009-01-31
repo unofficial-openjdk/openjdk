@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // All the necessary definitions for run-time link resolution.
@@ -44,7 +47,7 @@ class FieldAccessInfo: public LinkInfo {
   int          _field_index;  // original index in the klass
   int          _field_offset;
   BasicType    _field_type;
-
+  
  public:
   void         set(KlassHandle klass, symbolHandle name, int field_index, int field_offset,
                  BasicType field_type, AccessFlags access_flags);
@@ -103,37 +106,37 @@ class LinkResolver: AllStatic {
   static void lookup_method_in_klasses          (methodHandle& result, KlassHandle klass, symbolHandle name, symbolHandle signature, TRAPS);
   static void lookup_instance_method_in_klasses (methodHandle& result, KlassHandle klass, symbolHandle name, symbolHandle signature, TRAPS);
   static void lookup_method_in_interfaces       (methodHandle& result, KlassHandle klass, symbolHandle name, symbolHandle signature, TRAPS);
-
+  
   static int vtable_index_of_miranda_method(KlassHandle klass, symbolHandle name, symbolHandle signature, TRAPS);
 
-  static void resolve_klass           (KlassHandle& result, constantPoolHandle  pool, int index, TRAPS);
+  static void resolve_klass           (KlassHandle& result, constantPoolHandle  pool, int index, TRAPS); 
   static void resolve_klass_no_update (KlassHandle& result, constantPoolHandle pool, int index, TRAPS); // no update of constantPool entry
-
+  
   static void resolve_pool  (KlassHandle& resolved_klass, symbolHandle& method_name, symbolHandle& method_signature, KlassHandle& current_klass, constantPoolHandle pool, int index, TRAPS);
-
+  
   static void resolve_interface_method(methodHandle& resolved_method, KlassHandle resolved_klass, symbolHandle method_name, symbolHandle method_signature, KlassHandle current_klass, bool check_access, TRAPS);
   static void resolve_method          (methodHandle& resolved_method, KlassHandle resolved_klass, symbolHandle method_name, symbolHandle method_signature, KlassHandle current_klass, bool check_access, TRAPS);
-
+  
   static void linktime_resolve_static_method    (methodHandle& resolved_method, KlassHandle resolved_klass, symbolHandle method_name, symbolHandle method_signature, KlassHandle current_klass, bool check_access, TRAPS);
   static void linktime_resolve_special_method   (methodHandle& resolved_method, KlassHandle resolved_klass, symbolHandle method_name, symbolHandle method_signature, KlassHandle current_klass, bool check_access, TRAPS);
   static void linktime_resolve_virtual_method   (methodHandle &resolved_method, KlassHandle resolved_klass, symbolHandle method_name, symbolHandle method_signature,KlassHandle current_klass, bool check_access, TRAPS);
   static void linktime_resolve_interface_method (methodHandle& resolved_method, KlassHandle resolved_klass, symbolHandle method_name, symbolHandle method_signature, KlassHandle current_klass, bool check_access, TRAPS);
-
+    
   static void runtime_resolve_special_method    (CallInfo& result, methodHandle resolved_method, KlassHandle resolved_klass, KlassHandle current_klass, bool check_access, TRAPS);
   static void runtime_resolve_virtual_method    (CallInfo& result, methodHandle resolved_method, KlassHandle resolved_klass, Handle recv, KlassHandle recv_klass, bool check_null_and_abstract, TRAPS);
   static void runtime_resolve_interface_method  (CallInfo& result, methodHandle resolved_method, KlassHandle resolved_klass, Handle recv, KlassHandle recv_klass, bool check_null_and_abstract, TRAPS);
-
+  
   static void check_field_accessability   (KlassHandle ref_klass, KlassHandle resolved_klass, KlassHandle sel_klass, fieldDescriptor& fd, TRAPS);
-  static void check_method_accessability  (KlassHandle ref_klass, KlassHandle resolved_klass, KlassHandle sel_klass, methodHandle sel_method, TRAPS);
-
+  static void check_method_accessability  (KlassHandle ref_klass, KlassHandle resolved_klass, KlassHandle sel_klass, methodHandle sel_method, TRAPS);  
+  
  public:
   // constant pool resolving
-  static void check_klass_accessability(KlassHandle ref_klass, KlassHandle sel_klass, TRAPS);
+  static void check_klass_accessability(KlassHandle ref_klass, KlassHandle sel_klass, TRAPS);  
 
   // static resolving for all calls except interface calls
   static void resolve_method          (methodHandle& method_result, KlassHandle& klass_result, constantPoolHandle pool, int index, TRAPS);
   static void resolve_interface_method(methodHandle& method_result, KlassHandle& klass_result, constantPoolHandle pool, int index, TRAPS);
-
+  
   // runtime/static resolving for fields
   static void resolve_field(FieldAccessInfo& result, constantPoolHandle pool, int index, Bytecodes::Code byte, bool check_only, TRAPS);
   // takes an extra bool argument "update_pool" to decide whether to update the constantPool during klass resolution.
@@ -169,3 +172,4 @@ class LinkResolver: AllStatic {
 
   static void resolve_invoke         (CallInfo& result, Handle recv, constantPoolHandle pool, int index, Bytecodes::Code byte, TRAPS);
 };
+

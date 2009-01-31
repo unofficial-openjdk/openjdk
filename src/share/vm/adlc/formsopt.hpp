@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // FORMSOPT.HPP - ADL Parser Target Specific Optimization Forms Classes
@@ -93,7 +96,7 @@ public:
   RegisterForm();
   ~RegisterForm();
 
-  void        addRegDef(char *regName, char *callingConv, char *c_conv,
+  void        addRegDef(char *regName, char *callingConv, char *c_conv, 
                         char * idealtype, char *encoding, char* concreteName);
   RegClass   *addRegClass(const char *className);
   AllocClass *addAllocClass(char *allocName);
@@ -134,7 +137,7 @@ private:
 
 public:
   // Public Methods
-  RegDef(char  *regname, char *callconv, char *c_conv,
+  RegDef(char  *regname, char *callconv, char *c_conv, 
          char *idealtype, char *encoding, char *concrete);
   ~RegDef();                       // Destructor
 
@@ -167,7 +170,7 @@ public:
   uint size() const;            // Number of registers in class
   int regs_in_word( int wordnum, bool stack_also );
 
-  const RegDef *get_RegDef(const char *regDef_name) const;
+  const RegDef *get_RegDef(const char *regDef_name) const; 
 
   // Returns the lowest numbered register in the mask.
   const RegDef* find_first_elem();
@@ -264,8 +267,8 @@ public:
   bool       _branchHasDelaySlot; // Indicates that branches have delay slot instructions
   int        _maxInstrsPerBundle; // Indicates the maximum number of instructions for ILP
   int        _maxBundlesPerCycle; // Indicates the maximum number of bundles for ILP
-  int        _instrUnitSize;      // The minimum instruction unit size, in bytes
-  int        _bundleUnitSize;     // The bundle unit size, in bytes
+  int        _instrUnitSize;      // The minimum instruction unit size, in bytes 
+  int        _bundleUnitSize;     // The bundle unit size, in bytes 
   int        _instrFetchUnitSize; // The size of the I-fetch unit, in bytes [must be power of 2]
   int        _instrFetchUnits;    // The number of I-fetch units processed per cycle
 
@@ -310,7 +313,7 @@ public:
   unsigned _more_instrs;          // Additional Instructions
 
   // Public Methods
-  PipeClassOperandForm(const char *stage, unsigned iswrite, unsigned more_instrs)
+  PipeClassOperandForm(const char *stage, unsigned iswrite, unsigned more_instrs) 
   : _stage(stage)
   , _iswrite(iswrite)
   , _more_instrs(more_instrs)
@@ -388,13 +391,13 @@ public:
   void setBranchDelay(bool s)        { _has_branch_delay_slot = s; }
   void setForceSerialization(bool s) { _force_serialization = s; }
   void setMayHaveNoCode(bool s)      { _may_have_no_code = s; }
-
+  
   int  InstructionCount()   const { return _instruction_count; }
   bool hasMultipleBundles() const { return _has_multiple_bundles; }
   bool hasBranchDelay()     const { return _has_branch_delay_slot; }
   bool forceSerialization() const { return _force_serialization; }
   bool mayHaveNoCode()      const { return _may_have_no_code; }
-
+  
   void dump();                    // Debug printer
   void output(FILE *fp);          // Write info to output files
 };
@@ -482,7 +485,7 @@ public:
 
 public:
   // Public Methods
-  PeepConstraint(intptr_t  left_inst,  char *left_op, char *relation,
+  PeepConstraint(intptr_t  left_inst,  char *left_op, char *relation, 
                  intptr_t  right_inst, char *right_op);
   ~PeepConstraint();
 
@@ -546,3 +549,4 @@ public:
   void dump();
   void output(FILE *fp);
 };
+

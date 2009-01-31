@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -190,7 +193,7 @@ static bool is_unknown_compiled_frame(frame* fr, JavaThread *thread) {
   // This failure mode only occurs when the compiled frame's PC
   // is in the code cache so we are okay for this check if the
   // PC is not in the code cache.
-  CodeBlob* cb = CodeCache::find_blob(fr->pc());
+  CodeBlob* cb = CodeCache::find_blob(fr->pc()); 
   if (cb == NULL) {
     return ret_value;
   }
@@ -400,6 +403,40 @@ void vframeStreamForte::forte_next() {
   } while (!fill_from_frame());
 }
 
+
+// is_valid_method() exists in fprofiler.cpp and now here.
+// We need one central version of this routine.
+
+bool forte_is_valid_method(methodOop method) {
+
+  if (method == NULL || 
+      // The methodOop is extracted via an offset from the current
+      // interpreter frame. With AsyncGetCallTrace() the interpreter
+      // frame may still be under construction so we need to make
+      // sure that we got an aligned oop before we try to use it.
+      !Space::is_aligned(method) ||
+      !Universe::heap()->is_in((void*)method) ||
+      // See if GC became active after we entered AsyncGetCallTrace()
+      // and before we try to use the methodOop. This routine is
+      // used in validation of the top_frame so we don't have any
+      // other data to flush if we bail due to GC here.
+      // Yes, there is still a window after this check and before
+      // we use methodOop below, but we can't lock out GC so that
+      // has to be an acceptable risk.
+      Universe::heap()->is_gc_active() ||
+      //
+      // is_perm_and_alloced() needs to be checked before klass() because you can
+      // get a method pointing into the unmapped part of the heap's
+      // reserved area (e.g., a very high address just within bounds),
+      // and the instruction which loads the class will SIGSEGV.
+      !method->is_perm_and_alloced() || 
+      method->klass() != Universe::methodKlassObj()) {
+    return false;   // doesn't look good
+  }
+  return true;      // hopefully this is a method indeed
+}
+
+
 // Determine if 'fr' is a walkable, compiled frame.
 // *is_compiled_p is set to true if the frame is compiled and if it
 // is, then *is_walkable_p is set to true if it is also walkable.
@@ -409,8 +446,8 @@ static void forte_is_walkable_compiled_frame(frame* fr, RegisterMap* map,
   *is_compiled_p = false;
   *is_walkable_p = false;
 
-  CodeBlob* cb = CodeCache::find_blob(fr->pc());
-  if (cb != NULL &&
+  CodeBlob* cb = CodeCache::find_blob(fr->pc()); 
+  if (cb != NULL && 
       cb->is_nmethod() &&
       ((nmethod*)cb)->is_java_method()) {
     // frame is compiled and executing a Java method
@@ -461,14 +498,14 @@ static bool forte_is_walkable_interpreted_frame(frame* fr,
   methodOop* method_p, int* bci_p) {
   assert(fr->is_interpreted_frame(), "just checking");
 
-  // top frame is an interpreted frame
+  // top frame is an interpreted frame 
   // check if it is walkable (i.e. valid methodOop and valid bci)
   if (fr->is_interpreted_frame_valid()) {
     if (fr->fp() != NULL) {
       // access address in order not to trigger asserts that
       // are built in interpreter_frame_method function
       methodOop method = *fr->interpreter_frame_method_addr();
-      if (Universe::heap()->is_valid_method(method)) {
+      if (forte_is_valid_method(method)) {
         intptr_t bcx = fr->interpreter_frame_bcx();
         int      bci = method->validate_bci_from_bcx(bcx);
         // note: bci is set to -1 if not a valid bci
@@ -643,8 +680,6 @@ static void forte_fill_call_trace_given_top(JavaThread* thd,
     return;
   }
 
-  CollectedHeap* ch = Universe::heap();
-
   if (method != NULL) {
     // The method is not stored GC safe so see if GC became active
     // after we entered AsyncGetCallTrace() and before we try to
@@ -652,7 +687,7 @@ static void forte_fill_call_trace_given_top(JavaThread* thd,
     // Yes, there is still a window after this check and before
     // we use methodOop below, but we can't lock out GC so that
     // has to be an acceptable risk.
-    if (!ch->is_valid_method(method)) {
+    if (!forte_is_valid_method(method)) {
       trace->num_frames = -2;
       return;
     }
@@ -670,7 +705,7 @@ static void forte_fill_call_trace_given_top(JavaThread* thd,
         trace->frames[0].lineno = -3;
       }
     }
-  }
+  } 
 
   // check has_last_Java_frame() after looking at the top frame
   // which may be an interpreted Java frame.
@@ -690,7 +725,7 @@ static void forte_fill_call_trace_given_top(JavaThread* thd,
     // Yes, there is still a window after this check and before
     // we use methodOop below, but we can't lock out GC so that
     // has to be an acceptable risk.
-    if (!ch->is_valid_method(method)) {
+    if (!forte_is_valid_method(method)) {
       // we throw away everything we've gathered in this sample since
       // none of it is safe
       trace->num_frames = -2;
@@ -715,7 +750,7 @@ static void forte_fill_call_trace_given_top(JavaThread* thd,
 // Async-safe version of GetCallTrace being called from a signal handler
 // when a LWP gets interrupted by SIGPROF but the stack traces are filled
 // with different content (see below).
-//
+// 
 // This function must only be called when JVM/TI
 // CLASS_LOAD events have been enabled since agent startup. The enabled
 // event will cause the jmethodIDs to be allocated at class load time.
@@ -724,16 +759,16 @@ static void forte_fill_call_trace_given_top(JavaThread* thd,
 //
 // void (*AsyncGetCallTrace)(ASGCT_CallTrace *trace, jint depth, void* ucontext)
 //
-// Called by the profiler to obtain the current method call stack trace for
-// a given thread. The thread is identified by the env_id field in the
-// ASGCT_CallTrace structure. The profiler agent should allocate a ASGCT_CallTrace
-// structure with enough memory for the requested stack depth. The VM fills in
-// the frames buffer and the num_frames field.
+// Called by the profiler to obtain the current method call stack trace for 
+// a given thread. The thread is identified by the env_id field in the 
+// ASGCT_CallTrace structure. The profiler agent should allocate a ASGCT_CallTrace 
+// structure with enough memory for the requested stack depth. The VM fills in 
+// the frames buffer and the num_frames field. 
 //
-// Arguments:
+// Arguments: 
 //
-//   trace    - trace data structure to be filled by the VM.
-//   depth    - depth of the call stack trace.
+//   trace    - trace data structure to be filled by the VM. 
+//   depth    - depth of the call stack trace. 
 //   ucontext - ucontext_t of the LWP
 //
 // ASGCT_CallTrace:
@@ -744,18 +779,18 @@ static void forte_fill_call_trace_given_top(JavaThread* thd,
 //   } ASGCT_CallTrace;
 //
 // Fields:
-//   env_id     - ID of thread which executed this trace.
-//   num_frames - number of frames in the trace.
+//   env_id     - ID of thread which executed this trace. 
+//   num_frames - number of frames in the trace. 
 //                (< 0 indicates the frame is not walkable).
 //   frames     - the ASGCT_CallFrames that make up this trace. Callee followed by callers.
 //
 //  ASGCT_CallFrame:
 //    typedef struct {
-//        jint lineno;
-//        jmethodID method_id;
+//        jint lineno;                     
+//        jmethodID method_id;              
 //    } ASGCT_CallFrame;
 //
-//  Fields:
+//  Fields: 
 //    1) For Java frame (interpreted and compiled),
 //       lineno    - bci of the method being executed or -1 if bci is not available
 //       method_id - jmethodID of the method being executed
@@ -795,7 +830,7 @@ void AsyncGetCallTrace(ASGCT_CallTrace *trace, jint depth, void* ucontext) {
     return;
   }
 
-  assert(JavaThread::current() == thread,
+  assert(JavaThread::current() == thread, 
          "AsyncGetCallTrace must be called by the current interrupted thread");
 
   if (!JvmtiExport::should_post_class_load()) {
@@ -824,7 +859,7 @@ void AsyncGetCallTrace(ASGCT_CallTrace *trace, jint depth, void* ucontext) {
   case _thread_in_vm_trans:
     {
       frame fr;
-
+      
       // param isInJava == false - indicate we aren't in Java code
       if (!thread->pd_get_top_frame_for_signal_handler(&fr, ucontext, false)) {
         if (!thread->has_last_Java_frame()) {
@@ -835,11 +870,11 @@ void AsyncGetCallTrace(ASGCT_CallTrace *trace, jint depth, void* ucontext) {
       } else {
         trace->num_frames = -4;    // non walkable frame by default
         forte_fill_call_trace_given_top(thread, trace, depth, fr);
-      }
+      }      
     }
     break;
-  case _thread_in_Java:
-  case _thread_in_Java_trans:
+  case _thread_in_Java: 
+  case _thread_in_Java_trans: 
     {
       frame fr;
 

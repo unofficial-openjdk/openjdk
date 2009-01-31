@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -59,7 +62,7 @@ jlong elapsedTimer::active_ticks() const {
   if (!_active) {
     return ticks();
   }
-  jlong counter = _counter + os::elapsed_counter() - _start_counter;
+  jlong counter = _counter + os::elapsed_counter() - _start_counter; 
   return counter;
 }
 
@@ -69,7 +72,7 @@ void TimeStamp::update_to(jlong ticks) {
   assert(is_updated(), "must not look clear");
 }
 
-void TimeStamp::update() {
+void TimeStamp::update() { 
   update_to(os::elapsed_counter());
 }
 
@@ -96,9 +99,9 @@ jlong TimeStamp::ticks_since_update() const {
 }
 
 TraceTime::TraceTime(const char* title,
-                     bool doit,
-                     bool print_cr,
-                     outputStream* logfile) {
+		     bool doit,
+		     bool print_cr,
+		     outputStream* logfile) {
   _active   = doit;
   _verbose  = true;
   _print_cr = print_cr;
@@ -117,10 +120,10 @@ TraceTime::TraceTime(const char* title,
 }
 
 TraceTime::TraceTime(const char* title,
-                     elapsedTimer* accumulator,
-                     bool doit,
-                     bool verbose,
-                     outputStream* logfile) {
+		     elapsedTimer* accumulator,
+		     bool doit,
+		     bool verbose,
+		     outputStream* logfile) {
   _active = doit;
   _verbose = verbose;
   _print_cr = true;
@@ -128,8 +131,8 @@ TraceTime::TraceTime(const char* title,
   if (_active) {
     if (_verbose) {
       if (PrintGCTimeStamps) {
-        _logfile->stamp();
-        _logfile->print(": ");
+	_logfile->stamp();
+	_logfile->print(": ");
       }
       _logfile->print("[%s", title);
       _logfile->flush();
@@ -154,14 +157,14 @@ TraceTime::~TraceTime() {
   }
 }
 
-TraceCPUTime::TraceCPUTime(bool doit,
-               bool print_cr,
-               outputStream *logfile) :
+TraceCPUTime::TraceCPUTime(bool doit, 
+	       bool print_cr, 
+	       outputStream *logfile) :
   _active(doit),
   _print_cr(print_cr),
-  _starting_user_time(0.0),
-  _starting_system_time(0.0),
-  _starting_real_time(0.0),
+  _starting_user_time(0.0), 
+  _starting_system_time(0.0), 
+  _starting_real_time(0.0), 
   _logfile(logfile),
   _error(false) {
   if (_active) {
@@ -171,9 +174,9 @@ TraceCPUTime::TraceCPUTime(bool doit,
       _logfile = tty;
     }
 
-    _error = !os::getTimesSecs(&_starting_real_time,
-                               &_starting_user_time,
-                               &_starting_system_time);
+    _error = !os::getTimesSecs(&_starting_real_time, 
+			       &_starting_user_time, 
+			       &_starting_system_time);    
   }
 }
 
@@ -181,21 +184,21 @@ TraceCPUTime::~TraceCPUTime() {
   if (_active) {
     bool valid = false;
     if (!_error) {
-      double real_secs;                 // walk clock time
-      double system_secs;               // system time
-      double user_secs;                 // user time for all threads
+      double real_secs;  		// walk clock time
+      double system_secs;		// system time
+      double user_secs;			// user time for all threads
 
       double real_time, user_time, system_time;
       valid = os::getTimesSecs(&real_time, &user_time, &system_time);
       if (valid) {
 
-        user_secs = user_time - _starting_user_time;
-        system_secs = system_time - _starting_system_time;
-        real_secs = real_time - _starting_real_time;
+	user_secs = user_time - _starting_user_time;
+	system_secs = system_time - _starting_system_time;
+	real_secs = real_time - _starting_real_time;
 
-        _logfile->print(" [Times: user=%3.2f sys=%3.2f, real=%3.2f secs] ",
-          user_secs, system_secs, real_secs);
-
+	_logfile->print(" [Times: user=%3.2f sys=%3.2f, real=%3.2f secs] ",
+	  user_secs, system_secs, real_secs);
+	  
       } else {
         _logfile->print("[Invalid result in TraceCPUTime]");
       }

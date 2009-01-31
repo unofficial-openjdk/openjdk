@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 inline OopsInGenClosure::OopsInGenClosure(Generation* gen) :
@@ -58,7 +61,7 @@ inline void ScanClosure::do_oop(oop* p) {
       assert(!_g->to()->is_in_reserved(obj), "Scanning field twice?");
       if (obj->is_forwarded()) {
         *p = obj->forwardee();
-      } else {
+      } else {        
         *p = _g->copy_to_survivor_space(obj, p);
       }
     }
@@ -83,7 +86,7 @@ inline void FastScanClosure::do_oop(oop* p) {
       assert(!_g->to()->is_in_reserved(obj), "Scanning field twice?");
       if (obj->is_forwarded()) {
         *p = obj->forwardee();
-      } else {
+      } else {        
         *p = _g->copy_to_survivor_space(obj, p);
       }
       if (_gc_barrier) {
@@ -108,7 +111,7 @@ inline void ScanWeakRefClosure::do_oop(oop* p) {
   if ((HeapWord*)obj < _boundary && !_g->to()->is_in_reserved(obj)) {
     if (obj->is_forwarded()) {
       *p = obj->forwardee();
-    } else {
+    } else {        
       *p = _g->copy_to_survivor_space(obj, p);
     }
   }

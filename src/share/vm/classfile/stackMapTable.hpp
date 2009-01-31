@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class StackMapReader;
@@ -32,7 +35,7 @@ class StackMapTable : public StackObj {
   // be difficult to detect/recover from overflow or underflow conditions.
   // Widening the type and making it signed will help detect these.
   int32_t              _code_length;
-  int32_t              _frame_count;     // Stackmap frame count
+  int32_t              _frame_count;     // Stackmap frame count 
   StackMapFrame**       _frame_array;
 
  public:
@@ -41,28 +44,28 @@ class StackMapTable : public StackObj {
                 char* code_data, int code_len, TRAPS);
 
   inline int32_t get_frame_count() const { return _frame_count; }
-  inline int get_offset(int index) const {
-    return _frame_array[index]->offset();
+  inline int get_offset(int index) const { 
+    return _frame_array[index]->offset(); 
   }
 
   // Match and/or update current_frame to the frame in stackmap table with
-  // specified offset. Return true if the two frames match.
+  // specified offset. Return true if the two frames match. 
   bool match_stackmap(
-    StackMapFrame* current_frame, int32_t offset,
+    StackMapFrame* current_frame, int32_t offset, 
     bool match, bool update, TRAPS) const;
   // Match and/or update current_frame to the frame in stackmap table with
-  // specified offset and frame index. Return true if the two frames match.
+  // specified offset and frame index. Return true if the two frames match. 
   bool match_stackmap(
     StackMapFrame* current_frame, int32_t offset, int32_t frame_index,
     bool match, bool update, TRAPS) const;
 
-  // Check jump instructions. Make sure there are no uninitialized
+  // Check jump instructions. Make sure there are no uninitialized 
   // instances on backward branch.
   void check_jump_target(StackMapFrame* frame, int32_t target, TRAPS) const;
 
   // The following methods are only used inside this class.
 
-  // Returns the frame array index where the frame with offset is stored.
+  // Returns the frame array index where the frame with offset is stored. 
   int get_index_from_offset(int32_t offset) const;
 
   // Make sure that there's no uninitialized object exist on backward branch.
@@ -78,7 +81,7 @@ class StackMapStream : StackObj {
   typeArrayHandle _data;
   int _index;
  public:
-  StackMapStream(typeArrayHandle ah)
+  StackMapStream(typeArrayHandle ah) 
     : _data(ah), _index(0) {
   }
   u1 get_u1(TRAPS) {
@@ -103,7 +106,7 @@ class StackMapStream : StackObj {
 
 class StackMapReader : StackObj {
  private:
-  // information about the class and method
+  // information about the class and method 
   constantPoolHandle  _cp;
   ClassVerifier* _verifier;
   StackMapStream* _stream;
@@ -111,7 +114,7 @@ class StackMapReader : StackObj {
   int32_t _code_length;
 
   // information get from the attribute
-  int32_t  _frame_count;       // frame count
+  int32_t  _frame_count;       // frame count 
 
   int32_t chop(VerificationType* locals, int32_t length, int32_t chops);
   VerificationType parse_verification_type(u1* flags, TRAPS);
@@ -120,7 +123,7 @@ class StackMapReader : StackObj {
     if (size < 0 || size > max_size) {
       // Since this error could be caused someone rewriting the method
       // but not knowing to update the stackmap data, we call the the
-      // verifier's error method, which may not throw an exception and
+      // verifier's error method, which may not throw an exception and 
       // failover to the old verifier instead.
       _verifier->class_format_error(
         "StackMapTable format error: bad type array size");
@@ -149,7 +152,7 @@ class StackMapReader : StackObj {
     }
   }
 
-  inline int32_t get_frame_count() const                { return _frame_count; }
+  inline int32_t get_frame_count() const		{ return _frame_count; }
   StackMapFrame* next(StackMapFrame* pre_frame, bool first,
                       u2 max_locals, u2 max_stack, TRAPS);
 

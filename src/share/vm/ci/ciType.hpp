@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // ciType
@@ -40,7 +43,7 @@ private:
 
   const char* type_string() { return "ciType"; }
 
-  void print_impl(outputStream* st);
+  void print_impl();
 
   // Distinguished instances of primitive ciTypes..
   static ciType* _basic_types[T_CONFLICT+1];
@@ -73,10 +76,7 @@ public:
   bool is_type()                            { return true; }
   bool is_classless() const                 { return is_primitive_type(); }
 
-  virtual void print_name_on(outputStream* st);
-  void print_name() {
-    print_name_on(tty);
-  }
+  virtual void print_name();
 
   static ciType* make(BasicType t);
 };
@@ -94,10 +94,10 @@ private:
   int _bci;
 
   ciReturnAddress(int bci);
-
+  
   const char* type_string() { return "ciReturnAddress"; }
 
-  void print_impl(outputStream* st);
+  void print_impl();
 
 public:
   bool is_return_address()  { return true; }

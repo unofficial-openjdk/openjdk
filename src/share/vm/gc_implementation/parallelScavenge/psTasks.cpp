@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -50,7 +53,7 @@ void ScavengeRootsTask::do_it(GCTaskManager* manager, uint which) {
 
   PSPromotionManager* pm = PSPromotionManager::gc_thread_promotion_manager(which);
   PSScavengeRootsClosure roots_closure(pm);
-
+  
   switch (_root_type) {
     case universe:
       Universe::oops_do(&roots_closure);
@@ -105,7 +108,7 @@ void ThreadRootsTask::do_it(GCTaskManager* manager, uint which) {
 
   PSPromotionManager* pm = PSPromotionManager::gc_thread_promotion_manager(which);
   PSScavengeRootsClosure roots_closure(pm);
-
+  
   if (_java_thread != NULL)
     _java_thread->oops_do(&roots_closure);
 
@@ -126,7 +129,7 @@ StealTask::StealTask(ParallelTaskTerminator* t) :
 void StealTask::do_it(GCTaskManager* manager, uint which) {
   assert(Universe::heap()->is_gc_active(), "called outside gc");
 
-  PSPromotionManager* pm =
+  PSPromotionManager* pm = 
     PSPromotionManager::gc_thread_promotion_manager(which);
   pm->drain_stacks(true);
   guarantee(pm->stacks_empty(),
@@ -137,30 +140,24 @@ void StealTask::do_it(GCTaskManager* manager, uint which) {
     while(true) {
       oop* p;
       if (PSPromotionManager::steal_depth(which, &random_seed, p)) {
-#if PS_PM_STATS
-        pm->increment_steals(p);
-#endif // PS_PM_STATS
-        pm->process_popped_location_depth(p);
-        pm->drain_stacks_depth(true);
+	PSScavenge::copy_and_push_safe_barrier(pm, p);
+	pm->drain_stacks_depth(true);
       } else {
-        if (terminator()->offer_termination()) {
-          break;
-        }
+	if (terminator()->offer_termination()) {
+	  break;
+	}
       }
     }
   } else {
     while(true) {
       oop obj;
       if (PSPromotionManager::steal_breadth(which, &random_seed, obj)) {
-#if PS_PM_STATS
-        pm->increment_steals();
-#endif // PS_PM_STATS
-        obj->copy_contents(pm);
-        pm->drain_stacks_breadth(true);
+	obj->copy_contents(pm);
+	pm->drain_stacks_breadth(true);
       } else {
-        if (terminator()->offer_termination()) {
-          break;
-        }
+	if (terminator()->offer_termination()) {
+	  break;
+	}
       }
     }
   }
@@ -175,14 +172,14 @@ void StealTask::do_it(GCTaskManager* manager, uint which) {
 void SerialOldToYoungRootsTask::do_it(GCTaskManager* manager, uint which) {
   assert(_gen != NULL, "Sanity");
   assert(_gen->object_space()->contains(_gen_top) || _gen_top == _gen->object_space()->top(), "Sanity");
-
-  {
+  
+  { 
     PSPromotionManager* pm = PSPromotionManager::gc_thread_promotion_manager(which);
-
+    
     assert(Universe::heap()->kind() == CollectedHeap::ParallelScavengeHeap, "Sanity");
     CardTableExtension* card_table = (CardTableExtension *)Universe::heap()->barrier_set();
     // FIX ME! Assert that card_table is the type we believe it to be.
-
+    
     card_table->scavenge_contents(_gen->start_array(),
                                   _gen->object_space(),
                                   _gen_top,
@@ -202,20 +199,22 @@ void OldToYoungRootsTask::do_it(GCTaskManager* manager, uint which) {
   assert(_gen->object_space()->contains(_gen_top) || _gen_top == _gen->object_space()->top(), "Sanity");
   assert(_stripe_number < ParallelGCThreads, "Sanity");
 
-  {
+  { 
     PSPromotionManager* pm = PSPromotionManager::gc_thread_promotion_manager(which);
-
+    
     assert(Universe::heap()->kind() == CollectedHeap::ParallelScavengeHeap, "Sanity");
     CardTableExtension* card_table = (CardTableExtension *)Universe::heap()->barrier_set();
     // FIX ME! Assert that card_table is the type we believe it to be.
-
+    
     card_table->scavenge_contents_parallel(_gen->start_array(),
                                            _gen->object_space(),
                                            _gen_top,
                                            pm,
                                            _stripe_number);
-
+    
     // Do the real work
     pm->drain_stacks(false);
   }
 }
+
+

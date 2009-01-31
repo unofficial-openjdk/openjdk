@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include <stdio.h>
@@ -77,7 +80,7 @@ static void warn1(const char * file, int line, const char * msg, intptr_t arg1) 
 }
 
 #define CHECK_FAIL(err) \
-        if (err != PS_OK) { failed(err, __FILE__, __LINE__); goto fail; }
+	if (err != PS_OK) { failed(err, __FILE__, __LINE__); goto fail; }
 #define WARN(msg)  warn(__FILE__, __LINE__, msg)
 #define WARN1(msg, arg1)  warn1(__FILE__, __LINE__, msg, arg1)
 
@@ -119,19 +122,19 @@ typedef struct Nmethod_t {
   struct jvm_agent* J;
   Jframe_t *jframe;
 
-  uint64_t nm;                  /* _nmethod */
+  uint64_t nm;			/* _nmethod */
   uint64_t pc;
   uint64_t pc_desc;
 
-  int32_t  orig_pc_offset;      /* _orig_pc_offset */
-  int32_t  instrs_beg;          /* _instructions_offset */
+  int32_t  orig_pc_offset;	/* _orig_pc_offset */
+  int32_t  instrs_beg;		/* _instructions_offset */
   int32_t  instrs_end;
-  int32_t  deopt_beg;           /* _deoptimize_offset */
-  int32_t  scopes_data_beg;     /* _scopes_data_offset */
+  int32_t  deopt_beg;		/* _deoptimize_offset */
+  int32_t  scopes_data_beg;	/* _scopes_data_offset */
   int32_t  scopes_data_end;
-  int32_t  oops_beg;            /* _oops_offset */
-  int32_t  oops_len;            /* _oops_length */
-  int32_t  scopes_pcs_beg;      /* _scopes_pcs_offset */
+  int32_t  oops_beg;		/* _oops_offset */
+  int32_t  oops_len;		/* _oops_length */
+  int32_t  scopes_pcs_beg;	/* _scopes_pcs_offset */
   int32_t  scopes_pcs_end;
 
   int      vf_cnt;
@@ -161,7 +164,7 @@ struct jvm_agent {
   uint64_t methodOopPtr;
   uint64_t bcx;
 
-  Nmethod_t *N;                 /*Inlined methods support */
+  Nmethod_t *N;			/*Inlined methods support */
   Frame_t   prev_fr;
   Frame_t   curr_fr;
 };
@@ -169,9 +172,9 @@ struct jvm_agent {
 
 static int
 read_string(struct ps_prochandle *P,
-        char *buf,              /* caller's buffer */
-        size_t size,            /* upper limit on bytes to read */
-        uintptr_t addr)         /* address in process */
+	char *buf, 		/* caller's buffer */
+	size_t size,		/* upper limit on bytes to read */
+	uintptr_t addr)		/* address in process */
 {
   int err = PS_OK;
   while (size-- > 1 && err == PS_OK) {
@@ -402,7 +405,7 @@ jvm_agent_t *Jagent_create(struct ps_prochandle *P, int vers) {
       fprintf(stderr, "Jagent_create: debug=%d\n", debug);
 #ifdef X86_COMPILER2
       fprintf(stderr, "Jagent_create: R_SP=%d, R_FP=%d, POINTER_SIZE=%d\n", R_SP, R_FP, POINTER_SIZE);
-#endif  /* X86_COMPILER2 */
+#endif	/* X86_COMPILER2 */
   }
 
   J->P = P;
@@ -429,7 +432,7 @@ jvm_agent_t *Jagent_create(struct ps_prochandle *P, int vers) {
   CHECK_FAIL(err);
 
   return J;
-
+  
  fail:
   Jagent_destroy(J);
   return NULL;
@@ -508,7 +511,7 @@ name_for_methodOop(jvm_agent_t* J, uint64_t methodOopPtr, char * result, size_t 
   klassString = (char*)calloc(klassSymbolLength + 1, 1);
   err = ps_pread(J->P, klassSymbol + OFFSET_symbolOopDesc_body, klassString, klassSymbolLength);
   CHECK_FAIL(err);
-
+  
   result[0] = '\0';
   strncat(result, klassString, size);
   size -= strlen(klassString);
@@ -661,7 +664,7 @@ read_pair(jvm_agent_t* J, uint64_t *buffer, int32_t *bci, int32_t *line)
   if (next == 0) {
       if (debug > 2)
           fprintf(stderr, "\t\t read_pair: END: next == 0\n");
-      return 1; /* stream terminated */
+      return 1;	/* stream terminated */
   }
   if (next == 0xFF) {
       if (debug > 2)
@@ -821,7 +824,7 @@ static int pc_desc_at(Nmethod_t *N)
 
   for (offs = N->scopes_pcs_beg; offs < N->scopes_pcs_end; offs += SIZE_PcDesc) {
       uint64_t pd;
-      uint64_t best_pc_diff = 16;       /* some approximation */
+      uint64_t best_pc_diff = 16;	/* some approximation */
       uint64_t real_pc = 0;
 
       pd = N->nm + offs;
@@ -948,12 +951,12 @@ scopeDesc_chain(Nmethod_t *N)
 
 static int
 name_for_nmethod(jvm_agent_t* J,
-                 uint64_t nm,
-                 uint64_t pc,
-                 uint64_t methodOop,
-                 char *result,
-                 size_t size,
-                 Jframe_t *jframe
+		 uint64_t nm,
+		 uint64_t pc,
+		 uint64_t methodOop,
+		 char *result,
+		 size_t size,
+		 Jframe_t *jframe
 ) {
   Nmethod_t *N;
   Vframe_t *vf;
@@ -966,7 +969,7 @@ name_for_nmethod(jvm_agent_t* J,
   if (J->N == NULL) {
     J->N = (Nmethod_t *) malloc(sizeof(Nmethod_t));
   }
-  memset(J->N, 0, sizeof(Nmethod_t));   /* Initial stat: all values are zeros */
+  memset(J->N, 0, sizeof(Nmethod_t));	/* Initial stat: all values are zeros */
   N     = J->N;
   N->J  = J;
   N->nm = nm;
@@ -1039,7 +1042,7 @@ name_for_nmethod(jvm_agent_t* J,
 int is_bci(intptr_t bcx) {
   switch (DATA_MODEL) {
   case PR_MODEL_LP64:
-    return ((uintptr_t) bcx) <= ((uintptr_t) MAX_METHOD_CODE_SIZE) ;
+    return ((uintptr_t) bcx) <= ((uintptr_t) MAX_METHOD_CODE_SIZE) ; 
   case PR_MODEL_ILP32:
   default:
     return 0 <= bcx && bcx <= MAX_METHOD_CODE_SIZE;
@@ -1048,11 +1051,11 @@ int is_bci(intptr_t bcx) {
 
 static int
 name_for_imethod(jvm_agent_t* J,
-                 uint64_t bcx,
-                 uint64_t methodOop,
-                 char *result,
-                 size_t size,
-                 Jframe_t *jframe
+		 uint64_t bcx,
+		 uint64_t methodOop,
+		 char *result,
+		 size_t size,
+		 Jframe_t *jframe
 ) {
   uint64_t bci;
   uint64_t constMethod;
@@ -1337,7 +1340,7 @@ int Jlookup_by_regs(jvm_agent_t* J, const prgregset_t regs, char *name,
     fp = (uintptr_t) regs[R_FP];
     if (J->prev_fr.fp == 0) {
 #ifdef X86_COMPILER2
-        /* A workaround for top java frames */
+	/* A workaround for top java frames */
         J->prev_fr.fp = (uintptr_t)(regs[R_SP] - 2 * POINTER_SIZE);
 #else
         J->prev_fr.fp = (uintptr_t)(regs[R_SP] - POINTER_SIZE);
@@ -1412,7 +1415,7 @@ int Jlookup_by_regs(jvm_agent_t* J, const prgregset_t regs, char *name,
     read_pointer(J,  jframe->new_fp + POINTER_SIZE,  &jframe->new_pc);
     CHECK_FAIL(err);
     if (debug > 2) {
-        printf("Jlookup_by_regs: (update pc) jframe->new_fp: %#llx, jframe->new_pc: %#llx\n",
+        printf("Jlookup_by_regs: (update pc) jframe->new_fp: %#llx, jframe->new_pc: %#llx\n", 
                jframe->new_fp, jframe->new_pc);
     }
   }
@@ -1436,7 +1439,7 @@ void update_gregs(prgregset_t gregs, Jframe_t jframe) {
     }
     /*
      * A workaround for java C2 frames with unconventional FP.
-     * may have to modify regset with new values for FP/PC/SP when needed.
+     * may have to modify regset with new values for FP/PC/SP when needed.  
      */
      if (jframe.new_sp) {
          *((uintptr_t *) &gregs[R_SP]) = (uintptr_t) jframe.new_sp;
@@ -1453,7 +1456,7 @@ void update_gregs(prgregset_t gregs, Jframe_t jframe) {
     if (debug > 0) {
       fprintf(stderr, "update_gregs: after update sp = 0x%llx, fp = 0x%llx, pc = 0x%llx\n", gregs[R_SP], gregs[R_FP], gregs[R_PC]);
     }
-#endif  /* X86_COMPILER2 */
+#endif	/* X86_COMPILER2 */
 }
 
 /*
@@ -1471,16 +1474,16 @@ int Jframe_iter(jvm_agent_t *J, prgregset_t gregs, java_stack_f *func, void* cld
     if (debug > 0) {
       fprintf(stderr, "Jframe_iter: Entry sp = 0x%llx, fp = 0x%llx, pc = 0x%llx\n", gregs[R_SP], gregs[R_FP], gregs[R_PC]);
     }
-#endif  /* X86_COMPILER2 */
+#endif	/* X86_COMPILER2 */
 
     memset(&jframe, 0, sizeof(Jframe_t));
     memset(buf, 0, sizeof(buf));
-    res =  Jlookup_by_regs(J, gregs, buf, sizeof(buf), &jframe);
-    if (res != PS_OK)
+    res =  Jlookup_by_regs(J, gregs, buf, sizeof(buf), &jframe); 
+    if (res != PS_OK) 
         return (-1);
 
 
-    res = func(cld, gregs, buf, (jframe.locinf)? jframe.bci : -1,
+    res = func(cld, gregs, buf, (jframe.locinf)? jframe.bci : -1, 
                jframe.line, NULL);
     if (res != 0) {
         update_gregs(gregs, jframe);
@@ -1498,3 +1501,4 @@ int Jframe_iter(jvm_agent_t *J, prgregset_t gregs, java_stack_f *func, void* cld
     update_gregs(gregs, jframe);
     return (0);
 }
+

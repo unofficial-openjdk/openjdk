@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.oops;
@@ -55,7 +55,7 @@ public class ObjArray extends Array {
   private static long elementSize;
 
   public Oop getObjAt(long index) {
-    long offset = baseOffsetInBytes(BasicType.T_OBJECT) + (index * elementSize);
+    long offset = baseOffsetInBytes(BasicType.T_OBJECT) + (index * elementSize); 
     return getHeap().newOop(getHandle().getOopHandleAt(offset));
   }
 

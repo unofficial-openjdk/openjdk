@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 bool OneContigSpaceCardGeneration::is_in(const void* p) const {
@@ -43,7 +46,7 @@ HeapWord* OneContigSpaceCardGeneration::allocate(size_t word_size,
 }
 
 HeapWord* OneContigSpaceCardGeneration::par_allocate(size_t word_size,
-                                                     bool is_tlab) {
+						     bool is_tlab) {
   assert(!is_tlab, "OneContigSpaceCardGeneration does not support TLAB allocation");
   return the_space()->par_allocate(word_size);
 }

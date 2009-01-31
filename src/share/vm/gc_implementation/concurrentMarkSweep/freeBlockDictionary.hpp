@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //
@@ -96,7 +99,7 @@ class FreeChunk VALUE_OBJ_CLASS_SPEC {
   void verify()             const PRODUCT_RETURN;
   void verifyList()         const PRODUCT_RETURN;
   void mangleAllocated(size_t size) PRODUCT_RETURN;
-  void mangleFreed(size_t size)     PRODUCT_RETURN;
+  void mangleFreed(size_t size)     PRODUCT_RETURN; 
 };
 
 // Alignment helpers etc.
@@ -132,8 +135,8 @@ class FreeBlockDictionary: public CHeapObj {
   virtual size_t     minSize()        const = 0;
   // Reset the dictionary to the initial conditions for a single
   // block.
-  virtual void       reset(HeapWord* addr, size_t size) = 0;
-  virtual void       reset() = 0;
+  virtual void	     reset(HeapWord* addr, size_t size) = 0;
+  virtual void	     reset() = 0;
 
   virtual void       dictCensusUpdate(size_t size, bool split, bool birth) = 0;
   virtual bool       coalDictOverPopulated(size_t size) = 0;
@@ -161,7 +164,7 @@ class FreeBlockDictionary: public CHeapObj {
     gclog_or_tty->print("No statistics available");
   }
 
-  virtual void       printDictCensus() const = 0;
+  virtual void 	     printDictCensus() const = 0;
 
   virtual void       verify()         const = 0;
 

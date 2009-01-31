@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Implementation of all inlined member functions defined in oop.hpp
@@ -62,7 +65,7 @@ inline bool oopDesc::is_symbol()             const { return blueprint()->oop_is_
 inline bool oopDesc::is_klass()              const { return blueprint()->oop_is_klass(); }
 inline bool oopDesc::is_thread()             const { return blueprint()->oop_is_thread(); }
 inline bool oopDesc::is_method()             const { return blueprint()->oop_is_method(); }
-inline bool oopDesc::is_constMethod()        const { return blueprint()->oop_is_constMethod(); }
+inline bool oopDesc::is_constMethod()	     const { return blueprint()->oop_is_constMethod(); }
 inline bool oopDesc::is_methodData()         const { return blueprint()->oop_is_methodData(); }
 inline bool oopDesc::is_constantPool()       const { return blueprint()->oop_is_constantPool(); }
 inline bool oopDesc::is_constantPoolCache()  const { return blueprint()->oop_is_constantPoolCache(); }
@@ -154,7 +157,7 @@ inline int oopDesc::size_given_klass(Klass* klass)  {
     // The most common case is instances; fall through if so.
     if (lh < Klass::_lh_neutral_value) {
       // Second most common case is arrays.  We have to fetch the
-      // length of the array, shift (multiply) it appropriately,
+      // length of the array, shift (multiply) it appropriately, 
       // up to wordSize, add the header, and align to object size.
       size_t size_in_bytes;
 #ifdef _M_IA64
@@ -164,11 +167,11 @@ inline int oopDesc::size_given_klass(Klass* klass)  {
       // array oop.  Making the reference volatile prohibits this.
       // (%%% please explain by what magic the length is actually fetched!)
       volatile int *array_length;
-      array_length = (volatile int *)( (intptr_t)this +
+      array_length = (volatile int *)( (intptr_t)this + 
                           arrayOopDesc::length_offset_in_bytes() );
       assert(array_length > 0, "Integer arithmetic problem somewhere");
       // Put into size_t to avoid overflow.
-      size_in_bytes = (size_t) array_length;
+      size_in_bytes = (size_t) array_length;  
       size_in_bytes = size_in_bytes << Klass::layout_helper_log2_element_size(lh);
 #else
       size_t array_length = (size_t) ((arrayOop)this)->length();
@@ -180,8 +183,8 @@ inline int oopDesc::size_given_klass(Klass* klass)  {
       // in units of bytes and doing it this way we can round up just once,
       // skipping the intermediate round to HeapWordSize.  Cast the result
       // of round_to to size_t to guarantee unsigned division == right shift.
-      s = (int)((size_t)round_to(size_in_bytes, MinObjAlignmentInBytes) /
-        HeapWordSize);
+      s = (int)((size_t)round_to(size_in_bytes, MinObjAlignmentInBytes) / 
+	HeapWordSize);
 
       // UseParNewGC can change the length field of an "old copy" of an object
       // array in the young gen so it indicates the stealable portion of
@@ -199,8 +202,7 @@ inline int oopDesc::size_given_klass(Klass* klass)  {
       // technique, or when G1 is integrated (and currently uses this array chunking
       // technique) we will need to suitably modify the assertion.
       assert((s == klass->oop_size(this)) ||
-             (((UseParNewGC || UseParallelGC) &&
-                                           Universe::heap()->is_gc_active()) &&
+             ((UseParNewGC && Universe::heap()->is_gc_active()) &&
               (is_typeArray() ||
                (is_objArray() && is_forwarded()))),
              "wrong array object size");
@@ -344,7 +346,7 @@ inline bool oopDesc::is_unlocked_oop() const {
 
 #endif // PRODUCT
 
-inline void oopDesc::follow_header() {
+inline void oopDesc::follow_header() { 
   MarkSweep::mark_and_push((oop*)&_klass);
 }
 
@@ -356,7 +358,7 @@ inline void oopDesc::follow_contents() {
 
 // Used by scavengers
 
-inline bool oopDesc::is_forwarded() const {
+inline bool oopDesc::is_forwarded() const { 
   // The extra heap check is needed since the obj might be locked, in which case the
   // mark would point to a stack location and have the sentinel bit cleared
   return mark()->is_marked();
@@ -375,7 +377,7 @@ inline void oopDesc::forward_to(oop p) {
 // Used by parallel scavengers
 inline bool oopDesc::cas_forward_to(oop p, markOop compare) {
   assert(Universe::heap()->is_in_reserved(p),
-         "forwarding to something not in heap");
+	 "forwarding to something not in heap");
   markOop m = markOopDesc::encode_pointer_as_mark(p);
   assert(m->decode_pointer() == p, "encoding must be reversable");
   return cas_set_mark(m, compare) == compare;
@@ -466,8 +468,8 @@ inline int oopDesc::oop_iterate(OopClosureType* blk, MemRegion mr) {       \
   return blueprint()->oop_oop_iterate##nv_suffix##_m(this, blk, mr);       \
 }
 
-ALL_OOP_OOP_ITERATE_CLOSURES_1(OOP_ITERATE_DEFN)
-ALL_OOP_OOP_ITERATE_CLOSURES_3(OOP_ITERATE_DEFN)
+ALL_OOP_OOP_ITERATE_CLOSURES_1(OOP_ITERATE_DEFN) 
+ALL_OOP_OOP_ITERATE_CLOSURES_3(OOP_ITERATE_DEFN) 
 
 
 inline bool oopDesc::is_shared() const {

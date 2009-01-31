@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,12 +22,12 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Wrapper for all entry points to the virtual machine.
 // The HandleMarkCleaner is a faster version of HandleMark.
-// It relies on the fact that there is a HandleMark further
+// It relies on the fact that there is a HandleMark further 
 // down the stack (in JavaCalls::call_helper), and just resets
 // to the saved values in that HandleMark.
 
@@ -86,15 +89,15 @@ class InterfaceSupport: AllStatic {
 };
 
 
-// Basic class for all thread transition classes.
+// Basic class for all thread transition classes.  
 
 class ThreadStateTransition : public StackObj {
  protected:
-  JavaThread* _thread;
+  JavaThread* _thread; 
  public:
-  ThreadStateTransition(JavaThread *thread) {
-    _thread = thread;
-    assert(thread != NULL && thread->is_Java_thread(), "must be Java thread");
+  ThreadStateTransition(JavaThread *thread) { 
+    _thread = thread; 
+    assert(thread != NULL && thread->is_Java_thread(), "must be Java thread"); 
   }
 
   // Change threadstate in a manner, so safepoint can detect changes.
@@ -105,9 +108,9 @@ class ThreadStateTransition : public StackObj {
     assert((from & 1) == 0 && (to & 1) == 0, "odd numbers are transitions states");
     assert(thread->thread_state() == from, "coming from wrong thread state");
     // Change to transition state (assumes total store ordering!  -Urs)
-    thread->set_thread_state((JavaThreadState)(from + 1));
+    thread->set_thread_state((JavaThreadState)(from + 1)); 
 
-    // Make sure new state is seen by VM thread
+    // Make sure new state is seen by VM thread 
     if (os::is_MP()) {
       if (UseMembar) {
         // Force a fence between the write above and read below
@@ -121,7 +124,7 @@ class ThreadStateTransition : public StackObj {
     if (SafepointSynchronize::do_call_back()) {
       SafepointSynchronize::block(thread);
     }
-    thread->set_thread_state(to);
+    thread->set_thread_state(to); 
 
     CHECK_UNHANDLED_OOPS_ONLY(thread->clear_unhandled_oops();)
   }
@@ -136,23 +139,23 @@ class ThreadStateTransition : public StackObj {
     assert(thread->thread_state() == from, "coming from wrong thread state");
     assert((from & 1) == 0 && (to & 1) == 0, "odd numbers are transitions states");
     // Change to transition state (assumes total store ordering!  -Urs)
-    thread->set_thread_state((JavaThreadState)(from + 1));
+    thread->set_thread_state((JavaThreadState)(from + 1)); 
 
-    // Make sure new state is seen by VM thread
+    // Make sure new state is seen by VM thread 
     if (os::is_MP()) {
       if (UseMembar) {
         // Force a fence between the write above and read below
         OrderAccess::fence();
       } else {
         // Must use this rather than serialization page in particular on Windows
-        InterfaceSupport::serialize_memory(thread);
+        InterfaceSupport::serialize_memory(thread);      
       }
     }
 
     if (SafepointSynchronize::do_call_back()) {
       SafepointSynchronize::block(thread);
     }
-    thread->set_thread_state(to);
+    thread->set_thread_state(to); 
 
     CHECK_UNHANDLED_OOPS_ONLY(thread->clear_unhandled_oops();)
   }
@@ -160,9 +163,9 @@ class ThreadStateTransition : public StackObj {
   // Same as above, but assumes from = _thread_in_Java. This is simpler, since we
   // never block on entry to the VM. This will break the code, since e.g. preserve arguments
   // have not been setup.
-  static inline void transition_from_java(JavaThread *thread, JavaThreadState to) {
-    assert(thread->thread_state() == _thread_in_Java, "coming from wrong thread state");
-    thread->set_thread_state(to);
+  static inline void transition_from_java(JavaThread *thread, JavaThreadState to) {    
+    assert(thread->thread_state() == _thread_in_Java, "coming from wrong thread state");    
+    thread->set_thread_state(to); 
   }
 
   static inline void transition_from_native(JavaThread *thread, JavaThreadState to) {
@@ -178,7 +181,7 @@ class ThreadStateTransition : public StackObj {
         OrderAccess::fence();
       } else {
         // Must use this rather than serialization page in particular on Windows
-        InterfaceSupport::serialize_memory(thread);
+        InterfaceSupport::serialize_memory(thread);      
       }
     }
 
@@ -194,7 +197,7 @@ class ThreadStateTransition : public StackObj {
 
     thread->set_thread_state(to);
   }
- protected:
+ protected:  
    void trans(JavaThreadState from, JavaThreadState to)  { transition(_thread, from, to); }
    void trans_from_java(JavaThreadState to)              { transition_from_java(_thread, to); }
    void trans_from_native(JavaThreadState to)            { transition_from_native(_thread, to); }
@@ -204,10 +207,10 @@ class ThreadStateTransition : public StackObj {
 
 class ThreadInVMfromJava : public ThreadStateTransition {
  public:
-  ThreadInVMfromJava(JavaThread* thread) : ThreadStateTransition(thread) {
-    trans_from_java(_thread_in_vm);
+  ThreadInVMfromJava(JavaThread* thread) : ThreadStateTransition(thread) { 
+    trans_from_java(_thread_in_vm); 
   }
-  ~ThreadInVMfromJava()  {
+  ~ThreadInVMfromJava()  {     
     trans(_thread_in_vm, _thread_in_Java);
     // Check for pending. async. exceptions or suspends.
     if (_thread->has_special_runtime_exit_condition()) _thread->handle_special_runtime_exit_condition();
@@ -224,12 +227,12 @@ class ThreadInVMfromUnknown {
     if (t->is_Java_thread()) {
       JavaThread* t2 = (JavaThread*) t;
       if (t2->thread_state() == _thread_in_native) {
-        _thread = t2;
-        ThreadStateTransition::transition_from_native(t2, _thread_in_vm);
-        // Used to have a HandleMarkCleaner but that is dangerous as
-        // it could free a handle in our (indirect, nested) caller.
-        // We expect any handles will be short lived and figure we
-        // don't need an actual HandleMark.
+	_thread = t2;
+	ThreadStateTransition::transition_from_native(t2, _thread_in_vm);
+	// Used to have a HandleMarkCleaner but that is dangerous as
+	// it could free a handle in our (indirect, nested) caller.
+	// We expect any handles will be short lived and figure we
+	// don't need an actual HandleMark.
       }
     }
   }
@@ -241,22 +244,22 @@ class ThreadInVMfromUnknown {
 };
 
 
-class ThreadInVMfromNative : public ThreadStateTransition {
+class ThreadInVMfromNative : public ThreadStateTransition { 
  public:
-  ThreadInVMfromNative(JavaThread* thread) : ThreadStateTransition(thread) {
-    trans_from_native(_thread_in_vm);
+  ThreadInVMfromNative(JavaThread* thread) : ThreadStateTransition(thread) { 
+    trans_from_native(_thread_in_vm); 
   }
-  ~ThreadInVMfromNative() {
+  ~ThreadInVMfromNative() {     
     trans_and_fence(_thread_in_vm, _thread_in_native);
   }
 };
 
 
-class ThreadToNativeFromVM : public ThreadStateTransition {
+class ThreadToNativeFromVM : public ThreadStateTransition { 
  public:
   ThreadToNativeFromVM(JavaThread *thread) : ThreadStateTransition(thread) {
-    // We are leaving the VM at this point and going directly to native code.
-    // Block, if we are in the middle of a safepoint synchronization.
+    // We are leaving the VM at this point and going directly to native code. 
+    // Block, if we are in the middle of a safepoint synchronization.    
     assert(!thread->owns_locks(), "must release all locks when leaving VM");
     thread->frame_anchor()->make_walkable(thread);
     trans_and_fence(_thread_in_vm, _thread_in_native);
@@ -264,8 +267,8 @@ class ThreadToNativeFromVM : public ThreadStateTransition {
     if (_thread->has_special_runtime_exit_condition()) _thread->handle_special_runtime_exit_condition(false);
   }
 
-  ~ThreadToNativeFromVM() {
-    trans_from_native(_thread_in_vm);
+  ~ThreadToNativeFromVM() { 
+    trans_from_native(_thread_in_vm); 
     // We don't need to clear_walkable because it will happen automagically when we return to java
   }
 };
@@ -274,13 +277,13 @@ class ThreadToNativeFromVM : public ThreadStateTransition {
 class ThreadBlockInVM : public ThreadStateTransition {
  public:
   ThreadBlockInVM(JavaThread *thread)
-  : ThreadStateTransition(thread) {
-    // Once we are blocked vm expects stack to be walkable
+  : ThreadStateTransition(thread) { 
+    // Once we are blocked vm expects stack to be walkable 
     thread->frame_anchor()->make_walkable(thread);
-    trans_and_fence(_thread_in_vm, _thread_blocked);
+    trans_and_fence(_thread_in_vm, _thread_blocked); 
   }
-  ~ThreadBlockInVM() {
-    trans_and_fence(_thread_blocked, _thread_in_vm);
+  ~ThreadBlockInVM() { 
+    trans_and_fence(_thread_blocked, _thread_in_vm); 
     // We don't need to clear_walkable because it will happen automagically when we return to java
   }
 };
@@ -291,10 +294,10 @@ class ThreadBlockInVM : public ThreadStateTransition {
 // See bugs: 4324348, 4854693, 4998314, 5040492, 5050705.
 class ThreadInVMfromJavaNoAsyncException : public ThreadStateTransition {
  public:
-  ThreadInVMfromJavaNoAsyncException(JavaThread* thread) : ThreadStateTransition(thread) {
-    trans_from_java(_thread_in_vm);
+  ThreadInVMfromJavaNoAsyncException(JavaThread* thread) : ThreadStateTransition(thread) { 
+    trans_from_java(_thread_in_vm); 
   }
-  ~ThreadInVMfromJavaNoAsyncException()  {
+  ~ThreadInVMfromJavaNoAsyncException()  {     
     trans(_thread_in_vm, _thread_in_Java);
     // NOTE: We do not check for pending. async. exceptions.
     // If we did and moved the pending async exception over into the
@@ -346,7 +349,7 @@ class VMEntryWrapper {
     // do verification AFTER potential deoptimization
     if (VerifyStack) {
       InterfaceSupport::verify_stack();
-    }
+    }    
 
   }
 };
@@ -502,7 +505,7 @@ extern "C" {                                                         \
     ThreadInVMfromNative __tiv(thread);                              \
     debug_only(VMNativeEntryWrapper __vew;)                          \
     __ENTRY(result_type, header, thread)
-
+    
 
 // Ensure that the VMNativeEntryWrapper constructor, which can cause
 // a GC, is called outside the NoHandleMark (set via __QUICK_ENTRY).

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 # include "incls/_precompiled.incl"
 # include "incls/_vmCMSOperations.cpp.incl"
@@ -129,10 +132,10 @@ void VM_CMS_Initial_Mark::doit() {
   GCCauseSetter gccs(gch, GCCause::_cms_initial_mark);
 
   VM_CMS_Operation::verify_before_gc();
-
+  
   IsGCActiveMark x; // stop-world GC active
   _collector->do_CMS_operation(CMSCollector::CMS_op_checkpointRootsInitial);
-
+  
   VM_CMS_Operation::verify_after_gc();
   HS_DTRACE_PROBE(hs_private, cms__initmark__end);
 }
@@ -151,10 +154,10 @@ void VM_CMS_Final_Remark::doit() {
   GCCauseSetter gccs(gch, GCCause::_cms_final_remark);
 
   VM_CMS_Operation::verify_before_gc();
-
+  
   IsGCActiveMark x; // stop-world GC active
   _collector->do_CMS_operation(CMSCollector::CMS_op_checkpointRootsFinal);
-
+  
   VM_CMS_Operation::verify_after_gc();
   HS_DTRACE_PROBE(hs_private, cms__remark__end);
 }
@@ -163,7 +166,7 @@ void VM_CMS_Final_Remark::doit() {
 // GenCollectedHeap heap.
 void VM_GenCollectFullConcurrent::doit() {
   assert(Thread::current()->is_VM_thread(), "Should be VM thread");
-
+  
   GenCollectedHeap* gch = GenCollectedHeap::heap();
   if (_gc_count_before == gch->total_collections()) {
     // The "full" of do_full_collection call below "forces"
@@ -190,7 +193,7 @@ void VM_GenCollectFullConcurrent::doit() {
     CMSCollector::disable_icms();
     // In case CMS thread was in icms_wait(), wake it up.
     CMSCollector::start_icms();
-    // Nudge the CMS thread to start a concurrent collection
+    // Nudge the CMS thread to start a concurrent collection    
     CMSCollector::request_full_gc(_full_gc_count_before);
   } else {
     FullGCCount_lock->notify_all();  // Inform the Java thread its work is done
@@ -248,3 +251,4 @@ void VM_GenCollectFullConcurrent::doit_epilogue() {
   // Enable iCMS back.
   CMSCollector::enable_icms();
 }
+

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A constMethodKlass is the klass of a constMethodOop
@@ -47,7 +50,7 @@ public:
   // Casting from klassOop
   static constMethodKlass* cast(klassOop k) {
     assert(k->klass_part()->oop_is_constMethod(), "cast to constMethodKlass");
-    return (constMethodKlass*) k->klass_part();
+    return (constMethodKlass*) k->klass_part(); 
   }
 
   // Sizing
@@ -88,3 +91,4 @@ public:
   bool oop_partially_loaded(oop obj) const;
   void oop_set_partially_loaded(oop obj);
 };
+

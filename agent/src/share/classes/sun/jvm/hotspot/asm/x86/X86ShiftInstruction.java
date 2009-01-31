@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.x86;
@@ -44,10 +44,10 @@ public class X86ShiftInstruction extends X86Instruction implements ShiftInstruct
       buf.append(getName());
       buf.append(spaces);
       buf.append(getOperandAsString(operand1));
-
+      
       if(operand2 != null) {
          buf.append(comma);
-
+         
          if ((operand2 instanceof Register)) {
             buf.append(operand2.toString());
          }
@@ -55,8 +55,8 @@ public class X86ShiftInstruction extends X86Instruction implements ShiftInstruct
             Number number = ((Immediate)operand2).getNumber();
             buf.append("0x");
             buf.append(Integer.toHexString(number.intValue()));
-         }
-      }
+         }         
+      }      
       return buf.toString();
    }
 

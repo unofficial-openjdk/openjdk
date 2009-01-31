@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.utilities.soql;
@@ -56,7 +56,7 @@ public class JSMap extends DefaultScriptObject {
 
    public boolean has(String name) {
       if (map.containsKey(name)) {
-         return true;
+         return true; 
       } else {
          return super.has(name);
       }
@@ -73,13 +73,13 @@ public class JSMap extends DefaultScriptObject {
        Set keys = map.keySet();
        buf.append('{');
        for (Iterator itr = keys.iterator(); itr.hasNext();) {
-           Object key = itr.next();
-           buf.append(key);
-           buf.append('=');
-           buf.append(wrapObject(map.get(key)));
-           if (itr.hasNext()) {
-              buf.append(", ");
-           }
+	   Object key = itr.next();
+	   buf.append(key);
+	   buf.append('=');
+	   buf.append(wrapObject(map.get(key)));
+	   if (itr.hasNext()) {
+	      buf.append(", ");
+	   }
       }
       buf.append('}');
       return buf.toString();

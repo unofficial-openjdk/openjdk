@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.livejvm;
@@ -176,7 +176,7 @@ public class ServiceabilityAgentJVMDIModule {
   public boolean eventPending() {
     return (saEventPending.getValue() != 0);
   }
-
+  
   /** Poll for event; returns null if none pending. */
   public Event eventPoll() {
     if (saEventPending.getValue() == 0) {
@@ -210,7 +210,7 @@ public class ServiceabilityAgentJVMDIModule {
 
     default:
       throw new DebuggerException("Unsupported event type " + kind);
-    }
+    }    
   }
 
   /** Continue past current event */
@@ -278,7 +278,7 @@ public class ServiceabilityAgentJVMDIModule {
     /** Line number at which breakpoint toggle occurred; valid only if
         getSuccess() returns true. */
     public int getLineNumber() { return lineNumber; }
-
+    
     /** BCI at which breakpoint toggle occurred; valid only if
         getSuccess() returns true. */
     public int getBCI() { return bci; }
@@ -320,7 +320,7 @@ public class ServiceabilityAgentJVMDIModule {
       return new BreakpointToggleResult(saCmdResultErrMsg.getValue());
     }
   }
-
+                                                 
 
   //----------------------------------------------------------------------
   // Internals only below this point

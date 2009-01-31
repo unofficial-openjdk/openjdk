@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -47,9 +50,10 @@ void OSThread::print_on(outputStream *st) const {
     case MONITOR_WAIT:            st->print("waiting for monitor entry "); break;
     case CONDVAR_WAIT:            st->print("waiting on condition ");      break;
     case OBJECT_WAIT:             st->print("in Object.wait() ");          break;
-    case BREAKPOINTED:            st->print("at breakpoint");               break;
-    case SLEEPING:                st->print("sleeping");                    break;
-    case ZOMBIE:                  st->print("zombie");                      break;
+    case BREAKPOINTED:            st->print("at breakpoint");        	    break;
+    case SLEEPING:            	  st->print("sleeping");        	    break;
+    case ZOMBIE:            	  st->print("zombie");        	    	    break;
     default:                      st->print("unknown state %d", _state); break;
   }
 }
+

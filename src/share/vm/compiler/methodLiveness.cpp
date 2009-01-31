@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // The MethodLiveness class performs a simple liveness analysis on a method
@@ -50,7 +53,7 @@
 //    at that bci.
 //
 // The algorithm is approximate in many respects.  Notably:
-//
+// 
 // 1. We do not do the analysis necessary to match jsr's with the appropriate ret.
 //    Instead we make the conservative assumption that any ret can return to any
 //    jsr return site.
@@ -107,7 +110,7 @@ int  MethodLiveness::_max_method_locals = 0;
 
 long MethodLiveness::_total_locals_queried = 0;
 long MethodLiveness::_total_live_locals_queried = 0;
-
+  
 long MethodLiveness::_total_visits = 0;
 
 #endif
@@ -119,7 +122,7 @@ elapsedTimer MethodLiveness::_time_flow;
 elapsedTimer MethodLiveness::_time_query;
 elapsedTimer MethodLiveness::_time_total;
 
-MethodLiveness::MethodLiveness(Arena* arena, ciMethod* method)
+MethodLiveness::MethodLiveness(Arena* arena, ciMethod* method) 
 #ifdef COMPILER1
   : _bci_block_start((uintptr_t*)arena->Amalloc((method->code_size() >> LogBitsPerByte) + 1), method->code_size())
 #endif
@@ -255,7 +258,7 @@ void MethodLiveness::init_basic_blocks() {
       case Bytecodes::_if_icmple:
       case Bytecodes::_if_acmpeq:
       case Bytecodes::_if_acmpne:
-      case Bytecodes::_ifnull:
+      case Bytecodes::_ifnull:   
       case Bytecodes::_ifnonnull:
         // Two way branch.  Set predecessors at each destination.
         dest = _block_map->at(bytes.next_bci());
@@ -271,18 +274,18 @@ void MethodLiveness::init_basic_blocks() {
         assert(dest != NULL, "branch desination must start a block.");
         dest->add_normal_predecessor(current_block);
         break;
-      case Bytecodes::_goto_w:
+      case Bytecodes::_goto_w:         
         dest = _block_map->at(bytes.get_far_dest());
         assert(dest != NULL, "branch desination must start a block.");
         dest->add_normal_predecessor(current_block);
         break;
-      case Bytecodes::_tableswitch:
+      case Bytecodes::_tableswitch:  
         {
           Bytecode_tableswitch *tableswitch =
             Bytecode_tableswitch_at(bytes.cur_bcp());
 
-          int len = tableswitch->length();
-
+          int len = tableswitch->length();        
+        
           dest = _block_map->at(bci + tableswitch->default_offset());
           assert(dest != NULL, "branch desination must start a block.");
           dest->add_normal_predecessor(current_block);
@@ -291,16 +294,16 @@ void MethodLiveness::init_basic_blocks() {
             assert(dest != NULL, "branch desination must start a block.");
             dest->add_normal_predecessor(current_block);
           }
-          break;
+          break; 
         }
 
       case Bytecodes::_lookupswitch:
         {
           Bytecode_lookupswitch *lookupswitch =
             Bytecode_lookupswitch_at(bytes.cur_bcp());
-
-          int npairs = lookupswitch->number_of_pairs();
-
+          
+          int npairs = lookupswitch->number_of_pairs(); 
+        
           dest = _block_map->at(bci + lookupswitch->default_offset());
           assert(dest != NULL, "branch desination must start a block.");
           dest->add_normal_predecessor(current_block);
@@ -310,10 +313,10 @@ void MethodLiveness::init_basic_blocks() {
             assert(dest != NULL, "branch desination must start a block.");
             dest->add_normal_predecessor(current_block);
           }
-          break;
+          break; 
         }
 
-      case Bytecodes::_jsr:
+      case Bytecodes::_jsr: 
         {
           assert(bytes.is_wide()==false, "sanity check");
           dest = _block_map->at(bytes.get_dest());
@@ -325,7 +328,7 @@ void MethodLiveness::init_basic_blocks() {
           break;
         }
       case Bytecodes::_jsr_w:
-        {
+        {       
           dest = _block_map->at(bytes.get_far_dest());
           assert(dest != NULL, "branch desination must start a block.");
           dest->add_normal_predecessor(current_block);
@@ -335,7 +338,7 @@ void MethodLiveness::init_basic_blocks() {
           break;
         }
 
-      case Bytecodes::_wide:
+      case Bytecodes::_wide:           
         assert(false, "wide opcodes should not be seen here");
         break;
       case Bytecodes::_athrow:
@@ -344,7 +347,7 @@ void MethodLiveness::init_basic_blocks() {
       case Bytecodes::_freturn:
       case Bytecodes::_dreturn:
       case Bytecodes::_areturn:
-      case Bytecodes::_return:
+      case Bytecodes::_return:         
         // These opcodes are  not the normal predecessors of any other opcodes.
         break;
       case Bytecodes::_ret:
@@ -355,7 +358,7 @@ void MethodLiveness::init_basic_blocks() {
         // Bail out of there are breakpoints in here.
         bailout = true;
         break;
-      default:
+      default:                 
         // Do nothing.
         break;
     }
@@ -434,7 +437,7 @@ void MethodLiveness::propagate_liveness() {
     _work_list = block;
   }
 
-
+  
   while ((block = work_list_get()) != NULL) {
     block->propagate(this);
     NOT_PRODUCT(_total_visits++;)
@@ -564,7 +567,7 @@ void MethodLiveness::print_times() {
 
 #endif
 
-
+    
 MethodLiveness::BasicBlock::BasicBlock(MethodLiveness *analyzer, int start, int limit) :
          _gen((uintptr_t*)analyzer->arena()->Amalloc(BytesPerWord * analyzer->bit_map_size_words()),
                          analyzer->bit_map_size_bits()),
@@ -592,7 +595,7 @@ MethodLiveness::BasicBlock::BasicBlock(MethodLiveness *analyzer, int start, int 
   // _gen and _kill are cleared at the beginning of compute_gen_kill_range()
   _gen.clear();
   _kill.clear();
-}
+}  
 
 
 
@@ -627,7 +630,7 @@ void MethodLiveness::BasicBlock::compute_gen_kill(ciMethod* method) {
   bytes.reset_to_bci(start_bci());
   bytes.set_max_bci(limit_bci());
   compute_gen_kill_range(&bytes);
-
+  
 }
 
 void MethodLiveness::BasicBlock::compute_gen_kill_range(ciBytecodeStream *bytes) {
@@ -650,19 +653,19 @@ void MethodLiveness::BasicBlock::compute_gen_kill_single(ciBytecodeStream *instr
     case Bytecodes::_nop:
     case Bytecodes::_goto:
     case Bytecodes::_goto_w:
-    case Bytecodes::_aconst_null:
+    case Bytecodes::_aconst_null:       
     case Bytecodes::_new:
-    case Bytecodes::_iconst_m1:
-    case Bytecodes::_iconst_0:
-    case Bytecodes::_iconst_1:
-    case Bytecodes::_iconst_2:
-    case Bytecodes::_iconst_3:
-    case Bytecodes::_iconst_4:
-    case Bytecodes::_iconst_5:
-    case Bytecodes::_fconst_0:
-    case Bytecodes::_fconst_1:
-    case Bytecodes::_fconst_2:
-    case Bytecodes::_bipush:
+    case Bytecodes::_iconst_m1:          
+    case Bytecodes::_iconst_0:          
+    case Bytecodes::_iconst_1:          
+    case Bytecodes::_iconst_2:          
+    case Bytecodes::_iconst_3:          
+    case Bytecodes::_iconst_4:          
+    case Bytecodes::_iconst_5:          
+    case Bytecodes::_fconst_0:          
+    case Bytecodes::_fconst_1:          
+    case Bytecodes::_fconst_2:          
+    case Bytecodes::_bipush:            
     case Bytecodes::_sipush:
     case Bytecodes::_lconst_0:
     case Bytecodes::_lconst_1:
@@ -671,16 +674,16 @@ void MethodLiveness::BasicBlock::compute_gen_kill_single(ciBytecodeStream *instr
     case Bytecodes::_ldc2_w:
     case Bytecodes::_ldc:
     case Bytecodes::_ldc_w:
-    case Bytecodes::_iaload:
-    case Bytecodes::_faload:
-    case Bytecodes::_baload:
+    case Bytecodes::_iaload:            
+    case Bytecodes::_faload:            
+    case Bytecodes::_baload:    
     case Bytecodes::_caload:
     case Bytecodes::_saload:
     case Bytecodes::_laload:
     case Bytecodes::_daload:
     case Bytecodes::_aaload:
-    case Bytecodes::_iastore:
-    case Bytecodes::_fastore:
+    case Bytecodes::_iastore:           
+    case Bytecodes::_fastore:           
     case Bytecodes::_bastore:
     case Bytecodes::_castore:
     case Bytecodes::_sastore:
@@ -697,56 +700,56 @@ void MethodLiveness::BasicBlock::compute_gen_kill_single(ciBytecodeStream *instr
     case Bytecodes::_dup2_x2:
     case Bytecodes::_swap:
     case Bytecodes::_iadd:
-    case Bytecodes::_fadd:
-    case Bytecodes::_isub:
-    case Bytecodes::_fsub:
-    case Bytecodes::_imul:
-    case Bytecodes::_fmul:
-    case Bytecodes::_idiv:
-    case Bytecodes::_fdiv:
-    case Bytecodes::_irem:
-    case Bytecodes::_frem:
-    case Bytecodes::_ishl:
-    case Bytecodes::_ishr:
-    case Bytecodes::_iushr:
-    case Bytecodes::_iand:
-    case Bytecodes::_ior:
-    case Bytecodes::_ixor:
-    case Bytecodes::_l2f:
+    case Bytecodes::_fadd:                
+    case Bytecodes::_isub:              
+    case Bytecodes::_fsub:              
+    case Bytecodes::_imul:              
+    case Bytecodes::_fmul:              
+    case Bytecodes::_idiv:              
+    case Bytecodes::_fdiv:              
+    case Bytecodes::_irem:              
+    case Bytecodes::_frem:              
+    case Bytecodes::_ishl:              
+    case Bytecodes::_ishr:              
+    case Bytecodes::_iushr:             
+    case Bytecodes::_iand:              
+    case Bytecodes::_ior:               
+    case Bytecodes::_ixor:              
+    case Bytecodes::_l2f:               
     case Bytecodes::_l2i:
-    case Bytecodes::_d2f:
-    case Bytecodes::_d2i:
+    case Bytecodes::_d2f:               
+    case Bytecodes::_d2i:               
     case Bytecodes::_fcmpl:
     case Bytecodes::_fcmpg:
-    case Bytecodes::_ladd:
-    case Bytecodes::_dadd:
-    case Bytecodes::_lsub:
-    case Bytecodes::_dsub:
-    case Bytecodes::_lmul:
-    case Bytecodes::_dmul:
-    case Bytecodes::_ldiv:
-    case Bytecodes::_ddiv:
-    case Bytecodes::_lrem:
-    case Bytecodes::_drem:
-    case Bytecodes::_land:
-    case Bytecodes::_lor:
+    case Bytecodes::_ladd:              
+    case Bytecodes::_dadd:              
+    case Bytecodes::_lsub:              
+    case Bytecodes::_dsub:              
+    case Bytecodes::_lmul:              
+    case Bytecodes::_dmul:              
+    case Bytecodes::_ldiv:              
+    case Bytecodes::_ddiv:              
+    case Bytecodes::_lrem:              
+    case Bytecodes::_drem:              
+    case Bytecodes::_land:              
+    case Bytecodes::_lor:               
     case Bytecodes::_lxor:
-    case Bytecodes::_ineg:
+    case Bytecodes::_ineg:              
     case Bytecodes::_fneg:
     case Bytecodes::_i2f:
     case Bytecodes::_f2i:
     case Bytecodes::_i2c:
-    case Bytecodes::_i2s:
+    case Bytecodes::_i2s:               
     case Bytecodes::_i2b:
-    case Bytecodes::_lneg:
-    case Bytecodes::_dneg:
-    case Bytecodes::_l2d:
+    case Bytecodes::_lneg:              
+    case Bytecodes::_dneg:              
+    case Bytecodes::_l2d:               
     case Bytecodes::_d2l:
-    case Bytecodes::_lshl:
-    case Bytecodes::_lshr:
+    case Bytecodes::_lshl:              
+    case Bytecodes::_lshr:              
     case Bytecodes::_lushr:
-    case Bytecodes::_i2l:
-    case Bytecodes::_i2d:
+    case Bytecodes::_i2l:               
+    case Bytecodes::_i2d:               
     case Bytecodes::_f2l:
     case Bytecodes::_f2d:
     case Bytecodes::_lcmp:
@@ -757,9 +760,9 @@ void MethodLiveness::BasicBlock::compute_gen_kill_single(ciBytecodeStream *instr
     case Bytecodes::_iflt:
     case Bytecodes::_ifge:
     case Bytecodes::_ifgt:
-    case Bytecodes::_ifle:
-    case Bytecodes::_tableswitch:
-    case Bytecodes::_ireturn:
+    case Bytecodes::_ifle:              
+    case Bytecodes::_tableswitch:    
+    case Bytecodes::_ireturn:           
     case Bytecodes::_freturn:
     case Bytecodes::_if_icmpeq:
     case Bytecodes::_if_icmpne:
@@ -772,7 +775,7 @@ void MethodLiveness::BasicBlock::compute_gen_kill_single(ciBytecodeStream *instr
     case Bytecodes::_if_acmpeq:
     case Bytecodes::_if_acmpne:
     case Bytecodes::_jsr:
-    case Bytecodes::_jsr_w:
+    case Bytecodes::_jsr_w:    
     case Bytecodes::_getstatic:
     case Bytecodes::_putstatic:
     case Bytecodes::_getfield:
@@ -806,33 +809,33 @@ void MethodLiveness::BasicBlock::compute_gen_kill_single(ciBytecodeStream *instr
       break;
 
 
-    case Bytecodes::_lload:
+    case Bytecodes::_lload:             
     case Bytecodes::_dload:
       load_two(instruction->get_index());
       break;
-
-    case Bytecodes::_lload_0:
+        
+    case Bytecodes::_lload_0:           
     case Bytecodes::_dload_0:
       load_two(0);
       break;
 
-    case Bytecodes::_lload_1:
+    case Bytecodes::_lload_1:           
     case Bytecodes::_dload_1:
       load_two(1);
       break;
 
-    case Bytecodes::_lload_2:
+    case Bytecodes::_lload_2:           
     case Bytecodes::_dload_2:
       load_two(2);
       break;
 
-    case Bytecodes::_lload_3:
+    case Bytecodes::_lload_3:           
     case Bytecodes::_dload_3:
       load_two(3);
       break;
-
+    
     case Bytecodes::_iload:
-    case Bytecodes::_iinc:
+    case Bytecodes::_iinc:  
     case Bytecodes::_fload:
     case Bytecodes::_aload:
     case Bytecodes::_ret:
@@ -863,66 +866,66 @@ void MethodLiveness::BasicBlock::compute_gen_kill_single(ciBytecodeStream *instr
       load_one(3);
       break;
 
-    case Bytecodes::_lstore:
+    case Bytecodes::_lstore:            
     case Bytecodes::_dstore:
       store_two(localNum = instruction->get_index());
       break;
 
-    case Bytecodes::_lstore_0:
+    case Bytecodes::_lstore_0:          
     case Bytecodes::_dstore_0:
       store_two(0);
       break;
 
-    case Bytecodes::_lstore_1:
+    case Bytecodes::_lstore_1:          
     case Bytecodes::_dstore_1:
       store_two(1);
       break;
 
-    case Bytecodes::_lstore_2:
+    case Bytecodes::_lstore_2:          
     case Bytecodes::_dstore_2:
       store_two(2);
       break;
 
-    case Bytecodes::_lstore_3:
+    case Bytecodes::_lstore_3:          
     case Bytecodes::_dstore_3:
       store_two(3);
       break;
 
-    case Bytecodes::_istore:
+    case Bytecodes::_istore:            
     case Bytecodes::_fstore:
     case Bytecodes::_astore:
       store_one(instruction->get_index());
       break;
 
-    case Bytecodes::_istore_0:
+    case Bytecodes::_istore_0:          
     case Bytecodes::_fstore_0:
     case Bytecodes::_astore_0:
       store_one(0);
       break;
 
-    case Bytecodes::_istore_1:
+    case Bytecodes::_istore_1:          
     case Bytecodes::_fstore_1:
     case Bytecodes::_astore_1:
       store_one(1);
       break;
 
-    case Bytecodes::_istore_2:
+    case Bytecodes::_istore_2:          
     case Bytecodes::_fstore_2:
     case Bytecodes::_astore_2:
       store_one(2);
       break;
 
-    case Bytecodes::_istore_3:
+    case Bytecodes::_istore_3:          
     case Bytecodes::_fstore_3:
     case Bytecodes::_astore_3:
       store_one(3);
       break;
-
+        
     case Bytecodes::_wide:
       fatal("Iterator should skip this bytecode");
       break;
 
-    default:
+    default: 
       tty->print("unexpected opcode: %d\n", instruction->cur_bc());
       ShouldNotReachHere();
       break;
@@ -1006,7 +1009,7 @@ MethodLivenessResult MethodLiveness::BasicBlock::get_liveness_at(ciMethod* metho
   ResourceMark rm;
   BitMap g(_gen.size()); g.set_from(_gen);
   BitMap k(_kill.size()); k.set_from(_kill);
-#endif
+#endif    
   if (_last_bci != bci || trueInDebug) {
     ciBytecodeStream bytes(method);
     bytes.reset_to_bci(bci);
@@ -1061,3 +1064,4 @@ void MethodLiveness::BasicBlock::print_on(outputStream *os) const {
 }
 
 #endif // PRODUCT
+

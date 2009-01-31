@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.oops;
@@ -42,8 +42,8 @@ public class InstanceKlass extends Klass {
         }
       });
   }
-
-  // field offset constants
+ 
+  // field offset constants 
   public static int ACCESS_FLAGS_OFFSET;
   public static int NAME_INDEX_OFFSET;
   public static int SIGNATURE_INDEX_OFFSET;
@@ -231,7 +231,7 @@ public class InstanceKlass extends Klass {
         }
         result |= JVMDIClassStatus.INITIALIZED;
      }
-
+  
      if (isInErrorState()) {
         result |= JVMDIClassStatus.ERROR;
      }
@@ -301,9 +301,9 @@ public class InstanceKlass extends Klass {
           Assert.that(length % InnerClassAttributeOffset.innerClassNextOffset == 0, "just checking");
        }
        for (int i = 0; i < length; i += InnerClassAttributeOffset.innerClassNextOffset) {
-          int ioff = innerClassList.getShortAt(i +
+          int ioff = innerClassList.getShortAt(i + 
                          InnerClassAttributeOffset.innerClassInnerClassInfoOffset);
-          // 'ioff' can be zero.
+          // 'ioff' can be zero. 
           // refer to JVM spec. section 4.7.5.
           if (ioff != 0) {
              // only look at classes that are already loaded
@@ -320,7 +320,7 @@ public class InstanceKlass extends Klass {
 
              if (name.equals(getName())) {
                 // This is really a member class
-                access = innerClassList.getShortAt(i +
+                access = innerClassList.getShortAt(i + 
                         InnerClassAttributeOffset.innerClassAccessFlagsOffset);
                 break;
              }
@@ -332,14 +332,14 @@ public class InstanceKlass extends Klass {
     return (access & (~JVM_ACC_SUPER)) & JVM_ACC_WRITTEN_FLAGS;
   }
 
-
-  // whether given Symbol is name of an inner/nested Klass of this Klass?
+  
+  // whether given Symbol is name of an inner/nested Klass of this Klass? 
   // anonymous and local classes are excluded.
   public boolean isInnerClassName(Symbol sym) {
     return isInInnerClasses(sym, false);
   }
 
-  // whether given Symbol is name of an inner/nested Klass of this Klass?
+  // whether given Symbol is name of an inner/nested Klass of this Klass? 
   // anonymous classes excluded, but local classes are included.
   public boolean isInnerOrLocalClassName(Symbol sym) {
     return isInInnerClasses(sym, true);
@@ -353,9 +353,9 @@ public class InstanceKlass extends Klass {
          Assert.that(length % InnerClassAttributeOffset.innerClassNextOffset == 0, "just checking");
        }
        for (int i = 0; i < length; i += InnerClassAttributeOffset.innerClassNextOffset) {
-         int ioff = innerClassList.getShortAt(i +
+         int ioff = innerClassList.getShortAt(i + 
                         InnerClassAttributeOffset.innerClassInnerClassInfoOffset);
-         // 'ioff' can be zero.
+         // 'ioff' can be zero. 
          // refer to JVM spec. section 4.7.5.
          if (ioff != 0) {
             Oop iclassInfo = getConstants().getObjAt(ioff);
@@ -369,9 +369,9 @@ public class InstanceKlass extends Klass {
             }
 
             Symbol myname = getName();
-            int ooff = innerClassList.getShortAt(i +
+            int ooff = innerClassList.getShortAt(i + 
                         InnerClassAttributeOffset.innerClassOuterClassInfoOffset);
-            // for anonymous classes inner_name_index of InnerClasses
+            // for anonymous classes inner_name_index of InnerClasses 
             // attribute is zero.
             int innerNameIndex = innerClassList.getShortAt(i +
                         InnerClassAttributeOffset.innerClassInnerNameOffset);
@@ -380,7 +380,7 @@ public class InstanceKlass extends Klass {
             if (ooff == 0) {
                if (includeLocals) {
                   // does it looks like my local class?
-                  if (innerName.equals(sym) &&
+                  if (innerName.equals(sym) && 
                      innerName.asString().startsWith(myname.asString())) {
                      // exclude anonymous classes.
                      return (innerNameIndex != 0);
@@ -396,7 +396,7 @@ public class InstanceKlass extends Klass {
                } else {
                   throw new RuntimeException("should not reach here");
                }
-
+	 
                // include only if current class is outer class.
                if (outerName.equals(myname) && innerName.equals(sym)) {
                   return true;
@@ -467,7 +467,7 @@ public class InstanceKlass extends Klass {
     for (int index = 0; index < length; index += NEXT_OFFSET) {
       short accessFlags    = fields.getShortAt(index + ACCESS_FLAGS_OFFSET);
       short signatureIndex = fields.getShortAt(index + SIGNATURE_INDEX_OFFSET);
-
+            
       FieldType   type   = new FieldType((Symbol) getConstants().getObjAt(signatureIndex));
       AccessFlags access = new AccessFlags(accessFlags);
       if (access.isStatic()) {
@@ -483,14 +483,14 @@ public class InstanceKlass extends Klass {
   public void iterateNonStaticFields(OopVisitor visitor) {
     if (getSuper() != null) {
       ((InstanceKlass) getSuper()).iterateNonStaticFields(visitor);
-    }
+    }    
     TypeArray fields = getFields();
 
     int length = (int) fields.getLength();
     for (int index = 0; index < length; index += NEXT_OFFSET) {
       short accessFlags    = fields.getShortAt(index + ACCESS_FLAGS_OFFSET);
       short signatureIndex = fields.getShortAt(index + SIGNATURE_INDEX_OFFSET);
-
+            
       FieldType   type   = new FieldType((Symbol) getConstants().getObjAt(signatureIndex));
       AccessFlags access = new AccessFlags(accessFlags);
       if (!access.isStatic()) {
@@ -596,13 +596,13 @@ public class InstanceKlass extends Klass {
         // A list of Fields for each field declared in this class/interface,
         // not including inherited fields.
         TypeArray fields = getFields();
-
+            
         int length = (int) fields.getLength();
         List immediateFields = new ArrayList(length / NEXT_OFFSET);
         for (int index = 0; index < length; index += NEXT_OFFSET) {
             immediateFields.add(getFieldByIndex(index));
         }
-
+        
         return immediateFields;
     }
 
@@ -616,10 +616,10 @@ public class InstanceKlass extends Klass {
         // Contains a Field for each field in this class, including immediate
         // fields and inherited fields.
         List  allFields = getImmediateFields();
-
+            
         // transitiveInterfaces contains all interfaces implemented
         // by this class and its superclass chain with no duplicates.
-
+            
         ObjArray interfaces = getTransitiveInterfaces();
         int n = (int) interfaces.getLength();
         for (int i = 0; i < n; i++) {
@@ -629,7 +629,7 @@ public class InstanceKlass extends Klass {
             }
             allFields.addAll(intf1.getImmediateFields());
         }
-
+            
         // Get all fields in the superclass, recursively.  But, don't
         // include fields in interfaces implemented by superclasses;
         // we already have all those.
@@ -639,11 +639,11 @@ public class InstanceKlass extends Klass {
                 allFields.addAll(supr.getImmediateFields());
             }
         }
-
+        
         return allFields;
     }
 
-
+    
     /** Return a List of SA Methods declared directly in this class/interface.
         Return an empty list if there are none, or if this isn't a class/
         interface.
@@ -666,7 +666,7 @@ public class InstanceKlass extends Klass {
          for (int index = 0; index < length; index++) {
             int originalIndex = getMethodOrdering().getIntAt(index);
             tmp[originalIndex] = methods.getObjAt(index);
-         }
+         } 
       }
 
       return Arrays.asList(tmp);
@@ -678,15 +678,15 @@ public class InstanceKlass extends Klass {
     public List getDirectImplementedInterfaces() {
         // Contains an InstanceKlass for each interface in this classes
         // 'implements' clause.
-
+        
         ObjArray interfaces = getLocalInterfaces();
         int length = (int) interfaces.getLength();
         List directImplementedInterfaces = new ArrayList(length);
-
+            
         for (int index = 0; index < length; index ++) {
             directImplementedInterfaces.add(interfaces.getObjAt(index));
         }
-
+        
         return directImplementedInterfaces;
     }
 
@@ -733,7 +733,7 @@ public class InstanceKlass extends Klass {
   public Method findMethod(Symbol name, Symbol sig) {
     return findMethod(getMethods(), name, sig);
   }
-
+  
   /** Breakpoint support (see methods on methodOop for details) */
   public BreakpointInfo getBreakpoints() {
     Address addr = getHandle().getAddressAt(Oop.getHeaderSize() + breakpoints.getOffset());
@@ -830,7 +830,7 @@ public class InstanceKlass extends Klass {
       int res = m.getName().fastCompare(name);
       if (res == 0) {
         // found matching name; do linear search to find matching signature
-        // first, quick check for common case
+        // first, quick check for common case 
         if (m.getSignature().equals(signature)) return m;
         // search downwards through overloaded methods
         int i;

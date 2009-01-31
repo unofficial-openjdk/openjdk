@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -65,11 +68,11 @@ void ciMethodData::load_data() {
   methodDataOop mdo = get_methodDataOop();
   if (mdo == NULL) return;
 
-  // To do: don't copy the data if it is not "ripe" -- require a minimum #
+  // To do: don't copy the data if it is not "ripe" -- require a minimum # 
   // of invocations.
 
   // Snapshot the data -- actually, take an approximate snapshot of
-  // the data.  Any concurrently executing threads may be changing the
+  // the data.  Any concurrently executing threads may be changing the 
   // data as we copy it.
   int skip_header = oopDesc::header_size();
   Copy::disjoint_words((HeapWord*) mdo              + skip_header,
@@ -83,7 +86,7 @@ void ciMethodData::load_data() {
   _data = (intptr_t *) arena->Amalloc(total_size);
   Copy::disjoint_words((HeapWord*) mdo->data_base(), (HeapWord*) _data, total_size / HeapWordSize);
 
-  // Traverse the profile data, translating any oops into their
+  // Traverse the profile data, translating any oops into their 
   // ci equivalents.
   ResourceMark rm;
   ciProfileData* ci_data = first_data();
@@ -120,7 +123,7 @@ ciProfileData* ciMethodData::data_at(int data_index) {
     return NULL;
   }
   DataLayout* data_layout = data_layout_at(data_index);
-
+  
   switch (data_layout->tag()) {
   case DataLayout::no_tag:
   default:
@@ -277,7 +280,7 @@ bool ciMethodData::is_arg_returned(int i) const {
 ByteSize ciMethodData::offset_of_slot(ciProfileData* data, ByteSize slot_offset_in_data) {
   // Get offset within methodDataOop of the data array
   ByteSize data_offset = methodDataOopDesc::data_offset();
-
+  
   // Get cell offset of the ProfileData within data array
   int cell_offset = dp_to_di(data->dp());
 
@@ -288,13 +291,13 @@ ByteSize ciMethodData::offset_of_slot(ciProfileData* data, ByteSize slot_offset_
 }
 
 // Implementation of the print method.
-void ciMethodData::print_impl(outputStream* st) {
-  ciObject::print_impl(st);
+void ciMethodData::print_impl() {
+  ciObject::print_impl();
 }
 
 #ifndef PRODUCT
 void ciMethodData::print() {
-  print_data_on(tty);
+  print_data_on(tty); 
 }
 
 void ciMethodData::print_data_on(outputStream* st) {

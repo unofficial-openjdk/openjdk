@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -33,7 +33,7 @@ public interface SPARCOpcodes {
    // format type is coded in 2 bits - primary opcode - "op"
    public static final int FORMAT_START_BIT = 30;
    public static final int FORMAT_MASK = 3 << FORMAT_START_BIT;
-
+ 
    // sparc instruction formats
 
    // PC Relative CALL
@@ -149,7 +149,7 @@ public interface SPARCOpcodes {
 
    // annul bit mask
    public static final int ANNUL_MASK = 1 << 29;
-
+  
    // 22 bit displacement or immediate value - used in FORMAT_2 instructions.
    public static final int DISP_22_MASK = 0x3FFFFF;
    public static final int IMM_22_MASK  = DISP_22_MASK;
@@ -170,7 +170,7 @@ public interface SPARCOpcodes {
    public static final int OPF_MASK = 0x1FF << OPF_START_BIT;
    public static final int OPC_MASK = OPF_MASK;
 
-   // opcode part 3 - used in FORMAT_3 and FORMAT_3A instructions
+   // opcode part 3 - used in FORMAT_3 and FORMAT_3A instructions 
    // "op3" - 6 bits
    public static final int OP_3_START_BIT = 19;
    public static final int OP_3_MASK = 0x3F << OP_3_START_BIT;
@@ -226,12 +226,12 @@ public interface SPARCOpcodes {
 
    public static final int LDSH = 0xA;
    public static final int LDSHA = (1 << 4) | 0xA;
-
+  
    public static final int LDSTUB = 0xD;
    public static final int LDSTUBA = (1 << 4) | 0xD;
 
    public static final int SWAP = 0xF;
-   public static final int SWAPA = (1 << 4) | 0xF;
+   public static final int SWAPA = (1 << 4) | 0xF; 
 
    // arithmetic, logic remaining - op3 with op=2 (FORMAT_3A)
    public static final int ADD = 0;
@@ -342,12 +342,12 @@ public interface SPARCOpcodes {
    public static final int FqTOi    = 0xD3;
 
    // opf - 9 bits (op=2, op3=0x35=FPop2) - floating point comparisons
-   public static final int FCMPs    = 0x51;
-   public static final int FCMPd    = 0x52;
-   public static final int FCMPq    = 0x53;
-   public static final int FCMPEs   = 0x55;
-   public static final int FCMPEd   = 0x56;
-   public static final int FCMPEq   = 0x57;
+   public static final int FCMPs    = 0x51; 
+   public static final int FCMPd    = 0x52; 
+   public static final int FCMPq    = 0x53; 
+   public static final int FCMPEs   = 0x55; 
+   public static final int FCMPEd   = 0x56; 
+   public static final int FCMPEq   = 0x57; 
 
    // 5 bit shift count mask
    public static final int SHIFT_COUNT_5_MASK = 0x1F;

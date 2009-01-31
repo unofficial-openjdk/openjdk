@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -28,23 +31,17 @@
 bool
 ParMarkBitMap::initialize(MemRegion covered_region)
 {
+  const size_t alloc_granularity = os::vm_allocation_granularity();
   const idx_t bits = bits_required(covered_region);
+  const idx_t words = bits / BitsPerWord;
+  const idx_t bytes = align_size_up(words * sizeof(idx_t), alloc_granularity);
+
   // The bits will be divided evenly between two bitmaps; each of them should be
   // an integral number of words.
   assert(bits % (BitsPerWord * 2) == 0, "region size unaligned");
 
-  const size_t words = bits / BitsPerWord;
-  const size_t raw_bytes = words * sizeof(idx_t);
-  const size_t page_sz = os::page_size_for_region(raw_bytes, raw_bytes, 10);
-  const size_t granularity = os::vm_allocation_granularity();
-  const size_t bytes = align_size_up(raw_bytes, MAX2(page_sz, granularity));
-
-  const size_t rs_align = page_sz == (size_t) os::vm_page_size() ? 0 :
-    MAX2(page_sz, granularity);
-  ReservedSpace rs(bytes, rs_align, false);
-  os::trace_page_sizes("par bitmap", raw_bytes, raw_bytes, page_sz,
-                       rs.base(), rs.size());
-  _virtual_space = new PSVirtualSpace(rs, page_sz);
+  ReservedSpace rs(bytes);
+  _virtual_space = new PSVirtualSpace(rs, os::vm_page_size());
   if (_virtual_space != NULL && _virtual_space->expand_by(bytes)) {
     _region_start = covered_region.start();
     _region_size = covered_region.word_size();
@@ -68,7 +65,7 @@ ParMarkBitMap::initialize(MemRegion covered_region)
 #ifdef ASSERT
 extern size_t mark_bitmap_count;
 extern size_t mark_bitmap_size;
-#endif  // #ifdef ASSERT
+#endif	// #ifdef ASSERT
 
 bool
 ParMarkBitMap::mark_obj(HeapWord* addr, size_t size)
@@ -103,7 +100,7 @@ ParMarkBitMap::live_words_in_range(HeapWord* beg_addr, HeapWord* end_addr) const
       live_bits += tmp_end - beg_bit + 1;
       beg_bit = find_obj_beg(tmp_end + 1, range_end);
     } else {
-      live_bits += end_bit - beg_bit;  // No + 1 here; end_bit is not counted.
+      live_bits += end_bit - beg_bit;  // No + 1 here; end_bit is not counted. 
       return bits_to_words(live_bits);
     }
   }
@@ -133,7 +130,7 @@ size_t ParMarkBitMap::live_words_in_range(HeapWord* beg_addr, oop end_obj) const
 
 ParMarkBitMap::IterationStatus
 ParMarkBitMap::iterate(ParMarkBitMapClosure* live_closure,
-                       idx_t range_beg, idx_t range_end) const
+		       idx_t range_beg, idx_t range_end) const
 {
   DEBUG_ONLY(verify_bit(range_beg);)
   DEBUG_ONLY(verify_bit(range_end);)
@@ -168,9 +165,9 @@ ParMarkBitMap::iterate(ParMarkBitMapClosure* live_closure,
 
 ParMarkBitMap::IterationStatus
 ParMarkBitMap::iterate(ParMarkBitMapClosure* live_closure,
-                       ParMarkBitMapClosure* dead_closure,
-                       idx_t range_beg, idx_t range_end,
-                       idx_t dead_range_end) const
+		       ParMarkBitMapClosure* dead_closure,
+		       idx_t range_beg, idx_t range_end,
+		       idx_t dead_range_end) const
 {
   DEBUG_ONLY(verify_bit(range_beg);)
   DEBUG_ONLY(verify_bit(range_end);)
@@ -190,7 +187,7 @@ ParMarkBitMap::iterate(ParMarkBitMapClosure* live_closure,
     const size_t size = obj_size(range_beg, dead_space_end);
     dead_closure->do_addr(bit_to_addr(range_beg), size);
   }
-
+    
   while (cur_beg < range_end) {
     const idx_t cur_end = find_obj_end(cur_beg, live_search_end);
     if (cur_end >= range_end) {
@@ -221,12 +218,12 @@ ParMarkBitMap::iterate(ParMarkBitMapClosure* live_closure,
   return complete;
 }
 
-#ifndef PRODUCT
+#ifndef	PRODUCT
 void ParMarkBitMap::reset_counters()
 {
   _cas_tries = _cas_retries = _cas_by_another = 0;
 }
-#endif  // #ifndef PRODUCT
+#endif	// #ifndef PRODUCT
 
 #ifdef ASSERT
 void ParMarkBitMap::verify_clear() const
@@ -237,4 +234,4 @@ void ParMarkBitMap::verify_clear() const
     assert(*p == 0, "bitmap not clear");
   }
 }
-#endif  // #ifdef ASSERT
+#endif	// #ifdef ASSERT

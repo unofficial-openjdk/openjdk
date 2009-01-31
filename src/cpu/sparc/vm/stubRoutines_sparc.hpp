@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This file holds the platform specific parts of the StubRoutines
@@ -27,8 +30,8 @@
 // extend it.
 
 
-// So unfortunately c2 will call with a pc from a frame object
-// (already adjusted) and a raw pc (unadjusted), so we need to check both.
+// So unfortunately c2 will call with a pc from a frame object 
+// (already adjusted) and a raw pc (unadjusted), so we need to check both. 
 // It didn't use to be like this before adapter removal.
 static bool returns_to_call_stub(address return_pc)   {
   return ((return_pc + frame::pc_return_offset) == _call_stub_return_address) ||
@@ -36,7 +39,7 @@ static bool returns_to_call_stub(address return_pc)   {
 }
 
 enum /* platform_dependent_constants */ {
-  // %%%%%%%% May be able to shrink this a lot
+  // %%%%%%%% May be able to shrink this a lot 
   code_size1 = 20000,                                        // simply increase if too small (assembler will crash if too small)
   code_size2 = 20000                                         // simply increase if too small (assembler will crash if too small)
 };
@@ -53,11 +56,11 @@ class Sparc {
     locked   = 1
   };
 
-  enum {
-    v8_oop_lock_ignore_bits = 2,
-    v8_oop_lock_bits = 4,
-    nof_v8_oop_lock_cache_entries = 1 << (v8_oop_lock_bits+v8_oop_lock_ignore_bits),
-    v8_oop_lock_mask = right_n_bits(v8_oop_lock_bits),
+  enum { 
+    v8_oop_lock_ignore_bits = 2, 
+    v8_oop_lock_bits = 4, 
+    nof_v8_oop_lock_cache_entries = 1 << (v8_oop_lock_bits+v8_oop_lock_ignore_bits), 
+    v8_oop_lock_mask = right_n_bits(v8_oop_lock_bits), 
     v8_oop_lock_mask_in_place = v8_oop_lock_mask << v8_oop_lock_ignore_bits
   };
 
@@ -74,7 +77,7 @@ class Sparc {
 
  public:
   // %%% global lock for everyone who needs to use atomic_compare_and_exchange
-  // %%% or atomic_increment -- should probably use more locks for more
+  // %%% or atomic_increment -- should probably use more locks for more 
   // %%% scalability-- for instance one for each eden space or group of
 
   // address of the lock for atomic_compare_and_exchange
@@ -95,3 +98,4 @@ class Sparc {
 
   static address partial_subtype_check()                  { return _partial_subtype_check; }
 };
+

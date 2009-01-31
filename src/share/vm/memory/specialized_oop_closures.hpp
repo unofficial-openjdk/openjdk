@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // The following OopClosure types get specialized versions of
@@ -66,7 +69,7 @@ class CMSInnerParMarkAndPushClosure;
 
 #ifndef SERIALGC
 #define SPECIALIZED_OOP_OOP_ITERATE_CLOSURES_P(f)       \
-  f(ParScanWithBarrierClosure,_nv)                      \
+  f(ParScanWithBarrierClosure,_nv)	        	\
   f(ParScanWithoutBarrierClosure,_nv)
 #else  // SERIALGC
 #define SPECIALIZED_OOP_OOP_ITERATE_CLOSURES_P(f)
@@ -78,11 +81,11 @@ class CMSInnerParMarkAndPushClosure;
 
 #ifndef SERIALGC
 #define SPECIALIZED_OOP_OOP_ITERATE_CLOSURES_3(f)       \
-  f(MarkRefsIntoAndScanClosure,_nv)                     \
-  f(Par_MarkRefsIntoAndScanClosure,_nv)                 \
-  f(PushAndMarkClosure,_nv)                             \
+  f(MarkRefsIntoAndScanClosure,_nv)			\
+  f(Par_MarkRefsIntoAndScanClosure,_nv)			\
+  f(PushAndMarkClosure,_nv)				\
   f(Par_PushAndMarkClosure,_nv)                         \
-  f(PushOrMarkClosure,_nv)                              \
+  f(PushOrMarkClosure,_nv)				\
   f(Par_PushOrMarkClosure,_nv)                          \
   f(CMSKeepAliveClosure,_nv)                            \
   f(CMSInnerParMarkAndPushClosure,_nv)
@@ -126,12 +129,12 @@ class CMSInnerParMarkAndPushClosure;
 // "OopClosure" in some applications and "OopsInGenClosure" in others.
 
 #define SPECIALIZED_SINCE_SAVE_MARKS_CLOSURES_YOUNG_S(f) \
-  f(ScanClosure,_nv)                                     \
+  f(ScanClosure,_nv)					 \
   f(FastScanClosure,_nv)
 
 #ifndef SERIALGC
 #define SPECIALIZED_SINCE_SAVE_MARKS_CLOSURES_YOUNG_P(f) \
-  f(ParScanWithBarrierClosure,_nv)                       \
+  f(ParScanWithBarrierClosure,_nv)			 \
   f(ParScanWithoutBarrierClosure,_nv)
 #else  // SERIALGC
 #define SPECIALIZED_SINCE_SAVE_MARKS_CLOSURES_YOUNG_P(f)
@@ -197,7 +200,7 @@ public:
   static inline void record_do_oop_call_nv(Kind k)  PRODUCT_RETURN;
 
   static void print() PRODUCT_RETURN;
-};
+};  
 
 #ifndef PRODUCT
 #if ENABLE_SPECIALIZATION_STATS

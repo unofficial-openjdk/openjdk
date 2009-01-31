@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include <stdio.h>
@@ -102,12 +105,12 @@ Monitor::wait(long timeout) {
     // Enter critical section
     lock();
 
-    if (_tickets != 0 && _counter != c) break;
-
-    if (which == WAIT_TIMEOUT) {
-      --_waiters;
+    if (_tickets != 0 && _counter != c) break;    
+    
+    if (which == WAIT_TIMEOUT) {      
+      --_waiters;          
       return true;
-    }
+    }    
   }
   _waiters--;
 
@@ -115,7 +118,7 @@ Monitor::wait(long timeout) {
   // the event object.
   if (--_tickets == 0) {
     ResetEvent(_wait_event);
-  }
+  }  
 
   return false;
 }
@@ -124,7 +127,7 @@ Monitor::wait(long timeout) {
 bool
 Monitor::notify() {
   assert(ownedBySelf()); // Otherwise, notify on unknown thread
-
+  
   if (_waiters > _tickets) {
     if (!SetEvent(_wait_event)) {
       return false;
@@ -140,7 +143,7 @@ Monitor::notify() {
 bool
 Monitor::notifyAll() {
   assert(ownedBySelf()); // Otherwise, notifyAll on unknown thread
-
+  
   if (_waiters > 0) {
     if (!SetEvent(_wait_event)) {
       return false;

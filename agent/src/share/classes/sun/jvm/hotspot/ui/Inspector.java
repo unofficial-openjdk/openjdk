@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.ui;
@@ -73,7 +73,7 @@ public class Inspector extends SAPanel {
             VM vm = VM.getVM();
             Address a = vm.getDebugger().parseAddress(text);
             OopHandle handle = a.addOffsetToAsOopHandle(-vm.getAddressSize());
-            addressField.setText(handle.toString());
+            addressField.setText(handle.toString()); 
           } catch (Exception ex) {
           }
         }
@@ -102,7 +102,7 @@ public class Inspector extends SAPanel {
       fireShowLiveness();
       }
     };
-    livenessButton.addActionListener(livenessButtonListener);
+    livenessButton.addActionListener(livenessButtonListener); 
     hboxDown.add(livenessButton);
     hboxDown.add(Box.createGlue());
 
@@ -111,35 +111,35 @@ public class Inspector extends SAPanel {
     hboxDown.add(Box.createGlue());
 
     add(hbox, BorderLayout.NORTH);
-    add(hboxDown, BorderLayout.SOUTH);
-
+    add(hboxDown, BorderLayout.SOUTH); 
+    
     addressField.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
           String text = addressField.getText();
           try {
             Address a = VM.getVM().getDebugger().parseAddress(text);
-            int max_searches = 1000;
-            int searches = 0;
-            int offset = 0;
-            Oop oop = null;
-            if (a != null) {
-              OopHandle handle = a.addOffsetToAsOopHandle(0);
-              while (searches < max_searches) {
-                searches++;
-                if (RobustOopDeterminator.oopLooksValid(handle)) {
-                  try {
-                    oop = VM.getVM().getObjectHeap().newOop(handle);
-                    addressField.setText(handle.toString());
-                    break;
-                  } catch (UnknownOopException ex) {
+            int max_searches = 1000; 
+            int searches = 0; 
+            int offset = 0; 
+            Oop oop = null; 
+            if (a != null) { 
+              OopHandle handle = a.addOffsetToAsOopHandle(0); 
+              while (searches < max_searches) { 
+                searches++; 
+                if (RobustOopDeterminator.oopLooksValid(handle)) { 
+                  try { 
+                    oop = VM.getVM().getObjectHeap().newOop(handle); 
+                    addressField.setText(handle.toString()); 
+                    break; 
+                  } catch (UnknownOopException ex) { 
                     // ok
-                  } catch (RuntimeException ex) {
-                    ex.printStackTrace();
-                  }
-                }
-                offset -= 4;
-                handle = a.addOffsetToAsOopHandle(offset);
-              }
+                  } catch (RuntimeException ex) { 
+                    ex.printStackTrace(); 
+                  } 
+                } 
+                offset -= 4; 
+                handle = a.addOffsetToAsOopHandle(offset); 
+              } 
             }
             if (oop != currentOop) {
               currentOop = oop;
@@ -151,7 +151,7 @@ public class Inspector extends SAPanel {
                 livenessButton.addActionListener(livenessButtonListener);
               }
             }
-
+ 
             if (oop != null) {
               statusLabel.setText("");
               setRoot(new OopTreeNodeAdapter(oop, null));
@@ -285,14 +285,14 @@ public class Inspector extends SAPanel {
     // Let's see what happens if we let the parent deal with resizing the panel
     add(scrollPane, BorderLayout.CENTER);
   }
-
+  
   public Inspector(final SimpleTreeNode root) {
     this();
     SwingUtilities.invokeLater( new Runnable() {
         public void run() {
           if (root instanceof OopTreeNodeAdapter) {
             final Oop oop = ((OopTreeNodeAdapter)root).getOop();
-            addressField.setText(oop.getHandle().toString());
+            addressField.setText(oop.getHandle().toString()); 
           }
           setRoot(root);
         }
@@ -319,7 +319,7 @@ public class Inspector extends SAPanel {
             liveStatus.setText("Oop is Alive");
             livenessButton.removeActionListener(livenessButtonListener);
             livenessButton.addActionListener(showLivenessListener);
-
+         
             livenessButton.setEnabled(true);
             livenessButton.setText(showLivenessText);
           }
@@ -349,7 +349,7 @@ public class Inspector extends SAPanel {
     if (list == null) {
       return; // dead object
     }
-
+    
     for (Iterator iter = listeners.iterator(); iter.hasNext(); ) {
       SAListener listener = (SAListener) iter.next();
       listener.showLiveness(currentOop, list);

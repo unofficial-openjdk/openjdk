@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -41,7 +44,7 @@ bool MacroAssembler::needs_explicit_null_check(intptr_t offset) {
 }
 
 void MacroAssembler::read_ccr_trap(Register ccr_save) {
-  // Execute a trap to get the PSR, mask and shift
+  // Execute a trap to get the PSR, mask and shift 
   // to get the condition codes.
   get_psr_trap();
   nop();

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 /* Copyright 1992 Sun Microsystems, Inc. and Stanford University.
@@ -110,7 +113,7 @@ int ageTable::compute_tenuring_threshold(size_t survivor_capacity) {
       GCPolicyCounters* gc_counters = policy->counters();
       gc_counters->tenuring_threshold()->set_value(result);
       gc_counters->desired_survivor_size()->set_value(
-        desired_survivor_size*oopSize);
+	desired_survivor_size*oopSize);
     }
   }
 

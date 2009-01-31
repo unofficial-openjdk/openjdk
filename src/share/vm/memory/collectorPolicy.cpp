@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -56,9 +59,9 @@ void CollectorPolicy::initialize_flags() {
 void CollectorPolicy::initialize_size_info() {
   // User inputs from -mx and ms are aligned
   _initial_heap_byte_size = align_size_up(Arguments::initial_heap_size(),
-                                          min_alignment());
+					  min_alignment());
   _min_heap_byte_size = align_size_up(Arguments::min_heap_size(),
-                                          min_alignment());
+					  min_alignment());
   _max_heap_byte_size = align_size_up(MaxHeapSize, max_alignment());
 
   // Check validity of heap parameters from launcher
@@ -101,7 +104,7 @@ void CollectorPolicy::initialize_size_info() {
 void CollectorPolicy::initialize_perm_generation(PermGen::Name pgnm) {
   _permanent_generation =
     new PermanentGenerationSpec(pgnm, PermSize, MaxPermSize,
-                                SharedReadOnlySize,
+				SharedReadOnlySize,
                                 SharedReadWriteSize,
                                 SharedMiscDataSize,
                                 SharedMiscCodeSize);
@@ -112,10 +115,10 @@ void CollectorPolicy::initialize_perm_generation(PermGen::Name pgnm) {
 
 
 GenRemSet* CollectorPolicy::create_rem_set(MemRegion whole_heap,
-                                           int max_covered_regions) {
+					   int max_covered_regions) {
   switch (rem_set_name()) {
   case GenRemSet::CardTable: {
-    if (barrier_set_name() != BarrierSet::CardTableModRef)
+    if (barrier_set_name() != BarrierSet::CardTableModRef) 
       vm_exit_during_initialization("Mismatch between RS and BS.");
     CardTableRS* res = new CardTableRS(whole_heap, max_covered_regions);
     return res;
@@ -129,14 +132,14 @@ GenRemSet* CollectorPolicy::create_rem_set(MemRegion whole_heap,
 // GenCollectorPolicy methods.
 
 void GenCollectorPolicy::initialize_size_policy(size_t init_eden_size,
-                                                size_t init_promo_size,
-                                                size_t init_survivor_size) {
+						size_t init_promo_size,
+						size_t init_survivor_size) {
   double max_gc_minor_pause_sec = ((double) MaxGCMinorPauseMillis)/1000.0;
   _size_policy = new AdaptiveSizePolicy(init_eden_size,
-                                        init_promo_size,
-                                        init_survivor_size,
-                                        max_gc_minor_pause_sec,
-                                        GCTimeRatio);
+					init_promo_size,
+					init_survivor_size,
+					max_gc_minor_pause_sec,
+					GCTimeRatio);
 }
 
 size_t GenCollectorPolicy::compute_max_alignment() {
@@ -146,14 +149,9 @@ size_t GenCollectorPolicy::compute_max_alignment() {
   // byte entry and the os page size is 4096, the maximum heap size should
   // be 512*4096 = 2MB aligned.
   size_t alignment = GenRemSet::max_alignment_constraint(rem_set_name());
-
-  // Parallel GC does its own alignment of the generations to avoid requiring a
-  // large page (256M on some platforms) for the permanent generation.  The
-  // other collectors should also be updated to do their own alignment and then
-  // this use of lcm() should be removed.
-  if (UseLargePages && !UseParallelGC) {
-      // in presence of large pages we have to make sure that our
-      // alignment is large page aware
+  if (UseLargePages) {
+      // in presence of large pages we have to make sure that our 
+      // alignment is large page aware 
       alignment = lcm(os::large_page_size(), alignment);
   }
 
@@ -164,14 +162,14 @@ void GenCollectorPolicy::initialize_flags() {
   // All sizes must be multiples of the generation granularity.
   set_min_alignment((uintx) Generation::GenGrain);
   set_max_alignment(compute_max_alignment());
-  assert(max_alignment() >= min_alignment() &&
-         max_alignment() % min_alignment() == 0,
-         "invalid alignment constraints");
+  assert(max_alignment() >= min_alignment() && 
+	 max_alignment() % min_alignment() == 0, 
+	 "invalid alignment constraints");
 
   CollectorPolicy::initialize_flags();
 
   // All generational heaps have a youngest gen; handle those flags here.
-
+  
   // Adjust max size parameters
   if (NewSize > MaxNewSize) {
     MaxNewSize = NewSize;
@@ -219,33 +217,33 @@ void GenCollectorPolicy::initialize_size_info() {
     _min_gen0_size = NewSize;
   } else {
     _min_gen0_size = align_size_down(_min_heap_byte_size / (NewRatio+1),
-                                     min_alignment());
+				     min_alignment());
     // We bound the minimum size by NewSize below (since it historically
     // would have been NewSize and because the NewRatio calculation could
     // yield a size that is too small) and bound it by MaxNewSize above.
     // This is not always best.  The NewSize calculated by CMS (which has
     // a fixed minimum of 16m) can sometimes be "too" large.  Consider
     // the case where -Xmx32m.  The CMS calculated NewSize would be about
-    // half the entire heap which seems too large.  But the counter
+    // half the entire heap which seems too large.  But the counter 
     // example is seen when the client defaults for NewRatio are used.
-    // An initial young generation size of 640k was observed
+    // An initial young generation size of 640k was observed 
     // with -Xmx128m -XX:MaxNewSize=32m when NewSize was not used
     // as a lower bound as with
     // _min_gen0_size = MIN2(_min_gen0_size, MaxNewSize);
     // and 640k seemed too small a young generation.
     _min_gen0_size = MIN2(MAX2(_min_gen0_size, NewSize), MaxNewSize);
-  }
+  }	
 
   // Parameters are valid, compute area sizes.
   size_t max_new_size = align_size_down(_max_heap_byte_size / (NewRatio+1),
-                                        min_alignment());
+					min_alignment());
   max_new_size = MIN2(MAX2(max_new_size, _min_gen0_size), MaxNewSize);
 
   // desired_new_size is used to set the initial size.  The
   // initial size must be greater than the minimum size.
-  size_t desired_new_size =
+  size_t desired_new_size = 
     align_size_down(_initial_heap_byte_size / (NewRatio+1),
-                  min_alignment());
+		  min_alignment());
 
   size_t new_size = MIN2(MAX2(desired_new_size, _min_gen0_size), max_new_size);
 
@@ -255,7 +253,7 @@ void GenCollectorPolicy::initialize_size_info() {
 
 void TwoGenerationCollectorPolicy::initialize_size_info() {
   GenCollectorPolicy::initialize_size_info();
-
+  
   // Minimum sizes of the generations may be different than
   // the initial sizes.  An inconsistently is permitted here
   // in the total size that can be specified explicitly by
@@ -266,11 +264,11 @@ void TwoGenerationCollectorPolicy::initialize_size_info() {
     _min_gen1_size = OldSize;
     // The generation minimums and the overall heap mimimum should
     // be within one heap alignment.
-    if ((_min_gen1_size + _min_gen0_size + max_alignment()) <
-         _min_heap_byte_size) {
+    if ((_min_gen1_size + _min_gen0_size + max_alignment()) < 
+	 _min_heap_byte_size) {
       warning("Inconsistency between minimum heap size and minimum "
-        "generation sizes: using min heap = " SIZE_FORMAT,
-        _min_heap_byte_size);
+	"generation sizes: using min heap = " SIZE_FORMAT, 
+	_min_heap_byte_size);
     }
   } else {
     _min_gen1_size = _min_heap_byte_size - _min_gen0_size;
@@ -280,9 +278,9 @@ void TwoGenerationCollectorPolicy::initialize_size_info() {
   _max_gen1_size = _max_heap_byte_size - _max_gen0_size;
 }
 
-HeapWord* GenCollectorPolicy::mem_allocate_work(size_t size,
-                                        bool is_tlab,
-                                        bool* gc_overhead_limit_was_exceeded) {
+HeapWord* GenCollectorPolicy::mem_allocate_work(size_t size, 
+					bool is_tlab,
+					bool* gc_overhead_limit_was_exceeded) {
   GenCollectedHeap *gch = GenCollectedHeap::heap();
 
   debug_only(gch->check_for_valid_allocation_state());
@@ -377,7 +375,7 @@ HeapWord* GenCollectorPolicy::mem_allocate_work(size_t size,
       size_policy()->set_gc_time_limit_exceeded(false);
       return NULL;
     }
-
+      
     VM_GenCollectForAllocation op(size,
                                   is_tlab,
                                   gc_count_before);
@@ -389,7 +387,7 @@ HeapWord* GenCollectorPolicy::mem_allocate_work(size_t size,
          continue;  // retry and/or stall as necessary
       }
       assert(result == NULL || gch->is_in_reserved(result),
-             "result not in heap");
+	     "result not in heap");
       return result;
     }
 
@@ -397,13 +395,13 @@ HeapWord* GenCollectorPolicy::mem_allocate_work(size_t size,
     if ((QueuedAllocationWarningCount > 0) &&
         (try_count % QueuedAllocationWarningCount == 0)) {
           warning("TwoGenerationCollectorPolicy::mem_allocate_work retries %d times \n\t"
-                  " size=%d %s", try_count, size, is_tlab ? "(TLAB)" : "");
+		  " size=%d %s", try_count, size, is_tlab ? "(TLAB)" : "");
     }
   }
 }
 
 HeapWord* GenCollectorPolicy::expand_heap_and_allocate(size_t size,
-                                                       bool   is_tlab) {
+						       bool   is_tlab) {
   GenCollectedHeap *gch = GenCollectedHeap::heap();
   HeapWord* result = NULL;
   for (int i = number_of_generations() - 1; i >= 0 && result == NULL; i--) {
@@ -417,7 +415,7 @@ HeapWord* GenCollectorPolicy::expand_heap_and_allocate(size_t size,
 }
 
 HeapWord* GenCollectorPolicy::satisfy_failed_allocation(size_t size,
-                                                        bool   is_tlab) {
+							bool   is_tlab) {
   GenCollectedHeap *gch = GenCollectedHeap::heap();
   GCCauseSetter x(gch, GCCause::_allocation_failure);
   HeapWord* result = NULL;
@@ -432,7 +430,7 @@ HeapWord* GenCollectorPolicy::satisfy_failed_allocation(size_t size,
     return result;   // could be null if we are out of space
   } else if (!gch->incremental_collection_will_fail()) {
     // The gc_prologues have not executed yet.  The value
-    // for incremental_collection_will_fail() is the remanent
+    // for incremental_collection_will_fail() is the remanent 
     // of the last collection.
     // Do an incremental collection.
     gch->do_collection(false            /* full */,
@@ -445,26 +443,26 @@ HeapWord* GenCollectorPolicy::satisfy_failed_allocation(size_t size,
     // for the original code and why this has been simplified
     // with from-space allocation criteria modified and
     // such allocation moved out of the safepoint path.
-    gch->do_collection(true             /* full */,
-                       false            /* clear_all_soft_refs */,
-                       size             /* size */,
+    gch->do_collection(true             /* full */, 
+                       false            /* clear_all_soft_refs */, 
+                       size             /* size */, 
                        is_tlab          /* is_tlab */,
                        number_of_generations() - 1 /* max_level */);
   }
-
+  
   result = gch->attempt_allocation(size, is_tlab, false /*first_only*/);
-
+  
   if (result != NULL) {
     assert(gch->is_in_reserved(result), "result not in heap");
     return result;
   }
-
+  
   // OK, collection failed, try expansion.
   result = expand_heap_and_allocate(size, is_tlab);
   if (result != NULL) {
     return result;
   }
-
+  
   // If we reach this point, we're really out of memory. Try every trick
   // we can to reclaim memory. Force collection of soft references. Force
   // a complete compaction of the heap. Any additional methods for finding
@@ -485,7 +483,7 @@ HeapWord* GenCollectorPolicy::satisfy_failed_allocation(size_t size,
     assert(gch->is_in_reserved(result), "result not in heap");
     return result;
   }
-
+  
   // What else?  We might try synchronous finalization later.  If the total
   // space available is large enough for the allocation, then a more
   // complete compaction phase than we've tried so far might be
@@ -504,7 +502,7 @@ size_t GenCollectorPolicy::large_typearray_limit() {
 //   was a full collection because a partial collection (would
 //   have) failed and is likely to fail again
 bool GenCollectorPolicy::should_try_older_generation_allocation(
-        size_t word_size) const {
+	size_t word_size) const {
   GenCollectedHeap* gch = GenCollectedHeap::heap();
   size_t gen0_capacity = gch->get_gen(0)->capacity_before_gc();
   return    (word_size > heap_word_size(gen0_capacity))
@@ -527,7 +525,7 @@ void MarkSweepPolicy::initialize_generations() {
   _generations = new GenerationSpecPtr[number_of_generations()];
   if (_generations == NULL)
     vm_exit_during_initialization("Unable to allocate gen spec");
-
+  
   if (UseParNewGC && ParallelGCThreads > 0) {
     _generations[0] = new GenerationSpec(Generation::ParNew, _initial_gen0_size, _max_gen0_size);
   } else {

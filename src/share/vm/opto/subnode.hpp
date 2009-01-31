@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Portions of code courtesy of Clifford Click
@@ -27,7 +30,7 @@
 //------------------------------SUBNode----------------------------------------
 // Class SUBTRACTION functionality.  This covers all the usual 'subtract'
 // behaviors.  Subtract-integer, -float, -double, binary xor, compare-integer,
-// -float, and -double are all inherited from this class.  The compare
+// -float, and -double are all inherited from this class.  The compare 
 // functions behave like subtract functions, except that all negative answers
 // are compressed into -1, and all positive answers compressed to 1.
 class SubNode : public Node {
@@ -37,7 +40,7 @@ public:
   }
 
   // Handle algebraic identities here.  If we have an identity, return the Node
-  // we are equivalent to.  We look for "add of zero" as an identity.
+  // we are equivalent to.  We look for "add of zero" as an identity.  
   virtual Node *Identity( PhaseTransform *phase );
 
   // Compute a new Type for this node.  Basically we just do the pre-check,
@@ -256,7 +259,7 @@ struct BoolTest VALUE_OBJ_CLASS_SPEC {
   mask negate( ) const { return mask(_test^4); }
   bool is_canonical( ) const { return (_test == BoolTest::ne || _test == BoolTest::lt || _test == BoolTest::le); }
 #ifndef PRODUCT
-  void dump_on(outputStream *st) const;
+  void dump() const;
 #endif
 };
 
@@ -286,7 +289,7 @@ public:
 
   bool is_counted_loop_exit_test();
 #ifndef PRODUCT
-  virtual void dump_spec(outputStream *st) const;
+  virtual void dump_spec() const;
 #endif
 };
 

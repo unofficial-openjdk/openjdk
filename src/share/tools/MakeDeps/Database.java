@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 import java.io.*;
@@ -32,7 +32,7 @@ public class Database {
   // files that have implicit dependency on platform files
   // e.g. os.hpp: os_<os_family>.hpp os_<os_arch>.hpp but only
   // recorded if the platform file was seen.
-  private FileList platformFiles;
+  private FileList platformFiles; 
   private FileList outerFiles;
   private FileList indivIncludes;
   private FileList grandInclude; // the results for the grand include file
@@ -175,7 +175,7 @@ public class Database {
               // derive generic name from platform specific name
               // e.g. os_<arch_os>.hpp => os.hpp. We enforce the
               // restriction (imperfectly) noted in includeDB_core
-              // that platform specific files will have an underscore
+              // that platform specific files will have an underscore 
               // preceding the macro invocation.
 
               // First expand macro as null string.
@@ -240,7 +240,7 @@ public class Database {
 
               if (includee.equals(plat.noGrandInclude())) {
                 p.setUseGrandInclude(false);
-              } else {
+              } else {            
                 FileList q = allFiles.listForFile(includee);
                 p.addIfAbsent(q);
               }
@@ -260,13 +260,13 @@ public class Database {
       if (firstFile != null) {
         FileList p = allFiles.listForFile(firstFile);
         allFiles.setFirstFile(p);
-        outerFiles.setFirstFile(p);
+        outerFiles.setFirstFile(p);	  
       }
 
       if (lastFile != null) {
         FileList p = allFiles.listForFile(lastFile);
         allFiles.setLastFile(p);
-        outerFiles.setLastFile(p);
+        outerFiles.setLastFile(p);	  
       }
     }
 
@@ -345,7 +345,7 @@ public class Database {
   }
 
   private void writeGrandUnixMakefile() throws IOException {
-    if (!plat.writeDeps())
+    if (!plat.writeDeps()) 
       return;
 
     System.out.println("\twriting dependencies file\n");
@@ -383,7 +383,7 @@ public class Database {
       // write Obj_Files = ...
       gd.println("Obj_Files = \\");
       gd.println(firstName + plat.objFileSuffix() + " \\");
-      for (Iterator iter = sortList.iterator(); iter.hasNext(); ) {
+      for (Iterator iter = sortList.iterator(); iter.hasNext(); ) {            
         gd.println(iter.next() + plat.objFileSuffix() + " \\");
       }
       gd.println(lastName + plat.objFileSuffix() + " \\");
@@ -471,7 +471,7 @@ public class Database {
         }
 
         if (plat.includeGIDependencies()
-            && nPrecompiledFiles > 0
+            && nPrecompiledFiles > 0 
             && anII.getUseGrandInclude()) {
           gd.println("    $(Precompiled_Files) \\");
         }

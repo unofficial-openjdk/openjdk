@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //
@@ -33,7 +36,7 @@
 // the load of the dispatch address and hence the jmp would still go to the location
 // according to the prior table. So, we let the thread continue and let it block by itself.
 define_pd_global(bool, DontYieldALot,               true);  // yield no more than 100 times per second
-define_pd_global(bool, ConvertSleepToYield,         false); // do not convert sleep(0) to yield. Helps GUI
+define_pd_global(bool, ConvertSleepToYield,         false); // do not convert sleep(0) to yield. Helps GUI 
 define_pd_global(bool, ShareVtableStubs,            false); // improves performance markedly for mtrt and compress
 define_pd_global(bool, CountInterpCalls,            false); // not implemented in the interpreter
 define_pd_global(bool, NeedsDeoptSuspend,           true); // register window machines need this
@@ -41,18 +44,18 @@ define_pd_global(bool, NeedsDeoptSuspend,           true); // register window ma
 define_pd_global(bool, ImplicitNullChecks,          true);  // Generate code for implicit null checks
 define_pd_global(bool, UncommonNullCast,            true);  // Uncommon-trap NULLs past to check cast
 
-define_pd_global(intx,  CodeEntryAlignment,    32);
+define_pd_global(intx,  CodeEntryAlignment,    32); 
 define_pd_global(uintx, TLABSize,              0);
 define_pd_global(uintx, NewSize, ScaleForWordSize((2048 * K) + (2 * (64 * K))));
-define_pd_global(intx,  SurvivorRatio,         8);
+define_pd_global(intx,  SurvivorRatio,         8);  
 define_pd_global(intx,  InlineFrequencyCount,  50);  // we can use more inlining on the SPARC
 #ifdef _LP64
 // Stack slots are 2X larger in LP64 than in the 32 bit VM.
 define_pd_global(intx,  ThreadStackSize,       1024);
 define_pd_global(intx,  VMThreadStackSize,     1024);
 #else
-define_pd_global(intx,  ThreadStackSize,       512);
-define_pd_global(intx,  VMThreadStackSize,     512);
+define_pd_global(intx,  ThreadStackSize,       512); 
+define_pd_global(intx,  VMThreadStackSize,     512); 
 #endif
 
 define_pd_global(intx, StackYellowPages, 2);

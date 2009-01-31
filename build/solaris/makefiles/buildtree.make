@@ -36,9 +36,6 @@
 # GAMMADIR	- top of workspace
 # OS_FAMILY	- operating system
 # VARIANT	- core, compiler1, compiler2, or tiered
-# HOTSPOT_RELEASE_VERSION - <major>.<minor>-b<nn> (11.0-b07)
-# HOTSPOT_BUILD_VERSION   - internal, PRTjob ID, JPRTjob ID
-# JRE_RELEASE_VERSION     - <major>.<minor>.<micro> (1.7.0)
 #
 # Builds the directory trees with makefiles plus some convenience files in
 # each directory:
@@ -63,12 +60,11 @@ QUIETLY$(MAKE_VERBOSE)	= @
 # For now, until the compiler is less wobbly:
 TESTFLAGS	= -Xbatch -showversion
 
-### maye ARCH_XXX instead?
 ifdef USE_GCC
-PLATFORM_FILE	= $(GAMMADIR)/build/$(OS_FAMILY)/platform_$(BUILDARCH).gcc
+PLATFORM_FILE	= $(GAMMADIR)/build/$(OS_FAMILY)/platform_$(ARCH).gcc
 GCC_LIB         = /usr/local/lib
 else
-PLATFORM_FILE	= $(GAMMADIR)/build/$(OS_FAMILY)/platform_$(BUILDARCH)
+PLATFORM_FILE	= $(GAMMADIR)/build/$(OS_FAMILY)/platform_$(ARCH)
 GCC_LIB         = 
 endif
 
@@ -122,38 +118,6 @@ BUILDTREE_TARGETS = Makefile flags.make flags_vm.make vm.make adlc.make jvmti.ma
 BUILDTREE_VARS	= GAMMADIR=$(GAMMADIR) OS_FAMILY=$(OS_FAMILY) \
 	ARCH=$(ARCH) BUILDARCH=$(BUILDARCH) LIBARCH=$(LIBARCH) VARIANT=$(VARIANT)
 
-# Define variables to be set in flags.make.
-# Default values are set in make/defs.make.
-ifeq ($(HOTSPOT_BUILD_VERSION),)
-  HS_BUILD_VER=$(HOTSPOT_RELEASE_VERSION)
-else
-  HS_BUILD_VER=$(HOTSPOT_RELEASE_VERSION)-$(HOTSPOT_BUILD_VERSION)
-endif
-# Set BUILD_USER from system-dependent hints:  $LOGNAME, $(whoami)
-ifndef HOTSPOT_BUILD_USER
-  HOTSPOT_BUILD_USER := $(shell echo $$LOGNAME)
-endif
-ifndef HOTSPOT_BUILD_USER
-  HOTSPOT_BUILD_USER := $(shell whoami)
-endif
-# Define HOTSPOT_VM_DISTRO based on settings in build/hotspot_distro
-# or build/closed/hotspot_distro.
-ifndef HOTSPOT_VM_DISTRO
-  CLOSED_DIR_EXISTS := $(shell                \
-    if [ -d $(GAMMADIR)/build/closed ] ; then \
-      echo true;                              \
-    else                                      \
-      echo false;                             \
-    fi)
-  ifeq ($(CLOSED_DIR_EXISTS), true)
-    include $(GAMMADIR)/build/closed/hotspot_distro
-  else
-    include $(GAMMADIR)/build/hotspot_distro
-  endif
-endif
-
-BUILDTREE_VARS += HOTSPOT_RELEASE_VERSION=$(HS_BUILD_VER) HOTSPOT_BUILD_VERSION= JRE_RELEASE_VERSION=$(JRE_RELEASE_VERSION) 
-
 BUILDTREE	= \
 	$(MAKE) -f $(BUILDTREE_MAKE) $(BUILDTREE_TARGETS) $(BUILDTREE_VARS)
 
@@ -184,11 +148,6 @@ flags.make: $(BUILDTREE_MAKE) ../shared_dirs.lst
 	echo "BUILDARCH = $(BUILDARCH)"; \
 	echo "LIBARCH = $(LIBARCH)"; \
 	echo "TARGET = $(TARGET)"; \
-	echo "HS_BUILD_VER = $(HS_BUILD_VER)"; \
-	echo "JRE_RELEASE_VER = $(JRE_RELEASE_VERSION)"; \
-	echo "SA_BUILD_VERSION = $(HS_BUILD_VER)"; \
-	echo "HOTSPOT_BUILD_USER = $(HOTSPOT_BUILD_USER)"; \
-	echo "HOTSPOT_VM_DISTRO = $(HOTSPOT_VM_DISTRO)"; \
 	echo "$(LP64_SETTING/$(DATA_MODE))"; \
 	echo; \
 	echo "Src_Dirs = \\"; \

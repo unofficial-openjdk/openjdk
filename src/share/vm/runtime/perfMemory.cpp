@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -48,7 +51,7 @@ void perfMemory_exit() {
   // resources it may be dependent on. Typically, the StatSampler
   // is disengaged from the watcher thread when this method is called,
   // but it is not disengaged if this method is invoked during a
-  // VM abort.
+  // VM abort. 
   //
   if (!StatSampler::is_active())
     PerfDataManager::destroy();
@@ -71,11 +74,11 @@ void PerfMemory::initialize() {
 
   if (PerfTraceMemOps) {
     tty->print("PerfDataMemorySize = " SIZE_FORMAT ","
-               " os::vm_allocation_granularity = " SIZE_FORMAT ","
-               " adjusted size = " SIZE_FORMAT "\n",
-               PerfDataMemorySize,
-               os::vm_allocation_granularity(),
-               capacity);
+	       " os::vm_allocation_granularity = " SIZE_FORMAT ","
+	       " adjusted size = " SIZE_FORMAT "\n",
+	       PerfDataMemorySize,
+	       os::vm_allocation_granularity(),
+	       capacity);
   }
 
   // allocate PerfData memory region
@@ -103,9 +106,9 @@ void PerfMemory::initialize() {
 
     if (PerfTraceMemOps) {
       tty->print("PerfMemory created: address = " INTPTR_FORMAT ","
-                 " size = " SIZE_FORMAT "\n",
-                 (void*)_start,
-                 _capacity);
+		 " size = " SIZE_FORMAT "\n",
+		 (void*)_start,
+		 _capacity);
     }
 
     _prologue = (PerfDataPrologue *)_start;
@@ -222,13 +225,13 @@ void PerfMemory::mark_updated() {
 // Returns the complete path including the file name of performance data file.
 // Caller is expected to release the allocated memory.
 char* PerfMemory::get_perfdata_file_path() {
-  char* dest_file = NULL;
-
-  if (PerfDataSaveFile != NULL) {
+  char* dest_file = NULL; 
+ 
+  if (PerfDataSaveFile[0] != '\0') {
     // dest_file_name stores the validated file name if file_name
     // contains %p which will be replaced by pid.
     dest_file = NEW_C_HEAP_ARRAY(char, JVM_MAXPATHLEN);
-    if(!Arguments::copy_expand_pid(PerfDataSaveFile, strlen(PerfDataSaveFile),
+    if(!Arguments::copy_expand_pid(PerfDataSaveFile, strlen(PerfDataSaveFile), 
                                    dest_file, JVM_MAXPATHLEN)) {
       FREE_C_HEAP_ARRAY(char, dest_file);
       if (PrintMiscellaneous && Verbose) {
@@ -243,6 +246,7 @@ char* PerfMemory::get_perfdata_file_path() {
   dest_file = NEW_C_HEAP_ARRAY(char, PERFDATA_FILENAME_LEN);
   jio_snprintf(dest_file, PERFDATA_FILENAME_LEN,
                "%s_%d", PERFDATA_NAME, os::current_process_id());
-
+   
   return dest_file;
 }
+

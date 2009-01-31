@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // ciInstance
@@ -41,7 +44,7 @@ protected:
 
   const char* type_string() { return "ciInstance"; }
 
-  void print_impl(outputStream* st);
+  void print_impl();
 
 public:
   // If this object is a java mirror, return the corresponding type.
@@ -59,3 +62,4 @@ public:
   // Constant value of a field at the specified offset.
   ciConstant field_value_by_offset(int field_offset);
 };
+

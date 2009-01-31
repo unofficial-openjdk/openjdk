@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //
@@ -53,7 +56,7 @@ class ObjectStartArray : public CHeapObj {
  protected:
 
   // Mapping from address to object start array entry
-  jbyte* block_for_addr(void* p) const {
+  jbyte* block_for_addr(void* p) const { 
     assert(_covered_region.contains(p),
            "out of bounds access to object start array");
     jbyte* result = &_offset_base[uintptr_t(p) >> block_shift];
@@ -63,9 +66,9 @@ class ObjectStartArray : public CHeapObj {
   }
 
   // Mapping from object start array entry to address of first word
-  HeapWord* addr_for_block(jbyte* p) {
+  HeapWord* addr_for_block(jbyte* p) { 
     assert(_blocks_region.contains(p),
-           "out of bounds access to object start array");
+	   "out of bounds access to object start array");
     size_t delta = pointer_delta(p, _offset_base, sizeof(jbyte));
     HeapWord* result = (HeapWord*) (delta << block_shift);
     assert(_covered_region.contains(result),
@@ -83,7 +86,7 @@ class ObjectStartArray : public CHeapObj {
     }
 
     assert(_blocks_region.contains(p),
-           "out of bounds access to object start array");
+	   "out of bounds access to object start array");
 
     if (*p == clean_block) {
       return _covered_region.end();
@@ -92,7 +95,7 @@ class ObjectStartArray : public CHeapObj {
     size_t delta = pointer_delta(p, _offset_base, sizeof(jbyte));
     HeapWord* result = (HeapWord*) (delta << block_shift);
     result += *p;
-
+    
     assert(_covered_region.contains(result),
            "out of bounds accessor from card marking array");
 
@@ -100,7 +103,7 @@ class ObjectStartArray : public CHeapObj {
   }
 
  public:
-
+  
   // This method is in lieu of a constructor, so that this class can be
   // embedded inline in other classes.
   void initialize(MemRegion reserved_region);
@@ -160,3 +163,4 @@ class ObjectStartArray : public CHeapObj {
   // "start", the method will return true.
   bool object_starts_in_range(HeapWord* start_addr, HeapWord* end_addr) const;
 };
+

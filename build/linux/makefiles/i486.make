@@ -24,7 +24,7 @@
 
 # TLS helper, assembled from .s file
 # Not included in includeDB because it has no dependencies
-Obj_Files += linux_x86_32.o
+Obj_Files += linux_i486.o
 
 # The copied fdlibm routines in sharedRuntimeTrig.o must not be optimized
 OPT_CFLAGS/sharedRuntimeTrig.o = $(OPT_CFLAGS/NOOPT)

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class JniPeriodicCheckerTask;
@@ -39,7 +42,7 @@ class JniPeriodicChecker : AllStatic {
     static JniPeriodicCheckerTask* _task;
 
   public:
-    // Start/stop task
+    // Start/stop task 
     static void engage();
     static void disengage();
 

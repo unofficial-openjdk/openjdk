@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -63,7 +66,7 @@ class CodeBlob_sizes {
                   header_size             * 100 / total_size,
                   relocation_size         * 100 / total_size,
                   code_size               * 100 / total_size,
-                  stub_size               * 100 / total_size,
+                  stub_size               * 100 / total_size,                  
                   scopes_oop_size         * 100 / total_size,
                   scopes_data_size        * 100 / total_size,
                   scopes_pcs_size         * 100 / total_size);
@@ -75,11 +78,11 @@ class CodeBlob_sizes {
     header_size      += cb->header_size();
     relocation_size  += cb->relocation_size();
     scopes_oop_size  += cb->oops_size();
-    if (cb->is_nmethod()) {
+    if (cb->is_nmethod()) { 
       nmethod *nm = (nmethod*)cb;
       code_size        += nm->code_size();
       stub_size        += nm->stub_size();
-
+    
       scopes_data_size += nm->scopes_data_size();
       scopes_pcs_size  += nm->scopes_pcs_size();
     } else {
@@ -143,12 +146,12 @@ CodeBlob* CodeCache::allocate(int size) {
     if (PrintCodeCacheExtension) {
       ResourceMark rm;
       tty->print_cr("code cache extended to [" INTPTR_FORMAT ", " INTPTR_FORMAT "] (%d bytes)",
-                    (intptr_t)_heap->begin(), (intptr_t)_heap->end(),
-                    (address)_heap->end() - (address)_heap->begin());
+		    (intptr_t)_heap->begin(), (intptr_t)_heap->end(),
+		    (address)_heap->end() - (address)_heap->begin());
     }
   }
   verify_if_often();
-  if (PrintCodeCache2) {        // Need to add a new flag
+  if (PrintCodeCache2) {	// Need to add a new flag
       ResourceMark rm;
       tty->print_cr("CodeCache allocation:  addr: " INTPTR_FORMAT ", size: 0x%x\n", cb, size);
   }
@@ -159,18 +162,18 @@ void CodeCache::free(CodeBlob* cb) {
   assert_locked_or_safepoint(CodeCache_lock);
   verify_if_often();
 
-  if (PrintCodeCache2) {        // Need to add a new flag
+  if (PrintCodeCache2) {	// Need to add a new flag
       ResourceMark rm;
       tty->print_cr("CodeCache free:  addr: " INTPTR_FORMAT ", size: 0x%x\n", cb, cb->size());
   }
   if (cb->is_nmethod() && ((nmethod *)cb)->has_dependencies()) {
     _number_of_nmethods_with_dependencies--;
-  }
-  _number_of_blobs--;
+  }  
+  _number_of_blobs--;  
 
   _heap->deallocate(cb);
 
-  verify_if_often();
+  verify_if_often();  
   assert(_number_of_blobs >= 0, "sanity check");
 }
 
@@ -180,7 +183,7 @@ void CodeCache::commit(CodeBlob* cb) {
   assert_locked_or_safepoint(CodeCache_lock);
   if (cb->is_nmethod() && ((nmethod *)cb)->has_dependencies()) {
     _number_of_nmethods_with_dependencies++;
-  }
+  }  
   // flush the hardware I-cache
   ICache::invalidate_range(cb->instructions_begin(), cb->instructions_size());
 }
@@ -208,33 +211,33 @@ bool CodeCache::contains(void *p) {
 // This method is safe to call without holding the CodeCache_lock, as long as a dead codeblob is not
 // looked up (i.e., one that has been marked for deletion). It only dependes on the _segmap to contain
 // valid indices, which it will always do, as long as the CodeBlob is not in the process of being recycled.
-CodeBlob* CodeCache::find_blob(void* start) {
+CodeBlob* CodeCache::find_blob(void* start) {  
   CodeBlob* result = find_blob_unsafe(start);
   if (result == NULL) return NULL;
   // We could potientially look up non_entrant methods
   guarantee(!result->is_zombie() || result->is_locked_by_vm() || is_error_reported(), "unsafe access to zombie method");
-  return result;
+  return result;  
 }
 
-nmethod* CodeCache::find_nmethod(void* start) {
+nmethod* CodeCache::find_nmethod(void* start) {  
   CodeBlob *cb = find_blob(start);
-  assert(cb == NULL || cb->is_nmethod(), "did not find an nmethod");
+  assert(cb == NULL || cb->is_nmethod(), "did not find an nmethod");  
   return (nmethod*)cb;
 }
 
 
 void CodeCache::blobs_do(void f(CodeBlob* nm)) {
   assert_locked_or_safepoint(CodeCache_lock);
-  FOR_ALL_BLOBS(p) {
-    f(p);
+  FOR_ALL_BLOBS(p) { 
+    f(p); 
   }
 }
 
 
 void CodeCache::nmethods_do(void f(nmethod* nm)) {
   assert_locked_or_safepoint(CodeCache_lock);
-  FOR_ALL_BLOBS(nm) {
-    if (nm->is_nmethod()) f((nmethod*)nm);
+  FOR_ALL_BLOBS(nm) { 
+    if (nm->is_nmethod()) f((nmethod*)nm); 
   }
 }
 
@@ -321,11 +324,11 @@ void CodeCache::initialize() {
   MemoryService::add_code_heap_memory_pool(_heap);
 
   // Initialize ICache flush mechanism
-  // This service is needed for os::register_code_area
+  // This service is needed for os::register_code_area 
   icache_init();
 
-  // Give OS a chance to register generated code area.
-  // This is used on Windows 64 bit platforms to register
+  // Give OS a chance to register generated code area.  
+  // This is used on Windows 64 bit platforms to register 
   // Structured Exception Handlers for our generated code.
   os::register_code_area(_heap->low_boundary(), _heap->high_boundary());
 }
@@ -337,8 +340,8 @@ void codeCache_init() {
 
 //------------------------------------------------------------------------------------------------
 
-int CodeCache::number_of_nmethods_with_dependencies() {
-  return _number_of_nmethods_with_dependencies;
+int CodeCache::number_of_nmethods_with_dependencies() { 
+  return _number_of_nmethods_with_dependencies; 
 }
 
 void CodeCache::clear_inline_caches() {
@@ -357,7 +360,7 @@ static int dependentCheckCount = 0;
 
 int CodeCache::mark_for_deoptimization(DepChange& changes) {
   MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
-
+  
 #ifndef PRODUCT
   dependentCheckTime.start();
   dependentCheckCount++;
@@ -392,11 +395,11 @@ int CodeCache::mark_for_deoptimization(DepChange& changes) {
       }
     }
   }
-
+  
 #ifndef PRODUCT
   dependentCheckTime.stop();
 #endif // PRODUCT
-
+  
   return number_of_marked_CodeBlobs;
 }
 
@@ -405,7 +408,7 @@ int CodeCache::mark_for_deoptimization(DepChange& changes) {
 int CodeCache::mark_for_evol_deoptimization(instanceKlassHandle dependee) {
   MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
   int number_of_marked_CodeBlobs = 0;
-
+  
   // Deoptimize all methods of the evolving class itself
   objArrayOop old_methods = dependee->methods();
   for (int i = 0; i < old_methods->length(); i++) {
@@ -428,7 +431,7 @@ int CodeCache::mark_for_evol_deoptimization(instanceKlassHandle dependee) {
     } else  {
       // flush caches in case they refer to a redefined methodOop
       nm->clear_inline_caches();
-    }
+    } 
   }
 
   return number_of_marked_CodeBlobs;
@@ -436,7 +439,7 @@ int CodeCache::mark_for_evol_deoptimization(instanceKlassHandle dependee) {
 #endif // HOTSWAP
 
 
-// Deoptimize all methods
+// Deoptimize all methods 
 void CodeCache::mark_all_nmethods_for_deoptimization() {
   MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
   FOR_ALL_ALIVE_NMETHODS(nm) {
@@ -448,7 +451,7 @@ void CodeCache::mark_all_nmethods_for_deoptimization() {
 int CodeCache::mark_for_deoptimization(methodOop dependee) {
   MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
   int number_of_marked_CodeBlobs = 0;
-
+  
   FOR_ALL_ALIVE_NMETHODS(nm) {
     if (nm->is_dependent_on_method(dependee)) {
       ResourceMark rm;
@@ -470,7 +473,7 @@ void CodeCache::make_marked_nmethods_zombies() {
       // be zombied when it is no longer seen on the stack. Note that the nmethod
       // might be "entrant" and not on the stack and so could be zombied immediately
       // but we can't tell because we don't track it on stack until it becomes
-      // non-entrant.
+      // non-entrant. 
 
       if (nm->is_not_entrant() && nm->can_not_entrant_be_converted()) {
         nm->make_zombie();
@@ -532,23 +535,23 @@ void CodeCache::print_internals() {
       nmethod* nm = (nmethod*)cb;
 
       if (Verbose && nm->method() != NULL) {
-        ResourceMark rm;
-        char *method_name = nm->method()->name_and_sig_as_C_string();
-        tty->print("%s", method_name);
-        if(nm->is_alive()) { tty->print_cr(" alive"); }
-        if(nm->is_not_entrant()) { tty->print_cr(" not-entrant"); }
-        if(nm->is_zombie()) { tty->print_cr(" zombie"); }
+	ResourceMark rm;
+	char *method_name = nm->method()->name_and_sig_as_C_string();
+	tty->print("%s", method_name);
+	if(nm->is_alive()) { tty->print_cr(" alive"); }
+	if(nm->is_not_entrant()) { tty->print_cr(" not-entrant"); }
+	if(nm->is_zombie()) { tty->print_cr(" zombie"); }
       }
 
       nmethodCount++;
-
+ 
       if(nm->is_alive()) { nmethodAlive++; }
       if(nm->is_not_entrant()) { nmethodNotEntrant++; }
       if(nm->is_zombie()) { nmethodZombie++; }
       if(nm->is_unloaded()) { nmethodUnloaded++; }
       if(nm->is_native_method()) { nmethodNative++; }
 
-      if(nm->method() != NULL && nm->is_java_method()) {
+      if(nm->method() != NULL && nm->is_java_method()) { 
         nmethodJava++;
         if(nm->code_size() > maxCodeSize) {
           maxCodeSize = nm->code_size();
@@ -575,7 +578,7 @@ void CodeCache::print_internals() {
   for (cb = first(); cb != NULL; cb = next(cb)) {
     if (cb->is_nmethod()) {
       nmethod* nm = (nmethod*)cb;
-      if(nm->is_java_method()) {
+      if(nm->is_java_method()) { 
         buckets[nm->code_size() / bucketSize]++;
       }
     }
@@ -645,7 +648,7 @@ void CodeCache::print() {
         code_size += p->instructions_size();
         OopMapSet* set = p->oop_maps();
         if (set != NULL) {
-          number_of_oop_maps += set->size();
+          number_of_oop_maps += set->size();      
           map_size   += set->heap_size();
         }
       }

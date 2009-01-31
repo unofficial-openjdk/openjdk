@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class ciMethodBlocks;
@@ -86,7 +89,7 @@ class ciMethod : public ciObject {
 
   const char* type_string()                      { return "ciMethod"; }
 
-  void print_impl(outputStream* st);
+  void print_impl();
 
   void load_code();
 
@@ -107,7 +110,7 @@ class ciMethod : public ciObject {
   ciSymbol* name() const                         { return _name; }
   ciInstanceKlass* holder() const                { return _holder; }
   ciMethodData* method_data();
-
+  
   // Signature information.
   ciSignature* signature() const                 { return _signature; }
   ciType*      return_type() const               { return _signature->return_type(); }
@@ -169,7 +172,7 @@ class ciMethod : public ciObject {
   ciTypeFlow*   get_osr_flow_analysis(int osr_bci);  // alternate entry point
   ciCallProfile call_profile_at_bci(int bci);
   int           interpreter_call_site_count(int bci);
-
+  
   // Given a certain calling environment, find the monomorphic target
   // for the call.  Return NULL if the call is not monomorphic in
   // its calling environment.
@@ -177,7 +180,7 @@ class ciMethod : public ciObject {
                                     ciInstanceKlass* callee_holder,
                                     ciInstanceKlass* actual_receiver);
 
-  // Given a known receiver klass, find the target for the call.
+  // Given a known receiver klass, find the target for the call.  
   // Return NULL if the call has no target or is abstract.
   ciMethod* resolve_invoke(ciKlass* caller, ciKlass* exact_receiver);
 
@@ -185,9 +188,9 @@ class ciMethod : public ciObject {
   int resolve_vtable_index(ciKlass* caller, ciKlass* receiver);
 
   // Compilation directives
-  bool will_link(ciKlass* accessing_klass,
-                 ciKlass* declared_method_holder,
-                 Bytecodes::Code bc);
+  bool will_link(ciKlass* accessing_klass, 
+		 ciKlass* declared_method_holder,
+		 Bytecodes::Code bc);
   bool should_exclude();
   bool should_inline();
   bool should_not_inline();
@@ -234,13 +237,11 @@ class ciMethod : public ciObject {
   bool can_be_statically_bound() const           { return _can_be_statically_bound; }
 
   // Print the bytecodes of this method.
-  void print_codes_on(outputStream* st);
-  void print_codes() {
-    print_codes_on(tty);
-  }
-  void print_codes_on(int from, int to, outputStream* st);
+  void print_codes();
+  void print_codes(int from, int to);
 
   // Print the name of this method in various incarnations.
   void print_name(outputStream* st = tty);
   void print_short_name(outputStream* st = tty);
 };
+

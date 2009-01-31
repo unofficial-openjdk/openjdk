@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -172,7 +175,7 @@ void Compilation::build_hir() {
 
 void Compilation::emit_lir() {
   CHECK_BAILOUT();
-
+  
   LIRGenerator gen(this, method());
   {
     PhaseTraceTime timeit(_t_lirGeneration);
@@ -186,7 +189,7 @@ void Compilation::emit_lir() {
 
     LinearScan* allocator = new LinearScan(hir(), &gen, frame_map());
     set_allocator(allocator);
-    // Assign physical registers to LIR operands using a linear scan algorithm.
+    // Assign physical registers to LIR operands using a linear scan algorithm.    
     allocator->do_linear_scan();
     CHECK_BAILOUT();
 
@@ -397,7 +400,7 @@ void Compilation::generate_exception_handler_table() {
         scope_depths->append(handler->scope_count());
     }
       pcos->append(handler->entry_pco());
-
+      
       // stop processing once we hit a catch any
       if (handler->is_catch_all()) {
         assert(i == handlers->length() - 1, "catch all must be last handler");
@@ -435,7 +438,7 @@ Compilation::Compilation(AbstractCompiler* compiler, ciEnv* env, ciMethod* metho
   assert(_arena == NULL, "shouldn't only one instance of Compilation in existence at a time");
   _arena = Thread::current()->resource_area();
   _compilation = this;
-  _needs_debug_information = JvmtiExport::can_examine_or_deopt_anywhere() ||
+  _needs_debug_information = JvmtiExport::can_examine_or_deopt_anywhere() || 
                                JavaMonitorsInStackTrace || AlwaysEmitDebugInfo || DeoptimizeALot;
   _exception_info_list = new ExceptionInfoList();
   _implicit_exception_table.set_size(0);

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.types.basic;
@@ -56,7 +56,7 @@ public class BasicField implements Field {
     this.offset = offsetInBytes;
     this.staticFieldAddress = staticFieldAddress;
   }
-
+  
   public String getName() {
     return name;
   }
@@ -80,7 +80,7 @@ public class BasicField implements Field {
     }
     return offset;
   }
-
+  
   public Address getStaticFieldAddress() throws WrongTypeException {
     if (!isStatic) {
       throw new WrongTypeException("field \"" + name + "\" in class " +
@@ -88,7 +88,7 @@ public class BasicField implements Field {
     }
     return staticFieldAddress;
   }
-
+  
   //--------------------------------------------------------------------------------
   // Dereferencing operations for non-static fields
   //

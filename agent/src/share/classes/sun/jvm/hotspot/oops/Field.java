@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.oops;
@@ -83,13 +83,13 @@ public class Field {
 
   /** Indicates whether this is a VM field */
   public boolean isVMField() { return isVMField; }
-
+  
   /** Indicates whether this is a named field */
   public boolean isNamedField() { return (id instanceof NamedFieldIdentifier); }
 
   public void printOn(PrintStream tty) {
     getID().printOn(tty);
-    tty.print(" {" + getOffset() + "} :");
+    tty.print(" {" + getOffset() + "} :");    
   }
 
   /** (Named, non-VM fields only) Returns the InstanceKlass containing
@@ -104,7 +104,7 @@ public class Field {
   public int getFieldArrayIndex() {
     return fieldArrayIndex;
   }
-
+  
   /** (Named, non-VM fields only) Retrieves the access flags. */
   public long getAccessFlags() { return accessFlags.getValue(); }
   public AccessFlags getAccessFlagsObj() { return accessFlags; }

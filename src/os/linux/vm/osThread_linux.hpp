@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
  private:
@@ -48,7 +51,7 @@
   sigset_t _caller_sigmask; // Caller's signal mask
 
  public:
-
+  
   // Methods to save/restore caller's signal mask
   sigset_t  caller_sigmask() const       { return _caller_sigmask; }
   void    set_caller_sigmask(sigset_t sigmask)  { _caller_sigmask = sigmask; }
@@ -103,7 +106,7 @@ public:
 private:
   void* _siginfo;
   ucontext_t* _ucontext;
-  int _expanding_stack;                 /* non zero if manually expanding stack */
+  int _expanding_stack;			/* non zero if manually expanding stack */
   address _alt_sig_stack;               /* address of base of alternate signal stack */
 
 public:
@@ -137,5 +140,5 @@ private:
   void pd_destroy();
 
 // Reconciliation History
-// osThread_solaris.hpp 1.24 99/08/27 13:11:54
+// osThread_solaris.hpp	1.24 99/08/27 13:11:54
 // End

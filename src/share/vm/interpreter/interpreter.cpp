@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -50,7 +53,7 @@ void InterpreterCodelet::print() {
   if (description() != NULL) tty->print("%s  ", description());
   if (bytecode()    >= 0   ) tty->print("%d %s  ", bytecode(), Bytecodes::name(bytecode()));
   tty->print_cr("[" INTPTR_FORMAT ", " INTPTR_FORMAT "]  %d bytes",
-                code_begin(), code_end(), code_size());
+		code_begin(), code_end(), code_size());
 
   if (PrintInterpreter) {
     tty->cr();
@@ -113,8 +116,8 @@ void interpreter_init() {
   // notify JVMTI profiler
   if (JvmtiExport::should_post_dynamic_code_generated()) {
     JvmtiExport::post_dynamic_code_generated("Interpreter",
-                                             AbstractInterpreter::code()->code_start(),
-                                             AbstractInterpreter::code()->code_end());
+					     AbstractInterpreter::code()->code_start(),
+					     AbstractInterpreter::code()->code_end());
   }
 }
 
@@ -173,12 +176,12 @@ AbstractInterpreter::MethodKind AbstractInterpreter::method_kind(methodHandle m)
   //       methods. See also comments below.
   if (m->is_native()) {
     return m->is_synchronized() ? native_synchronized : native;
-  }
+  } 
 
   // Synchronized?
   if (m->is_synchronized()) {
     return zerolocals_synchronized;
-  }
+  } 
 
   if (RegisterFinalizersAtInit && m->code_size() == 1 &&
       m->intrinsic_id() == vmIntrinsics::_Object_init) {
@@ -190,14 +193,14 @@ AbstractInterpreter::MethodKind AbstractInterpreter::method_kind(methodHandle m)
   // Empty method?
   if (m->is_empty_method()) {
     return empty;
-  }
-
+  } 
+  
   // Accessor method?
   if (m->is_accessor()) {
     assert(m->size_of_parameters() == 1, "fast code for accessors assumes parameter size = 1");
     return accessor;
   }
-
+  
   // Special intrinsic method?
   // Note: This test must come _after_ the test for native methods,
   //       otherwise we will run into problems with JDK 1.2, see also
@@ -214,7 +217,7 @@ AbstractInterpreter::MethodKind AbstractInterpreter::method_kind(methodHandle m)
   }
 
   // Note: for now: zero locals for all non-empty methods
-  return zerolocals;
+  return zerolocals;  
 }
 
 
@@ -365,14 +368,14 @@ address AbstractInterpreter::continuation_for(methodOop method, address bcp, int
       }
       break;
     }
-
-    case Bytecodes::_ldc   :
-      type = constant_pool_type( method, *(bcp+1) );
+    
+    case Bytecodes::_ldc   : 
+      type = constant_pool_type( method, *(bcp+1) ); 
       break;
 
     case Bytecodes::_ldc_w : // fall through
-    case Bytecodes::_ldc2_w:
-      type = constant_pool_type( method, Bytes::get_Java_u2(bcp+1) );
+    case Bytecodes::_ldc2_w: 
+      type = constant_pool_type( method, Bytes::get_Java_u2(bcp+1) ); 
       break;
 
     default:

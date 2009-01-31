@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Linux_OS defines the interface to Linux operating systems
@@ -184,7 +187,7 @@ class Linux {
 
   // Stack repair handling
 
-  // none present
+  // none present 
 
   // LinuxThreads work-around for 6292965
   static int safe_cond_timedwait(pthread_cond_t *_cond, pthread_mutex_t *_mutex, const struct timespec *_abstime);
@@ -211,18 +214,18 @@ class Linux {
     void set_suspend_action(int x) { _suspend_action = x;    }
 
     // atomic updates for _state
-    void set_suspended()           {
+    void set_suspended()           { 
       jint temp, temp2;
       do {
-        temp = _state;
-        temp2 = Atomic::cmpxchg(temp | SR_SUSPENDED, &_state, temp);
+	temp = _state;
+	temp2 = Atomic::cmpxchg(temp | SR_SUSPENDED, &_state, temp);
       } while (temp2 != temp);
     }
-    void clear_suspended()        {
+    void clear_suspended()        { 
       jint temp, temp2;
       do {
-        temp = _state;
-        temp2 = Atomic::cmpxchg(temp & ~SR_SUSPENDED, &_state, temp);
+	temp = _state;
+	temp2 = Atomic::cmpxchg(temp & ~SR_SUSPENDED, &_state, temp);
       } while (temp2 != temp);
     }
     bool is_suspended()            { return _state & SR_SUSPENDED;       }
@@ -231,7 +234,7 @@ class Linux {
   };
 };
 
-
+  
 class PlatformEvent : public CHeapObj {
   private:
     double CachePad [4] ;   // increase odds that _mutex is sole occupant of cache line
@@ -239,9 +242,9 @@ class PlatformEvent : public CHeapObj {
     volatile int _nParked ;
     pthread_mutex_t _mutex  [1] ;
     pthread_cond_t  _cond   [1] ;
-    double PostPad  [2] ;
-    Thread * _Assoc ;
-
+    double PostPad  [2] ;  
+    Thread * _Assoc ; 
+    
   public:       // TODO-FIXME: make dtor private
     ~PlatformEvent() { guarantee (0, "invariant") ; }
 
@@ -254,17 +257,17 @@ class PlatformEvent : public CHeapObj {
       assert_status(status == 0, status, "mutex_init");
       _Event   = 0 ;
       _nParked = 0 ;
-      _Assoc   = NULL ;
+      _Assoc   = NULL ; 
     }
-
+  
     // Use caution with reset() and fired() -- they may require MEMBARs
-    void reset() { _Event = 0 ; }
-    int  fired() { return _Event; }
-    void park () ;
+    void reset() { _Event = 0 ; } 
+    int  fired() { return _Event; } 
+    void park () ; 
     void unpark () ;
-    int  TryPark () ;
+    int  TryPark () ; 
     int  park (jlong millis) ;
-    void SetAssociation (Thread * a) { _Assoc = a ; }
+    void SetAssociation (Thread * a) { _Assoc = a ; } 
 } ;
 
 class PlatformParker : public CHeapObj {

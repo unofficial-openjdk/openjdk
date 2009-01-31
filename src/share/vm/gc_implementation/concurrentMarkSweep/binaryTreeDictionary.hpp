@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,10 +22,10 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
-/*
+/* 
  * A binary tree based search structure for free blocks.
  * This is currently used in the Concurrent Mark&Sweep implementation.
  */
@@ -68,7 +71,7 @@ class TreeList: public FreeList {
   void clearLeft()               { _left = NULL;   }
   void clearRight()              { _right = NULL;  }
   void clearParent()             { _parent = NULL; }
-  void initialize()              { clearLeft(); clearRight(), clearParent(); }
+  void initialize()		 { clearLeft(); clearRight(), clearParent(); }
 
   // For constructing a TreeList from a Tree chunk or
   // address and size.
@@ -96,7 +99,7 @@ class TreeList: public FreeList {
 
 // A TreeChunk is a subclass of a FreeChunk that additionally
 // maintains a pointer to the free list on which it is currently
-// linked.
+// linked.  
 // A TreeChunk is also used as a node in the binary tree.  This
 // allows the binary tree to be maintained without any additional
 // storage (the free chunks are used).  In a binary tree the first
@@ -148,8 +151,8 @@ class BinaryTreeDictionary: public FreeBlockDictionary {
   void set_root(TreeList* v) { _root = v; }
 
   // Remove a chunk of size "size" or larger from the tree and
-  // return it.  If the chunk
-  // is the last chunk of that size, remove the node for that size
+  // return it.  If the chunk 
+  // is the last chunk of that size, remove the node for that size 
   // from the tree.
   TreeChunk* getChunkFromTree(size_t size, Dither dither, bool splay);
   // Return a list of the specified size or NULL from the tree.
@@ -195,13 +198,13 @@ class BinaryTreeDictionary: public FreeBlockDictionary {
 
   // Reset the dictionary to the initial conditions with
   // a single free chunk.
-  void       reset(MemRegion mr);
+  void	     reset(MemRegion mr);
   void       reset(HeapWord* addr, size_t size);
   // Reset the dictionary to be empty.
   void       reset();
 
   // Return a chunk of size "size" or greater from
-  // the tree.
+  // the tree.  
   // want a better dynamic splay strategy for the future.
   FreeChunk* getChunk(size_t size, Dither dither) {
     verify_par_locked();
@@ -261,21 +264,21 @@ class BinaryTreeDictionary: public FreeBlockDictionary {
   // Return the largest free chunk in the tree.
   FreeChunk* findLargestDict() const;
   // Accessors for statistics
-  void       setTreeSurplus(double splitSurplusPercent);
-  void       setTreeHints(void);
+  void 	     setTreeSurplus(double splitSurplusPercent);
+  void 	     setTreeHints(void);
   // Reset statistics for all the lists in the tree.
-  void       clearTreeCensus(void);
+  void	     clearTreeCensus(void);
   // Print the statistcis for all the lists in the tree.  Also may
   // print out summaries.
-  void       printDictCensus(void) const;
+  void	     printDictCensus(void) const;
 
   // For debugging.  Returns the sum of the _returnedBytes for
   // all lists in the tree.
-  size_t     sumDictReturnedBytes()     PRODUCT_RETURN0;
+  size_t     sumDictReturnedBytes()	PRODUCT_RETURN0;
   // Sets the _returnedBytes for all the lists in the tree to zero.
-  void       initializeDictReturnedBytes()      PRODUCT_RETURN;
+  void	     initializeDictReturnedBytes()	PRODUCT_RETURN;
   // For debugging.  Return the total number of chunks in the dictionary.
-  size_t     totalCount()       PRODUCT_RETURN0;
+  size_t     totalCount()	PRODUCT_RETURN0;
 
   void       reportStatistics() const;
 

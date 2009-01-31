@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -32,7 +32,7 @@ public abstract class SPARCFormat3AInstruction extends SPARCInstruction {
     final protected ImmediateOrRegister operand2;
     final protected SPARCRegister rd;
 
-    public SPARCFormat3AInstruction(String name, int opcode, SPARCRegister rs1,
+    public SPARCFormat3AInstruction(String name, int opcode, SPARCRegister rs1, 
                                     ImmediateOrRegister operand2, SPARCRegister rd) {
         super(name);
         this.opcode = opcode;
@@ -59,7 +59,7 @@ public abstract class SPARCFormat3AInstruction extends SPARCInstruction {
         buf.append(spaces);
         buf.append(rs1.toString());
         buf.append(comma);
-        buf.append(getOperand2String());
+        buf.append(getOperand2String()); 
         buf.append(comma);
         buf.append(rd.toString());
         return buf.toString();

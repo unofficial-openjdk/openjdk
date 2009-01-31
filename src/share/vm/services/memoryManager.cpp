@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -36,7 +39,7 @@ MemoryManager::MemoryManager() {
 }
 
 void MemoryManager::add_pool(MemoryPool* pool) {
-  assert(_num_pools < MemoryManager::max_num_pools, "_num_pools exceeds the max");
+  assert(_num_pools < MemoryManager::max_num_pools, "_num_pools exceeds the max");  
   if (_num_pools < MemoryManager::max_num_pools) {
     _pools[_num_pools] = pool;
     _num_pools++;
@@ -81,7 +84,7 @@ instanceOop MemoryManager::get_memory_manager_instance(TRAPS) {
     // Extra manager instances will just be gc'ed.
     klassOop k = Management::sun_management_ManagementFactory_klass(CHECK_0);
     instanceKlassHandle ik(THREAD, k);
-
+    
     Handle mgr_name = java_lang_String::create_from_str(name(), CHECK_0);
 
     JavaValue result(T_OBJECT);
@@ -93,7 +96,7 @@ instanceOop MemoryManager::get_memory_manager_instance(TRAPS) {
     if (is_gc_memory_manager()) {
       method_name = vmSymbolHandles::createGarbageCollector_name();
       signature = vmSymbolHandles::createGarbageCollector_signature();
-      args.push_oop(Handle());      // Argument 2 (for future extension)
+      args.push_oop(Handle());      // Argument 2 (for future extension) 
     } else {
       method_name = vmSymbolHandles::createMemoryManager_name();
       signature = vmSymbolHandles::createMemoryManager_signature();
@@ -206,10 +209,10 @@ void GCMemoryManager::gc_begin() {
     MemoryPool* pool = MemoryService::get_memory_pool(i);
     MemoryUsage usage = pool->get_memory_usage();
     _last_gc_stat->set_before_gc_usage(i, usage);
-    HS_DTRACE_PROBE8(hotspot, mem__pool__gc__begin,
+    HS_DTRACE_PROBE8(hotspot, mem__pool__gc__begin, 
       name(), strlen(name()),
-      pool->name(), strlen(pool->name()),
-      usage.init_size(), usage.used(),
+      pool->name(), strlen(pool->name()), 
+      usage.init_size(), usage.used(), 
       usage.committed(), usage.max_size());
   }
 }
@@ -224,10 +227,10 @@ void GCMemoryManager::gc_end() {
     MemoryPool* pool = MemoryService::get_memory_pool(i);
     MemoryUsage usage = pool->get_memory_usage();
 
-    HS_DTRACE_PROBE8(hotspot, mem__pool__gc__end,
-      name(), strlen(name()),
+    HS_DTRACE_PROBE8(hotspot, mem__pool__gc__end, 
+      name(), strlen(name()), 
       pool->name(), strlen(pool->name()),
-      usage.init_size(), usage.used(),
+      usage.init_size(), usage.used(), 
       usage.committed(), usage.max_size());
 
     _last_gc_stat->set_after_gc_usage(i, usage);

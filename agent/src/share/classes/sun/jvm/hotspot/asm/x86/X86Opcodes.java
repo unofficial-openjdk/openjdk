@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.x86;
@@ -36,7 +36,7 @@ public interface X86Opcodes
    public static final int w_mode = 3;
    public static final int d_mode = 4;
    public static final int p_mode = 5;
-
+   
    public static final int dq_mode = 6;     //SSE: double-quadword
    public static final int pi_mode = 7;     //SSE: quadword MMX register
    public static final int ps_mode = 8;     //SSE: 128bit single precision floating point data
@@ -44,9 +44,9 @@ public interface X86Opcodes
    public static final int sd_mode = 10;    //SSE: 128bit scalar double precision floating point data
    public static final int  q_mode = 11;    //SSE: quadword
    public static final int ss_mode = 12;    //SSE: scalar element of 128bit floating data
-   public static final int si_mode = 13;    //SSE: doubleword integer register (e.g. eax)
+   public static final int si_mode = 13;    //SSE: doubleword integer register (e.g. eax)   
    public static final int  s_mode = 14;    //SSE: 6 byte pseudo descriptor
-
+   
    public static final int INVALID_OPERANDTYPE = -1;
 
    public static final int EAX = 0;
@@ -125,3 +125,5 @@ public interface X86Opcodes
    public static final int PREFIX_ADR = 0x400;
    public static final int PREFIX_FWAIT = 0x800;
 }
+
+

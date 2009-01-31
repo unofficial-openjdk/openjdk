@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include <stdio.h>
@@ -35,14 +38,14 @@ int main(int argc, char** argv) {
          // process
          ph = Pgrab(atoi(argv[1]));
          break;
-      }
+      } 
 
       case 3: {
         // core
         ph = Pgrab_core(argv[1], argv[2]);
         break;
       }
-
+  
       default: {
         printf("usage %s <pid> or %s <exec file> <core file>\n");
         return 1;

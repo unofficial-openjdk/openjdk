@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class JavaAssertions: AllStatic {
@@ -51,29 +54,29 @@ private:
   static inline void trace(const char* name, const char* typefound,
     const char* namefound, bool enabled);
 
-  static inline OptionList*     match_class(const char* classname);
-  static OptionList*            match_package(const char* classname);
+  static inline OptionList*	match_class(const char* classname);
+  static OptionList*		match_package(const char* classname);
 
-  static bool           _userDefault;   // User class default (-ea/-da).
-  static bool           _sysDefault;    // System class default (-esa/-dsa).
-  static OptionList*    _classes;       // Options for classes.
-  static OptionList*    _packages;      // Options for package trees.
+  static bool		_userDefault;	// User class default (-ea/-da).
+  static bool		_sysDefault;	// System class default (-esa/-dsa).
+  static OptionList*	_classes;	// Options for classes.
+  static OptionList*	_packages;	// Options for package trees.
 };
 
 class JavaAssertions::OptionList: public CHeapObj {
 public:
   inline OptionList(const char* name, bool enable, OptionList* next);
 
-  inline const char*    name() const    { return _name; }
-  inline bool           enabled() const { return _enabled; }
-  inline OptionList*    next() const    { return _next; }
+  inline const char*	name() const	{ return _name; }
+  inline bool		enabled() const	{ return _enabled; }
+  inline OptionList*	next() const	{ return _next; }
 
   static int count(OptionList* p);
 
 private:
-  const char*   _name;
-  OptionList*   _next;
-  bool          _enabled;
+  const char*	_name;
+  OptionList*	_next;
+  bool		_enabled;
 };
 
 inline bool JavaAssertions::userClassDefault() {

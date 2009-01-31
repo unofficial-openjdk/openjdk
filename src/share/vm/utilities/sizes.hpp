@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2004 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // The following two classes are used to represent 'sizes' and 'offsets' in the VM;
@@ -142,3 +145,4 @@ inline int      in_words   (WordSize x)               { return x; }
 // Use the following #define to get C++ field member offsets
 
 #define byte_offset_of(klass,field)   in_ByteSize((int)offset_of(klass, field))
+

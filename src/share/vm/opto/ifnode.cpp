@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Portions of code courtesy of Clifford Click
@@ -51,7 +54,7 @@ const Type *IfNode::Value( PhaseTransform *phase ) const {
   return TypeTuple::IFBOTH;     // No progress
 }
 
-const RegMask &IfNode::out_RegMask() const {
+const RegMask &IfNode::out_RegMask() const { 
   return RegMask::Empty;
 }
 
@@ -135,12 +138,12 @@ static Node* split_if(IfNode *iff, PhaseIterGVN *igvn) {
     }
     // Make sure we can account for all Phi uses
     for (DUIterator_Fast kmax, k = u->fast_outs(kmax); k < kmax; k++) {
-      Node* v = u->fast_out(k); // User of the phi
+      Node* v = u->fast_out(k); // User of the phi  
       // CNC - Allow only really simple patterns.
       // In particular I disallow AddP of the Phi, a fairly common pattern
       if( v == cmp ) continue;  // The compare is OK
       if( (v->is_ConstraintCast()) &&
-          v->in(0)->in(0) == iff )
+          v->in(0)->in(0) == iff ) 
         continue;               // CastPP/II of the IfNode is OK
       // Disabled following code because I cannot tell if exactly one
       // path dominates without a real dominator check. CNC 9/9/1999
@@ -204,11 +207,11 @@ static Node* split_if(IfNode *iff, PhaseIterGVN *igvn) {
   //      T  F                              T  F                  T  F
   // ..s..    ..t ..                   ..s..    ..t..        ..s..    ..t..
   //
-  // Split the paths coming into the merge point into 2 seperate groups of
+  // Split the paths coming into the merge point into 2 seperate groups of 
   // merges.  On the left will be all the paths feeding constants into the
   // Cmp's Phi.  On the right will be the remaining paths.  The Cmp's Phi
   // will fold up into a constant; this will let the Cmp fold up as well as
-  // all the control flow.  Below the original IF we have 2 control
+  // all the control flow.  Below the original IF we have 2 control 
   // dependent regions, 's' and 't'.  Now we will merge the two paths
   // just prior to 's' and 't' from the two IFs.  At least 1 path (and quite
   // likely 2 or more) will promptly constant fold away.
@@ -235,8 +238,8 @@ static Node* split_if(IfNode *iff, PhaseIterGVN *igvn) {
     }
   }
 
-  // Register the new RegionNodes but do not transform them.  Cannot
-  // transform until the entire Region/Phi conglerate has been hacked
+  // Register the new RegionNodes but do not transform them.  Cannot 
+  // transform until the entire Region/Phi conglerate has been hacked 
   // as a single huge transform.
   igvn->register_new_node_with_optimizer( region_c );
   igvn->register_new_node_with_optimizer( region_x );
@@ -262,12 +265,12 @@ static Node* split_if(IfNode *iff, PhaseIterGVN *igvn) {
   igvn->set_type_bottom(iff_c);
   igvn->_worklist.push(iff_c);
   hook->init_req(2, iff_c);
-
+  
   IfNode *iff_x = new (igvn->C, 2) IfNode(region_x,b_x,iff->_prob, iff->_fcnt);
   igvn->set_type_bottom(iff_x);
   igvn->_worklist.push(iff_x);
   hook->init_req(3, iff_x);
-
+  
   // Make the true/false arms
   Node *iff_c_t = phase->transform(new (igvn->C, 1) IfTrueNode (iff_c));
   Node *iff_c_f = phase->transform(new (igvn->C, 1) IfFalseNode(iff_c));
@@ -296,7 +299,7 @@ static Node* split_if(IfNode *iff, PhaseIterGVN *igvn) {
   Node *phi_s = NULL;     // do not construct unless needed
   Node *phi_f = NULL;     // do not construct unless needed
   for (DUIterator_Last i2min, i2 = phi->last_outs(i2min); i2 >= i2min; --i2) {
-    Node* v = phi->last_out(i2);// User of the phi
+    Node* v = phi->last_out(i2);// User of the phi  
     igvn->hash_delete(v);       // Have to fixup other Phi users
     igvn->_worklist.push(v);
     uint vop = v->Opcode();
@@ -349,7 +352,7 @@ static Node* split_if(IfNode *iff, PhaseIterGVN *igvn) {
     } else if( v->is_ConstraintCast() ) {
       v->set_req(0, proj_path_ctrl );
       v->set_req(1, proj_path_data );
-    } else
+    } else 
       ShouldNotReachHere();
   }
 
@@ -361,19 +364,13 @@ static Node* split_if(IfNode *iff, PhaseIterGVN *igvn) {
     Node *u = (p->Opcode() == Op_IfTrue) ? region_s : region_f;
     // Replace p with u
     igvn->add_users_to_worklist(p);
-    for (DUIterator_Last lmin, l = p->last_outs(lmin); l >= lmin;) {
-      Node* x = p->last_out(l);
-      igvn->hash_delete(x);
-      uint uses_found = 0;
-      for( uint j = 0; j < x->req(); j++ ) {
-        if( x->in(j) == p ) {
-          x->set_req(j, u);
-          uses_found++;
-        }
-      }
-      l -= uses_found;    // we deleted 1 or more copies of this edge
+    for (DUIterator_Last jmin, j = p->last_outs(jmin); j >= jmin; --j) {
+      Node* x = p->last_out(j);
+      igvn->hash_delete(x);  
+      for( uint j = 0; j < x->req(); j++ )
+        if( x->in(j) == p )
+          x->set_req_X(j,u,igvn);
     }
-    igvn->remove_dead_node(p);
   }
 
   // Force the original merge dead
@@ -449,7 +446,7 @@ int IfNode::is_range_check(Node* &range, Node* &index, jint &offset) {
   Node* ind = l;
   jint  off = 0;
   if (l->is_top()) {
-    return 0;
+    return 0;                
   } else if (l->is_Add()) {
     if ((off = l->in(1)->find_int_con(0)) != 0) {
       ind = l->in(2);
@@ -490,8 +487,8 @@ static void adjust_check(Node* proj, Node* range, Node* index,
   if( index ) {
     new_add = off_lo ? gvn->transform(new (gvn->C, 3) AddINode( index, new_add )) : index;
   }
-  Node *new_cmp = (flip == 1)
-    ? new (gvn->C, 3) CmpUNode( new_add, range )
+  Node *new_cmp = (flip == 1) 
+    ? new (gvn->C, 3) CmpUNode( new_add, range ) 
     : new (gvn->C, 3) CmpUNode( range, new_add );
   new_cmp = gvn->transform(new_cmp);
   // See if no need to adjust the existing check
@@ -519,7 +516,7 @@ Node* IfNode::up_one_dom(Node *curr, bool linear_only) {
     return NULL;
 
   // Else hit a Region.  Check for a loop header
-  if( dom->is_Loop() )
+  if( dom->is_Loop() ) 
     return dom->in(1);          // Skip up thru loops
 
   // Check for small diamonds
@@ -574,7 +571,7 @@ static Node *remove_useless_bool(IfNode *iff, PhaseGVN *phase) {
 
   // phi->region->if_proj->ifnode->bool->cmp
   BoolNode *bol2 = phi->in(0)->in(1)->in(0)->in(1)->as_Bool();
-
+  
   // Now get the 'sense' of the test correct so we can plug in
   // either iff2->in(1) or its complement.
   int flip = 0;
@@ -607,7 +604,7 @@ static Node *remove_useless_bool(IfNode *iff, PhaseGVN *phase) {
 static IfNode* idealize_test(PhaseGVN* phase, IfNode* iff);
 
 //------------------------------Ideal------------------------------------------
-// Return a node which is more "ideal" than the current node.  Strip out
+// Return a node which is more "ideal" than the current node.  Strip out 
 // control copies
 Node *IfNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   if (remove_dead_region(phase, can_reshape))  return this;
@@ -653,8 +650,8 @@ Node *IfNode::Ideal(PhaseGVN *phase, bool can_reshape) {
     // so all checks we inspect post-dominate the top-most check we find.
     // If we are going to fail the current check and we reach the top check
     // then we are guarenteed to fail, so just start interpreting there.
-    // We 'expand' the top 2 range checks to include all post-dominating
-    // checks.
+    // We 'expand' the top 2 range checks to include all post-dominating 
+    // checks.  
 
     // The top 2 range checks seen
     Node *prev_chk1 = NULL;
@@ -674,7 +671,7 @@ Node *IfNode::Ideal(PhaseGVN *phase, bool can_reshape) {
         int flip2 = dom->as_If()->is_range_check(range2, index2, offset2);
         // See if this is a _matching_ range check, checking against
         // the same array bounds.
-        if( flip2 == flip1 && range2 == range1 && index2 == index1 &&
+        if( flip2 == flip1 && range2 == range1 && index2 == index1 && 
             dom->outcnt() == 2 ) {
           // Gather expanded bounds
           off_lo = MIN2(off_lo,offset2);
@@ -707,7 +704,7 @@ Node *IfNode::Ideal(PhaseGVN *phase, bool can_reshape) {
       if( !prev_chk2 ) return NULL;
       // 'Widen' the offsets of the 1st and 2nd covering check
       adjust_check( prev_chk1, range1, index1, flip1, off_lo, igvn );
-      // Do not call adjust_check twice on the same projection
+      // Do not call adjust_check twice on the same projection 
       // as the first call may have transformed the BoolNode to a ConI
       if( prev_chk1 != prev_chk2 ) {
         adjust_check( prev_chk2, range1, index1, flip1, off_hi, igvn );
@@ -729,7 +726,7 @@ Node *IfNode::Ideal(PhaseGVN *phase, bool can_reshape) {
     Node *cmp;
     int dist = 0;               // Cutoff limit for search
     int op = Opcode();
-    if( op == Op_If &&
+    if( op == Op_If && 
         (cmp=in(1)->in(1))->Opcode() == Op_CmpP ) {
       if( cmp->in(2) != NULL && // make sure cmp is not already dead
           cmp->in(2)->bottom_type() == TypePtr::NULL_PTR ) {
@@ -758,7 +755,7 @@ Node *IfNode::Ideal(PhaseGVN *phase, bool can_reshape) {
     }
 
     // Check that we did not follow a loop back to ourselves
-    if( this == dom )
+    if( this == dom ) 
       return NULL;
 
     if( dist > 2 )              // Add to count of NULL checks elided
@@ -772,7 +769,7 @@ Node *IfNode::Ideal(PhaseGVN *phase, bool can_reshape) {
     tty->print("   Removing IfNode: "); this->dump();
   }
   if( VerifyOpto && !phase->allow_progress() ) {
-    // Found an equivalent dominating test,
+    // Found an equivalent dominating test, 
     // we can not guarantee reaching a fix-point for these during iterativeGVN
     // since intervening nodes may not change.
     return NULL;
@@ -810,7 +807,7 @@ void IfNode::dominated_by( Node *prev_dom, PhaseIterGVN *igvn ) {
     Node *ctrl_target = (ifp->Opcode() == prev_op ) ?     idom : top;
 
     // For each child of an IfTrue/IfFalse projection, reroute.
-    // Loop ends when projection has no more uses.
+    // Loop ends when projection has no more uses. 
     for (DUIterator_Last jmin, j = ifp->last_outs(jmin); j >= jmin; --j) {
       Node* s = ifp->last_out(j);   // Get child of IfTrue/IfFalse
       igvn->hash_delete(s);         // Yank from hash table before edge hacking
@@ -818,9 +815,9 @@ void IfNode::dominated_by( Node *prev_dom, PhaseIterGVN *igvn ) {
         // Find the control input matching this def-use edge.
         // For Regions it may not be in slot 0.
         uint l;
-        for( l = 0; s->in(l) != ifp; l++ ) { }
+        for( l = 0; s->in(l) != ifp; l++ ) { } 
         s->set_req(l, ctrl_target);
-      } else {                      // Else, for control producers,
+      } else {                      // Else, for control producers, 
         s->set_req(0, data_target); // Move child to data-target
       }
       igvn->_worklist.push(s);  // Revisit collapsed Phis
@@ -845,8 +842,8 @@ Node *IfTrueNode::Identity( PhaseTransform *phase ) {
 
 //------------------------------dump_spec--------------------------------------
 #ifndef PRODUCT
-void IfNode::dump_spec(outputStream *st) const {
-  st->print("P=%f, C=%f",_prob,_fcnt);
+void IfNode::dump_spec() const { 
+  tty->print("P=%f, C=%f",_prob,_fcnt);
 }
 #endif
 
@@ -870,7 +867,7 @@ static IfNode* idealize_test(PhaseGVN* phase, IfNode* iff) {
   BoolNode *b = iff->in(1)->as_Bool();
   BoolTest bt = b->_test;
   // Test already in good order?
-  if( bt.is_canonical() )
+  if( bt.is_canonical() ) 
     return NULL;
 
   // Flip test to be canonical.  Requires flipping the IfFalse/IfTrue and
@@ -881,7 +878,7 @@ static IfNode* idealize_test(PhaseGVN* phase, IfNode* iff) {
 
   PhaseIterGVN *igvn = phase->is_IterGVN();
   assert( igvn, "Test is not canonical in parser?" );
-
+  
   // The IF node never really changes, but it needs to be cloned
   iff = new (phase->C, 2) IfNode( iff->in(0), b, 1.0-iff->_prob, iff->_fcnt);
 
@@ -903,7 +900,7 @@ static IfNode* idealize_test(PhaseGVN* phase, IfNode* iff) {
   igvn->register_new_node_with_optimizer(new_if_t);
   igvn->hash_delete(old_if_f);
   igvn->hash_delete(old_if_t);
-  // Flip test, so flip trailing control
+  // Flip test, so flip trailing control 
   igvn->subsume_node(old_if_f, new_if_t);
   igvn->subsume_node(old_if_t, new_if_f);
 
@@ -920,3 +917,4 @@ Node *IfFalseNode::Identity( PhaseTransform *phase ) {
     ? in(0)->in(0)              // IfNode control
     : this;                     // no progress
 }
+

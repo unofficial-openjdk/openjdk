@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This kind of "BarrierSet" allows a "CollectedHeap" to detect and
@@ -36,15 +39,15 @@ public:
   bool has_read_prim_barrier() { return false; }
   bool has_write_ref_barrier() { return true; }
   bool has_write_prim_barrier() { return false; }
-
+  
   bool read_ref_needs_barrier(oop* field) { return false; }
   bool read_prim_needs_barrier(HeapWord* field, size_t bytes) { return false; }
   virtual bool write_ref_needs_barrier(oop* field, oop new_val) = 0;
   bool write_prim_needs_barrier(HeapWord* field, size_t bytes,
-                                juint val1, juint val2) { return false; }
+				juint val1, juint val2) { return false; }
 
   void write_prim_field(oop obj, size_t offset, size_t bytes,
-                        juint val1, juint val2) {}
+			juint val1, juint val2) {}
 
   void read_ref_field(oop* field) {}
   void read_prim_field(HeapWord* field, size_t bytes) {}
@@ -52,7 +55,7 @@ protected:
   virtual void write_ref_field_work(oop* field, oop new_val) = 0;
 public:
   void write_prim_field(HeapWord* field, size_t bytes,
-                        juint val1, juint val2) {}
+			juint val1, juint val2) {}
 
   bool has_read_ref_array_opt() { return false; }
   bool has_read_prim_array_opt() { return false; }
@@ -88,7 +91,7 @@ public:
   // Causes all refs in "mr" to be assumed to be modified.
   virtual void invalidate(MemRegion mr) = 0;
 
-  // The caller guarantees that "mr" contains no references.  (Perhaps it's
+  // The caller guarantees that "mr" contains no references.  (Perhaps it's 
   // objects have been moved elsewhere.)
   virtual void clear(MemRegion mr) = 0;
 

@@ -22,55 +22,55 @@
 //  
 //
 
-ad_<arch_model>.cpp                     adGlobals_<arch_model>.hpp
-ad_<arch_model>.cpp                     ad_<arch_model>.hpp
-ad_<arch_model>.cpp                     allocation.inline.hpp
-ad_<arch_model>.cpp                     assembler.hpp
-ad_<arch_model>.cpp                     assembler_<arch_model>.inline.hpp
-ad_<arch_model>.cpp                     biasedLocking.hpp
-ad_<arch_model>.cpp                     cfgnode.hpp
-ad_<arch_model>.cpp                     collectedHeap.inline.hpp
-ad_<arch_model>.cpp                     compiledICHolderOop.hpp
-ad_<arch_model>.cpp                     growableArray.hpp
-ad_<arch_model>.cpp                     locknode.hpp
-ad_<arch_model>.cpp                     markOop.hpp
-ad_<arch_model>.cpp                     methodOop.hpp
-ad_<arch_model>.cpp                     nativeInst_<arch>.hpp
-ad_<arch_model>.cpp                     oop.inline.hpp
-ad_<arch_model>.cpp                     oop.inline2.hpp
-ad_<arch_model>.cpp                     opcodes.hpp
-ad_<arch_model>.cpp                     regalloc.hpp
-ad_<arch_model>.cpp                     regmask.hpp
-ad_<arch_model>.cpp                     runtime.hpp
-ad_<arch_model>.cpp                     sharedRuntime.hpp
-ad_<arch_model>.cpp                     stubRoutines.hpp
-ad_<arch_model>.cpp                     vmreg.hpp
-ad_<arch_model>.cpp                     vmreg_<arch>.inline.hpp
+ad_<arch>.cpp                           adGlobals_<arch>.hpp
+ad_<arch>.cpp                           ad_<arch>.hpp
+ad_<arch>.cpp                           allocation.inline.hpp
+ad_<arch>.cpp                           assembler.hpp
+ad_<arch>.cpp                           assembler_<arch>.inline.hpp
+ad_<arch>.cpp                           biasedLocking.hpp
+ad_<arch>.cpp                           cfgnode.hpp
+ad_<arch>.cpp                           collectedHeap.inline.hpp
+ad_<arch>.cpp                           compiledICHolderOop.hpp
+ad_<arch>.cpp                           growableArray.hpp
+ad_<arch>.cpp                           locknode.hpp
+ad_<arch>.cpp                           markOop.hpp
+ad_<arch>.cpp                           methodOop.hpp
+ad_<arch>.cpp                           nativeInst_<arch>.hpp
+ad_<arch>.cpp                           oop.inline.hpp
+ad_<arch>.cpp                           oop.inline2.hpp
+ad_<arch>.cpp                           opcodes.hpp
+ad_<arch>.cpp                           regalloc.hpp
+ad_<arch>.cpp                           regmask.hpp
+ad_<arch>.cpp                           runtime.hpp
+ad_<arch>.cpp                           sharedRuntime.hpp
+ad_<arch>.cpp                           stubRoutines.hpp
+ad_<arch>.cpp                           vmreg.hpp
+ad_<arch>.cpp                           vmreg_<arch>.inline.hpp
 
-ad_<arch_model>.hpp                     addnode.hpp
-ad_<arch_model>.hpp                     machnode.hpp
-ad_<arch_model>.hpp                     matcher.hpp
-ad_<arch_model>.hpp                     opcodes.hpp
-ad_<arch_model>.hpp                     regalloc.hpp
-ad_<arch_model>.hpp                     resourceArea.hpp
-ad_<arch_model>.hpp                     subnode.hpp
-ad_<arch_model>.hpp                     vectornode.hpp
+ad_<arch>.hpp                           addnode.hpp
+ad_<arch>.hpp                           machnode.hpp
+ad_<arch>.hpp                           matcher.hpp
+ad_<arch>.hpp                           opcodes.hpp
+ad_<arch>.hpp                           regalloc.hpp
+ad_<arch>.hpp                           resourceArea.hpp
+ad_<arch>.hpp                           subnode.hpp
+ad_<arch>.hpp                           vectornode.hpp
 
-ad_<arch_model>_clone.cpp               ad_<arch_model>.hpp
+ad_<arch>_clone.cpp                     ad_<arch>.hpp
 
-ad_<arch_model>_expand.cpp              ad_<arch_model>.hpp
+ad_<arch>_expand.cpp                    ad_<arch>.hpp
 
-ad_<arch_model>_format.cpp              ad_<arch_model>.hpp
+ad_<arch>_format.cpp                    ad_<arch>.hpp
 
-ad_<arch_model>_gen.cpp                 ad_<arch_model>.hpp
-ad_<arch_model>_gen.cpp                 cfgnode.hpp
-ad_<arch_model>_gen.cpp                 locknode.hpp
+ad_<arch>_gen.cpp                       ad_<arch>.hpp
+ad_<arch>_gen.cpp                       cfgnode.hpp
+ad_<arch>_gen.cpp                       locknode.hpp
 
-ad_<arch_model>_misc.cpp                ad_<arch_model>.hpp
+ad_<arch>_misc.cpp                      ad_<arch>.hpp
 
-ad_<arch_model>_peephole.cpp            ad_<arch_model>.hpp
+ad_<arch>_peephole.cpp                  ad_<arch>.hpp
 
-ad_<arch_model>_pipeline.cpp            ad_<arch_model>.hpp
+ad_<arch>_pipeline.cpp                  ad_<arch>.hpp
 
 addnode.cpp                             addnode.hpp
 addnode.cpp                             allocation.inline.hpp
@@ -141,7 +141,7 @@ c2_globals_<os_family>.hpp              macros.hpp
 
 c2_init_<arch>.cpp                      compile.hpp
 
-c2compiler.cpp                          ad_<arch_model>.hpp
+c2compiler.cpp                          ad_<arch>.hpp
 c2compiler.cpp                          c2compiler.hpp
 c2compiler.cpp                          runtime.hpp
 
@@ -287,7 +287,7 @@ coalesce.cpp                            regmask.hpp
 
 coalesce.hpp                            phase.hpp
 
-compile.cpp                             ad_<arch_model>.hpp
+compile.cpp                             ad_<arch>.hpp
 compile.cpp                             addnode.hpp
 compile.cpp                             arguments.hpp
 compile.cpp                             assembler.hpp
@@ -333,7 +333,6 @@ compile.hpp                             debugInfoRec.hpp
 compile.hpp                             deoptimization.hpp
 compile.hpp                             dict.hpp
 compile.hpp                             exceptionHandlerTable.hpp
-compile.hpp                             idealGraphPrinter.hpp
 compile.hpp                             phase.hpp
 compile.hpp                             port.hpp
 compile.hpp                             regmask.hpp
@@ -359,11 +358,11 @@ connode.hpp                             node.hpp
 connode.hpp                             opcodes.hpp
 connode.hpp                             type.hpp
 
-deoptimization.cpp                      ad_<arch_model>.hpp
+deoptimization.cpp                      ad_<arch>.hpp
 
-dfa_<arch_model>.cpp                    ad_<arch_model>.hpp
-dfa_<arch_model>.cpp                    matcher.hpp
-dfa_<arch_model>.cpp                    opcodes.hpp
+dfa_<arch>.cpp                          ad_<arch>.hpp
+dfa_<arch>.cpp                          matcher.hpp
+dfa_<arch>.cpp                          opcodes.hpp
 
 dict.cpp                                allocation.inline.hpp
 dict.cpp                                dict.hpp
@@ -390,6 +389,7 @@ divnode.hpp                             type.hpp
 doCall.cpp                              addnode.hpp
 doCall.cpp                              callGenerator.hpp
 doCall.cpp                              cfgnode.hpp
+doCall.cpp                              cha.hpp
 doCall.cpp                              compileLog.hpp
 doCall.cpp                              linkResolver.hpp
 doCall.cpp                              mulnode.hpp
@@ -422,9 +422,9 @@ escape.hpp                              addnode.hpp
 escape.hpp                              growableArray.hpp
 escape.hpp                              node.hpp
 
-frame.hpp                               adGlobals_<arch_model>.hpp
+frame.hpp                               adGlobals_<arch>.hpp
 
-gcm.cpp                                 ad_<arch_model>.hpp
+gcm.cpp                                 ad_<arch>.hpp
 gcm.cpp                                 allocation.inline.hpp
 gcm.cpp                                 block.hpp
 gcm.cpp                                 c2compiler.hpp
@@ -532,7 +532,7 @@ java.cpp                                indexSet.hpp
 java.cpp                                methodLiveness.hpp
 java.cpp                                runtime.hpp
 
-lcm.cpp                                 ad_<arch_model>.hpp
+lcm.cpp                                 ad_<arch>.hpp
 lcm.cpp                                 allocation.inline.hpp
 lcm.cpp                                 block.hpp
 lcm.cpp                                 c2compiler.hpp
@@ -574,7 +574,7 @@ locknode.cpp                            parse.hpp
 locknode.cpp                            rootnode.hpp
 locknode.cpp                            runtime.hpp
 
-locknode.hpp                            ad_<arch_model>.hpp
+locknode.hpp                            ad_<arch>.hpp
 locknode.hpp                            node.hpp
 locknode.hpp                            opcodes.hpp
 locknode.hpp                            subnode.hpp
@@ -649,7 +649,7 @@ macro.cpp                               type.hpp
 macro.cpp                               vectset.hpp
 macro.hpp                               phase.hpp
 
-matcher.cpp                             ad_<arch_model>.hpp
+matcher.cpp                             ad_<arch>.hpp
 matcher.cpp                             addnode.hpp
 matcher.cpp                             allocation.inline.hpp
 matcher.cpp                             atomic.hpp
@@ -764,7 +764,7 @@ output.cpp                              subnode.hpp
 output.cpp                              type.hpp
 output.cpp                              xmlstream.hpp
 
-output.hpp                              ad_<arch_model>.hpp
+output.hpp                              ad_<arch>.hpp
 output.hpp                              block.hpp
 output.hpp                              node.hpp
 
@@ -883,11 +883,11 @@ regalloc.hpp                            matcher.hpp
 regalloc.hpp                            phase.hpp
 regalloc.hpp                            vmreg.hpp
 
-regmask.cpp                             ad_<arch_model>.hpp
+regmask.cpp                             ad_<arch>.hpp
 regmask.cpp                             compile.hpp
 regmask.cpp                             regmask.hpp
 
-regmask.hpp                             adGlobals_<arch_model>.hpp
+regmask.hpp                             adGlobals_<arch>.hpp
 regmask.hpp                             optoreg.hpp
 regmask.hpp                             port.hpp
 regmask.hpp                             vmreg.hpp
@@ -903,7 +903,7 @@ rootnode.cpp                            type.hpp
 
 rootnode.hpp                            loopnode.hpp
 
-runtime.cpp                             ad_<arch_model>.hpp
+runtime.cpp                             ad_<arch>.hpp
 runtime.cpp                             addnode.hpp
 runtime.cpp                             barrierSet.hpp
 runtime.cpp                             bytecode.hpp
@@ -955,21 +955,21 @@ runtime.hpp                             machnode.hpp
 runtime.hpp                             type.hpp
 runtime.hpp                             vframe.hpp
 
-runtime_<arch_model>.cpp                adGlobals_<arch_model>.hpp
-runtime_<arch_model>.cpp                ad_<arch_model>.hpp
-runtime_<arch_model>.cpp                assembler.hpp
-runtime_<arch_model>.cpp                assembler_<arch_model>.inline.hpp
-runtime_<arch_model>.cpp                globalDefinitions.hpp
-runtime_<arch_model>.cpp                interfaceSupport.hpp
-runtime_<arch_model>.cpp                interpreter.hpp
-runtime_<arch_model>.cpp                nativeInst_<arch>.hpp
-runtime_<arch_model>.cpp                runtime.hpp
-runtime_<arch_model>.cpp                sharedRuntime.hpp
-runtime_<arch_model>.cpp                stubRoutines.hpp
-runtime_<arch_model>.cpp                systemDictionary.hpp
-runtime_<arch_model>.cpp                vframeArray.hpp
-runtime_<arch_model>.cpp                vmreg.hpp
-runtime_<arch_model>.cpp                vmreg_<arch>.inline.hpp
+runtime_<arch>.cpp                      adGlobals_<arch>.hpp
+runtime_<arch>.cpp                      ad_<arch>.hpp
+runtime_<arch>.cpp                      assembler.hpp
+runtime_<arch>.cpp                      assembler_<arch>.inline.hpp
+runtime_<arch>.cpp                      globalDefinitions.hpp
+runtime_<arch>.cpp                      interfaceSupport.hpp
+runtime_<arch>.cpp                      interpreter.hpp
+runtime_<arch>.cpp                      nativeInst_<arch>.hpp
+runtime_<arch>.cpp                      runtime.hpp
+runtime_<arch>.cpp                      sharedRuntime.hpp
+runtime_<arch>.cpp                      stubRoutines.hpp
+runtime_<arch>.cpp                      systemDictionary.hpp
+runtime_<arch>.cpp                      vframeArray.hpp
+runtime_<arch>.cpp                      vmreg.hpp
+runtime_<arch>.cpp                      vmreg_<arch>.inline.hpp
 
 set.cpp                                 allocation.inline.hpp
 set.cpp                                 set.hpp
@@ -977,14 +977,14 @@ set.cpp                                 set.hpp
 set.hpp                                 allocation.hpp
 set.hpp                                 port.hpp
 
-sharedRuntime_<arch_model>.cpp          runtime.hpp
+sharedRuntime_<arch>.cpp                runtime.hpp
 
 split_if.cpp                            allocation.inline.hpp
 split_if.cpp                            callnode.hpp
 split_if.cpp                            connode.hpp
 split_if.cpp                            loopnode.hpp
 
-stubGenerator_<arch_model>.cpp          runtime.hpp
+stubGenerator_<arch>.cpp                runtime.hpp
 
 stubRoutines.cpp                        runtime.hpp
 
@@ -1024,6 +1024,8 @@ superword.hpp                           loopnode.hpp
 superword.hpp                           node.hpp
 superword.hpp                           phaseX.hpp
 superword.hpp                           vectornode.hpp
+
+systemDictionary.cpp                    cha.hpp
 
 thread.cpp                              c2compiler.hpp
 
@@ -1068,34 +1070,15 @@ vframeArray.cpp                         runtime.hpp
 
 vframe_hp.cpp                           matcher.hpp
 
-vmStructs.cpp                           adGlobals_<arch_model>.hpp
+vmStructs.cpp                           adGlobals_<arch>.hpp
 vmStructs.cpp                           matcher.hpp
 
-vmreg.hpp                               adGlobals_<arch_model>.hpp
+vmreg.hpp                               adGlobals_<arch>.hpp
 vmreg.hpp                               adlcVMDeps.hpp
 vmreg.hpp                               ostream.hpp
 
 vtableStubs.cpp                         matcher.hpp
 
-vtableStubs_<arch_model>.cpp            ad_<arch_model>.hpp
-vtableStubs_<arch_model>.cpp            runtime.hpp
+vtableStubs_<arch>.cpp                  ad_<arch>.hpp
+vtableStubs_<arch>.cpp                  runtime.hpp
 
-idealGraphPrinter.hpp                   dict.hpp
-idealGraphPrinter.hpp                   vectset.hpp
-idealGraphPrinter.hpp                   growableArray.hpp
-idealGraphPrinter.hpp                   ostream.hpp
-
-idealGraphPrinter.cpp                   idealGraphPrinter.hpp
-idealGraphPrinter.cpp			chaitin.hpp
-idealGraphPrinter.cpp                   machnode.hpp
-idealGraphPrinter.cpp                   parse.hpp
-idealGraphPrinter.cpp                   threadCritical.hpp
-
-compile.cpp                             idealGraphPrinter.hpp
-thread.cpp                              idealGraphPrinter.hpp
-phaseX.cpp                              idealGraphPrinter.hpp
-parse2.cpp                              idealGraphPrinter.hpp
-parse1.cpp                              idealGraphPrinter.hpp
-matcher.cpp                             idealGraphPrinter.hpp
-loopnode.cpp                            idealGraphPrinter.hpp
-chaitin.cpp				idealGraphPrinter.hpp

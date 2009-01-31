@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //
@@ -81,7 +84,7 @@
 //     CreateEx
 //     ConP
 //     LoadKlass
-//
+//     
 // AddP nodes are fields.
 //
 // After building the graph, a pass is made over the nodes, deleting deferred
@@ -245,7 +248,7 @@ private:
   // matches "offset"
   void add_deferred_edge_to_fields(uint from_i, uint adr, int offs);
 
-
+  
   // Remove outgoing deferred edges from the node referenced by "ni".
   // Any outgoing edges from the target of the deferred edge are copied
   // to "ni".
@@ -317,3 +320,4 @@ public:
   void dump();
 #endif
 };
+

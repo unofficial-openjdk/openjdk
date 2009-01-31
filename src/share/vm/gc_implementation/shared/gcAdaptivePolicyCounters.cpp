@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2004-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -28,12 +31,12 @@
 // This class keeps statistical information and computes the
 // size of the heap.
 
-GCAdaptivePolicyCounters::GCAdaptivePolicyCounters(const char* name,
-                                        int collectors,
-                                        int generations,
-                                        AdaptiveSizePolicy* size_policy_arg)
-        : GCPolicyCounters(name, collectors, generations),
-          _size_policy(size_policy_arg) {
+GCAdaptivePolicyCounters::GCAdaptivePolicyCounters(const char* name, 
+					int collectors,
+					int generations,
+					AdaptiveSizePolicy* size_policy_arg)
+	: GCPolicyCounters(name, collectors, generations),
+	  _size_policy(size_policy_arg) {
   if (UsePerfData) {
     EXCEPTION_MARK;
     ResourceMark rm;
@@ -44,11 +47,11 @@ GCAdaptivePolicyCounters::GCAdaptivePolicyCounters(const char* name,
 
     cname = PerfDataManager::counter_name(name_space(), "promoSize");
     _promo_size_counter = PerfDataManager::create_variable(SUN_GC, cname,
-      PerfData::U_Bytes, size_policy()->calculated_promo_size_in_bytes(),
+      PerfData::U_Bytes, size_policy()->calculated_promo_size_in_bytes(), 
       CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "youngCapacity");
-    size_t young_capacity_in_bytes =
+    size_t young_capacity_in_bytes = 
       _size_policy->calculated_eden_size_in_bytes() +
       _size_policy->calculated_survivor_size_in_bytes();
     _young_capacity_counter = PerfDataManager::create_variable(SUN_GC, cname,
@@ -74,28 +77,28 @@ GCAdaptivePolicyCounters::GCAdaptivePolicyCounters(const char* name,
       CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "avgMinorIntervalTime");
-    _avg_minor_interval_counter = PerfDataManager::create_variable(SUN_GC,
+    _avg_minor_interval_counter = PerfDataManager::create_variable(SUN_GC, 
       cname,
-      PerfData::U_Ticks,
-      (jlong) _size_policy->_avg_minor_interval->average(),
+      PerfData::U_Ticks, 
+      (jlong) _size_policy->_avg_minor_interval->average(), 
       CHECK);
 
-#ifdef NOT_PRODUCT
+#ifdef NOT_PRODUCT 
       // This is a counter for the most recent minor pause time
       // (the last sample, not the average).  It is useful for
       // verifying the average pause time but not worth putting
       // into the product.
-      cname = PerfDataManager::counter_name(name_space(), "minorPauseTime");
+      cname = PerfDataManager::counter_name(name_space(), "minorPauseTime"); 
       _minor_pause_counter = PerfDataManager::create_variable(SUN_GC, cname,
       PerfData::U_Ticks, (jlong) _size_policy->_avg_minor_pause->last_sample(),
       CHECK);
 #endif
 
     cname = PerfDataManager::counter_name(name_space(), "minorGcCost");
-    _minor_gc_cost_counter = PerfDataManager::create_variable(SUN_GC,
+    _minor_gc_cost_counter = PerfDataManager::create_variable(SUN_GC, 
       cname,
-      PerfData::U_Ticks,
-      (jlong) _size_policy->minor_gc_cost(),
+      PerfData::U_Ticks, 
+      (jlong) _size_policy->minor_gc_cost(), 
       CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "mutatorCost");
@@ -112,12 +115,12 @@ GCAdaptivePolicyCounters::GCAdaptivePolicyCounters(const char* name,
 
     cname = PerfDataManager::counter_name(name_space(), "avgYoungLive");
     _avg_young_live_counter = PerfDataManager::create_variable(SUN_GC, cname,
-      PerfData::U_Bytes, (jlong) size_policy()->avg_young_live()->average(),
+      PerfData::U_Bytes, (jlong) size_policy()->avg_young_live()->average(), 
       CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "avgOldLive");
     _avg_old_live_counter = PerfDataManager::create_variable(SUN_GC, cname,
-      PerfData::U_Bytes, (jlong) size_policy()->avg_old_live()->average(),
+      PerfData::U_Bytes, (jlong) size_policy()->avg_old_live()->average(), 
       CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "survivorOverflowed");
@@ -176,17 +179,17 @@ GCAdaptivePolicyCounters::GCAdaptivePolicyCounters(const char* name,
       PerfData::U_None, (jlong)0, CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "minorPauseYoungSlope");
-    _minor_pause_young_slope_counter =
+    _minor_pause_young_slope_counter = 
       PerfDataManager::create_variable(SUN_GC, cname,
       PerfData::U_None, (jlong) 0, CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "majorCollectionSlope");
-    _major_collection_slope_counter =
+    _major_collection_slope_counter = 
       PerfDataManager::create_variable(SUN_GC, cname,
       PerfData::U_None, (jlong) 0, CHECK);
 
     cname = PerfDataManager::counter_name(name_space(), "minorCollectionSlope");
-    _minor_collection_slope_counter =
+    _minor_collection_slope_counter = 
       PerfDataManager::create_variable(SUN_GC, cname,
       PerfData::U_None, (jlong) 0, CHECK);
   }
@@ -196,7 +199,7 @@ void GCAdaptivePolicyCounters::update_counters_from_policy() {
   if (UsePerfData && (size_policy() != NULL)) {
     update_avg_minor_pause_counter();
     update_avg_minor_interval_counter();
-#ifdef NOT_PRODUCT
+#ifdef NOT_PRODUCT 
     update_minor_pause_counter();
 #endif
     update_minor_gc_cost_counter();

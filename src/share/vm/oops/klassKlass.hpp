@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A klassKlass serves as the fix point of the klass chain.
@@ -45,10 +48,10 @@ class klassKlass: public Klass {
   // Casting from klassOop
   static klassKlass* cast(klassOop k) {
     assert(k->klass_part()->oop_is_klass(), "cast to klassKlass");
-    return (klassKlass*) k->klass_part();
+    return (klassKlass*) k->klass_part(); 
   }
 
-  // Sizing
+  // Sizing 
   static int header_size()  { return oopDesc::header_size() + sizeof(klassKlass)/HeapWordSize; }
   int object_size() const   { return align_object_size(header_size()); }
 
@@ -79,3 +82,4 @@ class klassKlass: public Klass {
   const char* internal_name() const;
   void oop_verify_on(oop obj, outputStream* st);
 };
+

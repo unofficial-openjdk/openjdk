@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,20 +22,20 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include <stdio.h>
 #include <strings.h>
 
 typedef enum GEN_variant {
-        GEN_OFFSET = 0,
-        GEN_INDEX  = 1,
-        GEN_TABLE  = 2
+	GEN_OFFSET = 0,
+	GEN_INDEX  = 1,
+	GEN_TABLE  = 2
 } GEN_variant;
 
 extern "C" {
-        int generateJvmOffsets(GEN_variant gen_var);
-        void gen_prologue(GEN_variant gen_var);
-        void gen_epilogue(GEN_variant gen_var);
+	int generateJvmOffsets(GEN_variant gen_var);
+	void gen_prologue(GEN_variant gen_var);
+	void gen_epilogue(GEN_variant gen_var);
 }

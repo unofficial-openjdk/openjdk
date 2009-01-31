@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,13 +22,13 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
-// An instanceRefKlass is a specialized instanceKlass for Java
+// An instanceRefKlass is a specialized instanceKlass for Java 
 // classes that are subclasses of java/lang/ref/Reference.
 //
-// These classes are used to implement soft/weak/final/phantom
+// These classes are used to implement soft/weak/final/phantom 
 // references and finalization, and need special treatment by the
 // garbage collector.
 //
@@ -47,7 +50,7 @@ class instanceRefKlass: public instanceKlass {
   // Casting from klassOop
   static instanceRefKlass* cast(klassOop k) {
     assert(k->klass_part()->oop_is_instanceRef(), "cast to instanceRefKlass");
-    return (instanceRefKlass*) k->klass_part();
+    return (instanceRefKlass*) k->klass_part(); 
   }
 
   // allocation

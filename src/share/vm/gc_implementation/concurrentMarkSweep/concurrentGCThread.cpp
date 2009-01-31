@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // CopyrightVersion 1.2
@@ -101,7 +101,7 @@ void SuspendibleThreadSet::initialize_work() {
   MutexLocker x(STS_init_lock);
   if (!_initialized) {
     _m             = new Monitor(Mutex::leaf,
-                                 "SuspendibleThreadSetLock", true);
+				 "SuspendibleThreadSetLock", true);
     _async         = 0;
     _async_stop    = false;
     _async_stopped = 0;
@@ -133,12 +133,12 @@ void SuspendibleThreadSet::yield(const char* id) {
       _async_stopped++;
       assert(_async_stopped > 0, "Huh.");
       if (_async_stopped == _async) {
-        if (ConcGCYieldTimeout > 0) {
-          double now = os::elapsedTime();
-          guarantee((now - _suspend_all_start) * 1000.0 <
-                    (double)ConcGCYieldTimeout,
-                    "Long delay; whodunit?");
-        }
+	if (ConcGCYieldTimeout > 0) {
+	  double now = os::elapsedTime();
+	  guarantee((now - _suspend_all_start) * 1000.0 <
+		    (double)ConcGCYieldTimeout,
+		    "Long delay; whodunit?");
+	}
       }
       _m->notify_all();
       while (_async_stop) _m->wait(Mutex::_no_safepoint_check_flag);
@@ -193,12 +193,12 @@ SurrogateLockerThread* SurrogateLockerThread::make(TRAPS) {
   Handle thread_group (THREAD, Universe::system_thread_group());
   JavaValue result(T_VOID);
   JavaCalls::call_special(&result, thread_oop,
-                          klass,
-                          vmSymbolHandles::object_initializer_name(),
-                          vmSymbolHandles::threadgroup_string_void_signature(),
-                          thread_group,
-                          string,
-                          CHECK_NULL);
+			  klass,
+			  vmSymbolHandles::object_initializer_name(),
+			  vmSymbolHandles::threadgroup_string_void_signature(),
+			  thread_group,
+			  string,
+			  CHECK_NULL);
 
   SurrogateLockerThread* res;
   {
@@ -291,24 +291,24 @@ void SurrogateLockerThread::loop() {
 
 void ConcurrentGCThread::stsYield(const char* id) {
   assert( Thread::current()->is_ConcurrentGC_thread(),
-          "only a conc GC thread can call this" );
+	  "only a conc GC thread can call this" );
   _sts.yield(id);
 }
 
 bool ConcurrentGCThread::stsShouldYield() {
   assert( Thread::current()->is_ConcurrentGC_thread(),
-          "only a conc GC thread can call this" );
+	  "only a conc GC thread can call this" );
   return _sts.should_yield();
 }
 
 void ConcurrentGCThread::stsJoin() {
   assert( Thread::current()->is_ConcurrentGC_thread(),
-          "only a conc GC thread can call this" );
+	  "only a conc GC thread can call this" );
   _sts.join();
 }
 
 void ConcurrentGCThread::stsLeave() {
   assert( Thread::current()->is_ConcurrentGC_thread(),
-          "only a conc GC thread can call this" );
+	  "only a conc GC thread can call this" );
   _sts.leave();
 }

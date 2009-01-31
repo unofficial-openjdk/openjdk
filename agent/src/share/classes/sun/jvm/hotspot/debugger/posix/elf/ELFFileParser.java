@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.posix.elf;
@@ -29,7 +29,7 @@ import java.util.*;
 import sun.jvm.hotspot.utilities.memo.*;
 import sun.jvm.hotspot.debugger.DataSource;
 import sun.jvm.hotspot.debugger.RandomAccessFileDataSource;
-
+        
 public class ELFFileParser {
     private static ELFFileParser elfParser;
     private static final String US_ASCII = "US-ASCII";
@@ -81,7 +81,7 @@ public class ELFFileParser {
             if (!Arrays.equals(getMagicNumber(), ELF_MAGIC_NUMBER)) {
                     throw new ELFException("Bad magic number for file.");
             }
-
+            
             header = new ELFHeaderImpl();
         }
 
@@ -142,7 +142,7 @@ public class ELFFileParser {
              * name string table.  SH_UNDEF if there is no section name string
              * table. */
             private short sh_string_ndx;                // Elf32_Half
-
+        
             /** MemoizedObject array of section headers associated with this
              * ELF file. */
             private MemoizedObject[] sectionHeaders;
@@ -349,7 +349,7 @@ public class ELFFileParser {
                         value = symbol.getValue();
                         if (address >= value && address < value + symbol.getSize()) {
                            return symbol;
-                        }
+                        } 
                     }
                 }
 
@@ -689,10 +689,10 @@ public class ELFFileParser {
                 // table.
                 String symbol_name = null;
                 if (section_type == ELFSectionHeader.TYPE_SYMTBL) {
-                    symbol_name = getHeader().getStringTable().get(name_ndx);
+                    symbol_name = getHeader().getStringTable().get(name_ndx); 
                 } else if (section_type == ELFSectionHeader.TYPE_DYNSYM) {
                     symbol_name =
-                            getHeader().getDynamicStringTable().get(name_ndx);
+                            getHeader().getDynamicStringTable().get(name_ndx); 
                 }
                 return symbol_name;
             }
@@ -703,7 +703,7 @@ public class ELFFileParser {
 
             public int getSize() {
                 return size;
-            }
+            } 
         }
 
         /**
@@ -928,7 +928,7 @@ public class ELFFileParser {
         short byteSwap(short arg) {
           return (short) ((arg << 8) | ((arg >>> 8) & 0xFF));
         }
-
+    
         int byteSwap(int arg) {
             return (((int) byteSwap((short) arg)) << 16) |
                    (((int) (byteSwap((short) (arg >>> 16)))) & 0xFFFF);
@@ -1043,7 +1043,7 @@ public class ELFFileParser {
 
         ELFHeader elfHeader = elfFile.getHeader();
         System.out.println("ELF File: " + args[0]);
-
+        
         System.out.println("ELF object size: " +
                 ((elfFile.getObjectSize() == 0) ? "Invalid Object Size" :
                 (elfFile.getObjectSize() == 1) ? "32-bit" : "64-bit"));

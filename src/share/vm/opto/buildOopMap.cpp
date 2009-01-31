@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -65,9 +68,9 @@
 
 
 //------------------------------OopFlow----------------------------------------
-// Structure to pass around
+// Structure to pass around 
 struct OopFlow : public ResourceObj {
-  short *_callees;              // Array mapping register to callee-saved
+  short *_callees;              // Array mapping register to callee-saved 
   Node **_defs;                 // array mapping register to reaching def
                                 // or NULL if dead/conflict
   // OopFlow structs, when not being actively modified, describe the _end_ of
@@ -203,7 +206,7 @@ static void clr_live_bit( int *live, int reg ) {
 OopMap *OopFlow::build_oop_map( Node *n, int max_reg, PhaseRegAlloc *regalloc, int* live ) {
   int framesize = regalloc->_framesize;
   int max_inarg_slot = OptoReg::reg2stack(regalloc->_matcher._new_SP);
-  debug_only( char *dup_check = NEW_RESOURCE_ARRAY(char,OptoReg::stack0());
+  debug_only( char *dup_check = NEW_RESOURCE_ARRAY(char,OptoReg::stack0()); 
               memset(dup_check,0,OptoReg::stack0()) );
 
   OopMap *omap = new OopMap( framesize,  max_inarg_slot );
@@ -217,7 +220,7 @@ OopMap *OopFlow::build_oop_map( Node *n, int max_reg, PhaseRegAlloc *regalloc, i
 
     // %%% C2 can use 2 OptoRegs when the physical register is only one 64bit
     // register in that case we'll get an non-concrete register for the second
-    // half. We only need to tell the map the register once!
+    // half. We only need to tell the map the register once! 
     //
     // However for the moment we disable this change and leave things as they
     // were.
@@ -248,13 +251,13 @@ OopMap *OopFlow::build_oop_map( Node *n, int max_reg, PhaseRegAlloc *regalloc, i
 
       // Check for a legal reg name in the oopMap and bailout if it is not.
       if (!omap->legal_vm_reg_name(r)) {
-        regalloc->C->record_method_not_compilable("illegal oopMap register name");
-        continue;
+	regalloc->C->record_method_not_compilable("illegal oopMap register name");
+	continue;
       }
       if( t->is_ptr()->_offset == 0 ) { // Not derived?
         if( mcall ) {
-          // Outgoing argument GC mask responsibility belongs to the callee,
-          // not the caller.  Inspect the inputs to the call, to see if
+          // Outgoing argument GC mask responsibility belongs to the callee, 
+          // not the caller.  Inspect the inputs to the call, to see if 
           // this live-range is one of them.
           uint cnt = mcall->tf()->domain()->cnt();
           uint j;
@@ -265,11 +268,11 @@ OopMap *OopFlow::build_oop_map( Node *n, int max_reg, PhaseRegAlloc *regalloc, i
             continue;           // Continue on to the next register
         }
         omap->set_oop(r);
-      } else {                  // Else it's derived.
+      } else {                  // Else it's derived.  
         // Find the base of the derived value.
         uint i;
         // Fast, common case, scan
-        for( i = jvms->oopoff(); i < n->req(); i+=2 )
+        for( i = jvms->oopoff(); i < n->req(); i+=2 ) 
           if( n->in(i) == def ) break; // Common case
         if( i == n->req() ) {   // Missed, try a more generous scan
           // Scan again, but this time peek through copies
@@ -342,7 +345,7 @@ OopMap *OopFlow::build_oop_map( Node *n, int max_reg, PhaseRegAlloc *regalloc, i
   }
   */
 #endif
-
+  
   return omap;
 }
 
@@ -371,13 +374,13 @@ static void do_liveness( PhaseRegAlloc *regalloc, PhaseCFG *cfg, Block_List *wor
 
     while( worklist->size() ) { // Standard worklist algorithm
       Block *b = worklist->rpop();
-
+      
       // Copy first successor into my tmp_live space
       int s0num = b->_succs[0]->_pre_order;
       int *t = &live[s0num*max_reg_ints];
       for( int i=0; i<max_reg_ints; i++ )
         tmp_live[i] = t[i];
-
+      
       // OR in the remaining live registers
       for( uint j=1; j<b->_num_succs; j++ ) {
         uint sjnum = b->_succs[j]->_pre_order;
@@ -385,7 +388,7 @@ static void do_liveness( PhaseRegAlloc *regalloc, PhaseCFG *cfg, Block_List *wor
         for( int i=0; i<max_reg_ints; i++ )
           tmp_live[i] |= t[i];
       }
-
+      
       // Now walk tmp_live up the block backwards, computing live
       for( int k=b->_nodes.size()-1; k>=0; k-- ) {
         Node *n = b->_nodes[k];
@@ -398,12 +401,12 @@ static void do_liveness( PhaseRegAlloc *regalloc, PhaseCFG *cfg, Block_List *wor
         MachNode *m = n->is_Mach() ? n->as_Mach() : NULL;
 
         // Check if m is potentially a CISC alternate instruction (i.e, possibly
-        // synthesized by RegAlloc from a conventional instruction and a
+        // synthesized by RegAlloc from a conventional instruction and a 
         // spilled input)
         bool is_cisc_alternate = false;
         if (UseCISCSpill && m) {
           is_cisc_alternate = m->is_cisc_alternate();
-        }
+        }             
 
         // GEN use'd bits
         for( uint l=1; l<n->req(); l++ ) {
@@ -414,8 +417,8 @@ static void do_liveness( PhaseRegAlloc *regalloc, PhaseCFG *cfg, Block_List *wor
           if( OptoReg::is_valid(first) ) set_live_bit(tmp_live,first);
           if( OptoReg::is_valid(second) ) set_live_bit(tmp_live,second);
           // If we use the stack pointer in a cisc-alternative instruction,
-          // check for use as a memory operand.  Then reconstruct the RegName
-          // for this stack location, and set the appropriate bit in the
+          // check for use as a memory operand.  Then reconstruct the RegName 
+          // for this stack location, and set the appropriate bit in the 
           // live vector 4987749.
           if (is_cisc_alternate && def == fp) {
             const TypePtr *adr_type = NULL;
@@ -428,7 +431,7 @@ static void do_liveness( PhaseRegAlloc *regalloc, PhaseCFG *cfg, Block_List *wor
               // look at a specific input instead of all inputs.
               assert(!def->bottom_type()->isa_oop_ptr(), "expecting non-oop mem input");
             } else if (base != fp || offset == Type::OffsetBot) {
-              // Do nothing: the fp operand is either not from a memory use
+              // Do nothing: the fp operand is either not from a memory use 
               // (base == NULL) OR the fp is used in a non-memory context
               // (base is some other register) OR the offset is not constant,
               // so it is not a stack slot.
@@ -458,7 +461,7 @@ static void do_liveness( PhaseRegAlloc *regalloc, PhaseCFG *cfg, Block_List *wor
         }
 
       }
-
+      
       // Now at block top, see if we have any changes.  If so, propagate
       // to prior blocks.
       int *old_live = &live[b->_pre_order*max_reg_ints];
@@ -475,7 +478,7 @@ static void do_liveness( PhaseRegAlloc *regalloc, PhaseCFG *cfg, Block_List *wor
           worklist->push(cfg->_bbs[b->pred(l)->_idx]);
       }
     }
-
+    
     // Scan for any missing safepoints.  Happens to infinite loops
     // ala ZKM.jar
     uint i;
@@ -512,7 +515,7 @@ void Compile::BuildOopMaps() {
 
   Arena *A = Thread::current()->resource_area();
   Block_List worklist;          // Worklist of pending blocks
-
+  
   int max_reg_ints = round_to(max_reg, BitsPerInt)>>LogBitsPerInt;
   Dict *safehash = NULL;        // Used for assert only
   // Compute a backwards liveness per register.  Needs a bitarray of
@@ -548,10 +551,10 @@ void Compile::BuildOopMaps() {
     // structures rapidly and cut down on the memory footprint.
     // Note: not all predecessors might be visited yet (must happen for
     // irreducible loops).  This is OK, since every live value must have the
-    // SAME reaching def for the block, so any reaching def is OK.
+    // SAME reaching def for the block, so any reaching def is OK.  
     uint i;
 
-    Block *b = worklist.pop();
+    Block *b = worklist.pop(); 
     // Ignore root block
     if( b == _cfg->_broot ) continue;
     // Block is already done?  Happens if block has several predecessors,
@@ -612,7 +615,7 @@ void Compile::BuildOopMaps() {
 
     // Now push flow forward
     flows[b->_pre_order] = flow;// Mark flow for this block
-    flow->_b = b;
+    flow->_b = b;               
     flow->compute_reach( _regalloc, max_reg, safehash );
 
     // Now push children onto worklist

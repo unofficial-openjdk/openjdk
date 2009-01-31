@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class CompileTask;
@@ -124,24 +127,24 @@ private:
                                      int klass_index,
                                      bool& is_accessible);
   ciConstant get_constant_by_index_impl(ciInstanceKlass* loading_klass,
-                                        int constant_index);
+					int constant_index);
   bool       is_unresolved_string_impl (instanceKlass* loading_klass,
-                                        int constant_index) const;
+					int constant_index) const;
   bool       is_unresolved_klass_impl (instanceKlass* loading_klass,
-                                        int constant_index) const;
+					int constant_index) const;
   ciField*   get_field_by_index_impl(ciInstanceKlass* loading_klass,
-                                     int field_index);
+				     int field_index);
   ciMethod*  get_method_by_index_impl(ciInstanceKlass* loading_klass,
-                                      int method_index, Bytecodes::Code bc);
+				      int method_index, Bytecodes::Code bc);
 
   // Helper methods
   bool       check_klass_accessibility(ciKlass* accessing_klass,
-                                      klassOop resolved_klassOop);
+				      klassOop resolved_klassOop);
   methodOop  lookup_method(instanceKlass*  accessor,
-                           instanceKlass*  holder,
-                           symbolOop       name,
-                           symbolOop       sig,
-                           Bytecodes::Code bc);
+			   instanceKlass*  holder,
+			   symbolOop       name,
+			   symbolOop       sig,
+			   Bytecodes::Code bc);
 
   // Get a ciObject from the object factory.  Ensures uniqueness
   // of ciObjects.
@@ -357,3 +360,5 @@ public:
   void record_method_not_compilable(const char* reason, bool all_tiers = true);
   void record_out_of_memory_failure();
 };
+
+

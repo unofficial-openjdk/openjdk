@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -166,7 +169,7 @@ void DebugInformationRecorder::add_new_pc_offset(int pc_offset) {
   assert(_pcs_size > _pcs_length, "There must be room for after expanding");
 
   _pcs[_pcs_length++] = PcDesc(pc_offset, DebugInformationRecorder::serialized_null,
-                               DebugInformationRecorder::serialized_null);
+			       DebugInformationRecorder::serialized_null);
 }
 
 
@@ -303,7 +306,7 @@ void DebugInformationRecorder::describe_scope(int         pc_offset,
          (!method->is_native() && 0 <= bci && bci < method->code_size()) ||
          bci == -1, "illegal bci");
 
-  // serialize the locals/expressions/monitors
+  // serialize the locals/expressions/monitors  
   stream()->write_int((intptr_t) locals);
   stream()->write_int((intptr_t) expressions);
   stream()->write_int((intptr_t) monitors);

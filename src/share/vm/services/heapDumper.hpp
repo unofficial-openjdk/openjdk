@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // HeapDumper is used to dump the java heap to file in HPROF binary format:
@@ -42,19 +45,19 @@ class HeapDumper : public StackObj {
   elapsedTimer _t;
 
   // string representation of error
-  char* error() const                   { return _error; }
+  char* error() const			{ return _error; }
   void set_error(char* error);
 
   // indicates if progress messages can be sent to tty
-  bool print_to_tty() const             { return _print_to_tty; }
+  bool print_to_tty() const		{ return _print_to_tty; }
 
   // internal timer.
-  elapsedTimer* timer()                 { return &_t; }
+  elapsedTimer* timer()                 { return &_t; }  
 
  public:
-  HeapDumper(bool gc_before_heap_dump) :
+  HeapDumper(bool gc_before_heap_dump) : 
     _gc_before_heap_dump(gc_before_heap_dump), _error(NULL), _print_to_tty(false)  { }
-  HeapDumper(bool gc_before_heap_dump, bool print_to_tty) :
+  HeapDumper(bool gc_before_heap_dump, bool print_to_tty) : 
     _gc_before_heap_dump(gc_before_heap_dump), _error(NULL), _print_to_tty(print_to_tty) { }
 
   ~HeapDumper();

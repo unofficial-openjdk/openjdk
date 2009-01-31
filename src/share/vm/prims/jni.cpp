@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -35,7 +38,7 @@ static jint CurrentVersion = JNI_VERSION_1_6;
 // since those macros can cause an immedate uninstrumented return.
 //
 // In order to get the return value, a reference to the variable containing
-// the return value must be passed to the contructor of the object, and
+// the return value must be passed to the contructor of the object, and 
 // the return value must be set before return (since the mark object has
 // a reference to it).
 //
@@ -82,7 +85,7 @@ static jint CurrentVersion = JNI_VERSION_1_6;
 
 
 // Use these to select distinct code for floating-point vs. non-floating point
-// situations.  Used from within common macros where we need slightly
+// situations.  Used from within common macros where we need slightly 
 // different behavior for Float/Double
 #define FP_SELECT_Boolean(intcode, fpcode) intcode
 #define FP_SELECT_Byte(intcode, fpcode)    intcode
@@ -98,7 +101,7 @@ static jint CurrentVersion = JNI_VERSION_1_6;
 
 #define COMMA ,
 
-// Choose DT_RETURN_MARK macros  based on the type: float/double -> void
+// Choose DT_RETURN_MARK macros  based on the type: float/double -> void 
 // (dtrace doesn't do FP yet)
 #define DT_RETURN_MARK_DECL_FOR(TypeName, name, type) \
   FP_SELECT(TypeName, \
@@ -269,7 +272,7 @@ JNI_ENTRY(jclass, jni_DefineClass(JNIEnv *env, const char *name, jobject loaderR
   jclass cls = NULL;
   DT_RETURN_MARK(DefineClass, jclass, (const jclass&)cls);
 
-  // Since exceptions can be thrown, class initialization can take place
+  // Since exceptions can be thrown, class initialization can take place  
   // if name is NULL no check for class name in .class stream has to be made.
   symbolHandle class_name;
   if (name != NULL) {
@@ -285,12 +288,12 @@ JNI_ENTRY(jclass, jni_DefineClass(JNIEnv *env, const char *name, jobject loaderR
   ResourceMark rm(THREAD);
   ClassFileStream st((u1*) buf, bufLen, NULL);
   Handle class_loader (THREAD, JNIHandles::resolve(loaderRef));
-
+  
   if (UsePerfData && !class_loader.is_null()) {
     // check whether the current caller thread holds the lock or not.
     // If not, increment the corresponding counter
     if (ObjectSynchronizer::
-        query_lock_ownership((JavaThread*)THREAD, class_loader) !=
+        query_lock_ownership((JavaThread*)THREAD, class_loader) != 
         ObjectSynchronizer::owner_self) {
       ClassLoader::sync_JNIDefineClassLockFreeCounter()->inc();
     }
@@ -497,7 +500,7 @@ JNI_QUICK_ENTRY(jboolean, jni_IsAssignableFrom(JNIEnv *env, jclass sub, jclass s
   DTRACE_PROBE3(hotspot_jni, IsAssignableFrom__entry, env, sub, super);
   oop sub_mirror   = JNIHandles::resolve_non_null(sub);
   oop super_mirror = JNIHandles::resolve_non_null(super);
-  if (java_lang_Class::is_primitive(sub_mirror) ||
+  if (java_lang_Class::is_primitive(sub_mirror) || 
       java_lang_Class::is_primitive(super_mirror)) {
     jboolean ret = (sub_mirror == super_mirror);
     DTRACE_PROBE1(hotspot_jni, IsAssignableFrom__return, ret);
@@ -506,7 +509,7 @@ JNI_QUICK_ENTRY(jboolean, jni_IsAssignableFrom(JNIEnv *env, jclass sub, jclass s
   klassOop sub_klass   = java_lang_Class::as_klassOop(sub_mirror);
   klassOop super_klass = java_lang_Class::as_klassOop(super_mirror);
   assert(sub_klass != NULL && super_klass != NULL, "invalid arguments to jni_IsAssignableFrom");
-  jboolean ret = Klass::cast(sub_klass)->is_subtype_of(super_klass) ?
+  jboolean ret = Klass::cast(sub_klass)->is_subtype_of(super_klass) ? 
                    JNI_TRUE : JNI_FALSE;
   DTRACE_PROBE1(hotspot_jni, IsAssignableFrom__return, ret);
   return ret;
@@ -526,13 +529,13 @@ JNI_END
 
 DT_RETURN_MARK_DECL(ThrowNew, jint);
 
-JNI_ENTRY(jint, jni_ThrowNew(JNIEnv *env, jclass clazz, const char *message))
-  JNIWrapper("ThrowNew");
+JNI_ENTRY(jint, jni_ThrowNew(JNIEnv *env, jclass clazz, const char *message))  
+  JNIWrapper("ThrowNew");  
   DTRACE_PROBE3(hotspot_jni, ThrowNew__entry, env, clazz, message);
   jint ret = JNI_OK;
   DT_RETURN_MARK(ThrowNew, jint, (const jint&)ret);
 
-  instanceKlass* k = instanceKlass::cast(java_lang_Class::as_klassOop(JNIHandles::resolve_non_null(clazz)));
+  instanceKlass* k = instanceKlass::cast(java_lang_Class::as_klassOop(JNIHandles::resolve_non_null(clazz)));  
   symbolHandle name = symbolHandle(THREAD, k->name());
   Handle class_loader (THREAD,  k->class_loader());
   Handle protection_domain (THREAD, k->protection_domain());
@@ -566,7 +569,7 @@ JNI_ENTRY_NO_PRESERVE(jthrowable, jni_ExceptionOccurred(JNIEnv *env))
 JNI_END
 
 
-JNI_ENTRY_NO_PRESERVE(void, jni_ExceptionDescribe(JNIEnv *env))
+JNI_ENTRY_NO_PRESERVE(void, jni_ExceptionDescribe(JNIEnv *env))  
   JNIWrapper("ExceptionDescribe");
   DTRACE_PROBE1(hotspot_jni, ExceptionDescribe__entry, env);
   if (thread->has_pending_exception()) {
@@ -611,13 +614,13 @@ JNI_END
 JNI_QUICK_ENTRY(void, jni_ExceptionClear(JNIEnv *env))
   JNIWrapper("ExceptionClear");
   DTRACE_PROBE1(hotspot_jni, ExceptionClear__entry, env);
-
-  // The jni code might be using this API to clear java thrown exception.
-  // So just mark jvmti thread exception state as exception caught.
-  JvmtiThreadState *state = JavaThread::current()->jvmti_thread_state();
-  if (state != NULL && state->is_exception_detected()) {
-    state->set_exception_caught();
-  }
+  
+  // The jni code might be using this API to clear java thrown exception. 
+  // So just mark jvmti thread exception state as exception caught. 
+  JvmtiThreadState *state = JavaThread::current()->jvmti_thread_state(); 
+  if (state != NULL && state->is_exception_detected()) { 
+    state->set_exception_caught(); 
+  } 
   thread->clear_pending_exception();
   DTRACE_PROBE(hotspot_jni, ExceptionClear__return);
 JNI_END
@@ -734,7 +737,7 @@ JNI_LEAF(jobjectRefType, jni_GetObjectRefType(JNIEnv *env, jobject obj))
   JNIWrapper("GetObjectRefType");
   DTRACE_PROBE2(hotspot_jni, GetObjectRefType__entry, env, obj);
   jobjectRefType ret;
-  if (JNIHandles::is_local_handle(thread, obj) ||
+  if (JNIHandles::is_local_handle(thread, obj) || 
       JNIHandles::is_frame_handle(thread, obj))
     ret = JNILocalRefType;
   else if (JNIHandles::is_global_handle(obj))
@@ -1026,7 +1029,7 @@ static void jni_invoke_nonstatic(JNIEnv *env, JavaValue* result, jobject receive
     klassOop holder = m->method_holder();
     if (!(Klass::cast(holder))->is_interface()) {
       // non-interface call -- for that little speed boost, don't handlize
-      debug_only(No_Safepoint_Verifier nosafepoint;)
+      debug_only(No_Safepoint_Verifier nosafepoint;) 
       if (call_type == JNI_VIRTUAL) {
         // jni_GetMethodID makes sure class is linked and initialized
         // so m should have a valid vtable index.
@@ -1045,7 +1048,7 @@ static void jni_invoke_nonstatic(JNIEnv *env, JavaValue* result, jobject receive
         // JNI_NONVIRTUAL call
         selected_method = m;
       }
-    } else {
+    } else {  
       // interface call
       KlassHandle h_holder(THREAD, holder);
 
@@ -1111,7 +1114,7 @@ JNI_END
 
 DT_RETURN_MARK_DECL(NewObjectA, jobject);
 
-JNI_ENTRY(jobject, jni_NewObjectA(JNIEnv *env, jclass clazz, jmethodID methodID, const jvalue *args))
+JNI_ENTRY(jobject, jni_NewObjectA(JNIEnv *env, jclass clazz, jmethodID methodID, const jvalue *args))  
   JNIWrapper("NewObjectA");
   DTRACE_PROBE3(hotspot_jni, NewObjectA__entry, env, clazz, methodID);
   jobject obj = NULL;
@@ -1127,7 +1130,7 @@ JNI_END
 
 DT_RETURN_MARK_DECL(NewObjectV, jobject);
 
-JNI_ENTRY(jobject, jni_NewObjectV(JNIEnv *env, jclass clazz, jmethodID methodID, va_list args))
+JNI_ENTRY(jobject, jni_NewObjectV(JNIEnv *env, jclass clazz, jmethodID methodID, va_list args))  
   JNIWrapper("NewObjectV");
   DTRACE_PROBE3(hotspot_jni, NewObjectV__entry, env, clazz, methodID);
   jobject obj = NULL;
@@ -1143,7 +1146,7 @@ JNI_END
 
 DT_RETURN_MARK_DECL(NewObject, jobject);
 
-JNI_ENTRY(jobject, jni_NewObject(JNIEnv *env, jclass clazz, jmethodID methodID, ...))
+JNI_ENTRY(jobject, jni_NewObject(JNIEnv *env, jclass clazz, jmethodID methodID, ...))  
   JNIWrapper("NewObject");
   DTRACE_PROBE3(hotspot_jni, NewObject__entry, env, clazz, methodID);
   jobject obj = NULL;
@@ -1245,7 +1248,7 @@ static jmethodID get_method_id(JNIEnv *env, jclass clazz, const char *name_str,
 }
 
 
-JNI_ENTRY(jmethodID, jni_GetMethodID(JNIEnv *env, jclass clazz,
+JNI_ENTRY(jmethodID, jni_GetMethodID(JNIEnv *env, jclass clazz, 
           const char *name, const char *sig))
   JNIWrapper("GetMethodID");
   DTRACE_PROBE4(hotspot_jni, GetMethodID__entry, env, clazz, name, sig);
@@ -1255,7 +1258,7 @@ JNI_ENTRY(jmethodID, jni_GetMethodID(JNIEnv *env, jclass clazz,
 JNI_END
 
 
-JNI_ENTRY(jmethodID, jni_GetStaticMethodID(JNIEnv *env, jclass clazz,
+JNI_ENTRY(jmethodID, jni_GetStaticMethodID(JNIEnv *env, jclass clazz, 
           const char *name, const char *sig))
   JNIWrapper("GetStaticMethodID");
   DTRACE_PROBE4(hotspot_jni, GetStaticMethodID__entry, env, clazz, name, sig);
@@ -1345,7 +1348,7 @@ DT_VOID_RETURN_MARK_DECL(CallVoidMethod);
 DT_VOID_RETURN_MARK_DECL(CallVoidMethodV);
 DT_VOID_RETURN_MARK_DECL(CallVoidMethodA);
 
-JNI_ENTRY(void, jni_CallVoidMethod(JNIEnv *env, jobject obj, jmethodID methodID, ...))
+JNI_ENTRY(void, jni_CallVoidMethod(JNIEnv *env, jobject obj, jmethodID methodID, ...))  
   JNIWrapper("CallVoidMethod");
   DTRACE_PROBE3(hotspot_jni, CallVoidMethod__entry, env, obj, methodID);
   DT_VOID_RETURN_MARK(CallVoidMethod);
@@ -1357,9 +1360,9 @@ JNI_ENTRY(void, jni_CallVoidMethod(JNIEnv *env, jobject obj, jmethodID methodID,
   jni_invoke_nonstatic(env, &jvalue, obj, JNI_VIRTUAL, methodID, &ap, CHECK);
   va_end(args);
 JNI_END
-
-
-JNI_ENTRY(void, jni_CallVoidMethodV(JNIEnv *env, jobject obj, jmethodID methodID, va_list args))
+                                                
+                                                   
+JNI_ENTRY(void, jni_CallVoidMethodV(JNIEnv *env, jobject obj, jmethodID methodID, va_list args))  
   JNIWrapper("CallVoidMethodV");
   DTRACE_PROBE3(hotspot_jni, CallVoidMethodV__entry, env, obj, methodID);
   DT_VOID_RETURN_MARK(CallVoidMethodV);
@@ -1368,9 +1371,9 @@ JNI_ENTRY(void, jni_CallVoidMethodV(JNIEnv *env, jobject obj, jmethodID methodID
   JNI_ArgumentPusherVaArg ap(THREAD, methodID, args);
   jni_invoke_nonstatic(env, &jvalue, obj, JNI_VIRTUAL, methodID, &ap, CHECK);
 JNI_END
-
-
-JNI_ENTRY(void, jni_CallVoidMethodA(JNIEnv *env, jobject obj, jmethodID methodID, const jvalue *args))
+                                  
+                                     
+JNI_ENTRY(void, jni_CallVoidMethodA(JNIEnv *env, jobject obj, jmethodID methodID, const jvalue *args))  
   JNIWrapper("CallVoidMethodA");
   DTRACE_PROBE3(hotspot_jni, CallVoidMethodA__entry, env, obj, methodID);
   DT_VOID_RETURN_MARK(CallVoidMethodA);
@@ -1453,10 +1456,10 @@ DT_VOID_RETURN_MARK_DECL(CallNonvirtualVoidMethod);
 DT_VOID_RETURN_MARK_DECL(CallNonvirtualVoidMethodV);
 DT_VOID_RETURN_MARK_DECL(CallNonvirtualVoidMethodA);
 
-JNI_ENTRY(void, jni_CallNonvirtualVoidMethod(JNIEnv *env, jobject obj, jclass cls, jmethodID methodID, ...))
+JNI_ENTRY(void, jni_CallNonvirtualVoidMethod(JNIEnv *env, jobject obj, jclass cls, jmethodID methodID, ...))  
   JNIWrapper("CallNonvirtualVoidMethod");
 
-  DTRACE_PROBE4(hotspot_jni, CallNonvirtualVoidMethod__entry,
+  DTRACE_PROBE4(hotspot_jni, CallNonvirtualVoidMethod__entry, 
                env, obj, cls, methodID);
   DT_VOID_RETURN_MARK(CallNonvirtualVoidMethod);
 
@@ -1467,12 +1470,12 @@ JNI_ENTRY(void, jni_CallNonvirtualVoidMethod(JNIEnv *env, jobject obj, jclass cl
   jni_invoke_nonstatic(env, &jvalue, obj, JNI_NONVIRTUAL, methodID, &ap, CHECK);
   va_end(args);
 JNI_END
-
-
-JNI_ENTRY(void, jni_CallNonvirtualVoidMethodV(JNIEnv *env, jobject obj, jclass cls, jmethodID methodID, va_list args))
+                                                 
+                                                   
+JNI_ENTRY(void, jni_CallNonvirtualVoidMethodV(JNIEnv *env, jobject obj, jclass cls, jmethodID methodID, va_list args))  
   JNIWrapper("CallNonvirtualVoidMethodV");
 
-  DTRACE_PROBE4(hotspot_jni, CallNonvirtualVoidMethodV__entry,
+  DTRACE_PROBE4(hotspot_jni, CallNonvirtualVoidMethodV__entry, 
                env, obj, cls, methodID);
   DT_VOID_RETURN_MARK(CallNonvirtualVoidMethodV);
 
@@ -1482,9 +1485,9 @@ JNI_ENTRY(void, jni_CallNonvirtualVoidMethodV(JNIEnv *env, jobject obj, jclass c
 JNI_END
 
 
-JNI_ENTRY(void, jni_CallNonvirtualVoidMethodA(JNIEnv *env, jobject obj, jclass cls, jmethodID methodID, const jvalue *args))
+JNI_ENTRY(void, jni_CallNonvirtualVoidMethodA(JNIEnv *env, jobject obj, jclass cls, jmethodID methodID, const jvalue *args))  
   JNIWrapper("CallNonvirtualVoidMethodA");
-  DTRACE_PROBE4(hotspot_jni, CallNonvirtualVoidMethodA__entry,
+  DTRACE_PROBE4(hotspot_jni, CallNonvirtualVoidMethodA__entry, 
                 env, obj, cls, methodID);
   DT_VOID_RETURN_MARK(CallNonvirtualVoidMethodA);
   JavaValue jvalue(T_VOID);
@@ -1565,7 +1568,7 @@ DT_VOID_RETURN_MARK_DECL(CallStaticVoidMethod);
 DT_VOID_RETURN_MARK_DECL(CallStaticVoidMethodV);
 DT_VOID_RETURN_MARK_DECL(CallStaticVoidMethodA);
 
-JNI_ENTRY(void, jni_CallStaticVoidMethod(JNIEnv *env, jclass cls, jmethodID methodID, ...))
+JNI_ENTRY(void, jni_CallStaticVoidMethod(JNIEnv *env, jclass cls, jmethodID methodID, ...))  
   JNIWrapper("CallStaticVoidMethod");
   DTRACE_PROBE3(hotspot_jni, CallStaticVoidMethod__entry, env, cls, methodID);
   DT_VOID_RETURN_MARK(CallStaticVoidMethod);
@@ -1577,9 +1580,9 @@ JNI_ENTRY(void, jni_CallStaticVoidMethod(JNIEnv *env, jclass cls, jmethodID meth
   jni_invoke_static(env, &jvalue, NULL, JNI_STATIC, methodID, &ap, CHECK);
   va_end(args);
 JNI_END
-
-
-JNI_ENTRY(void, jni_CallStaticVoidMethodV(JNIEnv *env, jclass cls, jmethodID methodID, va_list args))
+                                                 
+                                                   
+JNI_ENTRY(void, jni_CallStaticVoidMethodV(JNIEnv *env, jclass cls, jmethodID methodID, va_list args))  
   JNIWrapper("CallStaticVoidMethodV");
   DTRACE_PROBE3(hotspot_jni, CallStaticVoidMethodV__entry, env, cls, methodID);
   DT_VOID_RETURN_MARK(CallStaticVoidMethodV);
@@ -1588,9 +1591,9 @@ JNI_ENTRY(void, jni_CallStaticVoidMethodV(JNIEnv *env, jclass cls, jmethodID met
   JNI_ArgumentPusherVaArg ap(THREAD, methodID, args);
   jni_invoke_static(env, &jvalue, NULL, JNI_STATIC, methodID, &ap, CHECK);
 JNI_END
-
-
-JNI_ENTRY(void, jni_CallStaticVoidMethodA(JNIEnv *env, jclass cls, jmethodID methodID, const jvalue *args))
+                                  
+                                     
+JNI_ENTRY(void, jni_CallStaticVoidMethodA(JNIEnv *env, jclass cls, jmethodID methodID, const jvalue *args))  
   JNIWrapper("CallStaticVoidMethodA");
   DTRACE_PROBE3(hotspot_jni, CallStaticVoidMethodA__entry, env, cls, methodID);
   DT_VOID_RETURN_MARK(CallStaticVoidMethodA);
@@ -1608,7 +1611,7 @@ JNI_END
 
 DT_RETURN_MARK_DECL(GetFieldID, jfieldID);
 
-JNI_ENTRY(jfieldID, jni_GetFieldID(JNIEnv *env, jclass clazz,
+JNI_ENTRY(jfieldID, jni_GetFieldID(JNIEnv *env, jclass clazz, 
           const char *name, const char *sig))
   JNIWrapper("GetFieldID");
   DTRACE_PROBE4(hotspot_jni, GetFieldID__entry, env, clazz, name, sig);
@@ -1719,9 +1722,9 @@ address jni_GetDoubleField_addr() {
 }
 
 JNI_QUICK_ENTRY(void, jni_SetObjectField(JNIEnv *env, jobject obj, jfieldID fieldID, jobject value))
-  JNIWrapper("SetObjectField");
+  JNIWrapper("SetObjectField"); 
   DTRACE_PROBE4(hotspot_jni, SetObjectField__entry, env, obj, fieldID, value);
-  oop o = JNIHandles::resolve_non_null(obj);
+  oop o = JNIHandles::resolve_non_null(obj); 
   klassOop k = o->klass();
   int offset = jfieldIDWorkaround::from_instance_jfieldID(k, fieldID);
   // Keep JVMTI addition small and only check enabled flag here.
@@ -1774,7 +1777,7 @@ DT_RETURN_MARK_DECL(ToReflectedField, jobject);
 
 JNI_ENTRY(jobject, jni_ToReflectedField(JNIEnv *env, jclass cls, jfieldID fieldID, jboolean isStatic))
   JNIWrapper("ToReflectedField");
-  DTRACE_PROBE4(hotspot_jni, ToReflectedField__entry,
+  DTRACE_PROBE4(hotspot_jni, ToReflectedField__entry, 
                 env, cls, fieldID, isStatic);
   jobject ret = NULL;
   DT_RETURN_MARK(ToReflectedField, jobject, (const jobject&)ret);
@@ -1807,7 +1810,7 @@ JNI_END
 //
 DT_RETURN_MARK_DECL(GetStaticFieldID, jfieldID);
 
-JNI_ENTRY(jfieldID, jni_GetStaticFieldID(JNIEnv *env, jclass clazz,
+JNI_ENTRY(jfieldID, jni_GetStaticFieldID(JNIEnv *env, jclass clazz, 
           const char *name, const char *sig))
   JNIWrapper("GetStaticFieldID");
   DTRACE_PROBE4(hotspot_jni, GetStaticFieldID__entry, env, clazz, name, sig);
@@ -1900,8 +1903,8 @@ DEFINE_GETSTATICFIELD(jdouble,  double, Double)
 JNI_ENTRY(void, jni_SetStaticObjectField(JNIEnv *env, jclass clazz, jfieldID fieldID, jobject value))
   JNIWrapper("SetStaticObjectField");
   DTRACE_PROBE4(hotspot_jni, SetStaticObjectField__entry, env, clazz, fieldID, value);
-  JNIid* id = jfieldIDWorkaround::from_static_jfieldID(fieldID);
-  assert(id->is_static_field_id(), "invalid static field id");
+  JNIid* id = jfieldIDWorkaround::from_static_jfieldID(fieldID); 
+  assert(id->is_static_field_id(), "invalid static field id"); 
   // Keep JVMTI addition small and only check enabled flag here.
   // jni_SetField_probe() assumes that is okay to create handles.
   if (JvmtiExport::should_post_field_modification()) {
@@ -2310,10 +2313,10 @@ DEFINE_SETSCALARARRAYREGION(T_DOUBLE,  jdouble,  Double,  double)
 //
 
 // The RegisterNatives call being attempted tried to register with a method that
-// is not native.  Ask JVM TI what prefixes have been specified.  Then check
-// to see if the native method is now wrapped with the prefixes.  See the
+// is not native.  Ask JVM TI what prefixes have been specified.  Then check 
+// to see if the native method is now wrapped with the prefixes.  See the 
 // SetNativeMethodPrefix(es) functions in the JVM TI Spec for details.
-static methodOop find_prefixed_native(KlassHandle k,
+static methodOop find_prefixed_native(KlassHandle k, 
                                       symbolHandle name, symbolHandle signature, TRAPS) {
   ResourceMark rm(THREAD);
   methodOop method;
@@ -2387,9 +2390,9 @@ static bool register_native(KlassHandle k, symbolHandle name, symbolHandle signa
 
 DT_RETURN_MARK_DECL(RegisterNatives, jint);
 
-JNI_ENTRY(jint, jni_RegisterNatives(JNIEnv *env, jclass clazz,
-                                    const JNINativeMethod *methods,
-                                    jint nMethods))
+JNI_ENTRY(jint, jni_RegisterNatives(JNIEnv *env, jclass clazz, 
+                                    const JNINativeMethod *methods, 
+                                    jint nMethods))  
   JNIWrapper("RegisterNatives");
   DTRACE_PROBE4(hotspot_jni, RegisterNatives__entry, env, clazz, methods, nMethods);
   jint ret = 0;
@@ -2427,7 +2430,7 @@ JNI_ENTRY(jint, jni_RegisterNatives(JNIEnv *env, jclass clazz,
 JNI_END
 
 
-JNI_ENTRY(jint, jni_UnregisterNatives(JNIEnv *env, jclass clazz))
+JNI_ENTRY(jint, jni_UnregisterNatives(JNIEnv *env, jclass clazz))  
   JNIWrapper("UnregisterNatives");
   DTRACE_PROBE2(hotspot_jni, UnregisterNatives__entry, env, clazz);
   klassOop k   = java_lang_Class::as_klassOop(JNIHandles::resolve_non_null(clazz));
@@ -3259,7 +3262,7 @@ _JNI_IMPORT_OR_EXPORT_ jint JNICALL JNI_CreateJavaVM(JavaVM **vm, void **penv, v
     // Check if we should compile all classes on bootclasspath
     NOT_PRODUCT(if (CompileTheWorld) ClassLoader::compile_the_world();)
     // Since this is not a JVM_ENTRY we have to set the thread state manually before leaving.
-    ThreadStateTransition::transition_and_fence(thread, _thread_in_vm, _thread_in_native);
+    ThreadStateTransition::transition_and_fence(thread, _thread_in_vm, _thread_in_native); 
   } else {
     if (can_try_again) {
       // reset safe_to_recreate_vm to 1 so that retrial would be possible
@@ -3269,7 +3272,7 @@ _JNI_IMPORT_OR_EXPORT_ jint JNICALL JNI_CreateJavaVM(JavaVM **vm, void **penv, v
     // Creation failed. We must reset vm_created
     *vm = 0;
     *(JNIEnv**)penv = 0;
-    // reset vm_created last to avoid race condition. Use OrderAccess to
+    // reset vm_created last to avoid race condition. Use OrderAccess to 
     // control both compiler and architectural-based reordering.
     OrderAccess::release_store(&vm_created, 0);
   }
@@ -3445,7 +3448,7 @@ static jint attach_current_thread(JavaVM *vm, void **penv, void *_args, bool dae
 
 jint JNICALL jni_AttachCurrentThread(JavaVM *vm, void **penv, void *_args) {
   DTRACE_PROBE3(hotspot_jni, AttachCurrentThread__entry, vm, penv, _args);
-  if (!vm_created) {
+  if (!vm_created) { 
     DTRACE_PROBE1(hotspot_jni, AttachCurrentThread__return, JNI_ERR);
     return JNI_ERR;
   }
@@ -3555,7 +3558,7 @@ jint JNICALL jni_GetEnv(JavaVM *vm, void **penv, jint version) {
 
 jint JNICALL jni_AttachCurrentThreadAsDaemon(JavaVM *vm, void **penv, void *_args) {
   DTRACE_PROBE3(hotspot_jni, AttachCurrentThreadAsDaemon__entry, vm, penv, _args);
-  if (!vm_created) {
+  if (!vm_created) { 
     DTRACE_PROBE1(hotspot_jni, AttachCurrentThreadAsDaemon__return, JNI_ERR);
     return JNI_ERR;
   }
@@ -3580,3 +3583,4 @@ const struct JNIInvokeInterface_ jni_InvokeInterface = {
     jni_GetEnv,
     jni_AttachCurrentThreadAsDaemon
 };
+

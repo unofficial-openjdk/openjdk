@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,15 +22,15 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Platform specific for C++ based Interpreter
-#define LOTS_OF_REGS    /* Lets interpreter use plenty of registers */
+#define LOTS_OF_REGS	/* Lets interpreter use plenty of registers */
 
 private:
 
-    // save the bottom of the stack after frame manager setup. For ease of restoration after return
+    // save the bottom of the stack after frame manager setup. For ease of restoration after return 
     // from recursive interpreter call
     intptr_t*  _frame_bottom;             /* saved bottom of frame manager frame */
     intptr_t* _last_Java_pc;              /* pc to return to in frame manager */
@@ -92,8 +95,10 @@ public:
 #define SET_LOCALS_FLOAT(value, offset)   (*((jfloat *)&locals[-(offset)]) = (value))
 #define SET_LOCALS_OBJECT(value, offset)  (*((oop *)&locals[-(offset)]) = (value))
 #define SET_LOCALS_DOUBLE(value, offset)  (((VMJavaVal64*)&locals[-((offset)+1)])->d = (value))
-#define SET_LOCALS_LONG(value, offset)    (((VMJavaVal64*)&locals[-((offset)+1)])->l = (value))
+#define SET_LOCALS_LONG(value, offset)	  (((VMJavaVal64*)&locals[-((offset)+1)])->l = (value))
 #define SET_LOCALS_DOUBLE_FROM_ADDR(addr, offset) (((VMJavaVal64*)&locals[-((offset)+1)])->d = \
                                                   ((VMJavaVal64*)(addr))->d)
 #define SET_LOCALS_LONG_FROM_ADDR(addr, offset) (((VMJavaVal64*)&locals[-((offset)+1)])->l = \
                                                 ((VMJavaVal64*)(addr))->l)
+
+

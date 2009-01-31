@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -27,7 +27,7 @@ package sun.jvm.hotspot.asm.sparc;
 import sun.jvm.hotspot.asm.*;
 
 abstract class BranchDecoder extends InstructionDecoder {
-
+    
     // format 2 - condition code names.
     // Appendix F - Opcodes and Condition Codes - Page 231 - Table F-7.
     static final String integerConditionNames[] = {
@@ -69,3 +69,4 @@ abstract class BranchDecoder extends InstructionDecoder {
 
     abstract String getConditionName(int conditionCode, boolean isAnnuled);
 }
+

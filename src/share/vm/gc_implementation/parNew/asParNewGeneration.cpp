@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,17 +22,17 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
 # include "incls/_asParNewGeneration.cpp.incl"
 
-ASParNewGeneration::ASParNewGeneration(ReservedSpace rs,
-                                       size_t initial_byte_size,
-                                       size_t min_byte_size,
-                                       int level) :
-  ParNewGeneration(rs, initial_byte_size, level),
+ASParNewGeneration::ASParNewGeneration(ReservedSpace rs, 
+				       size_t initial_byte_size, 
+				       size_t min_byte_size,
+				       int level) :
+  ParNewGeneration(rs, initial_byte_size, level), 
   _min_gen_size(min_byte_size) {}
 
 const char* ASParNewGeneration::name() const {
@@ -37,7 +40,7 @@ const char* ASParNewGeneration::name() const {
 }
 
 void ASParNewGeneration::adjust_desired_tenuring_threshold() {
-  assert(UseAdaptiveSizePolicy,
+  assert(UseAdaptiveSizePolicy, 
     "Should only be used with UseAdaptiveSizePolicy");
 }
 
@@ -89,17 +92,17 @@ size_t ASParNewGeneration::available_to_live() const {
   assert(((HeapWord*)virtual_space()->high()) >= space_shrinking->end(),
     "Survivor space beyond high end");
   size_t unused_committed = pointer_delta(virtual_space()->high(),
-    space_shrinking->end(), sizeof(char));
+    space_shrinking->end(), sizeof(char));   
 
   if (space_shrinking->is_empty()) {
     // Don't let the space shrink to 0
-    assert(space_shrinking->capacity_in_bytes() >= space_alignment,
+    assert(space_shrinking->capacity_in_bytes() >= space_alignment, 
       "Space is too small");
     delta_in_survivor = space_shrinking->capacity_in_bytes() - space_alignment;
   } else {
-    delta_in_survivor = pointer_delta(space_shrinking->end(),
-                                      space_shrinking->top(),
-                                      sizeof(char));
+    delta_in_survivor = pointer_delta(space_shrinking->end(), 
+				      space_shrinking->top(),
+				      sizeof(char));
   }
 
   size_t delta_in_bytes = unused_committed + delta_in_survivor;
@@ -123,9 +126,9 @@ size_t ASParNewGeneration::available_to_live() const {
 
 // Return the number of bytes available for resizing down the young
 // generation.  This is the minimum of
-//      input "bytes"
-//      bytes to the minimum young gen size
-//      bytes to the size currently being used + some small extra
+// 	input "bytes"
+//	bytes to the minimum young gen size
+//	bytes to the size currently being used + some small extra
 size_t ASParNewGeneration::limit_gen_shrink (size_t bytes) {
   // Allow shrinkage into the current eden but keep eden large enough
   // to maintain the minimum young gen size
@@ -136,8 +139,8 @@ size_t ASParNewGeneration::limit_gen_shrink (size_t bytes) {
 // Note that the the alignment used is the OS page size as
 // opposed to an alignment associated with the virtual space
 // (as is done in the ASPSYoungGen/ASPSOldGen)
-bool ASParNewGeneration::resize_generation(size_t eden_size,
-                                           size_t survivor_size) {
+bool ASParNewGeneration::resize_generation(size_t eden_size, 
+					   size_t survivor_size) {
   const size_t alignment = os::vm_page_size();
   size_t orig_size = virtual_space()->committed_size();
   bool size_changed = false;
@@ -148,14 +151,14 @@ bool ASParNewGeneration::resize_generation(size_t eden_size,
   // size and disired survivor sizes are desired goals and may
   // exceed the total generation size.
 
-  assert(min_gen_size() <= orig_size && orig_size <= max_gen_size(),
+  assert(min_gen_size() <= orig_size && orig_size <= max_gen_size(), 
     "just checking");
 
   // Adjust new generation size
   const size_t eden_plus_survivors =
-          align_size_up(eden_size + 2 * survivor_size, alignment);
-  size_t desired_size = MAX2(MIN2(eden_plus_survivors, max_gen_size()),
-                             min_gen_size());
+	  align_size_up(eden_size + 2 * survivor_size, alignment);
+  size_t desired_size = MAX2(MIN2(eden_plus_survivors, max_gen_size()), 
+			     min_gen_size());
   assert(desired_size <= max_gen_size(), "just checking");
 
   if (desired_size > orig_size) {
@@ -199,13 +202,13 @@ bool ASParNewGeneration::resize_generation(size_t eden_size,
     if (Verbose && PrintGC) {
       size_t current_size  = virtual_space()->committed_size();
       gclog_or_tty->print_cr("ASParNew generation size changed: "
-                             SIZE_FORMAT "K->" SIZE_FORMAT "K",
-                             orig_size/K, current_size/K);
+			     SIZE_FORMAT "K->" SIZE_FORMAT "K",
+			     orig_size/K, current_size/K);
     }
   }
 
   guarantee(eden_plus_survivors <= virtual_space()->committed_size() ||
-            virtual_space()->committed_size() == max_gen_size(), "Sanity");
+	    virtual_space()->committed_size() == max_gen_size(), "Sanity");
 
   return true;
 }
@@ -214,7 +217,7 @@ void ASParNewGeneration::reset_survivors_after_shrink() {
 
   GenCollectedHeap* gch = GenCollectedHeap::heap();
   HeapWord* new_end = (HeapWord*)virtual_space()->high();
-
+  
   if (from()->end() > to()->end()) {
     assert(new_end >= from()->end(), "Shrinking past from-space");
   } else {
@@ -226,14 +229,14 @@ void ASParNewGeneration::reset_survivors_after_shrink() {
     }
   }
 }
-void ASParNewGeneration::resize_spaces(size_t requested_eden_size,
-                                       size_t requested_survivor_size) {
+void ASParNewGeneration::resize_spaces(size_t requested_eden_size, 
+			               size_t requested_survivor_size) {
   assert(UseAdaptiveSizePolicy, "sanity check");
-  assert(requested_eden_size > 0  && requested_survivor_size > 0,
-         "just checking");
+  assert(requested_eden_size > 0  && requested_survivor_size > 0, 
+	 "just checking");
   CollectedHeap* heap = Universe::heap();
   assert(heap->kind() == CollectedHeap::GenCollectedHeap, "Sanity");
-
+      
 
   // We require eden and to space to be empty
   if ((!eden()->is_empty()) || (!to()->is_empty())) {
@@ -243,35 +246,35 @@ void ASParNewGeneration::resize_spaces(size_t requested_eden_size,
   size_t cur_eden_size = eden()->capacity();
 
   if (PrintAdaptiveSizePolicy && Verbose) {
-    gclog_or_tty->print_cr("ASParNew::resize_spaces(requested_eden_size: "
-                  SIZE_FORMAT
+    gclog_or_tty->print_cr("ASParNew::resize_spaces(requested_eden_size: " 
+                  SIZE_FORMAT 
                   ", requested_survivor_size: " SIZE_FORMAT ")",
                   requested_eden_size, requested_survivor_size);
-    gclog_or_tty->print_cr("    eden: [" PTR_FORMAT ".." PTR_FORMAT ") "
-                  SIZE_FORMAT,
-                  eden()->bottom(),
-                  eden()->end(),
+    gclog_or_tty->print_cr("    eden: [" PTR_FORMAT ".." PTR_FORMAT ") " 
+                  SIZE_FORMAT, 
+                  eden()->bottom(), 
+                  eden()->end(), 
                   pointer_delta(eden()->end(),
                                 eden()->bottom(),
                                 sizeof(char)));
-    gclog_or_tty->print_cr("    from: [" PTR_FORMAT ".." PTR_FORMAT ") "
-                  SIZE_FORMAT,
-                  from()->bottom(),
-                  from()->end(),
+    gclog_or_tty->print_cr("    from: [" PTR_FORMAT ".." PTR_FORMAT ") " 
+		  SIZE_FORMAT, 
+                  from()->bottom(), 
+                  from()->end(), 
                   pointer_delta(from()->end(),
                                 from()->bottom(),
                                 sizeof(char)));
-    gclog_or_tty->print_cr("      to: [" PTR_FORMAT ".." PTR_FORMAT ") "
-                  SIZE_FORMAT,
-                  to()->bottom(),
-                  to()->end(),
+    gclog_or_tty->print_cr("      to: [" PTR_FORMAT ".." PTR_FORMAT ") " 
+		  SIZE_FORMAT, 
+                  to()->bottom(),   
+                  to()->end(), 
                   pointer_delta(  to()->end(),
                                   to()->bottom(),
                                   sizeof(char)));
   }
 
   // There's nothing to do if the new sizes are the same as the current
-  if (requested_survivor_size == to()->capacity() &&
+  if (requested_survivor_size == to()->capacity() && 
       requested_survivor_size == from()->capacity() &&
       requested_eden_size == eden()->capacity()) {
     if (PrintAdaptiveSizePolicy && Verbose) {
@@ -279,16 +282,16 @@ void ASParNewGeneration::resize_spaces(size_t requested_eden_size,
     }
     return;
   }
-
+  
   char* eden_start = (char*)eden()->bottom();
-  char* eden_end   = (char*)eden()->end();
+  char* eden_end   = (char*)eden()->end();   
   char* from_start = (char*)from()->bottom();
   char* from_end   = (char*)from()->end();
   char* to_start   = (char*)to()->bottom();
   char* to_end     = (char*)to()->end();
 
   const size_t alignment = os::vm_page_size();
-  const bool maintain_minimum =
+  const bool maintain_minimum = 
     (requested_eden_size + 2 * requested_survivor_size) <= min_gen_size();
 
   // Check whether from space is below to space
@@ -314,9 +317,9 @@ void ASParNewGeneration::resize_spaces(size_t requested_eden_size,
       // This could be done in general but policy at a higher
       // level is determining a requested size for eden and that
       // should be honored unless there is a fundamental reason.
-      eden_size = pointer_delta(from_start,
-                                eden_start,
-                                sizeof(char));
+      eden_size = pointer_delta(from_start, 
+				eden_start, 
+				sizeof(char));
     } else {
       eden_size = MIN2(requested_eden_size,
                        pointer_delta(from_start, eden_start, sizeof(char)));
@@ -334,8 +337,8 @@ void ASParNewGeneration::resize_spaces(size_t requested_eden_size,
 
     // First calculate an optimal to-space
     to_end   = (char*)virtual_space()->high();
-    to_start = (char*)pointer_delta(to_end, (char*)requested_survivor_size,
-                                    sizeof(char));
+    to_start = (char*)pointer_delta(to_end, (char*)requested_survivor_size, 
+				    sizeof(char));
 
     // Does the optimal to-space overlap from-space?
     if (to_start < (char*)from()->end()) {
@@ -363,29 +366,29 @@ void ASParNewGeneration::resize_spaces(size_t requested_eden_size,
       if (requested_eden_size <= cur_eden_size) {
         to_start = from_end;
         if (to_start + requested_survivor_size > to_start) {
-          to_end = to_start + requested_survivor_size;
+	  to_end = to_start + requested_survivor_size;
         }
       }
       // else leave to_end pointing to the high end of the virtual space.
     }
 
     guarantee(to_start != to_end, "to space is zero sized");
-
+      
     if (PrintAdaptiveSizePolicy && Verbose) {
       gclog_or_tty->print_cr("    [eden_start .. eden_end): "
-                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT,
-                    eden_start,
-                    eden_end,
+                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT, 
+                    eden_start, 
+                    eden_end, 
                     pointer_delta(eden_end, eden_start, sizeof(char)));
       gclog_or_tty->print_cr("    [from_start .. from_end): "
-                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT,
-                    from_start,
-                    from_end,
+                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT, 
+                    from_start, 
+                    from_end, 
                     pointer_delta(from_end, from_start, sizeof(char)));
       gclog_or_tty->print_cr("    [  to_start ..   to_end): "
-                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT,
-                    to_start,
-                    to_end,
+                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT, 
+                    to_start,   
+                    to_end, 
                     pointer_delta(  to_end,   to_start, sizeof(char)));
     }
   } else {
@@ -397,12 +400,12 @@ void ASParNewGeneration::resize_spaces(size_t requested_eden_size,
     // Calculate the to-space boundaries based on
     // the start of from-space.
     to_end = from_start;
-    to_start = (char*)pointer_delta(from_start,
-                                    (char*)requested_survivor_size,
-                                    sizeof(char));
+    to_start = (char*)pointer_delta(from_start, 
+                                    (char*)requested_survivor_size, 
+				    sizeof(char));
     // Calculate the ideal eden boundaries.
     // eden_end is already at the bottom of the generation
-    assert(eden_start == virtual_space()->low(),
+    assert(eden_start == virtual_space()->low(), 
       "Eden is not starting at the low end of the virtual space");
     if (eden_start + requested_eden_size >= eden_start) {
       eden_end = eden_start + requested_eden_size;
@@ -431,7 +434,7 @@ void ASParNewGeneration::resize_spaces(size_t requested_eden_size,
       eden_size = pointer_delta(eden_end, eden_start, sizeof(char));
     }
     eden_size = align_size_down(eden_size, alignment);
-    assert(maintain_minimum || eden_size <= requested_eden_size,
+    assert(maintain_minimum || eden_size <= requested_eden_size, 
       "Eden size is too large");
     assert(eden_size >= alignment, "Eden size is too small");
     eden_end = eden_start + eden_size;
@@ -457,32 +460,32 @@ void ASParNewGeneration::resize_spaces(size_t requested_eden_size,
         from_end = from_start + requested_survivor_size;
       }
       if (from_end > virtual_space()->high()) {
-        from_end = virtual_space()->high();
+	from_end = virtual_space()->high();
       }
     }
 
     assert(to_start >= eden_end, "to-space should be above eden");
     if (PrintAdaptiveSizePolicy && Verbose) {
       gclog_or_tty->print_cr("    [eden_start .. eden_end): "
-                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT,
-                    eden_start,
-                    eden_end,
+                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT, 
+                    eden_start, 
+                    eden_end, 
                     pointer_delta(eden_end, eden_start, sizeof(char)));
-      gclog_or_tty->print_cr("    [  to_start ..   to_end): "
-                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT,
-                    to_start,
-                    to_end,
+      gclog_or_tty->print_cr("    [  to_start ..   to_end): " 
+                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT, 
+                    to_start,   
+                    to_end, 
                     pointer_delta(  to_end,   to_start, sizeof(char)));
-      gclog_or_tty->print_cr("    [from_start .. from_end): "
-                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT,
-                    from_start,
-                    from_end,
+      gclog_or_tty->print_cr("    [from_start .. from_end): " 
+                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT, 
+                    from_start, 
+                    from_end, 
                     pointer_delta(from_end, from_start, sizeof(char)));
     }
   }
+  
 
-
-  guarantee((HeapWord*)from_start <= from()->bottom(),
+  guarantee((HeapWord*)from_start <= from()->bottom(), 
             "from start moved to the right");
   guarantee((HeapWord*)from_end >= from()->top(),
             "from end moved into live data");
@@ -531,7 +534,7 @@ void ASParNewGeneration::compute_new_size() {
     "not a CMS generational heap");
 
 
-  CMSAdaptiveSizePolicy* size_policy =
+  CMSAdaptiveSizePolicy* size_policy = 
     (CMSAdaptiveSizePolicy*)gch->gen_policy()->size_policy();
   assert(size_policy->is_gc_cms_adaptive_size_policy(),
     "Wrong type of size policy");
@@ -541,7 +544,7 @@ void ASParNewGeneration::compute_new_size() {
     // Keep running averages on how much survived
     size_policy->avg_survived()->sample(survived);
   } else {
-    size_t promoted =
+    size_t promoted = 
       (size_t) next_gen()->gc_stats()->avg_promoted()->last_sample();
     assert(promoted < gch->capacity(), "Conversion problem?");
     size_t survived_guess = survived + promoted;
@@ -560,14 +563,14 @@ void ASParNewGeneration::compute_new_size() {
   size_policy->compute_young_generation_free_space(eden()->capacity(),
                                                    max_gen_size());
 
-  resize(size_policy->calculated_eden_size_in_bytes(),
-         size_policy->calculated_survivor_size_in_bytes());
+  resize(size_policy->calculated_eden_size_in_bytes(), 
+	 size_policy->calculated_survivor_size_in_bytes());
 
   if (UsePerfData) {
-    CMSGCAdaptivePolicyCounters* counters =
+    CMSGCAdaptivePolicyCounters* counters = 
       (CMSGCAdaptivePolicyCounters*) gch->collector_policy()->counters();
-    assert(counters->kind() ==
-           GCPolicyCounters::CMSGCAdaptivePolicyCountersKind,
+    assert(counters->kind() == 
+	   GCPolicyCounters::CMSGCAdaptivePolicyCountersKind,
       "Wrong kind of counters");
     counters->update_tenuring_threshold(_tenuring_threshold);
     counters->update_survivor_overflowed(_survivor_overflow);
@@ -578,7 +581,7 @@ void ASParNewGeneration::compute_new_size() {
 
 #ifndef PRODUCT
 // Changes from PSYoungGen version
-//      value of "alignment"
+//	value of "alignment"
 void ASParNewGeneration::space_invariants() {
   const size_t alignment = os::vm_page_size();
 
@@ -589,7 +592,7 @@ void ASParNewGeneration::space_invariants() {
 
   // Relationship of spaces to each other
   char* eden_start = (char*)eden()->bottom();
-  char* eden_end   = (char*)eden()->end();
+  char* eden_end   = (char*)eden()->end();   
   char* from_start = (char*)from()->bottom();
   char* from_end   = (char*)from()->end();
   char* to_start   = (char*)to()->bottom();

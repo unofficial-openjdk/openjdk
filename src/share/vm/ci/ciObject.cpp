@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -177,7 +180,7 @@ jobject ciObject::encoding() {
   assert(has_encoding(), "oop must be NULL or perm");
   return handle();
 }
-
+  
 // ------------------------------------------------------------------
 // ciObject::has_encoding
 bool ciObject::has_encoding() {
@@ -192,10 +195,10 @@ bool ciObject::has_encoding() {
 //
 // Implementation note: dispatch to the virtual print_impl behavior
 // for this ciObject.
-void ciObject::print(outputStream* st) {
-  st->print("<%s", type_string());
-  GUARDED_VM_ENTRY(print_impl(st);)
-  st->print(" ident=%d %s address=0x%x>", ident(),
+void ciObject::print() {
+  tty->print("<%s", type_string());
+  GUARDED_VM_ENTRY(print_impl();)
+  tty->print(" ident=%d %s address=0x%x>", ident(),
         is_perm() ? "PERM" : "",
         (address)this);
 }
@@ -204,12 +207,13 @@ void ciObject::print(outputStream* st) {
 // ciObject::print_oop
 //
 // Print debugging output about the oop this ciObject represents.
-void ciObject::print_oop(outputStream* st) {
+void ciObject::print_oop() {
   if (is_null_object()) {
-    st->print_cr("NULL");
+    tty->print_cr("NULL");
   } else if (!is_loaded()) {
-    st->print_cr("UNLOADED");
+    tty->print_cr("UNLOADED");
   } else {
-    GUARDED_VM_ENTRY(get_oop()->print_on(st);)
+    GUARDED_VM_ENTRY(get_oop()->print();)
   }
 }
+

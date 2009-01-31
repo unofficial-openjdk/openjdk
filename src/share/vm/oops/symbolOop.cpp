@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -29,7 +32,7 @@ bool symbolOopDesc::equals(const char* str, int len) const {
   int l = utf8_length();
   if (l != len) return false;
   while (l-- > 0) {
-    if (str[l] != (char) byte_at(l))
+    if (str[l] != (char) byte_at(l)) 
       return false;
   }
   assert(l == -1, "we should be at the beginning");

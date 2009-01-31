@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -69,9 +72,9 @@ int ciSymbol::utf8_length() {
 // ciSymbol::print_impl
 //
 // Implementation of the print method
-void ciSymbol::print_impl(outputStream* st) {
-  st->print(" value=");
-  print_symbol_on(st);
+void ciSymbol::print_impl() {
+  tty->print(" value=");
+  print_symbol();
 }
 
 // ------------------------------------------------------------------
@@ -106,3 +109,4 @@ ciSymbol* ciSymbol::make_impl(const char* s) {
 ciSymbol* ciSymbol::make(const char* s) {
   GUARDED_VM_ENTRY(return make_impl(s);)
 }
+

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -42,9 +45,9 @@ void hpi::initialize_get_interface(vm_calls_t *callbacks)
       buf[JVM_MAXPATHLEN - 1] = '\0';
     } else {
       const char *thread_type = "native_threads";
-
+      
       os::jvm_path(buf, JVM_MAXPATHLEN);
-
+      
 #ifdef PRODUCT
       const char * hpi_lib = "/libhpi.so";
 #else
@@ -63,15 +66,15 @@ void hpi::initialize_get_interface(vm_calls_t *callbacks)
     if (TraceHPI)  tty->print_cr("Loading HPI %s ", buf);
     hpi_handle = dlopen(buf, RTLD_NOW);
     if (hpi_handle == NULL) {
-        if (TraceHPI) tty->print_cr("HPI dlopen failed: %s", dlerror());
+	if (TraceHPI) tty->print_cr("HPI dlopen failed: %s", dlerror());
         return;
     }
-    DLL_Initialize = CAST_TO_FN_PTR(jint (JNICALL *)(GetInterfaceFunc *, void *),
+    DLL_Initialize = CAST_TO_FN_PTR(jint (JNICALL *)(GetInterfaceFunc *, void *),  
                                     dlsym(hpi_handle, "DLL_Initialize"));
     if (TraceHPI && DLL_Initialize == NULL) tty->print_cr("HPI dlsym of DLL_Initialize failed: %s", dlerror());
     if (DLL_Initialize == NULL ||
         (*DLL_Initialize)(&getintf, callbacks) < 0) {
-        if (TraceHPI) tty->print_cr("HPI DLL_Initialize failed");
+	if (TraceHPI) tty->print_cr("HPI DLL_Initialize failed");
         return;
     }
     if (TraceHPI)  tty->print_cr("HPI loaded successfully");

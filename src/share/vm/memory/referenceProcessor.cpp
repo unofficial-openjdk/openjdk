@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -39,7 +42,7 @@ private:
   size_t _len;
   oop   _head;
 };
-
+  
 oop  ReferenceProcessor::_sentinelRef = NULL;
 
 const int subclasses_of_ref = REF_PHANTOM - REF_OTHER;
@@ -71,11 +74,11 @@ void ReferenceProcessor::init_statics() {
 
 
 ReferenceProcessor* ReferenceProcessor::create_ref_processor(
-    MemRegion          span,
+    MemRegion          span, 
     bool               atomic_discovery,
     bool               mt_discovery,
     BoolObjectClosure* is_alive_non_header,
-    int                parallel_gc_threads,
+    int                parallel_gc_threads, 
     bool               mt_processing)
 {
   int mt_degree = 1;
@@ -95,7 +98,7 @@ ReferenceProcessor* ReferenceProcessor::create_ref_processor(
 
 
 ReferenceProcessor::ReferenceProcessor(MemRegion span,
-  bool atomic_discovery, bool mt_discovery, int mt_degree,
+  bool atomic_discovery, bool mt_discovery, int mt_degree, 
   bool mt_processing) :
   _discovering_refs(false),
   _enqueuing_is_done(false),
@@ -117,7 +120,7 @@ ReferenceProcessor::ReferenceProcessor(MemRegion span,
   assert(_sentinelRef != NULL, "_sentinelRef is NULL");
   // Initialized all entries to _sentinelRef
   for (int i = 0; i < _num_q * subclasses_of_ref; i++) {
-        _discoveredSoftRefs[i].set_head(_sentinelRef);
+	_discoveredSoftRefs[i].set_head(_sentinelRef);
     _discoveredSoftRefs[i].set_length(0);
   }
 }
@@ -182,30 +185,30 @@ ReferenceProcessor::process_discovered_references(
   // Soft references
   {
     TraceTime tt("SoftReference", trace_time, false, gclog_or_tty);
-    process_discovered_reflist(_discoveredSoftRefs, policy, true,
+    process_discovered_reflist(_discoveredSoftRefs, policy, true, 
                                is_alive, keep_alive, complete_gc, task_executor);
   }
 
   update_soft_ref_master_clock();
-
+  
   // Weak references
   {
     TraceTime tt("WeakReference", trace_time, false, gclog_or_tty);
-    process_discovered_reflist(_discoveredWeakRefs, NULL, true,
+    process_discovered_reflist(_discoveredWeakRefs, NULL, true, 
                                is_alive, keep_alive, complete_gc, task_executor);
   }
 
   // Final references
   {
     TraceTime tt("FinalReference", trace_time, false, gclog_or_tty);
-    process_discovered_reflist(_discoveredFinalRefs, NULL, false,
+    process_discovered_reflist(_discoveredFinalRefs, NULL, false, 
                                is_alive, keep_alive, complete_gc, task_executor);
   }
 
   // Phantom references
   {
     TraceTime tt("PhantomReference", trace_time, false, gclog_or_tty);
-    process_discovered_reflist(_discoveredPhantomRefs, NULL, false,
+    process_discovered_reflist(_discoveredPhantomRefs, NULL, false, 
                                is_alive, keep_alive, complete_gc, task_executor);
   }
 
@@ -214,7 +217,7 @@ ReferenceProcessor::process_discovered_references(
   // that is not how the JDK1.2 specification is. See #4126360. Native code can
   // thus use JNI weak references to circumvent the phantom references and
   // resurrect a "post-mortem" object.
-  {
+  { 
     TraceTime tt("JNI Weak Reference", trace_time, false, gclog_or_tty);
     if (task_executor != NULL) {
       task_executor->set_single_threaded_mode();
@@ -309,10 +312,10 @@ void ReferenceProcessor::enqueue_discovered_reflist(DiscoveredList& refs_list,
     assert(obj->is_instanceRef(), "should be reference object");
     oop next = java_lang_ref_Reference::discovered(obj);
     if (TraceReferenceGC && PrintGCDetails) {
-      gclog_or_tty->print_cr("  obj " INTPTR_FORMAT "/next " INTPTR_FORMAT,
+      gclog_or_tty->print_cr("	obj " INTPTR_FORMAT "/next " INTPTR_FORMAT,
                              (oopDesc*) obj, (oopDesc*) next);
     }
-    assert(*java_lang_ref_Reference::next_addr(obj) == NULL,
+    assert(*java_lang_ref_Reference::next_addr(obj) == NULL, 
       "The reference should not be enqueued");
     if (next == _sentinelRef) {  // obj is last
       // Swap refs_list into pendling_list_addr and
@@ -342,12 +345,12 @@ public:
   RefProcEnqueueTask(ReferenceProcessor& ref_processor,
                      DiscoveredList      discovered_refs[],
                      oop*                pending_list_addr,
-                     oop                 sentinel_ref,
+                     oop                 sentinel_ref, 
                      int                 n_queues)
     : EnqueueTask(ref_processor, discovered_refs,
                   pending_list_addr, sentinel_ref, n_queues)
   { }
-
+    
   virtual void work(unsigned int work_id)
   {
     assert(work_id < (unsigned int)_ref_processor.num_q(), "Index out-of-bounds");
@@ -363,7 +366,7 @@ public:
 };
 
 // Enqueue references that are not made active again
-void ReferenceProcessor::enqueue_discovered_reflists(oop* pending_list_addr,
+void ReferenceProcessor::enqueue_discovered_reflists(oop* pending_list_addr, 
   AbstractRefProcTaskExecutor* task_executor) {
   if (_processing_is_mt && task_executor != NULL) {
     // Parallel code
@@ -383,45 +386,45 @@ void ReferenceProcessor::enqueue_discovered_reflists(oop* pending_list_addr,
 // Iterator for the list of discovered references.
 class DiscoveredListIterator {
 public:
-  inline DiscoveredListIterator(DiscoveredList&    refs_list,
+  inline DiscoveredListIterator(DiscoveredList&    refs_list, 
                                 OopClosure*        keep_alive,
                                 BoolObjectClosure* is_alive);
-
+  
   // End Of List.
-  inline bool has_next() const
+  inline bool has_next() const 
   { return _next != ReferenceProcessor::_sentinelRef; }
-
+ 
   // Get oop to the Reference object.
   inline oop  obj() const { return _ref; }
 
   // Get oop to the referent object.
   inline oop  referent() const { return _referent; }
-
+  
   // Returns true if referent is alive.
   inline bool is_referent_alive() const;
-
+  
   // Loads data for the current reference.
   // The "allow_null_referent" argument tells us to allow for the possibility
   // of a NULL referent in the discovered Reference object. This typically
   // happens in the case of concurrent collectors that may have done the
   // discovery concurrently or interleaved with mutator execution.
   inline void load_ptrs(DEBUG_ONLY(bool allow_null_referent));
-
+  
   // Move to the next discovered reference.
   inline void next();
-
+  
   // Remove the current reference from the list and move to the next.
   inline void remove();
-
+  
   // Make the Reference object active again.
   inline void make_active() { java_lang_ref_Reference::set_next(_ref, NULL); }
-
+  
   // Make the referent alive.
   inline void make_referent_alive() { _keep_alive->do_oop(_referent_addr); }
-
+  
   // Update the discovered field.
   inline void update_discovered() { _keep_alive->do_oop(_prev_next); }
-
+  
   // NULL out referent pointer.
   inline void clear_referent() { *_referent_addr = NULL; }
 
@@ -430,10 +433,10 @@ public:
   inline size_t processed() const { return _processed; }
   inline size_t removed() const   { return _removed; }
   )
-
+  
 private:
   inline void move_to_next();
-
+  
 private:
   DiscoveredList&    _refs_list;
   oop*               _prev_next;
@@ -486,9 +489,9 @@ inline void DiscoveredListIterator::load_ptrs(DEBUG_ONLY(bool allow_null_referen
   _referent = *_referent_addr;
   assert(Universe::heap()->is_in_reserved_or_null(_referent),
          "Wrong oop found in java.lang.Reference object");
-  assert(allow_null_referent ?
-             _referent->is_oop_or_null()
-           : _referent->is_oop(),
+  assert(allow_null_referent ? 
+             _referent->is_oop_or_null() 
+           : _referent->is_oop(), 
          "bad referent");
 }
 
@@ -544,8 +547,8 @@ ReferenceProcessor::process_phase1(DiscoveredList&    refs_list_addr,
     bool referent_is_dead = (iter.referent() != NULL) && !iter.is_referent_alive();
     if (referent_is_dead && !policy->should_clear_reference(iter.obj())) {
       if (TraceReferenceGC) {
-        gclog_or_tty->print_cr("Dropping reference (" INTPTR_FORMAT ": %s"  ") by policy",
-                               (address)iter.obj(), iter.obj()->blueprint()->internal_name());
+        gclog_or_tty->print_cr("Dropping reference (" INTPTR_FORMAT ": %s"  ") by policy",  
+                               (address)iter.obj(), iter.obj()->blueprint()->internal_name()); 
       }
       // Make the Reference object active again
       iter.make_active();
@@ -582,8 +585,8 @@ ReferenceProcessor::pp2_work(DiscoveredList&    refs_list_addr,
     assert(*next_addr == NULL, "Should not discover inactive Reference");
     if (iter.is_referent_alive()) {
       if (TraceReferenceGC) {
-        gclog_or_tty->print_cr("Dropping strongly reachable reference (" INTPTR_FORMAT ": %s)",
-                               (address)iter.obj(), iter.obj()->blueprint()->internal_name());
+        gclog_or_tty->print_cr("Dropping strongly reachable reference (" INTPTR_FORMAT ": %s)",  
+                               (address)iter.obj(), iter.obj()->blueprint()->internal_name()); 
       }
       // The referent is reachable after all.
       // Update the referent pointer as necessary: Note that this
@@ -659,9 +662,9 @@ ReferenceProcessor::process_phase3(DiscoveredList&    refs_list_addr,
       iter.make_referent_alive();
     }
     if (TraceReferenceGC) {
-      gclog_or_tty->print_cr("Adding %sreference (" INTPTR_FORMAT ": %s) as pending",
-                             clear_referent ? "cleared " : "",
-                             (address)iter.obj(), iter.obj()->blueprint()->internal_name());
+      gclog_or_tty->print_cr("Adding %sreference (" INTPTR_FORMAT ": %s) as pending",  
+                             clear_referent ? "cleared " : "",  
+                             (address)iter.obj(), iter.obj()->blueprint()->internal_name()); 
     }
     assert(iter.obj()->is_oop(UseConcMarkSweepGC), "Adding a bad reference");
     // If discovery is concurrent, we may have objects with null referents,
@@ -708,9 +711,9 @@ public:
   { }
   virtual void work(unsigned int i, BoolObjectClosure& is_alive,
                     OopClosure& keep_alive,
-                    VoidClosure& complete_gc)
+                    VoidClosure& complete_gc) 
   {
-    _ref_processor.process_phase1(_refs_lists[i], _policy,
+    _ref_processor.process_phase1(_refs_lists[i], _policy, 
                                   &is_alive, &keep_alive, &complete_gc);
   }
 private:
@@ -722,13 +725,13 @@ public:
   RefProcPhase2Task(ReferenceProcessor& ref_processor,
                     DiscoveredList      refs_lists[],
                     bool                marks_oops_alive)
-    : ProcessTask(ref_processor, refs_lists, marks_oops_alive)
+    : ProcessTask(ref_processor, refs_lists, marks_oops_alive) 
   { }
   virtual void work(unsigned int i, BoolObjectClosure& is_alive,
                     OopClosure& keep_alive,
-                    VoidClosure& complete_gc)
+                    VoidClosure& complete_gc) 
   {
-    _ref_processor.process_phase2(_refs_lists[i],
+    _ref_processor.process_phase2(_refs_lists[i], 
                                   &is_alive, &keep_alive, &complete_gc);
   }
 };
@@ -768,8 +771,8 @@ void ReferenceProcessor::balance_queues(DiscoveredList ref_lists[])
       assert(to_idx < _num_q, "Sanity Check!");
       if (ref_lists[to_idx].length() < avg_refs) {
         // move superfluous refs
-        size_t refs_to_move =
-          MIN2(ref_lists[from_idx].length() - avg_refs,
+        size_t refs_to_move = 
+          MIN2(ref_lists[from_idx].length() - avg_refs, 
                avg_refs - ref_lists[to_idx].length());
         oop move_head = ref_lists[from_idx].head();
         oop move_tail = move_head;
@@ -799,7 +802,7 @@ ReferenceProcessor::process_discovered_reflist(
   BoolObjectClosure*           is_alive,
   OopClosure*                  keep_alive,
   VoidClosure*                 complete_gc,
-  AbstractRefProcTaskExecutor* task_executor)
+  AbstractRefProcTaskExecutor* task_executor) 
 {
   bool mt = task_executor != NULL && _processing_is_mt;
   if (mt && ParallelRefProcBalancingEnabled) {
@@ -812,7 +815,7 @@ ReferenceProcessor::process_discovered_reflist(
     }
     gclog_or_tty->print(", %u refs", total);
   }
-
+                            
   // Phase 1 (soft refs only):
   // . Traverse the list and remove any SoftReferences whose
   //   referents are not alive, but that should be kept alive for
@@ -829,7 +832,7 @@ ReferenceProcessor::process_discovered_reflist(
       }
     }
   } else { // policy == NULL
-    assert(refs_lists != _discoveredSoftRefs,
+    assert(refs_lists != _discoveredSoftRefs, 
            "Policy must be specified for soft references.");
   }
 
@@ -843,7 +846,7 @@ ReferenceProcessor::process_discovered_reflist(
       process_phase2(refs_lists[i], is_alive, keep_alive, complete_gc);
     }
   }
-
+  
   // Phase 3:
   // . Traverse the list and process referents as appropriate.
   if (mt) {
@@ -881,12 +884,12 @@ void ReferenceProcessor::clean_up_discovered_reflist(DiscoveredList& refs_list) 
     // drop it.
     if (iter.referent() == NULL || *next_addr != NULL) {
       debug_only(
-        if (PrintGCDetails && TraceReferenceGC) {
-          gclog_or_tty->print_cr("clean_up_discovered_list: Dropping Reference: "
-            INTPTR_FORMAT " with next field: " INTPTR_FORMAT
-            " and referent: " INTPTR_FORMAT,
-            (address)iter.obj(), (address)*next_addr, (address)iter.referent());
-        }
+	if (PrintGCDetails && TraceReferenceGC) {
+	  gclog_or_tty->print_cr("clean_up_discovered_list: Dropping Reference: " 
+	    INTPTR_FORMAT " with next field: " INTPTR_FORMAT 
+	    " and referent: " INTPTR_FORMAT, 
+	    (address)iter.obj(), (address)*next_addr, (address)iter.referent());
+	}
       )
       // Remove Reference object from list
       iter.remove();
@@ -899,8 +902,8 @@ void ReferenceProcessor::clean_up_discovered_reflist(DiscoveredList& refs_list) 
   NOT_PRODUCT(
     if (PrintGCDetails && TraceReferenceGC) {
       gclog_or_tty->print(
-        " Removed %d Refs with NULL referents out of %d discovered Refs",
-        iter.removed(), iter.processed());
+	" Removed %d Refs with NULL referents out of %d discovered Refs", 
+	iter.removed(), iter.processed());
     }
   )
 }
@@ -966,8 +969,8 @@ inline void ReferenceProcessor::add_to_discovered_list_mt(DiscoveredList& list,
     // If retest was non NULL, another thread beat us to it:
     // The reference has already been discovered...
     if (TraceReferenceGC) {
-      gclog_or_tty->print_cr("Already enqueued reference (" INTPTR_FORMAT ": %s)",
-                             obj, obj->blueprint()->internal_name());
+      gclog_or_tty->print_cr("Already enqueued reference (" INTPTR_FORMAT ": %s)",  
+                             obj, obj->blueprint()->internal_name()); 
     }
   }
 }
@@ -1040,8 +1043,8 @@ bool ReferenceProcessor::discover_reference(oop obj, ReferenceType rt) {
   if (*discovered_addr != NULL) {
     // The reference has already been discovered...
     if (TraceReferenceGC) {
-      gclog_or_tty->print_cr("Already enqueued reference (" INTPTR_FORMAT ": %s)",
-                             (oopDesc*)obj, obj->blueprint()->internal_name());
+      gclog_or_tty->print_cr("Already enqueued reference (" INTPTR_FORMAT ": %s)",  
+                             (oopDesc*)obj, obj->blueprint()->internal_name()); 
     }
     if (RefDiscoveryPolicy == ReferentBasedDiscovery) {
       // assumes that an object is not processed twice;
@@ -1084,7 +1087,7 @@ bool ReferenceProcessor::discover_reference(oop obj, ReferenceType rt) {
   }
 
   // We do a raw store here, the field will be visited later when
-  // processing the discovered references.
+  // processing the discovered references. 
   if (_discovery_is_mt) {
     add_to_discovered_list_mt(*list, obj, discovered_addr);
   } else {
@@ -1105,8 +1108,8 @@ bool ReferenceProcessor::discover_reference(oop obj, ReferenceType rt) {
   if (TraceReferenceGC) {
     oop referent = java_lang_ref_Reference::referent(obj);
     if (PrintGCDetails) {
-      gclog_or_tty->print_cr("Enqueued reference (" INTPTR_FORMAT ": %s)",
-                             (oopDesc*) obj, obj->blueprint()->internal_name());
+      gclog_or_tty->print_cr("Enqueued reference (" INTPTR_FORMAT ": %s)",  
+                             (oopDesc*) obj, obj->blueprint()->internal_name()); 
     }
     assert(referent->is_oop(), "Enqueued a bad referent");
   }
@@ -1125,7 +1128,7 @@ void ReferenceProcessor::preclean_discovered_references(
   YieldClosure* yield) {
 
   NOT_PRODUCT(verify_ok_to_handle_reflists());
-
+  
   // Soft references
   {
     TraceTime tt("Preclean SoftReferences", PrintGCDetails && PrintReferenceGC,
@@ -1190,13 +1193,13 @@ void ReferenceProcessor::preclean_discovered_reflist(
   while (iter.has_next()) {
     iter.load_ptrs(DEBUG_ONLY(true /* allow_null_referent */));
     oop* next_addr = java_lang_ref_Reference::next_addr(iter.obj());
-    if (iter.referent() == NULL || iter.is_referent_alive() ||
+    if (iter.referent() == NULL || iter.is_referent_alive() || 
         *next_addr != NULL) {
       // The referent has been cleared, or is alive, or the Reference is not
       // active; we need to trace and mark its cohort.
       if (TraceReferenceGC) {
-        gclog_or_tty->print_cr("Precleaning Reference (" INTPTR_FORMAT ": %s)",
-                               iter.obj(), iter.obj()->blueprint()->internal_name());
+        gclog_or_tty->print_cr("Precleaning Reference (" INTPTR_FORMAT ": %s)",  
+                               iter.obj(), iter.obj()->blueprint()->internal_name()); 
       }
       // Remove Reference object from list
       iter.remove();
@@ -1209,7 +1212,7 @@ void ReferenceProcessor::preclean_discovered_reflist(
     }
   }
   refs_list.set_length(length);
-
+  
   // Close the reachable set
   complete_gc->do_void();
 

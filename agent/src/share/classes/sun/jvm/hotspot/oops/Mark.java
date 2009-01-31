@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.oops;
@@ -105,7 +105,7 @@ public class Mark extends VMObject {
   private static long ageMaskInPlace;
   private static long hashMask;
   private static long hashMaskInPlace;
-  private static long biasedLockAlignment;
+  private static long biasedLockAlignment; 
 
   private static long lockedValue;
   private static long unlockedValue;
@@ -176,7 +176,7 @@ public class Mark extends VMObject {
      return (!isUnlocked() || !hasNoHash());
   }
 
-  // WARNING: The following routines are used EXCLUSIVELY by
+  // WARNING: The following routines are used EXCLUSIVELY by 
   // synchronization functions. They are not really gc safe.
   // They must get updated if markOop layout get changed.
 
@@ -225,7 +225,7 @@ public class Mark extends VMObject {
   //    tmp |= ((hash & hash_mask) << hash_shift);
   //    return (markOop)tmp;
   //  }
-  // it is only used to be stored into BasicLock as the
+  // it is only used to be stored into BasicLock as the 
   // indicator that the lock is using heavyweight monitor
   //  static markOop unused_mark() {
   //    return (markOop) marked_value;
@@ -240,8 +240,8 @@ public class Mark extends VMObject {
   //    return (markOop) (tmp | monitor_value);
   //  }
   // used for alignment-based marking to reuse the busy state to encode pointers
-  // (see markOop_alignment.hpp)
-  //  markOop clear_lock_bits() { return markOop(value() & ~lock_mask_in_place); }
+  // (see markOop_alignment.hpp)  
+  //  markOop clear_lock_bits() { return markOop(value() & ~lock_mask_in_place); }  
   //
   //  // age operations
   //  markOop set_marked()   { return markOop((value() & ~lock_mask_in_place) | marked_value); }
@@ -254,12 +254,12 @@ public class Mark extends VMObject {
   //  markOop incr_age()          const { return age() == max_age ? markOop(this) : set_age(age() + 1); }
 
   // hash operations
-  public long hash() {
+  public long hash() {     
     return Bits.maskBitsLong(value() >> hashShift, hashMask);
   }
-
-  public boolean hasNoHash() {
-    return hash() == noHash;
+  
+  public boolean hasNoHash() { 
+    return hash() == noHash; 
   }
 
   // FIXME
@@ -267,7 +267,7 @@ public class Mark extends VMObject {
   //  static markOop prototype() {
   //    return markOop( no_hash_in_place | no_lock_in_place );
   //  }
-
+ 
   // Debugging
   public void printOn(PrintStream tty) {
     if (isLocked()) {

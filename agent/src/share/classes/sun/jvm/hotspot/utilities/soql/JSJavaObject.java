@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.utilities.soql;
@@ -29,7 +29,7 @@ import sun.jvm.hotspot.oops.Oop;
 /** This is JavaScript wrapper for a Java Object in debuggee.*/
 
 public abstract class JSJavaObject extends DefaultScriptObject {
-   public JSJavaObject(Oop oop, JSJavaFactory factory) {
+   public JSJavaObject(Oop oop, JSJavaFactory factory) { 
        this.oop = oop;
        this.factory = factory;
    }

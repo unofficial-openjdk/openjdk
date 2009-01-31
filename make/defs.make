@@ -115,6 +115,13 @@ else
   endif
 endif
 
+# Serviceability Agent version
+ifeq ($(HOTSPOT_BUILD_VERSION),)
+  SA_BUILD_VERSION = $(HOTSPOT_RELEASE_VERSION)
+else
+  SA_BUILD_VERSION = $(HOTSPOT_RELEASE_VERSION)-$(HOTSPOT_BUILD_VERSION)
+endif
+
 # Windows should have OS predefined
 ifeq ($(OS),)
   OS   := $(shell uname -s)
@@ -190,26 +197,25 @@ ifneq ($(OSNAME),windows)
   #   LIBARCH   - directory name in JDK/JRE
 
   # Use uname output for SRCARCH, but deal with platform differences. If ARCH
-  # is not explicitly listed below, it is treated as x86. 
+  # is not explicitly listed below, it is treated as i486. Also note amd64 is
+  # a separate src arch, so LP64 && i486 ==> amd64.
   SRCARCH     = $(ARCH/$(filter sparc sparc64 ia64 amd64 x86_64,$(ARCH)))
-  ARCH/       = x86
+  ARCH/       = i486
   ARCH/sparc  = sparc
   ARCH/sparc64= sparc
   ARCH/ia64   = ia64
-  ARCH/amd64  = x86
-  ARCH/x86_64 = x86
+  ARCH/amd64  = amd64
+  ARCH/x86_64 = amd64
+  ifdef LP64
+    ifeq ($(SRCARCH), i486)
+      SRCARCH = amd64
+    endif
+  endif
 
   # BUILDARCH is usually the same as SRCARCH, except for sparcv9
   BUILDARCH = $(SRCARCH)
-  ifeq ($(BUILDARCH), x86)
-    ifdef LP64
-      BUILDARCH = amd64
-    else
-      BUILDARCH = i486
-    endif
-  endif
-  ifeq ($(BUILDARCH), sparc)
-    ifdef LP64
+  ifdef LP64
+    ifeq ($(BUILDARCH), sparc)
       BUILDARCH = sparcv9
     endif
   endif
@@ -230,12 +236,9 @@ MAKE_ARGS += JAVA_HOME=$(ABS_BOOTDIR)
 MAKE_ARGS += GAMMADIR=$(ABS_GAMMADIR)
 MAKE_ARGS += MAKE_VERBOSE=$(MAKE_VERBOSE)
 MAKE_ARGS += HOTSPOT_RELEASE_VERSION=$(HOTSPOT_RELEASE_VERSION)
-MAKE_ARGS += JRE_RELEASE_VERSION=$(JRE_RELEASE_VERSION)
-
-# Pass HOTSPOT_BUILD_VERSION as argument to OS specific Makefile
-# to overwrite the default definition since OS specific Makefile also
-# includes this make/defs.make file.
 MAKE_ARGS += HOTSPOT_BUILD_VERSION=$(HOTSPOT_BUILD_VERSION)
+MAKE_ARGS += JRE_RELEASE_VERSION=$(JRE_RELEASE_VERSION)
+MAKE_ARGS += SA_BUILD_VERSION=$(SA_BUILD_VERSION)
 
 # Select name of export directory
 EXPORT_PATH=$(OUTPUTDIR)/export-$(PLATFORM)$(EXPORT_SUBDIR)

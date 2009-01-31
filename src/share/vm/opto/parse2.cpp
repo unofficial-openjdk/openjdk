@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,13 +22,13 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
 #include "incls/_parse2.cpp.incl"
 
-extern int explicit_null_checks_inserted,
+extern int explicit_null_checks_inserted, 
            explicit_null_checks_elided;
 
 //---------------------------------array_load----------------------------------
@@ -77,7 +80,7 @@ Node* Parse::array_addressing(BasicType type, int vals, const Type* *result2) {
     }
   }
 
-  // Check for big class initializers with all constant offsets
+  // Check for big class initializers with all constant offsets 
   // feeding into a known-size array.
   const TypeInt* idxtype = _gvn.type(idx)->is_int();
   // See if the highest idx value is less than the lowest array bound,
@@ -231,11 +234,11 @@ public:
     return false;
   }
 
-  void set (jint value, int dest, int table_index) {
-    setRange(value, value, dest, table_index);
+  void set (jint value, int dest, int table_index) {           
+    setRange(value, value, dest, table_index); 
   }
-  bool adjoin(jint value, int dest, int table_index) {
-    return adjoinRange(value, value, dest, table_index);
+  bool adjoin(jint value, int dest, int table_index) { 
+    return adjoinRange(value, value, dest, table_index); 
   }
 
   void print(ciEnv* env) {
@@ -287,14 +290,14 @@ void Parse::do_tableswitch() {
   }
   jint highest = lo_index+(len-1);
   assert(ranges[rp].hi() == highest, "");
-  if (highest != max_jint
+  if (highest != max_jint 
       && !ranges[rp].adjoinRange(highest+1, max_jint, default_dest, NullTableIndex)) {
     ranges[++rp].setRange(highest+1, max_jint, default_dest, NullTableIndex);
   }
   assert(rp < len+2, "not too many ranges");
 
   // Safepoint in case if backward branch observed
-  if( makes_backward_branch && UseLoopSafepoints )
+  if( makes_backward_branch && UseLoopSafepoints )      
     add_safepoint();
 
   jump_switch_ranges(lookup, &ranges[0], &ranges[rp]);
@@ -343,14 +346,14 @@ void Parse::do_lookupswitch() {
   }
   jint highest = table[2*(len-1)];
   assert(ranges[rp].hi() == highest, "");
-  if( highest != max_jint
+  if( highest != max_jint 
       && !ranges[rp].adjoinRange(highest+1, max_jint, default_dest, NullTableIndex) ) {
     ranges[++rp].setRange(highest+1, max_jint, default_dest, NullTableIndex);
   }
   assert(rp < rnum, "not too many ranges");
 
   // Safepoint in case backward branch observed
-  if( makes_backward_branch && UseLoopSafepoints )
+  if( makes_backward_branch && UseLoopSafepoints )      
     add_safepoint();
 
   jump_switch_ranges(lookup, &ranges[0], &ranges[rp]);
@@ -360,23 +363,23 @@ void Parse::do_lookupswitch() {
 bool Parse::create_jump_tables(Node* key_val, SwitchRange* lo, SwitchRange* hi) {
   // Are jumptables enabled
   if (!UseJumpTables)  return false;
-
+  
   // Are jumptables supported
   if (!Matcher::has_match_rule(Op_Jump))  return false;
-
+  
   // Don't make jump table if profiling
   if (method_data_update())  return false;
-
+  
   // Decide if a guard is needed to lop off big ranges at either (or
   // both) end(s) of the input set. We'll call this the default target
   // even though we can't be sure that it is the true "default".
-
+  
   bool needs_guard = false;
-  int default_dest;
+  int default_dest; 
   int64 total_outlier_size = 0;
   int64 hi_size = ((int64)hi->hi()) - ((int64)hi->lo()) + 1;
   int64 lo_size = ((int64)lo->hi()) - ((int64)lo->lo()) + 1;
-
+  
   if (lo->dest() == hi->dest()) {
     total_outlier_size = hi_size + lo_size;
     default_dest = lo->dest();
@@ -387,7 +390,7 @@ bool Parse::create_jump_tables(Node* key_val, SwitchRange* lo, SwitchRange* hi) 
     total_outlier_size = hi_size;
     default_dest = hi->dest();
   }
-
+   
   // If a guard test will eliminate very sparse end ranges, then
   // it is worth the cost of an extra jump.
   if (total_outlier_size > (MaxJumpTableSparseness * 4)) {
@@ -395,21 +398,21 @@ bool Parse::create_jump_tables(Node* key_val, SwitchRange* lo, SwitchRange* hi) 
     if (default_dest == lo->dest()) lo++;
     if (default_dest == hi->dest()) hi--;
   }
-
+   
   // Find the total number of cases and ranges
   int64 num_cases = ((int64)hi->hi()) - ((int64)lo->lo()) + 1;
   int num_range = hi - lo + 1;
-
+ 
   // Don't create table if: too large, too small, or too sparse.
-  if (num_cases < MinJumpTableSize || num_cases > MaxJumpTableSize)
+  if (num_cases < MinJumpTableSize || num_cases > MaxJumpTableSize)  
     return false;
-  if (num_cases > (MaxJumpTableSparseness * num_range))
+  if (num_cases > (MaxJumpTableSparseness * num_range))  
     return false;
-
+   
   // Normalize table lookups to zero
   int lowval = lo->lo();
   key_val = _gvn.transform( new (C, 3) SubINode(key_val, _gvn.intcon(lowval)) );
-
+   
   // Generate a guard to protect against input keyvals that aren't
   // in the switch domain.
   if (needs_guard) {
@@ -419,7 +422,7 @@ bool Parse::create_jump_tables(Node* key_val, SwitchRange* lo, SwitchRange* hi) 
     IfNode* iff = create_and_map_if( control(), tst, PROB_FAIR, COUNT_UNKNOWN);
     jump_if_true_fork(iff, default_dest, NullTableIndex);
   }
-
+ 
   // Create an ideal node JumpTable that has projections
   // of all possible ranges for a switch statement
   // The key_val input must be converted to a pointer offset and scaled.
@@ -430,14 +433,14 @@ bool Parse::create_jump_tables(Node* key_val, SwitchRange* lo, SwitchRange* hi) 
   const TypeLong* lkeytype = TypeLong::make(CONST64(0), num_cases-1, Type::WidenMin);
   key_val       = _gvn.transform( new (C, 2) ConvI2LNode(key_val, lkeytype) );
 #endif
-  // Shift the value by wordsize so we have an index into the table, rather
+  // Shift the value by wordsize so we have an index into the table, rather 
   // than a switch value
   Node *shiftWord = _gvn.MakeConX(wordSize);
   key_val = _gvn.transform( new (C, 3) MulXNode( key_val, shiftWord));
 
   // Create the JumpNode
   Node* jtn = _gvn.transform( new (C, 2) JumpNode(control(), key_val, num_cases) );
-
+   
   // These are the switch destinations hanging off the jumpnode
   int i = 0;
   for (SwitchRange* r = lo; r <= hi; r++) {
@@ -648,16 +651,16 @@ void Parse::l2f() {
   Node* res = _gvn.transform(new (C, 1) ProjNode(c, TypeFunc::Parms + 0));
 
   push(res);
-}
+} 
 
 void Parse::do_irem() {
   // Must keep both values on the expression-stack during null-check
-  do_null_check(peek(), T_INT);
+  do_null_check(peek(), T_INT); 
   // Compile-time detect of null-exception?
   if (stopped())  return;
 
   Node* b = pop();
-  Node* a = pop();
+  Node* a = pop();  
 
   const Type *t = _gvn.type(b);
   if (t != Type::TOP) {
@@ -912,7 +915,7 @@ void Parse::do_ifnull(BoolTest::mask btest) {
 
   explicit_null_checks_inserted++;
   Node* a = null();
-  Node* b = pop();
+  Node* b = pop();  
   Node* c = _gvn.transform( new (C, 3) CmpPNode(b, a) );
 
   // Make a cast-away-nullness that is control dependent on the test
@@ -947,7 +950,7 @@ void Parse::do_ifnull(BoolTest::mask btest) {
   // False branch
   Node* iffalse = _gvn.transform( new (C, 1) IfFalseNode(iff) );
   set_control(iffalse);
-
+  
   if (stopped()) {              // Path is dead?
     explicit_null_checks_elided++;
   } else  {                     // Path is live.
@@ -991,7 +994,7 @@ void Parse::do_if(BoolTest::mask btest, Node* c) {
   if (!BoolTest(btest).is_canonical()) {
     btest         = BoolTest(btest).negate();
     taken_if_true = false;
-    // prob is NOT updated here; it remains the probability of the taken
+    // prob is NOT updated here; it remains the probability of the taken 
     // path (as opposed to the prob of the path guarded by an 'IfTrueNode').
   }
   assert(btest != BoolTest::eq, "!= is the only canonical exact test");
@@ -1312,7 +1315,7 @@ void Parse::do_one_bytecode() {
     push( local(3) );
     break;
   case Bytecodes::_fload:
-  case Bytecodes::_iload:
+  case Bytecodes::_iload:    
     push( local(iter().get_index()) );
     break;
   case Bytecodes::_lload_0:
@@ -1365,13 +1368,13 @@ void Parse::do_one_bytecode() {
   case Bytecodes::_istore_3:
   case Bytecodes::_astore_3:
     set_local( 3, pop() );
-    break;
+    break; 
   case Bytecodes::_fstore:
   case Bytecodes::_istore:
   case Bytecodes::_astore:
     set_local( iter().get_index(), pop() );
-    break;
-  // long stores
+    break; 
+  // long stores 
   case Bytecodes::_lstore_0:
     set_pair_local( 0, pop_pair() );
     break;
@@ -1388,7 +1391,7 @@ void Parse::do_one_bytecode() {
     set_pair_local( iter().get_index(), pop_pair() );
     break;
 
-  // double stores
+  // double stores 
   case Bytecodes::_dstore_0:
     set_pair_local( 0, dstore_rounding(pop_pair()) );
     break;
@@ -1407,7 +1410,7 @@ void Parse::do_one_bytecode() {
 
   case Bytecodes::_pop:  _sp -= 1;   break;
   case Bytecodes::_pop2: _sp -= 2;   break;
-  case Bytecodes::_swap:
+  case Bytecodes::_swap: 
     a = pop();
     b = pop();
     push(a);
@@ -1418,14 +1421,14 @@ void Parse::do_one_bytecode() {
     push(a);
     push(a);
     break;
-  case Bytecodes::_dup_x1:
+  case Bytecodes::_dup_x1: 
     a = pop();
     b = pop();
     push( a );
     push( b );
     push( a );
     break;
-  case Bytecodes::_dup_x2:
+  case Bytecodes::_dup_x2: 
     a = pop();
     b = pop();
     c = pop();
@@ -1434,7 +1437,7 @@ void Parse::do_one_bytecode() {
     push( b );
     push( a );
     break;
-  case Bytecodes::_dup2:
+  case Bytecodes::_dup2: 
     a = pop();
     b = pop();
     push( b );
@@ -1474,13 +1477,13 @@ void Parse::do_one_bytecode() {
 
   case Bytecodes::_arraylength: {
     // Must do null-check with value on expression stack
-    Node *ary = do_null_check(peek(), T_ARRAY);
+    Node *ary = do_null_check(peek(), T_ARRAY); 
     // Compile-time detect of null-exception?
     if (stopped())  return;
     a = pop();
-    push(load_array_length(a));
+    push(load_array_length(a)); 
     break;
-  }
+  } 
 
   case Bytecodes::_baload: array_load(T_BYTE);   break;
   case Bytecodes::_caload: array_load(T_CHAR);   break;
@@ -1557,19 +1560,19 @@ void Parse::do_one_bytecode() {
     break;
   case Bytecodes::_idiv:
     // Must keep both values on the expression-stack during null-check
-    do_null_check(peek(), T_INT);
+    do_null_check(peek(), T_INT); 
     // Compile-time detect of null-exception?
     if (stopped())  return;
     b = pop();
-    a = pop();
+    a = pop();  
     push( _gvn.transform( new (C, 3) DivINode(control(),a,b) ) );
     break;
   case Bytecodes::_imul:
-    b = pop(); a = pop();
+    b = pop(); a = pop();  
     push( _gvn.transform( new (C, 3) MulINode(a,b) ) );
     break;
   case Bytecodes::_iadd:
-    b = pop(); a = pop();
+    b = pop(); a = pop();  
     push( _gvn.transform( new (C, 3) AddINode(a,b) ) );
     break;
   case Bytecodes::_ineg:
@@ -1577,19 +1580,19 @@ void Parse::do_one_bytecode() {
     push( _gvn.transform( new (C, 3) SubINode(_gvn.intcon(0),a)) );
     break;
   case Bytecodes::_isub:
-    b = pop(); a = pop();
+    b = pop(); a = pop();  
     push( _gvn.transform( new (C, 3) SubINode(a,b) ) );
     break;
   case Bytecodes::_iand:
-    b = pop(); a = pop();
+    b = pop(); a = pop();  
     push( _gvn.transform( new (C, 3) AndINode(a,b) ) );
     break;
   case Bytecodes::_ior:
-    b = pop(); a = pop();
+    b = pop(); a = pop();  
     push( _gvn.transform( new (C, 3) OrINode(a,b) ) );
     break;
   case Bytecodes::_ixor:
-    b = pop(); a = pop();
+    b = pop(); a = pop();  
     push( _gvn.transform( new (C, 3) XorINode(a,b) ) );
     break;
   case Bytecodes::_ishl:
@@ -1605,31 +1608,31 @@ void Parse::do_one_bytecode() {
     push( _gvn.transform( new (C, 3) URShiftINode(a,b) ) );
     break;
 
-  case Bytecodes::_fneg:
+  case Bytecodes::_fneg:  
     a = pop();
     b = _gvn.transform(new (C, 2) NegFNode (a));
     push(b);
     break;
 
   case Bytecodes::_fsub:
-    b = pop();
-    a = pop();
+    b = pop();  
+    a = pop();  
     c = _gvn.transform( new (C, 3) SubFNode(a,b) );
     d = precision_rounding(c);
     push( d );
     break;
 
   case Bytecodes::_fadd:
-    b = pop();
-    a = pop();
+    b = pop();  
+    a = pop();  
     c = _gvn.transform( new (C, 3) AddFNode(a,b) );
     d = precision_rounding(c);
     push( d );
     break;
 
   case Bytecodes::_fmul:
-    b = pop();
-    a = pop();
+    b = pop();  
+    a = pop();  
     c = _gvn.transform( new (C, 3) MulFNode(a,b) );
     d = precision_rounding(c);
     push( d );
@@ -1637,7 +1640,7 @@ void Parse::do_one_bytecode() {
 
   case Bytecodes::_fdiv:
     b = pop();
-    a = pop();
+    a = pop();  
     c = _gvn.transform( new (C, 3) DivFNode(0,a,b) );
     d = precision_rounding(c);
     push( d );
@@ -1647,7 +1650,7 @@ void Parse::do_one_bytecode() {
     if (Matcher::has_match_rule(Op_ModF)) {
       // Generate a ModF node.
       b = pop();
-      a = pop();
+      a = pop();  
       c = _gvn.transform( new (C, 3) ModFNode(0,a,b) );
       d = precision_rounding(c);
       push( d );
@@ -1657,11 +1660,11 @@ void Parse::do_one_bytecode() {
       modf();
     }
     break;
-
+    
   case Bytecodes::_fcmpl:
     b = pop();
     a = pop();
-    c = _gvn.transform( new (C, 3) CmpF3Node( a, b));
+    c = _gvn.transform( new (C, 3) CmpF3Node( a, b)); 
     push(c);
     break;
   case Bytecodes::_fcmpg:
@@ -1673,7 +1676,7 @@ void Parse::do_one_bytecode() {
     // as well by using CmpF3 which implements unordered-lesser instead of
     // unordered-greater semantics.  Finally, commute the result bits.  Result
     // is same as using a CmpF3Greater except we did it with CmpF3 alone.
-    c = _gvn.transform( new (C, 3) CmpF3Node( b, a));
+    c = _gvn.transform( new (C, 3) CmpF3Node( b, a)); 
     c = _gvn.transform( new (C, 3) SubINode(_gvn.intcon(0),c) );
     push(c);
     break;
@@ -1705,7 +1708,7 @@ void Parse::do_one_bytecode() {
 
   case Bytecodes::_l2f:
     if (Matcher::convL2FSupported()) {
-      a = pop_pair();
+      a = pop_pair(); 
       b = _gvn.transform( new (C, 2) ConvL2FNode(a));
       // For i486.ad, FILD doesn't restrict precision to 24 or 53 bits.
       // Rather than storing the result into an FP register then pushing
@@ -1720,7 +1723,7 @@ void Parse::do_one_bytecode() {
     break;
 
   case Bytecodes::_l2d:
-    a = pop_pair();
+    a = pop_pair(); 
     b = _gvn.transform( new (C, 2) ConvL2DNode(a));
     // For i486.ad, rounding is always necessary (see _l2f above).
     // c = dprecision_rounding(b);
@@ -1741,8 +1744,8 @@ void Parse::do_one_bytecode() {
     break;
 
   case Bytecodes::_dsub:
-    b = pop_pair();
-    a = pop_pair();
+    b = pop_pair();  
+    a = pop_pair();  
     c = _gvn.transform( new (C, 3) SubDNode(a,b) );
     d = dprecision_rounding(c);
     push_pair( d );
@@ -1757,8 +1760,8 @@ void Parse::do_one_bytecode() {
     break;
 
   case Bytecodes::_dmul:
-    b = pop_pair();
-    a = pop_pair();
+    b = pop_pair();  
+    a = pop_pair();  
     c = _gvn.transform( new (C, 3) MulDNode(a,b) );
     d = dprecision_rounding(c);
     push_pair( d );
@@ -1766,13 +1769,13 @@ void Parse::do_one_bytecode() {
 
   case Bytecodes::_ddiv:
     b = pop_pair();
-    a = pop_pair();
+    a = pop_pair();  
     c = _gvn.transform( new (C, 3) DivDNode(0,a,b) );
     d = dprecision_rounding(c);
     push_pair( d );
     break;
 
-  case Bytecodes::_dneg:
+  case Bytecodes::_dneg: 
     a = pop_pair();
     b = _gvn.transform(new (C, 2) NegDNode (a));
     push_pair(b);
@@ -1782,9 +1785,9 @@ void Parse::do_one_bytecode() {
     if (Matcher::has_match_rule(Op_ModD)) {
       // Generate a ModD node.
       b = pop_pair();
-      a = pop_pair();
+      a = pop_pair();  
       // a % b
-
+    
       c = _gvn.transform( new (C, 3) ModDNode(0,a,b) );
       d = dprecision_rounding(c);
       push_pair( d );
@@ -1794,11 +1797,11 @@ void Parse::do_one_bytecode() {
       modd();
     }
     break;
-
+    
   case Bytecodes::_dcmpl:
     b = pop_pair();
     a = pop_pair();
-    c = _gvn.transform( new (C, 3) CmpD3Node( a, b));
+    c = _gvn.transform( new (C, 3) CmpD3Node( a, b)); 
     push(c);
     break;
 
@@ -1807,16 +1810,16 @@ void Parse::do_one_bytecode() {
     a = pop_pair();
     // Same as dcmpl but need to flip the unordered case.
     // Commute the inputs, which negates the result sign except for unordered.
-    // Flip the unordered as well by using CmpD3 which implements
+    // Flip the unordered as well by using CmpD3 which implements 
     // unordered-lesser instead of unordered-greater semantics.
-    // Finally, negate the result bits.  Result is same as using a
+    // Finally, negate the result bits.  Result is same as using a 
     // CmpD3Greater except we did it with CmpD3 alone.
-    c = _gvn.transform( new (C, 3) CmpD3Node( b, a));
+    c = _gvn.transform( new (C, 3) CmpD3Node( b, a)); 
     c = _gvn.transform( new (C, 3) SubINode(_gvn.intcon(0),c) );
     push(c);
     break;
 
-
+   
     // Note for longs -> lo word is on TOS, hi word is on TOS - 1
   case Bytecodes::_land:
     b = pop_pair();
@@ -1849,23 +1852,23 @@ void Parse::do_one_bytecode() {
     c = _gvn.transform( new (C, 3) RShiftLNode(a,b) );
     push_pair(c);
     break;
-  case Bytecodes::_lushr:
+  case Bytecodes::_lushr: 
     b = pop();                  // the shift count
     a = pop_pair();             // value to be shifted
     c = _gvn.transform( new (C, 3) URShiftLNode(a,b) );
     push_pair(c);
     break;
-  case Bytecodes::_lmul:
+  case Bytecodes::_lmul: 
     b = pop_pair();
     a = pop_pair();
     c = _gvn.transform( new (C, 3) MulLNode(a,b) );
     push_pair(c);
     break;
 
-  case Bytecodes::_lrem:
+  case Bytecodes::_lrem: 
     // Must keep both values on the expression-stack during null-check
     assert(peek(0) == top(), "long word order");
-    do_null_check(peek(1), T_LONG);
+    do_null_check(peek(1), T_LONG); 
     // Compile-time detect of null-exception?
     if (stopped())  return;
     b = pop_pair();
@@ -1874,10 +1877,10 @@ void Parse::do_one_bytecode() {
     push_pair(c);
     break;
 
-  case Bytecodes::_ldiv:
+  case Bytecodes::_ldiv: 
     // Must keep both values on the expression-stack during null-check
     assert(peek(0) == top(), "long word order");
-    do_null_check(peek(1), T_LONG);
+    do_null_check(peek(1), T_LONG); 
     // Compile-time detect of null-exception?
     if (stopped())  return;
     b = pop_pair();
@@ -1886,19 +1889,19 @@ void Parse::do_one_bytecode() {
     push_pair(c);
     break;
 
-  case Bytecodes::_ladd:
+  case Bytecodes::_ladd: 
     b = pop_pair();
     a = pop_pair();
     c = _gvn.transform( new (C, 3) AddLNode(a,b) );
     push_pair(c);
     break;
-  case Bytecodes::_lsub:
+  case Bytecodes::_lsub: 
     b = pop_pair();
     a = pop_pair();
     c = _gvn.transform( new (C, 3) SubLNode(a,b) );
     push_pair(c);
     break;
-  case Bytecodes::_lcmp:
+  case Bytecodes::_lcmp: 
     // Safepoints are now inserted _before_ branches.  The long-compare
     // bytecode painfully produces a 3-way value (-1,0,+1) which requires a
     // slew of control flow.  These are usually followed by a CmpI vs zero and
@@ -1920,17 +1923,17 @@ void Parse::do_one_bytecode() {
       case Bytecodes::_ifle:
       case Bytecodes::_ifne:
       case Bytecodes::_ifeq:
-        // If this is a backwards branch in the bytecodes, add Safepoint
-        maybe_add_safepoint(iter().next_get_dest());
+        // If this is a backwards branch in the bytecodes, add Safepoint        
+        maybe_add_safepoint(iter().next_get_dest());        
       }
     }
     b = pop_pair();
     a = pop_pair();
-    c = _gvn.transform( new (C, 3) CmpL3Node( a, b ));
+    c = _gvn.transform( new (C, 3) CmpL3Node( a, b )); 
     push(c);
     break;
 
-  case Bytecodes::_lneg:
+  case Bytecodes::_lneg: 
     a = pop_pair();
     b = _gvn.transform( new (C, 3) SubLNode(longcon(0),a));
     push_pair(b);
@@ -1999,7 +2002,7 @@ void Parse::do_one_bytecode() {
 
   case Bytecodes::_athrow:
     // null exception oop throws NULL pointer exception
-    do_null_check(peek(), T_OBJECT);
+    do_null_check(peek(), T_OBJECT); 
     if (stopped())  return;
     if (JvmtiExport::can_post_exceptions()) {
       // "Full-speed throwing" is not necessary here,
@@ -2056,8 +2059,8 @@ void Parse::do_one_bytecode() {
   handle_if_acmp:
     // If this is a backwards branch in the bytecodes, add Safepoint
     maybe_add_safepoint(iter().get_dest());
-    a = pop();
-    b = pop();
+    a = pop(); 
+    b = pop();  
     c = _gvn.transform( new (C, 3) CmpPNode(b, a) );
     do_if(btest, c);
     break;
@@ -2072,7 +2075,7 @@ void Parse::do_one_bytecode() {
     // If this is a backwards branch in the bytecodes, add Safepoint
     maybe_add_safepoint(iter().get_dest());
     a = _gvn.intcon(0);
-    b = pop();
+    b = pop();  
     c = _gvn.transform( new (C, 3) CmpINode(b, a) );
     do_if(btest, c);
     break;
@@ -2083,11 +2086,11 @@ void Parse::do_one_bytecode() {
   case Bytecodes::_if_icmple: btest = BoolTest::le; goto handle_if_icmp;
   case Bytecodes::_if_icmpgt: btest = BoolTest::gt; goto handle_if_icmp;
   case Bytecodes::_if_icmpge: btest = BoolTest::ge; goto handle_if_icmp;
-  handle_if_icmp:
+  handle_if_icmp: 
     // If this is a backwards branch in the bytecodes, add Safepoint
     maybe_add_safepoint(iter().get_dest());
-    a = pop();
-    b = pop();
+    a = pop(); 
+    b = pop();  
     c = _gvn.transform( new (C, 3) CmpINode( b, a ) );
     do_if(btest, c);
     break;
@@ -2102,7 +2105,7 @@ void Parse::do_one_bytecode() {
 
   case Bytecodes::_invokestatic:
   case Bytecodes::_invokespecial:
-  case Bytecodes::_invokevirtual:
+  case Bytecodes::_invokevirtual: 
   case Bytecodes::_invokeinterface:
     do_call();
     break;
@@ -2112,7 +2115,7 @@ void Parse::do_one_bytecode() {
   case Bytecodes::_instanceof:
     do_instanceof();
     break;
-  case Bytecodes::_anewarray:
+  case Bytecodes::_anewarray: 
     do_anewarray();
     break;
   case Bytecodes::_newarray:
@@ -2129,7 +2132,7 @@ void Parse::do_one_bytecode() {
   case Bytecodes::_jsr_w:
     do_jsr();
     break;
-
+      
   case Bytecodes::_ret:
     do_ret();
     break;
@@ -2156,16 +2159,4 @@ void Parse::do_one_bytecode() {
     tty->print("\nUnhandled bytecode %s\n", Bytecodes::name(bc()) );
     ShouldNotReachHere();
   }
-
-#ifndef PRODUCT
-  IdealGraphPrinter *printer = IdealGraphPrinter::printer();
-  if(printer) {
-    char buffer[256];
-    sprintf(buffer, "Bytecode %d: %s", bci(), Bytecodes::name(bc()));
-    bool old = printer->traverse_outs();
-    printer->set_traverse_outs(true);
-    printer->print_method(C, buffer, 3);
-    printer->set_traverse_outs(old);
-  }
-#endif
 }

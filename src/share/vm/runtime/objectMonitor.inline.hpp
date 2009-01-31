@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1998-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 inline intptr_t ObjectMonitor::is_entered(TRAPS) const {
@@ -82,8 +85,8 @@ inline bool ObjectMonitor::check(TRAPS) {
   if (THREAD != _owner) {
     if (THREAD->is_lock_owned((address) _owner)) {
       _owner = THREAD;  // regain ownership of inflated monitor
-      OwnerIsThread = 1 ;
-      assert (_recursions == 0, "invariant") ;
+      OwnerIsThread = 1 ; 
+      assert (_recursions == 0, "invariant") ; 
     } else {
       check_slow(THREAD);
       return false;
@@ -103,7 +106,7 @@ inline void ObjectMonitor::set_owner(void* owner) {
   _recursions = 0;
   _count = 0;
 }
-
+               
 
 // here are the platform-dependent bodies:
 

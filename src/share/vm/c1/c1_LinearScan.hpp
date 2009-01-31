@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class DebugInfoCache;
@@ -81,7 +84,7 @@ enum IntervalState {
 
 enum IntervalSpillState {
   noDefinitionFound,  // starting state of calculation: no definition found yet
-  oneDefinitionFound, // one definition has already been found.
+  oneDefinitionFound, // one definition has already been found. 
                       // Note: two consecutive definitions are treated as one (e.g. consecutive move and add because of two-operand LIR form)
                       // the position of this definition is stored in _definition_pos
   oneMoveInserted,    // one spill move has already been inserted.
@@ -100,7 +103,7 @@ enum IntervalSpillState {
 
 
 class LinearScan : public CompilationResourceObj {
-  // declare classes used by LinearScan as friends because they
+  // declare classes used by LinearScan as friends because they 
   // need a wide variety of functions declared here
   //
   // Only the small interface to the rest of the compiler is public
@@ -220,8 +223,8 @@ class LinearScan : public CompilationResourceObj {
   static bool is_in_fpu_register(const Interval* i);
   static bool is_oop_interval(const Interval* i);
 
-
-  // General helper functions
+  
+  // General helper functions 
   int         allocate_spill_slot(bool double_word);
   void        assign_spill_slot(Interval* it);
   void        propagate_spill_slots();
@@ -236,7 +239,7 @@ class LinearScan : public CompilationResourceObj {
   static bool requires_adjacent_regs(BasicType type);
   static bool is_caller_save(int assigned_reg);
 
-  // spill move optimization: eliminate moves from register to stack if
+  // spill move optimization: eliminate moves from register to stack if 
   // stack slot is known to be correct
   void        change_spill_definition_pos(Interval* interval, int def_pos);
   void        change_spill_state(Interval* interval, int spill_pos);
@@ -338,7 +341,7 @@ class LinearScan : public CompilationResourceObj {
 
   // methods used for debug information computation
   void init_compute_debug_info();
-
+  
   MonitorValue*  location_for_monitor_index(int monitor_index);
   LocationValue* location_for_name(int name, Location::Type loc_type);
 
@@ -385,7 +388,7 @@ class LinearScan : public CompilationResourceObj {
   // accessors used by Compilation
   int         max_spills()  const { return _max_spills; }
   int         num_calls() const   { assert(_num_calls >= 0, "not set"); return _num_calls; }
-
+  
   // entry functions for printing
 #ifndef PRODUCT
   static void print_statistics();
@@ -414,12 +417,12 @@ class MoveResolver: public StackObj {
   IntervalList     _mapping_to;
   bool             _multiple_reads_allowed;
   int              _register_blocked[LinearScan::nof_regs];
-
+ 
   int  register_blocked(int reg)                    { assert(reg >= 0 && reg < LinearScan::nof_regs, "out of bounds"); return _register_blocked[reg]; }
   void set_register_blocked(int reg, int direction) { assert(reg >= 0 && reg < LinearScan::nof_regs, "out of bounds"); assert(direction == 1 || direction == -1, "out of bounds"); _register_blocked[reg] += direction; }
 
-  void block_registers(Interval* it);
-  void unblock_registers(Interval* it);
+  void block_registers(Interval* it);   
+  void unblock_registers(Interval* it); 
   bool save_to_process_move(Interval* from, Interval* to);
 
   void create_insertion_buffer(LIR_List* list);
@@ -551,7 +554,7 @@ class Interval : public CompilationResourceObj {
   int              assigned_regHi() const        { return _assigned_regHi; }
   void             assign_reg(int reg)           { _assigned_reg = reg; _assigned_regHi = LinearScan::any_reg; }
   void             assign_reg(int reg,int regHi) { _assigned_reg = reg; _assigned_regHi = regHi; }
-
+  
   Interval*        register_hint(bool search_split_child = true) const; // calculation needed
   void             set_register_hint(Interval* i) { _register_hint = i; }
 
@@ -566,7 +569,7 @@ class Interval : public CompilationResourceObj {
   Interval*        split_child_before_op_id(int op_id);
   bool             split_child_covers(int op_id, LIR_OpVisitState::OprMode mode);
   DEBUG_ONLY(void  check_split_children();)
-
+   
   // information stored in split parent, but available for all children
   int              canonical_spill_slot() const            { return split_parent()->_canonical_spill_slot; }
   void             set_canonical_spill_slot(int slot)      { assert(split_parent()->_canonical_spill_slot == -1, "overwriting existing value"); split_parent()->_canonical_spill_slot = slot; }
@@ -706,7 +709,7 @@ class LinearScanWalker : public IntervalWalker {
   int              _block_pos[LinearScan::nof_regs];
   IntervalList*    _spill_intervals[LinearScan::nof_regs];
 
-  MoveResolver     _move_resolver;   // for ordering spill moves
+  MoveResolver     _move_resolver;   // for ordering spill moves 
 
   // accessors mapped to same functions in class LinearScan
   int         block_count() const      { return allocator()->block_count(); }
@@ -770,8 +773,8 @@ class LinearScanWalker : public IntervalWalker {
 
 
 /*
-When a block has more than one predecessor, and all predecessors end with
-the same sequence of move-instructions, than this moves can be placed once
+When a block has more than one predecessor, and all predecessors end with 
+the same sequence of move-instructions, than this moves can be placed once 
 at the beginning of the block instead of multiple times in the predecessors.
 
 Similarly, when a block has more than one successor, then equal sequences of
@@ -788,7 +791,7 @@ empty.
 */
 class EdgeMoveOptimizer : public StackObj {
  private:
-  // the class maintains a list with all lir-instruction-list of the
+  // the class maintains a list with all lir-instruction-list of the 
   // successors (predecessors) and the current index into the lir-lists
   LIR_OpListStack _edge_instructions;
   intStack        _edge_instructions_idx;

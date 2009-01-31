@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.runtime;
@@ -55,7 +55,7 @@ public class JNIid extends VMObject {
 
     /***********************************************************
     Type type = db.lookupType("JNIid");
-
+    
     holder = type.getOopField("_holder");
     next = type.getAddressField("_next");
     offset = type.getCIntegerField("_offset");

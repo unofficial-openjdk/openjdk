@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.memory;
@@ -60,7 +60,7 @@ public class CompactibleFreeListSpace extends CompactibleSpace {
    // Accessing block offset table
    public CMSCollector collector() {
     return (CMSCollector) VMObjectFactory.newObject(
-                                 CMSCollector.class,
+                                 CMSCollector.class, 
                                  collectorField.getValue(addr));
   }
 
@@ -111,7 +111,7 @@ public class CompactibleFreeListSpace extends CompactibleSpace {
          // FIXME: need to do a better job here.
          // can I use bitMap here?
          if (klassOop == null) {
-            //Find the object size using Printezis bits and skip over
+            //Find the object size using Printezis bits and skip over 
             System.err.println("Finding object size using Printezis bits and skipping over...");
             long size = collector().blockSizeUsingPrintezisBits(cur);
             if (size == -1) {

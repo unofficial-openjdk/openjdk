@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -27,9 +30,9 @@
 
 
 oop fieldDescriptor::loader() const {
-  return instanceKlass::cast(_cp->pool_holder())->class_loader();
+  return instanceKlass::cast(_cp->pool_holder())->class_loader(); 
 }
-
+                   
 typeArrayOop fieldDescriptor::annotations() const {
   instanceKlass* ik = instanceKlass::cast(field_holder());
   objArrayOop md = ik->fields_annotations();
@@ -63,7 +66,7 @@ oop fieldDescriptor::string_initial_value(TRAPS) const {
   return constants()->string_at(_initial_value_index, CHECK_0);
 }
 
-void fieldDescriptor::initialize(klassOop k, int index) {
+void fieldDescriptor::initialize(klassOop k, int index) {    
   instanceKlass* ik = instanceKlass::cast(k);
   _cp = ik->constants();
   typeArrayOop fields = ik->fields();
@@ -116,7 +119,7 @@ void fieldDescriptor::print_on_for(outputStream* st, oop obj) {
     case T_CHAR:
       {
         jchar c = obj->char_field(offset());
-        as_int = c;
+	as_int = c;
         st->print(" %c %d", isprint(c) ? c : ' ', c);
       }
       break;

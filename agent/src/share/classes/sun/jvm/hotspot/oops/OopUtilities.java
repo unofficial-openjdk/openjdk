@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.oops;
@@ -74,8 +74,8 @@ public class OopUtilities implements /* imports */ JVMTIThreadState {
     private static int THREAD_STATUS_TERMINATED;
   */
 
-  // java.lang.Class fields
-  private static OopField hcKlassField;
+  // java.lang.Class fields 
+  private static OopField hcKlassField;  
 
   // java.util.concurrent.locks.AbstractOwnableSynchronizer fields
   private static OopField absOwnSyncOwnerThreadField;
@@ -114,7 +114,7 @@ public class OopUtilities implements /* imports */ JVMTIThreadState {
     }
     return buf.toString();
   }
-
+  
   public static String stringOopToString(Oop stringOop) {
     if (offsetField == null) {
       InstanceKlass k = (InstanceKlass) stringOop.getKlass();
@@ -193,7 +193,7 @@ public class OopUtilities implements /* imports */ JVMTIThreadState {
       threadGroupField = (OopField) k.findField("group", "Ljava/lang/ThreadGroup;");
       threadEETopField = (LongField) k.findField("eetop", "J");
       threadStatusField = (IntField) k.findField("threadStatus", "I");
-      threadParkBlockerField = (OopField) k.findField("parkBlocker",
+      threadParkBlockerField = (OopField) k.findField("parkBlocker", 
                                      "Ljava/lang/Object;");
       TypeDataBase db = VM.getVM().getTypeDataBase();
       THREAD_STATUS_NEW = db.lookupIntConstant("java_lang_Thread::NEW").intValue();
@@ -211,7 +211,7 @@ public class OopUtilities implements /* imports */ JVMTIThreadState {
       */
 
       if (Assert.ASSERTS_ENABLED) {
-        // it is okay to miss threadStatusField, because this was
+	// it is okay to miss threadStatusField, because this was 
         // introduced only in 1.5 JDK.
         Assert.that(threadNameField   != null &&
                     threadGroupField  != null &&
@@ -272,7 +272,7 @@ public class OopUtilities implements /* imports */ JVMTIThreadState {
   private static void initClassFields() {
     if (hcKlassField == null) {
        // hc_klass is a HotSpot magic field and hence we can't
-       // find it from InstanceKlass for java.lang.Class.
+       // find it from InstanceKlass for java.lang.Class. 
        TypeDataBase db = VM.getVM().getTypeDataBase();
        int hcKlassOffset = (int) Oop.getHeaderSize();
        try {
@@ -281,7 +281,7 @@ public class OopUtilities implements /* imports */ JVMTIThreadState {
        } catch (RuntimeException re) {
           // ignore, currently java_lang_Class::hc_klass_offset is zero
        }
-
+   
        hcKlassField = new OopField(new NamedFieldIdentifier("hc_klass"), hcKlassOffset, true);
     }
   }
@@ -297,7 +297,7 @@ public class OopUtilities implements /* imports */ JVMTIThreadState {
     if (absOwnSyncOwnerThreadField == null) {
        SystemDictionary sysDict = VM.getVM().getSystemDictionary();
        InstanceKlass k = sysDict.getAbstractOwnableSynchronizerKlass();
-       absOwnSyncOwnerThreadField =
+       absOwnSyncOwnerThreadField = 
            (OopField) k.findField("exclusiveOwnerThread",
                                   "Ljava/lang/Thread;");
     }

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 CompactibleSpace* DefNewGeneration::first_compaction_space() const {
@@ -41,7 +44,7 @@ HeapWord* DefNewGeneration::allocate(size_t word_size,
     HeapWord* old_limit = eden()->soft_end();
     if (old_limit < eden()->end()) {
       // Tell the next generation we reached a limit.
-      HeapWord* new_limit =
+      HeapWord* new_limit = 
         next_gen()->allocation_limit_reached(eden(), eden()->top(), word_size);
       if (new_limit != NULL) {
         Atomic::cmpxchg_ptr(new_limit, eden()->soft_end_addr(), old_limit);
@@ -50,7 +53,7 @@ HeapWord* DefNewGeneration::allocate(size_t word_size,
                "invalid state after allocation_limit_reached returned null");
       }
     } else {
-      // The allocation failed and the soft limit is equal to the hard limit,
+      // The allocation failed and the soft limit is equal to the hard limit, 
       // there are no reasons to do an attempt to allocate
       assert(old_limit == eden()->end(), "sanity check");
       break;
@@ -70,7 +73,7 @@ HeapWord* DefNewGeneration::allocate(size_t word_size,
 }
 
 HeapWord* DefNewGeneration::par_allocate(size_t word_size,
-                                         bool is_tlab) {
+					 bool is_tlab) {
   return eden()->par_allocate(word_size);
 }
 

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -120,7 +123,7 @@ ciField::ciField(ciInstanceKlass* klass, int index): _known_to_link_with(NULL) {
 
   // Perform the field lookup.
   fieldDescriptor field_desc;
-  klassOop canonical_holder =
+  klassOop canonical_holder = 
     loaded_decl_holder->find_field(name(), signature(), &field_desc);
   if (canonical_holder == NULL) {
     // Field lookup failed.  Will be detected by will_link.
@@ -166,7 +169,7 @@ void ciField::initialize_from(fieldDescriptor* fd) {
   _flags = ciFlags(fd->access_flags());
   _offset = fd->offset();
   _holder = CURRENT_ENV->get_object(fd->field_holder())->as_instance_klass();
-
+  
   // Check to see if the field is constant.
   if (_holder->is_initialized() &&
       this->is_final() && this->is_static()) {
@@ -178,13 +181,13 @@ void ciField::initialize_from(fieldDescriptor* fd) {
     //    generated code.  For the time being we need to consider the
     //    field to be not constant.
     // 2. The field is a *special* static&final field whose value
-    //    may change.  The three examples are java.lang.System.in,
+    //    may change.  The three examples are java.lang.System.in, 
     //    java.lang.System.out, and java.lang.System.err.
 
     klassOop k = _holder->get_klassOop();
     assert( SystemDictionary::system_klass() != NULL, "Check once per vm");
     if( k == SystemDictionary::system_klass() ) {
-      // Check offsets for case 2: System.in, System.out, or System.err
+      // Check offsets for case 2: System.in, System.out, or System.err 
       if( _offset == java_lang_System::in_offset_in_bytes()  ||
           _offset == java_lang_System::out_offset_in_bytes() ||
           _offset == java_lang_System::err_offset_in_bytes() ) {
@@ -195,13 +198,13 @@ void ciField::initialize_from(fieldDescriptor* fd) {
 
     _is_constant = true;
     switch(type()->basic_type()) {
-    case T_BYTE:
+    case T_BYTE: 
       _constant_value = ciConstant(type()->basic_type(), k->byte_field(_offset));
       break;
-    case T_CHAR:
+    case T_CHAR: 
       _constant_value = ciConstant(type()->basic_type(), k->char_field(_offset));
       break;
-    case T_SHORT:
+    case T_SHORT: 
       _constant_value = ciConstant(type()->basic_type(), k->short_field(_offset));
       break;
     case T_BOOLEAN:
@@ -222,21 +225,21 @@ void ciField::initialize_from(fieldDescriptor* fd) {
     case T_OBJECT:
     case T_ARRAY:
       {
-        oop o = k->obj_field(_offset);
+	oop o = k->obj_field(_offset);
 
-        // A field will be "constant" if it is known always to be
-        // a non-null reference to an instance of a particular class,
-        // or to a particular array.  This can happen even if the instance
-        // or array is not perm.  In such a case, an "unloaded" ciArray
-        // or ciInstance is created.  The compiler may be able to use
-        // information about the object's class (which is exact) or length.
+	// A field will be "constant" if it is known always to be
+	// a non-null reference to an instance of a particular class,
+	// or to a particular array.  This can happen even if the instance
+	// or array is not perm.  In such a case, an "unloaded" ciArray
+	// or ciInstance is created.  The compiler may be able to use
+	// information about the object's class (which is exact) or length.
 
-        if (o == NULL) {
-          _constant_value = ciConstant(type()->basic_type(), ciNullObject::make());
-        } else {
-          _constant_value = ciConstant(type()->basic_type(), CURRENT_ENV->get_object(o));
-          assert(_constant_value.as_object() == CURRENT_ENV->get_object(o), "check interning");
-        }
+	if (o == NULL) {
+	  _constant_value = ciConstant(type()->basic_type(), ciNullObject::make());
+	} else {
+	  _constant_value = ciConstant(type()->basic_type(), CURRENT_ENV->get_object(o));
+	  assert(_constant_value.as_object() == CURRENT_ENV->get_object(o), "check interning");
+	}
       }
     }
   } else {
@@ -279,7 +282,7 @@ ciType* ciField::compute_type_impl() {
 // Can a specific access to this field be made without causing
 // link errors?
 bool ciField::will_link(ciInstanceKlass* accessing_klass,
-                        Bytecodes::Code bc) {
+			Bytecodes::Code bc) {
   VM_ENTRY_MARK;
   if (_offset == -1) {
     // at creation we couldn't link to our holder so we need to
@@ -297,7 +300,7 @@ bool ciField::will_link(ciInstanceKlass* accessing_klass,
                          accessing_klass->get_instanceKlass()->constants());
   LinkResolver::resolve_field(result, c_pool, _cp_index,
                               Bytecodes::java_code(bc),
-                              true, false, KILL_COMPILE_ON_FATAL_(false));
+			      true, false, KILL_COMPILE_ON_FATAL_(false));
 
   // update the hit-cache, unless there is a problem with memory scoping:
   if (accessing_klass->is_shared() || !is_shared())

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -27,12 +30,12 @@
 
 #ifndef PRODUCT
 
-#define SPARC_VERSION (VM_Version::v9_instructions_work()?              \
-                        (VM_Version::v8_instructions_work()? "" : "9") : "8")
+#define SPARC_VERSION (VM_Version::v9_instructions_work()? 		\
+			(VM_Version::v8_instructions_work()? "" : "9") : "8")
 
 // This routine is in the shared library:
 typedef unsigned char* print_insn_sparc_t(unsigned char* start, DisassemblerEnv* env,
-                                          const char* sparc_version);
+					  const char* sparc_version);
 
 void*    Disassembler::_library          = NULL;
 dll_func Disassembler::_print_insn_sparc = NULL;
@@ -77,7 +80,7 @@ class sparc_env : public DisassemblerEnv {
 
 void sparc_env::print_address(address adr, outputStream* st) {
   if (!Universe::is_fully_initialized()) {
-    st->print(INTPTR_FORMAT, (intptr_t)adr);
+    st->print(INTPTR_FORMAT, (intptr_t)adr); 
     return;
   }
   if (StubRoutines::contains(adr)) {
@@ -89,17 +92,17 @@ void sparc_env::print_address(address adr, outputStream* st) {
     else {
       st->print("Stub::%s", desc->name());
       if (desc->begin() != adr)
-        st->print("%+d 0x%p",adr - desc->begin(), adr);
+	st->print("%+d 0x%p",adr - desc->begin(), adr);
       else if (WizardMode) st->print(" " INTPTR_FORMAT, adr);
     }
   } else {
     BarrierSet* bs = Universe::heap()->barrier_set();
     if (bs->kind() == BarrierSet::CardTableModRef &&
-        adr == (address)((CardTableModRefBS*)(bs))->byte_map_base) {
+	adr == (address)((CardTableModRefBS*)(bs))->byte_map_base) {
       st->print("word_map_base");
       if (WizardMode) st->print(" " INTPTR_FORMAT, (intptr_t)adr);
     } else {
-      st->print(INTPTR_FORMAT, (intptr_t)adr);
+      st->print(INTPTR_FORMAT, (intptr_t)adr); 
     }
   }
 }
@@ -185,7 +188,7 @@ void Disassembler::decode(nmethod* nm, outputStream* st) {
   st->print_cr("Decoding compiled method " INTPTR_FORMAT ":", nm);
   st->print("Code:");
   st->cr();
-
+  
   if (!load_library()) {
     st->print_cr("Could not load disassembler");
     return;
@@ -223,7 +226,7 @@ void Disassembler::decode(nmethod* nm, outputStream* st) {
       int bucket_count = FlatProfiler::bucket_count_for(p0);
       tty->print_cr("%3.1f%% [%d]", bucket_count*100.0/total_bucket_count, bucket_count);
       tty->cr();
-    }
+    } 
   }
 }
 

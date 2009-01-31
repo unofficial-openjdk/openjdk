@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class BytecodeStream;
@@ -201,7 +204,7 @@ public:
     assert(flag_number < flag_limit, "oob");
     return (_header._struct._flags & (0x1 << flag_number)) != 0;
   }
-
+  
   // Low-level support for code generation.
   static ByteSize header_offset() {
     return byte_offset_of(DataLayout, _header);
@@ -407,7 +410,7 @@ public:
   }
   ArrayData* as_ArrayData() {
     assert(is_ArrayData(), "wrong type");
-    return is_ArrayData()       ? (ArrayData*)      this : NULL;
+    return is_ArrayData()       ? (ArrayData*)      this : NULL;        
   }
   MultiBranchData* as_MultiBranchData() {
     assert(is_MultiBranchData(), "wrong type");
@@ -431,10 +434,10 @@ public:
   virtual void update_pointers(HeapWord* beg_addr, HeapWord* end_addr) {}
 #endif // SERIALGC
 
-  // CI translation: ProfileData can represent both MethodDataOop data
-  // as well as CIMethodData data. This function is provided for translating
-  // an oop in a ProfileData to the ci equivalent. Generally speaking,
-  // most ProfileData don't require any translation, so we provide the null
+  // CI translation: ProfileData can represent both MethodDataOop data 
+  // as well as CIMethodData data. This function is provided for translating 
+  // an oop in a ProfileData to the ci equivalent. Generally speaking, 
+  // most ProfileData don't require any translation, so we provide the null 
   // translation here, and the required translators are in the ci subclasses.
   virtual void translate_from(ProfileData* data) {}
 
@@ -458,7 +461,7 @@ protected:
     //  saw a null operand (cast/aastore/instanceof)
     null_seen_flag              = DataLayout::first_flag + 0
   };
-  enum { bit_cell_count = 0 };  // no additional data fields needed.
+  enum { bit_cell_count = 0 };  // no additional data fields needed. 
 public:
   BitData(DataLayout* layout) : ProfileData(layout) {
   }
@@ -468,19 +471,19 @@ public:
   static int static_cell_count() {
     return bit_cell_count;
   }
-
+  
   virtual int cell_count() {
     return static_cell_count();
   }
-
+  
   // Accessor
 
   // The null_seen flag bit is specially known to the interpreter.
   // Consulting it allows the compiler to avoid setting up null_check traps.
   bool null_seen()     { return flag_at(null_seen_flag); }
   void set_null_seen()    { set_flag_at(null_seen_flag); }
-
-
+  
+  
   // Code generation support
   static int null_seen_byte_constant() {
     return flag_number_to_byte_constant(null_seen_flag);
@@ -489,7 +492,7 @@ public:
   static ByteSize bit_data_size() {
     return cell_offset(bit_cell_count);
   }
-
+  
 #ifndef PRODUCT
   void print_data_on(outputStream* st);
 #endif
@@ -512,16 +515,16 @@ public:
   static int static_cell_count() {
     return counter_cell_count;
   }
-
+  
   virtual int cell_count() {
     return static_cell_count();
   }
-
+  
   // Direct accessor
   uint count() {
     return uint_at(count_off);
   }
-
+  
   // Code generation support
   static ByteSize count_offset() {
     return cell_offset(count_off);
@@ -529,12 +532,12 @@ public:
   static ByteSize counter_data_size() {
     return cell_offset(counter_cell_count);
   }
-
+  
 #ifndef PRODUCT
   void print_data_on(outputStream* st);
 #endif
 };
-
+  
 // JumpData
 //
 // A JumpData is used to access profiling information for a direct
@@ -552,7 +555,7 @@ protected:
   void set_displacement(int displacement) {
     set_int_at(displacement_off_set, displacement);
   }
-
+  
 public:
   JumpData(DataLayout* layout) : ProfileData(layout) {
     assert(layout->tag() == DataLayout::jump_data_tag ||
@@ -564,11 +567,11 @@ public:
   static int static_cell_count() {
     return jump_cell_count;
   }
-
+  
   virtual int cell_count() {
     return static_cell_count();
   }
-
+  
   // Direct accessor
   uint taken() {
     return uint_at(taken_off_set);
@@ -581,7 +584,7 @@ public:
     set_uint_at(taken_off_set, cnt);
     return cnt;
   }
-
+  
   int displacement() {
     return int_at(displacement_off_set);
   }
@@ -597,7 +600,7 @@ public:
 
   // Specific initialization.
   void post_initialize(BytecodeStream* stream, methodDataOop mdo);
-
+  
 #ifndef PRODUCT
   void print_data_on(outputStream* st);
 #endif
@@ -628,11 +631,11 @@ public:
   static int static_cell_count() {
     return counter_cell_count + (uint) TypeProfileWidth * receiver_type_row_cell_count;
   }
-
+  
   virtual int cell_count() {
     return static_cell_count();
   }
-
+  
   // Direct accessors
   static uint row_limit() {
     return TypeProfileWidth;
@@ -664,7 +667,7 @@ public:
     assert(row < row_limit(), "oob");
     return uint_at(receiver_count_cell_index(row));
   }
-
+  
   // Code generation support
   static ByteSize receiver_offset(uint row) {
     return cell_offset(receiver_cell_index(row));
@@ -675,7 +678,7 @@ public:
   static ByteSize receiver_type_data_size() {
     return cell_offset(static_cell_count());
   }
-
+  
   // GC support
   virtual void follow_contents();
   virtual void oop_iterate(OopClosure* blk);
@@ -720,12 +723,12 @@ public:
   virtual int cell_count() {
     return static_cell_count();
   }
-
+  
   // Direct accessors
   static ByteSize virtual_call_data_size() {
     return cell_offset(static_cell_count());
   }
-
+  
 #ifndef PRODUCT
   void print_data_on(outputStream* st);
 #endif
@@ -779,11 +782,11 @@ public:
   static int static_cell_count() {
     return counter_cell_count + (uint) BciProfileWidth * ret_row_cell_count;
   }
-
+  
   virtual int cell_count() {
     return static_cell_count();
   }
-
+  
   static uint row_limit() {
     return BciProfileWidth;
   }
@@ -807,7 +810,7 @@ public:
   int bci_displacement(uint row) {
     return int_at(bci_displacement_cell_index(row));
   }
-
+  
   // Interpreter Runtime support
   address fixup_ret(int return_bci, methodDataHandle mdo);
 
@@ -824,7 +827,7 @@ public:
 
   // Specific initialization.
   void post_initialize(BytecodeStream* stream, methodDataOop mdo);
-
+  
 #ifndef PRODUCT
   void print_data_on(outputStream* st);
 #endif
@@ -845,7 +848,7 @@ protected:
   void set_displacement(int displacement) {
     set_int_at(displacement_off_set, displacement);
   }
-
+  
 public:
   BranchData(DataLayout* layout) : JumpData(layout) {
     assert(layout->tag() == DataLayout::branch_data_tag, "wrong type");
@@ -856,11 +859,11 @@ public:
   static int static_cell_count() {
     return branch_cell_count;
   }
-
+  
   virtual int cell_count() {
     return static_cell_count();
   }
-
+  
   // Direct accessor
   uint not_taken() {
     return uint_at(not_taken_off_set);
@@ -873,7 +876,7 @@ public:
     set_uint_at(not_taken_off_set, cnt);
     return cnt;
   }
-
+  
   // Code generation support
   static ByteSize not_taken_offset() {
     return cell_offset(not_taken_off_set);
@@ -881,10 +884,10 @@ public:
   static ByteSize branch_data_size() {
     return cell_offset(branch_cell_count);
   }
-
+  
   // Specific initialization.
   void post_initialize(BytecodeStream* stream, methodDataOop mdo);
-
+  
 #ifndef PRODUCT
   void print_data_on(outputStream* st);
 #endif
@@ -920,7 +923,7 @@ protected:
     int aindex = index + array_start_off_set;
     set_int_at(aindex, value);
   }
-
+  
   // Code generation support for subclasses.
   static ByteSize array_element_offset(int index) {
     return cell_offset(array_start_off_set + index);
@@ -938,7 +941,7 @@ public:
   int array_len() {
     return int_at_unchecked(array_len_off_set);
   }
-
+  
   virtual int cell_count() {
     return array_len() + 1;
   }
@@ -1005,13 +1008,13 @@ public:
 
   uint count_at(int index) {
     return array_uint_at(case_array_start +
-                         index * per_case_cell_count +
-                         relative_count_off_set);
+			 index * per_case_cell_count +
+			 relative_count_off_set);
   }
   int displacement_at(int index) {
     return array_int_at(case_array_start +
-                        index * per_case_cell_count +
-                        relative_displacement_off_set);
+			index * per_case_cell_count +
+			relative_displacement_off_set);
   }
 
   // Code generation support
@@ -1022,7 +1025,7 @@ public:
     return array_element_offset(default_disaplacement_off_set);
   }
   static ByteSize case_count_offset(int index) {
-    return case_array_offset() +
+    return case_array_offset() + 
            (per_case_size() * index) +
            relative_count_offset();
   }
@@ -1061,23 +1064,23 @@ public:
 // -----------------------------
 // | Data entries...           |
 // |   (variable size)         |
-// |                           |
-// .                           .
-// .                           .
-// .                           .
-// |                           |
+// |			       |
+// .			       .
+// .			       .
+// .			       .
+// |   			       |
 // -----------------------------
 //
-// The data entry area is a heterogeneous array of DataLayouts. Each
-// DataLayout in the array corresponds to a specific bytecode in the
-// method.  The entries in the array are sorted by the corresponding
+// The data entry area is a heterogeneous array of DataLayouts. Each 
+// DataLayout in the array corresponds to a specific bytecode in the 
+// method.  The entries in the array are sorted by the corresponding 
 // bytecode.  Access to the data is via resource-allocated ProfileData,
 // which point to the underlying blocks of DataLayout structures.
 //
 // During interpretation, if profiling in enabled, the interpreter
 // maintains a method data pointer (mdp), which points at the entry
-// in the array corresponding to the current bci.  In the course of
-// intepretation, when a bytecode is encountered that has profile data
+// in the array corresponding to the current bci.  In the course of 
+// intepretation, when a bytecode is encountered that has profile data 
 // associated with it, the entry pointed to by mdp is updated, then the
 // mdp is adjusted to point to the next appropriate DataLayout.  If mdp
 // is NULL to begin with, the interpreter assumes that the current method
@@ -1086,9 +1089,9 @@ public:
 // In methodDataOop parlance, "dp" is a "data pointer", the actual address
 // of a DataLayout element.  A "di" is a "data index", the offset in bytes
 // from the base of the data entry array.  A "displacement" is the byte offset
-// in certain ProfileData objects that indicate the amount the mdp must be
+// in certain ProfileData objects that indicate the amount the mdp must be 
 // adjusted in the event of a change in control flow.
-//
+// 
 
 class methodDataOopDesc : public oopDesc {
   friend class VMStructs;
@@ -1097,7 +1100,7 @@ private:
 
   // Back pointer to the methodOop
   methodOop _method;
-
+  
   // Size of this oop in bytes
   int _size;
 
@@ -1106,7 +1109,7 @@ private:
 
   // Whole-method sticky bits and flags
 public:
-  enum {
+  enum { 
     _trap_hist_limit    = 16,   // decoupled from Deoptimization::Reason_LIMIT
     _trap_hist_mask     = max_jubyte,
     _extra_data_count   = 4     // extra DataLayout headers, for trap history
@@ -1163,9 +1166,9 @@ private:
 
   // hint accessors
   int      hint_di() const  { return _hint_di; }
-  void set_hint_di(int di)  {
+  void set_hint_di(int di)  { 
     assert(!out_of_bounds(di), "hint_di out of bounds");
-    _hint_di = di;
+    _hint_di = di; 
   }
   ProfileData* data_before(int bci) {
     // avoid SEGV on this edge case
@@ -1323,7 +1326,7 @@ public:
 
   // Support for code generation
   static ByteSize data_offset() {
-    return byte_offset_of(methodDataOopDesc, _data[0]);
+    return byte_offset_of(methodDataOopDesc, _data[0]); 
   }
 
   // GC support

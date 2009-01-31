@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class GlobalTLABStats;
@@ -60,7 +63,7 @@ private:
   void set_refill_waste_limit(size_t waste)      { _refill_waste_limit = waste;  }
 
   size_t initial_refill_waste_limit()            { return desired_size() / TLABRefillWasteFraction; }
-
+  
   static int    target_refills()                 { return _target_refills; }
   size_t initial_desired_size();
 
@@ -127,7 +130,7 @@ public:
 
   // Make an in-use tlab parsable, optionally also retiring it.
   void make_parsable(bool retire);
-
+  
   // Retire in-use tlab before allocation of a new tlab
   void clear_before_allocation();
 
@@ -147,8 +150,8 @@ public:
   static ByteSize end_offset()                   { return byte_offset_of(ThreadLocalAllocBuffer, _end  ); }
   static ByteSize top_offset()                   { return byte_offset_of(ThreadLocalAllocBuffer, _top  ); }
   static ByteSize pf_top_offset()                { return byte_offset_of(ThreadLocalAllocBuffer, _pf_top  ); }
-  static ByteSize size_offset()                  { return byte_offset_of(ThreadLocalAllocBuffer, _desired_size ); }
-  static ByteSize refill_waste_limit_offset()    { return byte_offset_of(ThreadLocalAllocBuffer, _refill_waste_limit ); }
+  static ByteSize size_offset()                  { return byte_offset_of(ThreadLocalAllocBuffer, _desired_size ); }  
+  static ByteSize refill_waste_limit_offset()    { return byte_offset_of(ThreadLocalAllocBuffer, _refill_waste_limit ); }  
 
   static ByteSize number_of_refills_offset()     { return byte_offset_of(ThreadLocalAllocBuffer, _number_of_refills ); }
   static ByteSize fast_refill_waste_offset()     { return byte_offset_of(ThreadLocalAllocBuffer, _fast_refill_waste ); }
@@ -175,7 +178,7 @@ private:
   size_t   _max_fast_refill_waste;
   unsigned _total_slow_allocations;
   unsigned _max_slow_allocations;
-
+  
   PerfVariable* _perf_allocating_threads;
   PerfVariable* _perf_total_refills;
   PerfVariable* _perf_max_refills;

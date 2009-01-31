@@ -1,12 +1,8 @@
 os_family = solaris
 
-arch = x86
+arch = i486
 
-arch_model = x86_32
-
-os_arch = solaris_x86
-
-os_arch_model = solaris_x86_32
+os_arch = solaris_i486
 
 lib_arch = i386
 

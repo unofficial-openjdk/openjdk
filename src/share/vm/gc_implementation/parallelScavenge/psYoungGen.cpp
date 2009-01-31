@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,16 +22,16 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
 # include "incls/_psYoungGen.cpp.incl"
 
 PSYoungGen::PSYoungGen(size_t        initial_size,
-                       size_t        min_size,
+                       size_t        min_size, 
                        size_t        max_size) :
-  _init_gen_size(initial_size),
+  _init_gen_size(initial_size), 
   _min_gen_size(min_size),
   _max_gen_size(max_size)
 {}
@@ -38,7 +41,7 @@ void PSYoungGen::initialize_virtual_space(ReservedSpace rs, size_t alignment) {
   _virtual_space = new PSVirtualSpace(rs, alignment);
   if (!_virtual_space->expand_by(_init_gen_size)) {
     vm_exit_during_initialization("Could not reserve enough space for "
-                                  "object heap");
+				  "object heap");
   }
 }
 
@@ -53,7 +56,7 @@ void PSYoungGen::initialize_work() {
                         (HeapWord*)_virtual_space->high_boundary());
 
   MemRegion cmr((HeapWord*)_virtual_space->low(),
-                (HeapWord*)_virtual_space->high());
+		(HeapWord*)_virtual_space->high());
   Universe::heap()->barrier_set()->resize_covered_region(cmr);
 
   if (UseNUMA) {
@@ -201,7 +204,7 @@ void PSYoungGen::space_invariants() {
 
   // Relationship of spaces to each other
   char* eden_start = (char*)eden_space()->bottom();
-  char* eden_end   = (char*)eden_space()->end();
+  char* eden_end   = (char*)eden_space()->end();   
   char* from_start = (char*)from_space()->bottom();
   char* from_end   = (char*)from_space()->end();
   char* to_start   = (char*)to_space()->bottom();
@@ -279,9 +282,9 @@ bool PSYoungGen::resize_generation(size_t eden_size, size_t survivor_size) {
 
   // Adjust new generation size
   const size_t eden_plus_survivors =
-          align_size_up(eden_size + 2 * survivor_size, alignment);
-  size_t desired_size = MAX2(MIN2(eden_plus_survivors, max_size()),
-                             min_gen_size());
+	  align_size_up(eden_size + 2 * survivor_size, alignment);
+  size_t desired_size = MAX2(MIN2(eden_plus_survivors, max_size()), 
+			     min_gen_size());
   assert(desired_size <= max_size(), "just checking");
 
   if (desired_size > orig_size) {
@@ -323,23 +326,23 @@ bool PSYoungGen::resize_generation(size_t eden_size, size_t survivor_size) {
     if (Verbose && PrintGC) {
       size_t current_size  = _virtual_space->committed_size();
       gclog_or_tty->print_cr("PSYoung generation size changed: "
-                             SIZE_FORMAT "K->" SIZE_FORMAT "K",
-                             orig_size/K, current_size/K);
+			     SIZE_FORMAT "K->" SIZE_FORMAT "K",
+			     orig_size/K, current_size/K);
     }
   }
 
   guarantee(eden_plus_survivors <= _virtual_space->committed_size() ||
-            _virtual_space->committed_size() == max_size(), "Sanity");
+	    _virtual_space->committed_size() == max_size(), "Sanity");
 
   return true;
 }
 
 
-void PSYoungGen::resize_spaces(size_t requested_eden_size,
-                               size_t requested_survivor_size) {
+void PSYoungGen::resize_spaces(size_t requested_eden_size, 
+			       size_t requested_survivor_size) {
   assert(UseAdaptiveSizePolicy, "sanity check");
-  assert(requested_eden_size > 0  && requested_survivor_size > 0,
-         "just checking");
+  assert(requested_eden_size > 0  && requested_survivor_size > 0, 
+	 "just checking");
 
   // We require eden and to space to be empty
   if ((!eden_space()->is_empty()) || (!to_space()->is_empty())) {
@@ -347,35 +350,35 @@ void PSYoungGen::resize_spaces(size_t requested_eden_size,
   }
 
   if (PrintAdaptiveSizePolicy && Verbose) {
-    gclog_or_tty->print_cr("PSYoungGen::resize_spaces(requested_eden_size: "
-                  SIZE_FORMAT
+    gclog_or_tty->print_cr("PSYoungGen::resize_spaces(requested_eden_size: " 
+                  SIZE_FORMAT 
                   ", requested_survivor_size: " SIZE_FORMAT ")",
                   requested_eden_size, requested_survivor_size);
-    gclog_or_tty->print_cr("    eden: [" PTR_FORMAT ".." PTR_FORMAT ") "
-                  SIZE_FORMAT,
-                  eden_space()->bottom(),
-                  eden_space()->end(),
+    gclog_or_tty->print_cr("    eden: [" PTR_FORMAT ".." PTR_FORMAT ") " 
+                  SIZE_FORMAT, 
+                  eden_space()->bottom(), 
+                  eden_space()->end(), 
                   pointer_delta(eden_space()->end(),
                                 eden_space()->bottom(),
                                 sizeof(char)));
-    gclog_or_tty->print_cr("    from: [" PTR_FORMAT ".." PTR_FORMAT ") "
-                  SIZE_FORMAT,
-                  from_space()->bottom(),
-                  from_space()->end(),
+    gclog_or_tty->print_cr("    from: [" PTR_FORMAT ".." PTR_FORMAT ") " 
+		  SIZE_FORMAT, 
+                  from_space()->bottom(), 
+                  from_space()->end(), 
                   pointer_delta(from_space()->end(),
                                 from_space()->bottom(),
                                 sizeof(char)));
-    gclog_or_tty->print_cr("      to: [" PTR_FORMAT ".." PTR_FORMAT ") "
-                  SIZE_FORMAT,
-                  to_space()->bottom(),
-                  to_space()->end(),
+    gclog_or_tty->print_cr("      to: [" PTR_FORMAT ".." PTR_FORMAT ") " 
+		  SIZE_FORMAT, 
+                  to_space()->bottom(),   
+                  to_space()->end(), 
                   pointer_delta(  to_space()->end(),
                                   to_space()->bottom(),
                                   sizeof(char)));
   }
 
   // There's nothing to do if the new sizes are the same as the current
-  if (requested_survivor_size == to_space()->capacity_in_bytes() &&
+  if (requested_survivor_size == to_space()->capacity_in_bytes() && 
       requested_survivor_size == from_space()->capacity_in_bytes() &&
       requested_eden_size == eden_space()->capacity_in_bytes()) {
     if (PrintAdaptiveSizePolicy && Verbose) {
@@ -383,9 +386,9 @@ void PSYoungGen::resize_spaces(size_t requested_eden_size,
     }
     return;
   }
-
+  
   char* eden_start = (char*)eden_space()->bottom();
-  char* eden_end   = (char*)eden_space()->end();
+  char* eden_end   = (char*)eden_space()->end();   
   char* from_start = (char*)from_space()->bottom();
   char* from_end   = (char*)from_space()->end();
   char* to_start   = (char*)to_space()->bottom();
@@ -393,7 +396,7 @@ void PSYoungGen::resize_spaces(size_t requested_eden_size,
 
   ParallelScavengeHeap* heap = (ParallelScavengeHeap*)Universe::heap();
   const size_t alignment = heap->intra_generation_alignment();
-  const bool maintain_minimum =
+  const bool maintain_minimum = 
     (requested_eden_size + 2 * requested_survivor_size) <= min_gen_size();
 
   // Check whether from space is below to space
@@ -419,9 +422,9 @@ void PSYoungGen::resize_spaces(size_t requested_eden_size,
       // This could be done in general but policy at a higher
       // level is determining a requested size for eden and that
       // should be honored unless there is a fundamental reason.
-      eden_size = pointer_delta(from_start,
-                                eden_start,
-                                sizeof(char));
+      eden_size = pointer_delta(from_start, 
+				eden_start, 
+				sizeof(char));
     } else {
       eden_size = MIN2(requested_eden_size,
                        pointer_delta(from_start, eden_start, sizeof(char)));
@@ -436,13 +439,13 @@ void PSYoungGen::resize_spaces(size_t requested_eden_size,
 
     // First calculate an optimal to-space
     to_end   = (char*)_virtual_space->high();
-    to_start = (char*)pointer_delta(to_end, (char*)requested_survivor_size,
-                                    sizeof(char));
+    to_start = (char*)pointer_delta(to_end, (char*)requested_survivor_size, 
+				    sizeof(char));
 
     // Does the optimal to-space overlap from-space?
     if (to_start < (char*)from_space()->end()) {
       assert(heap->kind() == CollectedHeap::ParallelScavengeHeap, "Sanity");
-
+      
       // Calculate the minimum offset possible for from_end
       size_t from_size = pointer_delta(from_space()->top(), from_start, sizeof(char));
 
@@ -463,22 +466,22 @@ void PSYoungGen::resize_spaces(size_t requested_eden_size,
     }
 
     guarantee(to_start != to_end, "to space is zero sized");
-
+      
     if (PrintAdaptiveSizePolicy && Verbose) {
       gclog_or_tty->print_cr("    [eden_start .. eden_end): "
-                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT,
-                    eden_start,
-                    eden_end,
+                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT, 
+                    eden_start, 
+                    eden_end, 
                     pointer_delta(eden_end, eden_start, sizeof(char)));
       gclog_or_tty->print_cr("    [from_start .. from_end): "
-                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT,
-                    from_start,
-                    from_end,
+                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT, 
+                    from_start, 
+                    from_end, 
                     pointer_delta(from_end, from_start, sizeof(char)));
       gclog_or_tty->print_cr("    [  to_start ..   to_end): "
-                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT,
-                    to_start,
-                    to_end,
+                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT, 
+                    to_start,   
+                    to_end, 
                     pointer_delta(  to_end,   to_start, sizeof(char)));
     }
   } else {
@@ -491,17 +494,17 @@ void PSYoungGen::resize_spaces(size_t requested_eden_size,
     // to space as if we were able to resize from space, even though from
     // space is not modified.
     // Giving eden priority was tried and gave poorer performance.
-    to_end   = (char*)pointer_delta(_virtual_space->high(),
-                                    (char*)requested_survivor_size,
-                                    sizeof(char));
+    to_end   = (char*)pointer_delta(_virtual_space->high(), 
+                                    (char*)requested_survivor_size, 
+				    sizeof(char));
     to_end   = MIN2(to_end, from_start);
-    to_start = (char*)pointer_delta(to_end, (char*)requested_survivor_size,
-                                    sizeof(char));
+    to_start = (char*)pointer_delta(to_end, (char*)requested_survivor_size, 
+				    sizeof(char));
     // if the space sizes are to be increased by several times then
     // 'to_start' will point beyond the young generation. In this case
     // 'to_start' should be adjusted.
     to_start = MAX2(to_start, eden_start + alignment);
-
+    
     // Compute how big eden can be, then adjust end.
     // See  comments above on calculating eden_end.
     size_t eden_size;
@@ -523,25 +526,25 @@ void PSYoungGen::resize_spaces(size_t requested_eden_size,
 
     if (PrintAdaptiveSizePolicy && Verbose) {
       gclog_or_tty->print_cr("    [eden_start .. eden_end): "
-                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT,
-                    eden_start,
-                    eden_end,
+                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT, 
+                    eden_start, 
+                    eden_end, 
                     pointer_delta(eden_end, eden_start, sizeof(char)));
-      gclog_or_tty->print_cr("    [  to_start ..   to_end): "
-                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT,
-                    to_start,
-                    to_end,
+      gclog_or_tty->print_cr("    [  to_start ..   to_end): " 
+                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT, 
+                    to_start,   
+                    to_end, 
                     pointer_delta(  to_end,   to_start, sizeof(char)));
-      gclog_or_tty->print_cr("    [from_start .. from_end): "
-                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT,
-                    from_start,
-                    from_end,
+      gclog_or_tty->print_cr("    [from_start .. from_end): " 
+                    "[" PTR_FORMAT " .. " PTR_FORMAT ") " SIZE_FORMAT, 
+                    from_start, 
+                    from_end, 
                     pointer_delta(from_end, from_start, sizeof(char)));
     }
   }
+  
 
-
-  guarantee((HeapWord*)from_start <= from_space()->bottom(),
+  guarantee((HeapWord*)from_start <= from_space()->bottom(), 
             "from start moved to the right");
   guarantee((HeapWord*)from_end >= from_space()->top(),
             "from end moved into live data");
@@ -709,7 +712,7 @@ size_t PSYoungGen::available_to_live() {
   size_t delta_in_survivor = 0;
   ParallelScavengeHeap* heap = (ParallelScavengeHeap*)Universe::heap();
   const size_t space_alignment = heap->intra_generation_alignment();
-  const size_t gen_alignment = heap->young_gen_alignment();
+  const size_t gen_alignment = heap->generation_alignment();
 
   MutableSpace* space_shrinking = NULL;
   if (from_space()->end() > to_space()->end()) {
@@ -723,17 +726,17 @@ size_t PSYoungGen::available_to_live() {
   assert(((HeapWord*)virtual_space()->high()) >= space_shrinking->end(),
     "Survivor space beyond high end");
   size_t unused_committed = pointer_delta(virtual_space()->high(),
-    space_shrinking->end(), sizeof(char));
+    space_shrinking->end(), sizeof(char));   
 
   if (space_shrinking->is_empty()) {
     // Don't let the space shrink to 0
-    assert(space_shrinking->capacity_in_bytes() >= space_alignment,
+    assert(space_shrinking->capacity_in_bytes() >= space_alignment, 
       "Space is too small");
     delta_in_survivor = space_shrinking->capacity_in_bytes() - space_alignment;
   } else {
-    delta_in_survivor = pointer_delta(space_shrinking->end(),
-                                      space_shrinking->top(),
-                                      sizeof(char));
+    delta_in_survivor = pointer_delta(space_shrinking->end(), 
+				      space_shrinking->top(),
+				      sizeof(char));
   }
 
   size_t delta_in_bytes = unused_committed + delta_in_survivor;
@@ -743,9 +746,9 @@ size_t PSYoungGen::available_to_live() {
 
 // Return the number of bytes available for resizing down the young
 // generation.  This is the minimum of
-//      input "bytes"
-//      bytes to the minimum young gen size
-//      bytes to the size currently being used + some small extra
+// 	input "bytes"
+//	bytes to the minimum young gen size
+//	bytes to the size currently being used + some small extra
 size_t PSYoungGen::limit_gen_shrink(size_t bytes) {
   // Allow shrinkage into the current eden but keep eden large enough
   // to maintain the minimum young gen size

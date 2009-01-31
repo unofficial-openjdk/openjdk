@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class ASPSYoungGen : public PSYoungGen {
@@ -30,14 +33,14 @@ class ASPSYoungGen : public PSYoungGen {
   virtual size_t available_to_live();
 
  public:
-  ASPSYoungGen(size_t         initial_byte_size,
+  ASPSYoungGen(size_t         initial_byte_size, 
                size_t         minimum_byte_size,
-               size_t         byte_size_limit);
+	       size_t         byte_size_limit);
 
   ASPSYoungGen(PSVirtualSpace* vs,
-               size_t         initial_byte_size,
+	       size_t         initial_byte_size, 
                size_t         minimum_byte_size,
-               size_t         byte_size_limit);
+	       size_t         byte_size_limit);
 
   void initialize(ReservedSpace rs, size_t alignment);
   void initialize_virtual_space(ReservedSpace rs, size_t alignment);

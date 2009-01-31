@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #ifndef _JAVA_JVMTITHREADSTATE_H_
@@ -77,15 +80,15 @@ class JvmtiThreadState : public CHeapObj {
   int               _hide_level;
 
   // Used to send class being redefined/retransformed and kind of transform
-  // info to the class file load hook event handler.
+  // info to the class file load hook event handler. 
   KlassHandle           *_class_being_redefined;
   JvmtiClassLoadKind    _class_load_kind;
 
   // This is only valid when is_interp_only_mode() returns true
   int               _cur_stack_depth;
-
+  
   JvmtiThreadEventEnable _thread_event_enable;
-
+  
   // for support of JvmtiEnvThreadState
   JvmtiEnvThreadState*   _head_env_thread_state;
 
@@ -110,10 +113,10 @@ class JvmtiThreadState : public CHeapObj {
  public:
   ~JvmtiThreadState();
 
-  // is event_type enabled and usable for this thread in any enviroments?
-  bool is_enabled(jvmtiEvent event_type) {
-    return _thread_event_enable.is_enabled(event_type);
-  }
+  // is event_type enabled and usable for this thread in any enviroments? 
+  bool is_enabled(jvmtiEvent event_type) { 
+    return _thread_event_enable.is_enabled(event_type); 
+  }       
 
   JvmtiThreadEventEnable *thread_event_enable() {
     return &_thread_event_enable;
@@ -134,15 +137,15 @@ class JvmtiThreadState : public CHeapObj {
   void leave_interp_only_mode();
 
   // access to the linked list of all JVMTI thread states
-  static JvmtiThreadState *first() {
+  static JvmtiThreadState *first() { 
     assert(Threads::number_of_threads() == 0 || JvmtiThreadState_lock->is_locked(), "sanity check");
-    return _head;
+    return _head; 
   }
 
   JvmtiThreadState *next()                  {
     return _next;
   }
-
+                  
   // Current stack depth is only valid when is_interp_only_mode() returns true.
   // These functions should only be called at a safepoint - usually called from same thread.
   // Returns the number of Java activations on the stack.
@@ -156,7 +159,7 @@ class JvmtiThreadState : public CHeapObj {
   inline JavaThread *get_thread()      { return _thread;              }
   inline bool is_exception_detected()  { return _exception_detected;  }
   inline bool is_exception_caught()    { return _exception_caught;  }
-  inline void set_exception_detected() { _exception_detected = true;
+  inline void set_exception_detected() { _exception_detected = true; 
                                          _exception_caught = false; }
   inline void set_exception_caught()   { _exception_caught = true;
                                          _exception_detected = false; }
@@ -185,7 +188,7 @@ class JvmtiThreadState : public CHeapObj {
   void set_pending_step_for_popframe() { _pending_step_for_popframe = true;  }
   void clr_pending_step_for_popframe() { _pending_step_for_popframe = false; }
   bool is_pending_step_for_popframe()  { return _pending_step_for_popframe;  }
-  void process_pending_step_for_popframe();
+  void process_pending_step_for_popframe();   
 
   // Step pending flag is set when ForceEarlyReturn is called and it is cleared
   // when step for the ForceEarlyReturn is completed.
@@ -217,7 +220,7 @@ class JvmtiThreadState : public CHeapObj {
     return _class_load_kind;
   }
 
-  // RedefineClasses support
+  // RedefineClasses support 
   // The bug 6214132 caused the verification to fail.
   //
   // Below is the detailed description of the fix approach taken:
@@ -241,7 +244,7 @@ class JvmtiThreadState : public CHeapObj {
   //   info about equivalent klass versions and use it to replace a klassOop
   //   of _the_class with a klassOop of _scratch_class. The function
   //   class_to_verify_considering_redefinition() must be called for it.
-  //
+  // 
   //   Note again, that this redirection happens only for the verifier thread.
   //   Other threads have very small overhead by checking the existence
   //   of the jvmtiThreadSate and the information about klasses equivalence.
@@ -267,14 +270,14 @@ class JvmtiThreadState : public CHeapObj {
                                                     JavaThread *thread) {
     JvmtiThreadState *state = thread->jvmti_thread_state();
     if (state != NULL && state->_the_class_for_redefinition_verification != NULL) {
-      if ((*(state->_the_class_for_redefinition_verification))() == klass) {
+      if ((*(state->_the_class_for_redefinition_verification))() == klass) {           
         klass = (*(state->_scratch_class_for_redefinition_verification))();
       }
     }
     return klass;
   }
-
-  // Todo: get rid of this!
+            
+  // Todo: get rid of this!  
  private:
   bool _debuggable;
  public:
@@ -287,20 +290,20 @@ class JvmtiThreadState : public CHeapObj {
 
   bool may_be_walked();
 
-  // Thread local event collector setter and getter methods.
+  // Thread local event collector setter and getter methods. 
   JvmtiDynamicCodeEventCollector* get_dynamic_code_event_collector() {
     return _dynamic_code_event_collector;
-  }
+  } 
   JvmtiVMObjectAllocEventCollector* get_vm_object_alloc_event_collector() {
     return _vm_object_alloc_event_collector;
-  }
+  } 
   void set_dynamic_code_event_collector(JvmtiDynamicCodeEventCollector* collector) {
     _dynamic_code_event_collector = collector;
-  }
+  } 
   void set_vm_object_alloc_event_collector(JvmtiVMObjectAllocEventCollector* collector) {
     _vm_object_alloc_event_collector = collector;
   }
-
+    
 
   //
   // Frame routines
@@ -380,10 +383,10 @@ class RedefineVerifyMark : public StackObj {
  private:
   JvmtiThreadState *_state;
 
- public:
+ public: 
   RedefineVerifyMark(KlassHandle *the_class, KlassHandle *scratch_class,
                      JvmtiThreadState *state) : _state(state)
-  {
+  { 
     _state->set_class_versions_map(the_class, scratch_class);
     (*scratch_class)->set_java_mirror((*the_class)->java_mirror());
   }

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2002-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Thread::current is "hot" it's called > 128K times in the 1st 500 msecs of
@@ -27,7 +30,7 @@
 // ThreadLocalStorage::thread is warm -- it's called > 16K times in the same
 // period.   Thread::current() now calls ThreadLocalStorage::thread() directly.
 // For SPARC, to avoid excessive register window spill-fill faults,
-// we aggressively inline these routines.
+// we aggressively inline these routines.  
 
 inline Thread* ThreadLocalStorage::thread()  {
   // don't use specialized code if +UseMallocOnly -- may confuse Purify et al.

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 inline void MarkSweep::_adjust_pointer(oop* p, bool isroot) {
@@ -35,7 +38,7 @@ inline void MarkSweep::_adjust_pointer(oop* p, bool isroot) {
     if (new_pointer != NULL) {
       *p = new_pointer;
       assert(Universe::heap()->is_in_reserved(new_pointer),
-             "should be in object space");
+	     "should be in object space");
       VALIDATE_MARK_SWEEP_ONLY(saved_new_pointer = new_pointer);
     }
   }

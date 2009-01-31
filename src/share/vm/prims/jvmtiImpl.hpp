@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //
@@ -32,7 +35,7 @@ class JvmtiBreakpoints;
 
 
 ///////////////////////////////////////////////////////////////
-//
+// 
 // class GrowableCache, GrowableElement
 // Used by              : JvmtiBreakpointCache
 // Used by JVMTI methods: none directly.
@@ -40,12 +43,12 @@ class JvmtiBreakpoints;
 // GrowableCache is a permanent CHeap growable array of <GrowableElement *>
 //
 // In addition, the GrowableCache maintains a NULL terminated cache array of type address
-// that's created from the element array using the function:
-//     address GrowableElement::getCacheValue().
+// that's created from the element array using the function: 
+//     address GrowableElement::getCacheValue(). 
 //
 // Whenever the GrowableArray changes size, the cache array gets recomputed into a new C_HEAP allocated
 // block of memory. Additionally, every time the cache changes its position in memory, the
-//    void (*_listener_fun)(void *this_obj, address* cache)
+//    void (*_listener_fun)(void *this_obj, address* cache) 
 // gets called with the cache's new address. This gives the user of the GrowableCache a callback
 // to update its pointer to the address cache.
 //
@@ -72,7 +75,7 @@ private:
   address *_cache;
 
   // Listener for changes to the _cache field.
-  // Called whenever the _cache field has it's value changed
+  // Called whenever the _cache field has it's value changed  
   // (but NOT when cached elements are recomputed).
   void (*_listener_fun)(void *, address*);
 
@@ -80,8 +83,8 @@ private:
 
   // recache all elements after size change, notify listener
   void recache();
-
-public:
+  
+public:  
    GrowableCache();
    ~GrowableCache();
 
@@ -94,9 +97,9 @@ public:
   // find the index of the element, -1 if it doesn't exist
   int find(GrowableElement* e);
   // append a copy of the element to the end of the collection, notify listener
-  void append(GrowableElement* e);
+  void append(GrowableElement* e);  
   // insert a copy of the element using lessthan(), notify listener
-  void insert(GrowableElement* e);
+  void insert(GrowableElement* e);  
   // remove the element at index, notify listener
   void remove (int index);
   // clear out all elements and release all heap space, notify listener
@@ -119,8 +122,8 @@ class JvmtiBreakpointCache : public CHeapObj {
 
 private:
   GrowableCache _cache;
-
-public:
+  
+public:  
   JvmtiBreakpointCache()  {}
   ~JvmtiBreakpointCache() {}
 
@@ -152,12 +155,12 @@ public:
 typedef void (methodOopDesc::*method_action)(int _bci);
 
 class JvmtiBreakpoint : public GrowableElement {
-private:
-  methodOop             _method;
-  int                   _bci;
-  Bytecodes::Code       _orig_bytecode;
+private:   
+  methodOop 		_method;
+  int       		_bci;
+  Bytecodes::Code 	_orig_bytecode;
 
-public:
+public: 
   JvmtiBreakpoint();
   JvmtiBreakpoint(methodOop m_method, jlocation location);
   bool equals(JvmtiBreakpoint& bp);
@@ -200,7 +203,7 @@ private:
   JvmtiBreakpoints* _breakpoints;
   int               _operation;
   JvmtiBreakpoint*  _bp;
-
+  
 public:
   enum { SET_BREAKPOINT=0, CLEAR_BREAKPOINT=1, CLEAR_ALL_BREAKPOINT=2 };
 
@@ -218,17 +221,17 @@ public:
     assert(breakpoints != NULL, "breakpoints != NULL");
     assert(bp != NULL, "bp != NULL");
     assert(operation == SET_BREAKPOINT || operation == CLEAR_BREAKPOINT , "unknown breakpoint operation");
-  }
+  }    
 
   VMOp_Type type() const { return VMOp_ChangeBreakpoints; }
   void doit();
-  void oops_do(OopClosure* f);
+  void oops_do(OopClosure* f);   
 };
-
+ 
 
 ///////////////////////////////////////////////////////////////
 //
-// class JvmtiBreakpoints
+// class JvmtiBreakpoints 
 // Used by              : JvmtiCurrentBreakpoints
 // Used by JVMTI methods: none directly
 // Note: A Helper class
@@ -240,14 +243,14 @@ public:
 // cached byte code pointers from _bps without doing any synchronization (see JvmtiCurrentBreakpoints).
 //
 // It would be possible to make JvmtiBreakpoints a static class, but I've made it
-// CHeap allocated to emphasize its similarity to JvmtiFramePops.
+// CHeap allocated to emphasize its similarity to JvmtiFramePops. 
 //
 
 class JvmtiBreakpoints : public CHeapObj {
 private:
 
   JvmtiBreakpointCache _bps;
-
+  
   // These should only be used by VM_ChangeBreakpoints
   // to insure they only occur at safepoints.
   // Todo: add checks for safepoint
@@ -258,9 +261,9 @@ private:
 
   static void do_element(GrowableElement *e);
 
-public:
+public:  
   JvmtiBreakpoints(void listener_fun(void *, address *));
-  ~JvmtiBreakpoints();
+  ~JvmtiBreakpoints(); 
 
   int length();
   void oops_do(OopClosure* f);
@@ -270,7 +273,7 @@ public:
   int  set(JvmtiBreakpoint& bp);
   int  clear(JvmtiBreakpoint& bp);
   void clearall_in_class_at_safepoint(klassOop klass);
-  void clearall();
+  void clearall(); 
 };
 
 
@@ -281,7 +284,7 @@ public:
 // A static wrapper class for the JvmtiBreakpoints that provides:
 // 1. a fast inlined function to check if a byte code pointer is a breakpoint (is_breakpoint).
 // 2. a function for lazily creating the JvmtiBreakpoints class (this is not strictly necessary,
-//    but I'm copying the code from JvmtiThreadState which needs to lazily initialize
+//    but I'm copying the code from JvmtiThreadState which needs to lazily initialize 
 //    JvmtiFramePops).
 // 3. An oops_do entry point for GC'ing the breakpoint array.
 //
@@ -294,7 +297,7 @@ private:
   static JvmtiBreakpoints *_jvmti_breakpoints;
 
   // NULL terminated cache of byte-code pointers corresponding to current breakpoints.
-  // Updated only at safepoints (with listener_fun) when the cache is moved.
+  // Updated only at safepoints (with listener_fun) when the cache is moved. 
   // It exists only to make is_breakpoint fast.
   static address          *_breakpoint_list;
   static inline void set_breakpoint_list(address *breakpoint_list) { _breakpoint_list = breakpoint_list; }
@@ -329,7 +332,7 @@ bool JvmtiCurrentBreakpoints::is_breakpoint(address bcp) {
 
 
 ///////////////////////////////////////////////////////////////
-//
+// 
 // class JvmtiRawMonitor
 //
 // Used by JVMTI methods: All RawMonitor methods (CreateRawMonitor, EnterRawMonitor, etc.)
@@ -343,13 +346,13 @@ private:
   char *        _name;
   // JVMTI_RM_MAGIC is set in contructor and unset in destructor.
   enum { JVMTI_RM_MAGIC = (int)(('T' << 24) | ('I' << 16) | ('R' << 8) | 'M') };
-
+    
 public:
   JvmtiRawMonitor(const char *name);
   ~JvmtiRawMonitor();
   int            magic()   { return _magic;  }
   const char *get_name()   { return _name; }
-  bool        is_valid()   { return _magic == JVMTI_RM_MAGIC;  }
+  bool        is_valid()   { return _magic == JVMTI_RM_MAGIC;  } 
 };
 
 // Onload pending raw monitors
@@ -371,9 +374,9 @@ public:
   static void enter(JvmtiRawMonitor *monitor) {
     monitors()->append(monitor);
   }
-
+    
   static int count() {
-    return monitors()->length();
+    return monitors()->length();            
   }
 
   static void destroy(JvmtiRawMonitor *monitor) {
@@ -381,7 +384,7 @@ public:
       monitors()->remove(monitor);
     }
   }
-
+    
   // Return false if monitor is not found in the list.
   static bool exit(JvmtiRawMonitor *monitor) {
     if (monitors()->contains(monitor)) {
@@ -391,7 +394,7 @@ public:
       return false;
     }
   }
-
+    
   static void transition_raw_monitors();
 };
 
@@ -457,8 +460,8 @@ public:
 // class JvmtiSuspendControl
 //
 // Convenience routines for suspending and resuming threads.
-//
-// All attempts by JVMTI to suspend and resume threads must go through the
+// 
+// All attempts by JVMTI to suspend and resume threads must go through the 
 // JvmtiSuspendControl interface.
 //
 // methods return true if successful
@@ -474,4 +477,5 @@ public:
 };
 
 // Utility macro that checks for NULL pointers:
-#define NULL_CHECK(X, Y) if ((X) == NULL) { return (Y); }
+#define NULL_CHECK(X, Y) if ((X) == NULL) { return (Y); } 
+

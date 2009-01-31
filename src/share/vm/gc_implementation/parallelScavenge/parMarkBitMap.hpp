@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class oopDesc;
@@ -79,25 +82,25 @@ public:
   // Apply live_closure to each live object that lies completely within the
   // range [live_range_beg, live_range_end).  This is used to iterate over the
   // compacted region of the heap.  Return values:
+  // 
+  // incomplete		The iteration is not complete.  The last object that
+  // 			begins in the range does not end in the range;
+  // 			closure->source() is set to the start of that object.
   //
-  // incomplete         The iteration is not complete.  The last object that
-  //                    begins in the range does not end in the range;
-  //                    closure->source() is set to the start of that object.
-  //
-  // complete           The iteration is complete.  All objects in the range
-  //                    were processed and the closure is not full;
-  //                    closure->source() is set one past the end of the range.
-  //
-  // full               The closure is full; closure->source() is set to one
-  //                    past the end of the last object processed.
-  //
-  // would_overflow     The next object in the range would overflow the closure;
-  //                    closure->source() is set to the start of that object.
+  // complete		The iteration is complete.  All objects in the range
+  // 			were processed and the closure is not full;
+  // 			closure->source() is set one past the end of the range.
+  // 
+  // full		The closure is full; closure->source() is set to one
+  // 			past the end of the last object processed.
+  // 
+  // would_overflow	The next object in the range would overflow the closure;
+  // 			closure->source() is set to the start of that object.
   IterationStatus iterate(ParMarkBitMapClosure* live_closure,
-                          idx_t range_beg, idx_t range_end) const;
+			  idx_t range_beg, idx_t range_end) const;
   inline IterationStatus iterate(ParMarkBitMapClosure* live_closure,
-                                 HeapWord* range_beg,
-                                 HeapWord* range_end) const;
+				 HeapWord* range_beg,
+				 HeapWord* range_end) const;
 
   // Apply live closure as above and additionally apply dead_closure to all dead
   // space in the range [range_beg, dead_range_end).  Note that dead_range_end
@@ -108,14 +111,14 @@ public:
   // applied.  Thus callers must ensure that range_beg is not in the middle of a
   // live object.
   IterationStatus iterate(ParMarkBitMapClosure* live_closure,
-                          ParMarkBitMapClosure* dead_closure,
-                          idx_t range_beg, idx_t range_end,
-                          idx_t dead_range_end) const;
+			  ParMarkBitMapClosure* dead_closure,
+			  idx_t range_beg, idx_t range_end,
+			  idx_t dead_range_end) const;
   inline IterationStatus iterate(ParMarkBitMapClosure* live_closure,
-                                 ParMarkBitMapClosure* dead_closure,
-                                 HeapWord* range_beg,
-                                 HeapWord* range_end,
-                                 HeapWord* dead_range_end) const;
+				 ParMarkBitMapClosure* dead_closure,
+				 HeapWord* range_beg,
+				 HeapWord* range_end,
+				 HeapWord* dead_range_end) const;
 
   // Return the number of live words in the range [beg_addr, end_addr) due to
   // objects that start in the range.  If a live object extends onto the range,
@@ -157,20 +160,20 @@ public:
   static inline idx_t bits_required(MemRegion covered_region);
   static inline idx_t words_required(MemRegion covered_region);
 
-#ifndef PRODUCT
+#ifndef	PRODUCT
   // CAS statistics.
   size_t cas_tries() { return _cas_tries; }
   size_t cas_retries() { return _cas_retries; }
   size_t cas_by_another() { return _cas_by_another; }
 
   void reset_counters();
-#endif  // #ifndef PRODUCT
+#endif	// #ifndef PRODUCT
 
-#ifdef  ASSERT
+#ifdef	ASSERT
   void verify_clear() const;
   inline void verify_bit(idx_t bit) const;
   inline void verify_addr(HeapWord* addr) const;
-#endif  // #ifdef ASSERT
+#endif	// #ifdef ASSERT
 
 private:
   // Each bit in the bitmap represents one unit of 'object granularity.' Objects
@@ -188,7 +191,7 @@ private:
   size_t _cas_tries;
   size_t _cas_retries;
   size_t _cas_by_another;
-#endif  // #ifndef PRODUCT
+#endif	// #ifndef PRODUCT
 };
 
 inline ParMarkBitMap::ParMarkBitMap():
@@ -199,7 +202,7 @@ inline ParMarkBitMap::ParMarkBitMap():
   _virtual_space = 0;
 }
 
-inline ParMarkBitMap::ParMarkBitMap(MemRegion covered_region):
+inline ParMarkBitMap::ParMarkBitMap(MemRegion covered_region): 
   _beg_bits(NULL, 0),
   _end_bits(NULL, 0)
 {
@@ -343,22 +346,22 @@ inline size_t ParMarkBitMap::obj_size(oop obj) const
 
 inline ParMarkBitMap::IterationStatus
 ParMarkBitMap::iterate(ParMarkBitMapClosure* live_closure,
-                       HeapWord* range_beg,
-                       HeapWord* range_end) const
+		       HeapWord* range_beg,
+		       HeapWord* range_end) const
 {
   return iterate(live_closure, addr_to_bit(range_beg), addr_to_bit(range_end));
 }
 
 inline ParMarkBitMap::IterationStatus
 ParMarkBitMap::iterate(ParMarkBitMapClosure* live_closure,
-                       ParMarkBitMapClosure* dead_closure,
-                       HeapWord* range_beg,
-                       HeapWord* range_end,
-                       HeapWord* dead_range_end) const
+		       ParMarkBitMapClosure* dead_closure,
+		       HeapWord* range_beg,
+		       HeapWord* range_end,
+		       HeapWord* dead_range_end) const
 {
   return iterate(live_closure, dead_closure,
-                 addr_to_bit(range_beg), addr_to_bit(range_end),
-                 addr_to_bit(dead_range_end));
+		 addr_to_bit(range_beg), addr_to_bit(range_end),
+		 addr_to_bit(dead_range_end));
 }
 
 inline bool
@@ -413,7 +416,7 @@ ParMarkBitMap::find_obj_end(HeapWord* beg, HeapWord* end) const
   return bit_to_addr(res_bit);
 }
 
-#ifdef  ASSERT
+#ifdef	ASSERT
 inline void ParMarkBitMap::verify_bit(idx_t bit) const {
   // Allow one past the last valid bit; useful for loop bounds.
   assert(bit <= _beg_bits.size(), "bit out of range");
@@ -424,4 +427,4 @@ inline void ParMarkBitMap::verify_addr(HeapWord* addr) const {
   assert(addr >= region_start(), "addr too small");
   assert(addr <= region_start() + region_size(), "addr too big");
 }
-#endif  // #ifdef ASSERT
+#endif	// #ifdef ASSERT

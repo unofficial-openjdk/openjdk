@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -27,7 +30,7 @@
 
 klassOop instanceKlassKlass::create_klass(TRAPS) {
   instanceKlassKlass o;
-  KlassHandle h_this_klass(THREAD, Universe::klassKlassObj());
+  KlassHandle h_this_klass(THREAD, Universe::klassKlassObj());  
   KlassHandle k = base_create_klass(h_this_klass, header_size(), o.vtbl_value(), CHECK_NULL);
   // Make sure size calculation is right
   assert(k()->size() == align_object_size(header_size()), "wrong size for object");
@@ -47,7 +50,7 @@ bool instanceKlassKlass::oop_is_parsable(oop obj) const {
 }
 
 void instanceKlassKlass::iterate_c_heap_oops(instanceKlass* ik,
-                                             OopClosure* closure) {
+					     OopClosure* closure) {
   if (ik->oop_map_cache() != NULL) {
     ik->oop_map_cache()->oop_iterate(closure);
   }
@@ -99,7 +102,7 @@ void instanceKlassKlass::oop_follow_contents(oop obj) {
 
 #ifndef SERIALGC
 void instanceKlassKlass::oop_follow_contents(ParCompactionManager* cm,
-                                             oop obj) {
+					     oop obj) {
   assert(obj->is_klass(),"must be a klass");
   assert(klassOop(obj)->klass_part()->oop_is_instance_slow(), "must be instance klass");
 
@@ -180,7 +183,7 @@ int instanceKlassKlass::oop_oop_iterate(oop obj, OopClosure* blk) {
 }
 
 int instanceKlassKlass::oop_oop_iterate_m(oop obj, OopClosure* blk,
-                                           MemRegion mr) {
+					   MemRegion mr) {
   assert(obj->is_klass(),"must be a klass");
   assert(klassOop(obj)->klass_part()->oop_is_instance_slow(), "must be instance klass");
   instanceKlass* ik = instanceKlass::cast(klassOop(obj));
@@ -329,7 +332,7 @@ void instanceKlassKlass::oop_push_contents(PSPromotionManager* pm, oop obj) {
 int instanceKlassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
   assert(obj->is_klass(),"must be a klass");
   assert(klassOop(obj)->klass_part()->oop_is_instance_slow(),
-         "must be instance klass");
+	 "must be instance klass");
 
   instanceKlass* ik = instanceKlass::cast(klassOop(obj));
   ik->update_static_fields();
@@ -350,11 +353,11 @@ int instanceKlassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj) {
 }
 
 int instanceKlassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
-                                            HeapWord* beg_addr,
-                                            HeapWord* end_addr) {
+					    HeapWord* beg_addr,
+					    HeapWord* end_addr) {
   assert(obj->is_klass(),"must be a klass");
   assert(klassOop(obj)->klass_part()->oop_is_instance_slow(),
-         "must be instance klass");
+	 "must be instance klass");
 
   instanceKlass* ik = instanceKlass::cast(klassOop(obj));
   ik->update_static_fields(beg_addr, end_addr);
@@ -380,13 +383,13 @@ int instanceKlassKlass::oop_update_pointers(ParCompactionManager* cm, oop obj,
 }
 #endif // SERIALGC
 
-klassOop instanceKlassKlass::allocate_instance_klass(int vtable_len, int itable_len, int static_field_size,
+klassOop instanceKlassKlass::allocate_instance_klass(int vtable_len, int itable_len, int static_field_size, 
                                                      int nonstatic_oop_map_size, ReferenceType rt, TRAPS) {
 
   int size = instanceKlass::object_size(align_object_offset(vtable_len) + align_object_offset(itable_len) + static_field_size + nonstatic_oop_map_size);
 
   // Allocation
-  KlassHandle h_this_klass(THREAD, as_klassOop());
+  KlassHandle h_this_klass(THREAD, as_klassOop());  
   KlassHandle k;
   if (rt == REF_NONE) {
     // regular klass
@@ -405,12 +408,12 @@ klassOop instanceKlassKlass::allocate_instance_klass(int vtable_len, int itable_
     // The sizes of these these three variables are used for determining the
     // size of the instanceKlassOop. It is critical that these are set to the right
     // sizes before the first GC, i.e., when we allocate the mirror.
-    ik->set_vtable_length(vtable_len);
-    ik->set_itable_length(itable_len);
+    ik->set_vtable_length(vtable_len);  
+    ik->set_itable_length(itable_len);  
     ik->set_static_field_size(static_field_size);
     ik->set_nonstatic_oop_map_size(nonstatic_oop_map_size);
     assert(k()->size() == size, "wrong size for object");
-
+  
     ik->set_array_klasses(NULL);
     ik->set_methods(NULL);
     ik->set_method_ordering(NULL);
@@ -424,9 +427,9 @@ klassOop instanceKlassKlass::allocate_instance_klass(int vtable_len, int itable_
     ik->set_signers(NULL);
     ik->set_source_file_name(NULL);
     ik->set_source_debug_extension(NULL);
-    ik->set_inner_classes(NULL);
+    ik->set_inner_classes(NULL);  
     ik->set_static_oop_field_size(0);
-    ik->set_nonstatic_field_size(0);
+    ik->set_nonstatic_field_size(0);  
     ik->set_is_marked_dependent(false);
     ik->set_init_state(instanceKlass::allocated);
     ik->set_init_thread(NULL);
@@ -448,15 +451,15 @@ klassOop instanceKlassKlass::allocate_instance_klass(int vtable_len, int itable_
     ik->set_jvmti_cached_class_field_map(NULL);
     ik->set_initial_method_idnum(0);
     assert(k()->is_parsable(), "should be parsable here.");
-
+  
     // initialize the non-header words to zero
     intptr_t* p = (intptr_t*)k();
     for (int index = instanceKlass::header_size(); index < size; index++) {
       p[index] = NULL_WORD;
     }
-
+  
     // To get verify to work - must be set to partial loaded before first GC point.
-    k()->set_partially_loaded();
+    k()->set_partially_loaded();     
   }
 
   // GC can happen here
@@ -486,13 +489,13 @@ void instanceKlassKlass::oop_print_on(oop obj, outputStream* st) {
   st->print(" - state:             "); st->print_cr(state_names[ik->_init_state]);
   st->print(" - name:              "); ik->name()->print_value_on(st);             st->cr();
   st->print(" - super:             "); ik->super()->print_value_on(st);            st->cr();
-  st->print(" - sub:               ");
-  Klass* sub = ik->subklass();
+  st->print(" - sub:               "); 
+  Klass* sub = ik->subklass(); 
   int n;
   for (n = 0; sub != NULL; n++, sub = sub->next_sibling()) {
-    if (n < MaxSubklassPrintSize) {
-      sub->as_klassOop()->print_value_on(st);
-      st->print("   ");
+    if (n < MaxSubklassPrintSize) {       
+      sub->as_klassOop()->print_value_on(st); 
+      st->print("   "); 
     }
   }
   if (n >= MaxSubklassPrintSize) st->print("(%d more klasses...)", n - MaxSubklassPrintSize);
@@ -505,7 +508,7 @@ void instanceKlassKlass::oop_print_on(oop obj, outputStream* st) {
       if (ik->implementor(i) != NULL) {
         if (++print_impl == 1)
           st->print_cr(" - implementor:    ");
-        st->print("   ");
+        st->print("   "); 
         ik->implementor(i)->print_value_on(st);
       }
     }
@@ -528,18 +531,18 @@ void instanceKlassKlass::oop_print_on(oop obj, outputStream* st) {
   st->print(" - protection domain: "); ik->protection_domain()->print_value_on(st); st->cr();
   st->print(" - signers:           "); ik->signers()->print_value_on(st);           st->cr();
   if (ik->source_file_name() != NULL) {
-    st->print(" - source file:       ");
+    st->print(" - source file:       "); 
     ik->source_file_name()->print_value_on(st);
     st->cr();
   }
   if (ik->source_debug_extension() != NULL) {
-    st->print(" - source debug extension:       ");
+    st->print(" - source debug extension:       "); 
     ik->source_debug_extension()->print_value_on(st);
     st->cr();
   }
 
-  st->print_cr(" - previous version:       ");
-  {
+  st->print_cr(" - previous version:       "); 
+  { 
     ResourceMark rm;
     // PreviousVersionInfo objects returned via PreviousVersionWalker
     // contain a GrowableArray of handles. We have to clean up the
@@ -556,12 +559,12 @@ void instanceKlassKlass::oop_print_on(oop obj, outputStream* st) {
   } // rm is cleaned up
 
   if (ik->generic_signature() != NULL) {
-    st->print(" - generic signature:            ");
+    st->print(" - generic signature:            "); 
     ik->generic_signature()->print_value_on(st);
   }
   st->print(" - inner classes:     "); ik->inner_classes()->print_value_on(st);     st->cr();
   st->print(" - java mirror:       "); ik->java_mirror()->print_value_on(st);       st->cr();
-  st->print(" - vtable length      %d  (start addr: " INTPTR_FORMAT ")", ik->vtable_length(), ik->start_of_vtable());  st->cr();
+  st->print(" - vtable length      %d  (start addr: " INTPTR_FORMAT ")", ik->vtable_length(), ik->start_of_vtable());  st->cr();  
   st->print(" - itable length      %d (start addr: " INTPTR_FORMAT ")", ik->itable_length(), ik->start_of_itable()); st->cr();
   st->print_cr(" - static fields:");
   FieldPrinter print_static_field(st);
@@ -616,7 +619,7 @@ void instanceKlassKlass::oop_verify_on(oop obj, outputStream* st) {
   klassKlass::oop_verify_on(obj, st);
   if (!obj->partially_loaded()) {
     Thread *thread = Thread::current();
-    instanceKlass* ik = instanceKlass::cast(klassOop(obj));
+    instanceKlass* ik = instanceKlass::cast(klassOop(obj));   
 
 #ifndef PRODUCT
     // Avoid redundant verifies
@@ -630,26 +633,26 @@ void instanceKlassKlass::oop_verify_on(oop obj, outputStream* st) {
       Handle h_obj(thread, obj);
       SystemDictionary::verify_obj_klass_present(h_obj, h_name, h_loader);
     }
-
+    
     // Verify static fields
     VerifyFieldClosure blk;
     ik->iterate_static_fields(&blk);
 
     // Verify vtables
     if (ik->is_linked()) {
-      ResourceMark rm(thread);
+      ResourceMark rm(thread);  
       // $$$ This used to be done only for m/s collections.  Doing it
       // always seemed a valid generalization.  (DLD -- 6/00)
       ik->vtable()->verify(st);
     }
-
+  
     // Verify oop map cache
     if (ik->oop_map_cache() != NULL) {
       ik->oop_map_cache()->verify();
     }
 
     // Verify first subklass
-    if (ik->subklass_oop() != NULL) {
+    if (ik->subklass_oop() != NULL) { 
       guarantee(ik->subklass_oop()->is_perm(),  "should be in permspace");
       guarantee(ik->subklass_oop()->is_klass(), "should be klass");
     }
@@ -683,7 +686,7 @@ void instanceKlassKlass::oop_verify_on(oop obj, outputStream* st) {
       guarantee(im->is_klass(), "should be klass");
       guarantee(!Klass::cast(klassOop(im))->is_interface(), "implementors cannot be interfaces");
     }
-
+    
     // Verify local interfaces
     objArrayOop local_interfaces = ik->local_interfaces();
     guarantee(local_interfaces->is_perm(),          "should be in permspace");
@@ -715,7 +718,7 @@ void instanceKlassKlass::oop_verify_on(oop obj, outputStream* st) {
       methodOop m2 = methodOop(methods->obj_at(j + 1));
       guarantee(m1->name()->fast_compare(m2->name()) <= 0, "methods not sorted correctly");
     }
-
+    
     // Verify method ordering
     typeArrayOop method_ordering = ik->method_ordering();
     guarantee(method_ordering->is_perm(),              "should be in permspace");
@@ -807,3 +810,4 @@ void instanceKlassKlass::oop_set_partially_loaded(oop obj) {
   assert(ik->transitive_interfaces() == NULL, "just checking");
   ik->set_transitive_interfaces((objArrayOop) obj);   // Temporarily set transitive_interfaces to point to self
 }
+

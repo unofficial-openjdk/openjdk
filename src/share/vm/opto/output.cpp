@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -61,7 +64,7 @@ void Compile::Output() {
   entry->_nodes.map( 0, prolog );
   bbs.map( prolog->_idx, entry );
   bbs.map( start->_idx, NULL ); // start is no longer in any block
-
+  
   // Virtual methods need an unverified entry point
 
   if( is_osr_compilation() ) {
@@ -71,9 +74,9 @@ void Compile::Output() {
     }
   } else {
     if( _method && !_method->flags().is_static() ) {
-      // Insert unvalidated entry point
+      // Insert unvalidated entry point 
       _cfg->insert( broot, 0, new (this) MachUEPNode() );
-    }
+    } 
 
   }
 
@@ -86,13 +89,13 @@ void Compile::Output() {
     ||(OptoBreakpointC2R && !_method)
 #endif
     ) {
-    // checking for _method means that OptoBreakpoint does not apply to
+    // checking for _method means that OptoBreakpoint does not apply to 
     // runtime stubs or frame converters
     _cfg->insert( entry, 1, new (this) MachBreakpointNode() );
   }
 
   // Insert epilogs before every return
-  for( uint i=0; i<_cfg->_num_blocks; i++ ) {
+  for( uint i=0; i<_cfg->_num_blocks; i++ ) { 
     Block *b = _cfg->_blocks[i];
     if( !b->is_connector() && b->non_connector_successor(0) == _cfg->_broot ) { // Found a program exit point?
       Node *m = b->end();
@@ -108,7 +111,7 @@ void Compile::Output() {
 # ifdef ENABLE_ZAP_DEAD_LOCALS
   if ( ZapDeadCompiledLocals )  Insert_zap_nodes();
 # endif
-
+  
   ScheduleAndBundle();
 
 #ifndef PRODUCT
@@ -140,7 +143,7 @@ bool Compile::need_stack_bang(int frame_size_in_bytes) const {
   // Determine if we need to generate a stack overflow check.
   // Do it if the method is not a stub function and
   // has java calls or has frame size > vm_page_size/8.
-  return (stub_function() == NULL &&
+  return (stub_function() == NULL && 
           (has_java_calls() || frame_size_in_bytes > os::vm_page_size()>>3));
 }
 
@@ -148,7 +151,7 @@ bool Compile::need_register_stack_bang() const {
   // Determine if we need to generate a register stack overflow check.
   // This is only used on architectures which have split register
   // and memory stacks (ie. IA64).
-  // Bang if the method is not a stub function and has java calls
+  // Bang if the method is not a stub function and has java calls 
   return (stub_function() == NULL && has_java_calls());
 }
 
@@ -188,12 +191,12 @@ void Compile::Insert_zap_nodes() {
 
   if ( skip )  return;
 
-
+   
   if ( _method == NULL )
     return; // no safepoints/oopmaps emitted for calls in stubs,so we don't care
 
   // Insert call to zap runtime stub before every node with an oop map
-  for( uint i=0; i<_cfg->_num_blocks; i++ ) {
+  for( uint i=0; i<_cfg->_num_blocks; i++ ) { 
     Block *b = _cfg->_blocks[i];
     for ( uint j = 0;  j < b->_nodes.size();  ++j ) {
       Node *n = b->_nodes[j];
@@ -213,12 +216,13 @@ void Compile::Insert_zap_nodes() {
           MachCallNode* call = n->as_MachCall();
           if (call->entry_point() == OptoRuntime::new_instance_Java() ||
               call->entry_point() == OptoRuntime::new_array_Java() ||
+              call->entry_point() == OptoRuntime::multianewarray1_Java() ||
               call->entry_point() == OptoRuntime::multianewarray2_Java() ||
               call->entry_point() == OptoRuntime::multianewarray3_Java() ||
               call->entry_point() == OptoRuntime::multianewarray4_Java() ||
               call->entry_point() == OptoRuntime::multianewarray5_Java() ||
               call->entry_point() == OptoRuntime::slow_arraycopy_Java() ||
-              call->entry_point() == OptoRuntime::complete_monitor_locking_Java()
+              call->entry_point() == OptoRuntime::complete_monitor_locking_Java() 
               ) {
             insert = false;
           }
@@ -237,9 +241,9 @@ void Compile::Insert_zap_nodes() {
 
 Node* Compile::call_zap_node(MachSafePointNode* node_to_check, int block_no) {
   const TypeFunc *tf = OptoRuntime::zap_dead_locals_Type();
-  CallStaticJavaNode* ideal_node =
-    new (this, tf->domain()->cnt()) CallStaticJavaNode( tf,
-         OptoRuntime::zap_dead_locals_stub(_method->flags().is_native()),
+  CallStaticJavaNode* ideal_node = 
+    new (this, tf->domain()->cnt()) CallStaticJavaNode( tf, 
+         OptoRuntime::zap_dead_locals_stub(_method->flags().is_native()), 
                             "call zap dead locals stub", 0, TypePtr::BOTTOM);
   // We need to copy the OopMap from the site we're zapping at.
   // We have to make a copy, because the zap site might not be
@@ -262,7 +266,7 @@ bool Compile::is_node_getting_a_safepoint( Node* n) {
 # endif // ENABLE_ZAP_DEAD_LOCALS
 
 //------------------------------compute_loop_first_inst_sizes------------------
-// Compute the size of first NumberOfLoopInstrToAlign instructions at head
+// Compute the size of first NumberOfLoopInstrToAlign instructions at head 
 // of a loop. When aligning a loop we need to provide enough instructions
 // in cpu's fetch buffer to feed decoders. The loop alignment could be
 // avoided if we have enough instructions in fetch buffer at the head of a loop.
@@ -270,7 +274,7 @@ bool Compile::is_node_getting_a_safepoint( Node* n) {
 // a loop will be aligned if the size is not reset here.
 //
 // Note: Mach instructions could contain several HW instructions
-// so the size is estimated only.
+// so the size is estimated only. 
 //
 void Compile::compute_loop_first_inst_sizes() {
   // The next condition is used to gate the loop alignment optimization.
@@ -283,7 +287,7 @@ void Compile::compute_loop_first_inst_sizes() {
     for( uint i=1; i <= last_block; i++ ) {
       Block *b = _cfg->_blocks[i];
       // Check the first loop's block which requires an alignment.
-      if( b->head()->is_Loop() &&
+      if( b->head()->is_Loop() && 
           b->code_alignment() > (uint)relocInfo::addr_unit() ) {
         uint sum_size = 0;
         uint inst_cnt = NumberOfLoopInstrToAlign;
@@ -306,7 +310,7 @@ void Compile::compute_loop_first_inst_sizes() {
                   !_cfg->_blocks[i+1]->head()->is_Loop() ) {
               i++;
               nb = _cfg->_blocks[i];
-              inst_cnt  = nb->compute_first_inst_size(sum_size, inst_cnt,
+              inst_cnt  = nb->compute_first_inst_size(sum_size, inst_cnt, 
                                                       _regalloc);
             } // while( inst_cnt > 0 && i < last_block  )
           } // if( bx != b )
@@ -379,7 +383,7 @@ void Compile::Shorten_branches(Label *labels, int& code_size, int& reloc_size, i
             reloc_size += reloc_java_to_interp();
           }
         } else if (mach->is_MachSafePoint()) {
-          // If call/safepoint are adjacent, account for possible
+          // If call/safepoint are adjacent, account for possible 
           // nop to disambiguate the two safepoints.
           if (min_offset_from_last_call == 0) {
             blk_size += nop_size;
@@ -430,7 +434,7 @@ void Compile::Shorten_branches(Label *labels, int& code_size, int& reloc_size, i
     // Find the branch; ignore trailing NOPs.
     for( j = b->_nodes.size()-1; j>=0; j-- ) {
       nj = b->_nodes[j];
-      if( !nj->is_Mach() || nj->as_Mach()->ideal_Opcode() != Op_Con )
+      if( !nj->is_Mach() || nj->as_Mach()->ideal_Opcode() != Op_Con ) 
         break;
     }
 
@@ -446,7 +450,7 @@ void Compile::Shorten_branches(Label *labels, int& code_size, int& reloc_size, i
             // We've got a winner.  Replace this branch.
             MachNode *replacement = mach->short_branch_version(this);
             b->_nodes.map(j, replacement);
-
+          
             // Update the jmp_end size to save time in our
             // next pass.
             jmp_end[i] -= (mach->size(_regalloc) - replacement->size(_regalloc));
@@ -462,7 +466,7 @@ void Compile::Shorten_branches(Label *labels, int& code_size, int& reloc_size, i
     }
   }
 
-  // Compute the size of first NumberOfLoopInstrToAlign instructions at head
+  // Compute the size of first NumberOfLoopInstrToAlign instructions at head 
   // of a loop. It is used to determine the padding for loop alignment.
   compute_loop_first_inst_sizes();
 
@@ -551,7 +555,7 @@ void Compile::Shorten_branches(Label *labels, int& code_size, int& reloc_size, i
 //------------------------------FillLocArray-----------------------------------
 // Create a bit of debug info and append it to the array.  The mapping is from
 // Java local or expression stack to constant, register or stack-slot.  For
-// doubles, insert 2 mappings and return 1 (to tell the caller that the next
+// doubles, insert 2 mappings and return 1 (to tell the caller that the next 
 // entry has been taken care of and caller should skip it).
 static LocationValue *new_loc_value( PhaseRegAlloc *ra, OptoReg::Name regnum, Location::Type l_type ) {
   // This should never have accepted Bad before
@@ -611,14 +615,14 @@ void Compile::FillLocArray( int idx, Node *local, GrowableArray<ScopeValue*> *ar
     }
 #else //_LP64
 #ifdef SPARC
-    if (t->base() == Type::Long && OptoReg::is_reg(regnum)) {
-      // For SPARC we have to swap high and low words for
+    if (t->base() == Type::Long && OptoReg::is_reg(regnum)) { 
+      // For SPARC we have to swap high and low words for 
       // long values stored in a single-register (g0-g7).
       array->append(new_loc_value( _regalloc,              regnum   , Location::normal ));
       array->append(new_loc_value( _regalloc, OptoReg::add(regnum,1), Location::normal ));
     } else
 #endif //SPARC
-    if( t->base() == Type::DoubleBot || t->base() == Type::DoubleCon || t->base() == Type::Long ) {
+    if( t->base() == Type::DoubleBot || t->base() == Type::DoubleCon || t->base() == Type::Long ) { 
       // Repack the double/long as two jints.
       // The convention the interpreter uses is that the second local
       // holds the first raw word of the native double representation.
@@ -631,11 +635,11 @@ void Compile::FillLocArray( int idx, Node *local, GrowableArray<ScopeValue*> *ar
     }
 #endif //_LP64
     else if( (t->base() == Type::FloatBot || t->base() == Type::FloatCon) &&
-               OptoReg::is_reg(regnum) ) {
-      array->append(new_loc_value( _regalloc, regnum, Matcher::float_in_double
+               OptoReg::is_reg(regnum) ) { 
+      array->append(new_loc_value( _regalloc, regnum, Matcher::float_in_double 
                                    ? Location::float_in_dbl : Location::normal ));
-    } else if( t->base() == Type::Int && OptoReg::is_reg(regnum) ) {
-      array->append(new_loc_value( _regalloc, regnum, Matcher::int_in_long
+    } else if( t->base() == Type::Int && OptoReg::is_reg(regnum) ) { 
+      array->append(new_loc_value( _regalloc, regnum, Matcher::int_in_long 
                                    ? Location::int_in_long : Location::normal ));
     } else {
       array->append(new_loc_value( _regalloc, regnum, _regalloc->is_oop(local) ? Location::oop : Location::normal ));
@@ -651,13 +655,13 @@ void Compile::FillLocArray( int idx, Node *local, GrowableArray<ScopeValue*> *ar
   case Type::AnyPtr:
     array->append(new ConstantOopWriteValue(NULL));
     break;
-  case Type::AryPtr:
-  case Type::InstPtr:
+  case Type::AryPtr: 
+  case Type::InstPtr: 
   case Type::KlassPtr:          // fall through
     array->append(new ConstantOopWriteValue(t->isa_oopptr()->const_oop()->encoding()));
     break;
-  case Type::Int:
-    array->append(new ConstantIntValue(t->is_int()->get_con()));
+  case Type::Int:    
+    array->append(new ConstantIntValue(t->is_int()->get_con())); 
     break;
   case Type::RawPtr:
     // A return address (T_ADDRESS).
@@ -713,12 +717,12 @@ void Compile::FillLocArray( int idx, Node *local, GrowableArray<ScopeValue*> *ar
     break;
   }
   case Type::Top:               // Add an illegal value here
-    array->append(new LocationValue(Location()));
+    array->append(new LocationValue(Location())); 
     break;
   default:
     ShouldNotReachHere();
     break;
-  }
+  }                     
 }
 
 // Determine if this node starts a bundle
@@ -784,15 +788,15 @@ void Compile::Process_OopMap_Node(MachNode *mach, int current_offset) {
 
     // Add in mappings of the monitors
     assert( !method ||
-            !method->is_synchronized() ||
-            method->is_native() ||
-            num_mon > 0 ||
-            !GenerateSynchronizationCode,
+            !method->is_synchronized() || 
+            method->is_native() || 
+            num_mon > 0 || 
+            !GenerateSynchronizationCode, 
             "monitors must always exist for synchronized methods");
 
     // Build the growable array of ScopeValues for exp stack
     GrowableArray<MonitorValue*> *monarray = new GrowableArray<MonitorValue*>(num_mon);
-
+            
     // Loop over monitors and insert into array
     for(idx = 0; idx < num_mon; idx++) {
       // Grab the node that defines this monitor
@@ -812,7 +816,7 @@ void Compile::Process_OopMap_Node(MachNode *mach, int current_offset) {
 
       OptoReg::Name box_reg = BoxLockNode::stack_slot(box_node);
       monarray->append(new MonitorValue(scval, Location::new_stk_loc(Location::normal,_regalloc->reg2offset(box_reg))));
-    }
+    }     
 
     // Build first class objects to pass to scope
     DebugToken *locvals = debug_info()->create_scope_values(locarray);
@@ -922,7 +926,7 @@ static void turn_off_compiler(Compile* C) {
     C->record_failure("excessive request to CodeCache");
   } else {
     UseInterpreter            = true;
-    UseCompiler               = false;
+    UseCompiler               = false;    
     AlwaysCompileLoopMethods  = false;
     C->record_failure("CodeCache is full");
     warning("CodeCache is full. Compiling has been disabled");
@@ -1012,7 +1016,7 @@ void Compile::Fill_buffer() {
   MachNode *_nop_list[Bundle::_nop_count];
   Bundle::initialize_nops(_nop_list, this);
 
-  // Create oopmap set.
+  // Create oopmap set. 
   _oop_map_set = new OopMapSet();
 
   // !!!!! This preserves old handling of oopmaps for now
@@ -1056,14 +1060,14 @@ void Compile::Fill_buffer() {
     // If this block needs to start aligned (i.e, can be reached other
     // than by falling-thru from the previous block), then force the
     // start of a new bundle.
-    if( Pipeline::requires_bundling() && starts_bundle(head) )
+    if( Pipeline::requires_bundling() && starts_bundle(head) ) 
       cb->flush_bundle(true);
 
     // Define the label at the beginning of the basic block
     if( labels_not_set )
       MacroAssembler(cb).bind( blk_labels[b->_pre_order] );
 
-    else
+    else 
       assert( blk_labels[b->_pre_order].loc_pos() == cb->code_size(),
               "label position does not match code offset" );
 
@@ -1088,7 +1092,7 @@ void Compile::Fill_buffer() {
 
       // If this starts a new instruction group, then flush the current one
       // (but allow split bundles)
-      if( Pipeline::requires_bundling() && starts_bundle(n) )
+      if( Pipeline::requires_bundling() && starts_bundle(n) ) 
         cb->flush_bundle(false);
 
       // The following logic is duplicated in the code ifdeffed for
@@ -1114,7 +1118,7 @@ void Compile::Fill_buffer() {
         // Make sure safepoint node for polling is distinct from a call's
         // return by adding a nop if needed.
         if (is_sfn && !is_mcall && padding == 0 && current_offset == last_call_offset ) {
-          padding = nop_size;
+          padding = nop_size; 
         }
         assert( labels_not_set || padding == 0, "instruction should already be aligned")
 
@@ -1138,7 +1142,7 @@ void Compile::Fill_buffer() {
           mcall->method_set((intptr_t)mcall->entry_point());
 
           // Save the return address
-          call_returns[b->_pre_order] = current_offset + mcall->ret_addr_offset();
+          call_returns[b->_pre_order] = current_offset + mcall->ret_addr_offset(); 
 
           if (!mcall->is_safepoint_node()) {
             is_mcall = false;
@@ -1213,12 +1217,12 @@ void Compile::Fill_buffer() {
 
         else if( !n->is_Proj() ) {
           // Remember the begining of the previous instruction, in case
-          // it's followed by a flag-kill and a null-check.  Happens on
+          // it's followed by a flag-kill and a null-check.  Happens on 
           // Intel all the time, with add-to-memory kind of opcodes.
           previous_offset = current_offset;
         }
       }
-
+      
       // Verify that there is sufficient space remaining
       cb->insts()->maybe_expand_to_ensure_remaining(MAX_inst_size);
       if (cb->blob() == NULL) {
@@ -1251,11 +1255,11 @@ void Compile::Fill_buffer() {
       // See if this instruction has a delay slot
       if ( valid_bundle_info(n) && node_bundling(n)->use_unconditional_delay()) {
         assert(delay_slot != NULL, "expecting delay slot node");
-
+  
         // Back up 1 instruction
         cb->set_code_end(
           cb->code_end()-Pipeline::instr_unit_size());
-
+  
         // Save the offset for the listing
 #ifndef PRODUCT
         if( node_offsets && delay_slot->_idx < node_offset_limit )
@@ -1385,7 +1389,7 @@ void Compile::FillExceptionTables(uint cnt, uint *call_returns, uint *inct_start
     // Find the branch; ignore trailing NOPs.
     for( j = b->_nodes.size()-1; j>=0; j-- ) {
       n = b->_nodes[j];
-      if( !n->is_Mach() || n->as_Mach()->ideal_Opcode() != Op_Con )
+      if( !n->is_Mach() || n->as_Mach()->ideal_Opcode() != Op_Con ) 
         break;
     }
 
@@ -1405,7 +1409,7 @@ void Compile::FillExceptionTables(uint cnt, uint *call_returns, uint *inct_start
 #endif
       // last instruction is a CatchNode, find it's CatchProjNodes
       int nof_succs = b->_num_succs;
-      // allocate space
+      // allocate space 
       GrowableArray<intptr_t> handler_bcis(nof_succs);
       GrowableArray<intptr_t> handler_pcos(nof_succs);
       // iterate through all successors
@@ -1461,9 +1465,9 @@ uint Scheduling::_total_instructions_per_bundle[Pipeline::_max_instrs_per_cycle+
 // Initializer for class Scheduling
 
 Scheduling::Scheduling(Arena *arena, Compile &compile)
-  : _arena(arena),
-    _cfg(compile.cfg()),
-    _bbs(compile.cfg()->_bbs),
+  : _arena(arena), 
+    _cfg(compile.cfg()), 
+    _bbs(compile.cfg()->_bbs), 
     _regalloc(compile.regalloc()),
     _reg_node(arena),
     _bundle_instr_count(0),
@@ -1804,11 +1808,11 @@ void Scheduling::DecrementUseCounts(Node *n, const Block *bb) {
   for ( uint i=0; i < n->len(); i++ ) {
     Node *def = n->in(i);
     if (!def) continue;
-    if( def->is_Proj() )        // If this is a machine projection, then
+    if( def->is_Proj() )        // If this is a machine projection, then 
       def = def->in(0);         // propagate usage thru to the base instruction
 
     if( _bbs[def->_idx] != bb ) // Ignore if not block-local
-      continue;
+      continue;                 
 
     // Compute the latency
     uint l = _bundle_cycle_number + n->latency(i);
@@ -2012,7 +2016,7 @@ void Scheduling::AddNodeToBundle(Node *n, const Block *bb) {
       (op != Op_Node &&         // Not an unused antidepedence node and
        // not an unallocated boxlock
        (OptoReg::is_valid(_regalloc->get_reg_first(n)) || op != Op_BoxLock)) ) {
-
+    
     // Push any trailing projections
     if( bb->_nodes[bb->_nodes.size()-1] != n ) {
       for (DUIterator_Fast imax, i = n->fast_outs(imax); i < imax; i++) {
@@ -2021,7 +2025,7 @@ void Scheduling::AddNodeToBundle(Node *n, const Block *bb) {
           _scheduled.push(foi);
       }
     }
-
+  
     // Put the instruction in the schedule list
     _scheduled.push(n);
   }
@@ -2082,13 +2086,13 @@ void Scheduling::ComputeUseCount(const Block *bb) {
       assert(inp != n, "no cycles allowed" );
       if( _bbs[inp->_idx] == bb ) { // Block-local use?
         if( inp->is_Proj() )    // Skip through Proj's
-          inp = inp->in(0);
+          inp = inp->in(0); 
         ++_uses[inp->_idx];     // Count 1 block-local use
       }
     }
 
     // If this instruction has a 0 use count, then it is available
-    if (!_uses[n->_idx]) {
+    if (!_uses[n->_idx]) { 
       _current_latency[n->_idx] = _bundle_cycle_number;
       AddNodeToAvailableList(n);
     }
@@ -2136,7 +2140,7 @@ void Scheduling::DoScheduling() {
       continue;
 
     // Skip empty, connector blocks
-    if (bb->is_connector())
+    if (bb->is_connector()) 
       continue;
 
     // If the following block is not the sole successor of
@@ -2176,7 +2180,7 @@ void Scheduling::DoScheduling() {
     // have their delay slots filled in the template expansions, so we don't
     // bother scheduling them.
     Node *last = bb->_nodes[_bb_end];
-    if( last->is_Catch() ||
+    if( last->is_Catch() || 
        (last->is_Mach() && last->as_Mach()->ideal_Opcode() == Op_Halt) ) {
       // There must be a prior call.  Skip it.
       while( !bb->_nodes[--_bb_end]->is_Call() ) {
@@ -2220,7 +2224,7 @@ void Scheduling::DoScheduling() {
       Node *n = bb->_nodes[l];
       uint m;
       for( m = 0; m < _bb_end-_bb_start; m++ )
-        if( _scheduled[m] == n )
+        if( _scheduled[m] == n ) 
           break;
       assert( m < _bb_end-_bb_start, "instruction missing in schedule" );
     }
@@ -2256,7 +2260,7 @@ void Scheduling::DoScheduling() {
   if (_cfg->C->trace_opto_output())
     tty->print("# <- DoScheduling\n");
 #endif
-
+  
   // Record final node-bundling array location
   _regalloc->C->set_node_bundling_base(_node_bundling_base);
 
@@ -2408,13 +2412,13 @@ void Scheduling::anti_do_def( Block *b, Node *def, OptoReg::Name def_reg, int is
       if( _regalloc->get_reg_first(uses->in(i)) == def_reg ||
           _regalloc->get_reg_second(uses->in(i)) == def_reg ) {
         // Yes, found a use/kill pinch-point
-        pinch->set_req(0,NULL);  //
+        pinch->set_req(0,NULL);  // 
         pinch->replace_by(kill); // Move anti-dep edges up
         pinch = kill;
         _reg_node.map(def_reg,pinch);
         return;
       }
-    }
+    }    
   }
 
   // Add edge from kill to pinch-point
@@ -2432,7 +2436,7 @@ void Scheduling::anti_do_use( Block *b, Node *use, OptoReg::Name use_reg ) {
       _bbs[use->_idx] == b ) {
     if( pinch->Opcode() == Op_Node && // Real pinch-point (not optimistic?)
         pinch->req() == 1 ) {   // pinch not yet in block?
-      pinch->del_req(0);        // yank pointer to later-def, also set flag
+      pinch->del_req(0);        // yank pointer to later-def, also set flag 
       // Insert the pinch-point in the block just after the last use
       b->_nodes.insert(b->find_node(use)+1,pinch);
       _bb_end++;                // Increase size scheduled region in block
@@ -2475,7 +2479,7 @@ void Scheduling::ComputeRegisterAntidependencies(Block *b) {
   // We put edges from the prior and current DEF/KILLs to the pinch point.
   // We put the pinch point in _reg_node.  If there's already a pinch point
   // we merely add an edge from the current DEF/KILL to the pinch point.
-
+                               
   // After doing the DEF/KILLs, we handle USEs.  For each used register, we
   // put an edge from the pinch point to the USE.
 
@@ -2494,7 +2498,7 @@ void Scheduling::ComputeRegisterAntidependencies(Block *b) {
     int is_def = n->outcnt();   // def if some uses prior to adding precedence edges
     if( n->Opcode() == Op_MachProj && n->ideal_reg() == MachProjNode::fat_proj ) {
       // Fat-proj kills a slew of registers
-      // This can add edges to 'n' and obscure whether or not it was a def,
+      // This can add edges to 'n' and obscure whether or not it was a def, 
       // hence the is_def flag.
       fat_proj_seen = true;
       RegMask rm = n->out_RegMask();// Make local copy
@@ -2525,7 +2529,7 @@ void Scheduling::ComputeRegisterAntidependencies(Block *b) {
     Node *m = b->_nodes[i];
 
     // Add precedence edge from following safepoint to use of derived pointer
-    if( last_safept_node != end_node &&
+    if( last_safept_node != end_node && 
         m != last_safept_node) {
       for (uint k = 1; k < m->req(); k++) {
         const Type *t = m->in(k)->bottom_type();

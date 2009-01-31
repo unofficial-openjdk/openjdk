@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -33,7 +36,7 @@
 
 typedef u4 EventID;
 
-class Event VALUE_OBJ_CLASS_SPEC  {
+class Event VALUE_OBJ_CLASS_SPEC  {     
  private:
   jlong       _time_tick;
   intx        _thread_id;
@@ -85,7 +88,7 @@ class Event VALUE_OBJ_CLASS_SPEC  {
 // will get different event id, and then write to different buffer location.
 // However, it is assumed that add_event() is quick enough (or buffer size
 // is big enough), so when one thread is adding event, there can't be more
-// than "size" events created by other threads; otherwise we'll end up having
+// than "size" events created by other threads; otherwise we'll end up having 
 // two threads writing to the same location.
 
 class EventBuffer : AllStatic {
@@ -118,7 +121,7 @@ class EventBuffer : AllStatic {
 
   // add a new event to the queue; if EventBuffer is full, this call will
   // overwrite the oldest event in the queue
-  static EventID add_event(const char* format,
+  static EventID add_event(const char* format, 
                            intptr_t arg_1, intptr_t arg_2, intptr_t arg_3) {
     // assign a unique id
     EventID id = get_next_event_id();
@@ -203,7 +206,7 @@ void Events::print_all(outputStream *st) {
 }
 
 void Events::print_last(outputStream *st, int number) {
-  EventBuffer::print_last(st, number);
+  EventBuffer::print_last(st, number);  
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -247,3 +250,4 @@ void eventlog_init() {}
 int print_all_events(outputStream *st) { return 0; }
 
 #endif // PRODUCT
+

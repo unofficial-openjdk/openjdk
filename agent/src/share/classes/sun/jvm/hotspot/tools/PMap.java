@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.tools;
@@ -50,11 +50,11 @@ public class PMap extends Tool {
             out.println(lo.getName());
          }
       } else {
-          if (getDebugeeType() == DEBUGEE_REMOTE) {
-              out.println("remote configuration is not yet implemented");
-          } else {
+	  if (getDebugeeType() == DEBUGEE_REMOTE) {
+	      out.println("remote configuration is not yet implemented");
+	  } else {
               out.println("not yet implemented (debugger does not support CDebugger)!");
-          }
+	  }
       }
    }
 

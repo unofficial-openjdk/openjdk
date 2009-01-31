@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -87,14 +90,14 @@ Node *Parse::fetch_interpreter_state(int index,
                                      Node *local_addrs_base) {
   Node *mem = memory(Compile::AliasIdxRaw);
   Node *adr = basic_plus_adr( local_addrs_base, local_addrs, -index*wordSize );
-
+  
   // Very similar to LoadNode::make, except we handle un-aligned longs and
   // doubles on Sparc.  Intel can handle them just fine directly.
   Node *l;
   switch( bt ) {                // Signature is flattened
   case T_INT:     l = new (C, 3) LoadINode( 0, mem, adr, TypeRawPtr::BOTTOM ); break;
   case T_FLOAT:   l = new (C, 3) LoadFNode( 0, mem, adr, TypeRawPtr::BOTTOM ); break;
-  case T_ADDRESS:
+  case T_ADDRESS: 
   case T_OBJECT:  l = new (C, 3) LoadPNode( 0, mem, adr, TypeRawPtr::BOTTOM, TypeInstPtr::BOTTOM ); break;
   case T_LONG:
   case T_DOUBLE: {
@@ -102,11 +105,11 @@ Node *Parse::fetch_interpreter_state(int index,
     // refers to the back half of the long/double.  Recompute adr.
     adr = basic_plus_adr( local_addrs_base, local_addrs, -(index+1)*wordSize );
     if( Matcher::misaligned_doubles_ok ) {
-      l = (bt == T_DOUBLE)
+      l = (bt == T_DOUBLE) 
         ? (Node*)new (C, 3) LoadDNode( 0, mem, adr, TypeRawPtr::BOTTOM )
         : (Node*)new (C, 3) LoadLNode( 0, mem, adr, TypeRawPtr::BOTTOM );
     } else {
-      l = (bt == T_DOUBLE)
+      l = (bt == T_DOUBLE) 
         ? (Node*)new (C, 3) LoadD_unalignedNode( 0, mem, adr, TypeRawPtr::BOTTOM )
         : (Node*)new (C, 3) LoadL_unalignedNode( 0, mem, adr, TypeRawPtr::BOTTOM );
     }
@@ -213,7 +216,7 @@ void Parse::load_interpreter_state(Node* osr_buf) {
     // Try and copy the displaced header to the BoxNode
     Node *displaced_hdr = fetch_interpreter_state((index*2) + 1, T_ADDRESS, monitors_addr, osr_buf);
 
-
+   
     store_to_memory(control(), box, displaced_hdr, T_ADDRESS, Compile::AliasIdxRaw);
 
     // Build a bogus FastLockNode (no code will be generated) and push the
@@ -293,7 +296,7 @@ void Parse::load_interpreter_state(Node* osr_buf) {
 
   // End the OSR migration
   make_runtime_call(RC_LEAF, OptoRuntime::osr_end_Type(),
-                    CAST_FROM_FN_PTR(address, SharedRuntime::OSR_migration_end),
+                    CAST_FROM_FN_PTR(address, SharedRuntime::OSR_migration_end), 
                     "OSR_migration_end", TypeRawPtr::BOTTOM,
                     osr_buf);
 
@@ -463,7 +466,7 @@ Parse::Parse(JVMState* caller, ciMethod* parse_method, float expected_uses)
     assert(C->is_osr_compilation() == this->is_osr_parse(), "OSR in sync");
     if (C->tf() != tf()) {
       MutexLockerEx ml(Compile_lock, Mutex::_no_safepoint_check_flag);
-      assert(C->env()->system_dictionary_modification_counter_changed(),
+      assert(C->env()->system_dictionary_modification_counter_changed(), 
              "Must invalidate if TypeFuncs differ");
     }
   } else {
@@ -474,7 +477,7 @@ Parse::Parse(JVMState* caller, ciMethod* parse_method, float expected_uses)
   methods_parsed++;
 #ifndef PRODUCT
   // add method size here to guarantee that inlined methods are added too
-  if (TimeCompiler)
+  if (TimeCompiler) 
     _total_bytes_compiled += method()->code_size();
 
   show_parse_info();
@@ -557,8 +560,8 @@ Parse::Parse(JVMState* caller, ciMethod* parse_method, float expected_uses)
   do_exits();
 
   // Collect a few more statistics.
-  parse_idx += C->unique();
-  parse_arena += C->node_arena()->used();
+  parse_idx += C->unique(); 
+  parse_arena += C->node_arena()->used(); 
 
   if (log)  log->done("parse nodes='%d' memory='%d'",
                       C->unique(), C->node_arena()->used());
@@ -691,7 +694,7 @@ void Parse::build_exits() {
   if (tf()->range()->cnt() > TypeFunc::Parms) {
     const Type* ret_type = tf()->range()->field_at(TypeFunc::Parms);
     // Don't "bind" an unloaded return klass to the ret_phi. If the klass
-    // becomes loaded during the subsequent parsing, the loaded and unloaded
+    // becomes loaded during the subsequent parsing, the loaded and unloaded 
     // types will not join when we transform and push in do_exits().
     const TypeOopPtr* ret_oop_type = ret_type->isa_oopptr();
     if (ret_oop_type && !ret_oop_type->klass()->is_loaded()) {
@@ -760,7 +763,7 @@ Node_Notes* Parse::make_node_notes(Node_Notes* caller_nn) {
 //--------------------------return_values--------------------------------------
 void Compile::return_values(JVMState* jvms) {
   GraphKit kit(jvms);
-  Node* ret = new (this, TypeFunc::Parms) ReturnNode(TypeFunc::Parms,
+  Node* ret = new (this, TypeFunc::Parms) ReturnNode(TypeFunc::Parms, 
                              kit.control(),
                              kit.i_o(),
                              kit.reset_memory(),
@@ -836,7 +839,7 @@ bool Parse::can_rerun_bytecode() {
   case Bytecodes::_checkcast:
   case Bytecodes::_instanceof:
   case Bytecodes::_athrow:
-  case Bytecodes::_anewarray:
+  case Bytecodes::_anewarray: 
   case Bytecodes::_newarray:
   case Bytecodes::_multianewarray:
   case Bytecodes::_new:
@@ -847,7 +850,7 @@ bool Parse::can_rerun_bytecode() {
 
   case Bytecodes::_invokestatic:
   case Bytecodes::_invokespecial:
-  case Bytecodes::_invokevirtual:
+  case Bytecodes::_invokevirtual: 
   case Bytecodes::_invokeinterface:
     return false;
     break;
@@ -973,7 +976,7 @@ void Parse::do_exits() {
   if (do_synch || DTraceMethodProbes) {
     // First move the exception list out of _exits:
     GraphKit kit(_exits.transfer_exceptions_into_jvms());
-    SafePointNode* normal_map = kit.map();  // keep this guy safe
+    SafePointNode* normal_map = kit.map();  // keep this guy safe 
     // Now re-collect the exceptions into _exits:
     SafePointNode* ex_map;
     while ((ex_map = kit.pop_exception_state()) != NULL) {
@@ -1021,9 +1024,9 @@ void Parse::do_exits() {
 // For OSR, the map contains a single RawPtr parameter.
 // Initial monitor locking for sync. methods is performed by do_method_entry.
 SafePointNode* Parse::create_entry_map() {
-  // Check for really stupid bail-out cases.
+  // Check for really stupid bail-out cases.  
   uint len = TypeFunc::Parms + method()->max_locals() + method()->max_stack();
-  if (len >= 32760) {
+  if (len >= 32760) { 
     C->record_method_not_compilable_all_tiers("too many local variables");
     return NULL;
   }
@@ -1090,13 +1093,13 @@ void Parse::do_method_entry() {
   set_sp(0);                      // Java Stack Pointer
 
   NOT_PRODUCT( count_compiled_calls(true/*at_method_entry*/, false/*is_inline*/); )
-
+  
   if (DTraceMethodProbes) {
     make_dtrace_method_entry(method());
   }
 
   // If the method is synchronized, we need to construct a lock node, attach
-  // it to the Start node, and pin it there.
+  // it to the Start node, and pin it there.  
   if (method()->is_synchronized()) {
     // Insert a FastLockNode right after the Start which takes as arguments
     // the current thread pointer, the "this" pointer & the address of the
@@ -1112,7 +1115,7 @@ void Parse::do_method_entry() {
       ciInstance* mirror = _method->holder()->java_mirror();
       const TypeInstPtr *t_lock = TypeInstPtr::make(mirror);
       lock_obj = makecon(t_lock);
-    } else {                  // Else pass the "this" pointer,
+    } else {                  // Else pass the "this" pointer, 
       lock_obj = local(0);    // which is Parm0 from StartNode
     }
     // Clear out dead values from the debug info.
@@ -1201,7 +1204,7 @@ void Parse::Block::init_graph(Parse* outer) {
 
   // Note: We never call next_path_num along exception paths, so they
   // never get processed as "ready".  Also, the input phis of exception
-  // handlers get specially processed, so that
+  // handlers get specially processed, so that 
 }
 
 //---------------------------successor_for_bci---------------------------------
@@ -1290,7 +1293,7 @@ void Parse::BytecodeParseHistogram::set_initial_state( Bytecodes::Code bc ) {
 
 //----------------------------record_change--------------------------------
 // Record results of parsing one bytecode
-void Parse::BytecodeParseHistogram::record_change() {
+void Parse::BytecodeParseHistogram::record_change() { 
   if( PrintParseStatistics && !_parser->is_osr_parse() ) {
     ++_bytecodes_parsed[_initial_bytecode];
     _nodes_constructed [_initial_bytecode] += (_compiler->unique() - _initial_node_count);
@@ -1500,7 +1503,7 @@ void Parse::merge_exception(int target_bci) {
 void Parse::handle_missing_successor(int target_bci) {
 #ifndef PRODUCT
   Block* b = block();
-  int trap_bci = b->flow()->has_trap()? b->flow()->trap_bci(): -1;
+  int trap_bci = b->flow()->has_trap()? b->flow()->trap_bci(): -1; 
   tty->print_cr("### Missing successor at bci:%d for block #%d (trap_bci:%d)", target_bci, b->pre_order(), trap_bci);
 #endif
   ShouldNotReachHere();
@@ -1826,7 +1829,7 @@ PhiNode *Parse::ensure_phi(int idx, bool nocreate) {
     map->set_req(idx, top());
     return NULL;
   }
-
+ 
   // Do not create phis for top either.
   // A top on a non-null control flow must be an unused even after the.phi.
   if (t == Type::TOP || t == Type::HALF) {
@@ -1944,7 +1947,7 @@ void Parse::call_register_finalizer() {
     set_all_memory( _gvn.transform(mem_phi) );
     set_i_o(        _gvn.transform(io_phi) );
   }
-
+  
   set_control( _gvn.transform(result_rgn) );
 }
 
@@ -1980,7 +1983,7 @@ void Parse::return_current(Node* value) {
     }
     mms.memory()->add_req(mms.memory2());
   }
-
+  
   // frame pointer is always same, already captured
   if (value != NULL) {
     // If returning oops to an interface-return, there is a silent free
@@ -2049,7 +2052,7 @@ void Parse::add_safepoint() {
   Node* mem = MergeMemNode::make(C, map()->memory());
 
   mem = _gvn.transform(mem);
-
+  
   // Pass control through the safepoint
   sfpnt->init_req(TypeFunc::Control  , control());
   // Fix edges normally used by a call

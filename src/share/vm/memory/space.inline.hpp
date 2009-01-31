@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 inline HeapWord* OffsetTableContigSpace::allocate(size_t size) {
@@ -56,7 +59,7 @@ inline HeapWord* OffsetTableContigSpace::block_start(const void* p) const {
 
 inline HeapWord* ContiguousSpace::concurrent_iteration_safe_limit()
 {
-  assert(_concurrent_iteration_safe_limit <= top(),
+  assert(_concurrent_iteration_safe_limit <= top(), 
          "_concurrent_iteration_safe_limit update missed");
   return _concurrent_iteration_safe_limit;
 }

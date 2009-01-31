@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 import com.sun.jdi.*;
@@ -31,10 +31,10 @@ import java.io.*;
 
 
 /**
- * Manages a VM conection for the JDI test framework.
+ * Manages a VM conection for the JDI test framework. 
  */
 class VMConnection {
-    private VirtualMachine vm;
+    private VirtualMachine vm;    
     private Process process = null;
     private int outputCompleteCount = 0;
 
@@ -60,7 +60,7 @@ class VMConnection {
           srcDir = System.getProperty("user.dir");
         }
         srcDir = srcDir + File.separator;
-
+  
         File myDir = new File(srcDir);
 
         File myFile = new File(myDir, filename);
@@ -68,13 +68,13 @@ class VMConnection {
             try {
                 // We have some subdirs of test/com/sun/jdi so in case we
                 // are in one of them, look in our parent dir for the file.
-                myFile = new File(myDir.getCanonicalFile().getParent(),
+                myFile = new File(myDir.getCanonicalFile().getParent(), 
                                   filename);
                 if (!myFile.canRead()) {
                     return "";
                 }
             } catch (IOException ee) {
-                System.out.println("-- Error 1 trying to access file " +
+                System.out.println("-- Error 1 trying to access file " + 
                                    myFile.getPath() + ": " + ee);
                 return "";
             }
@@ -83,7 +83,7 @@ class VMConnection {
         try {
             reader = new BufferedReader(new FileReader(myFile));
         } catch (FileNotFoundException ee) {
-            System.out.println("-- Error 2 trying to access file " +
+            System.out.println("-- Error 2 trying to access file " + 
                                wholePath + ": " + ee);
             return "";
         }
@@ -99,13 +99,13 @@ class VMConnection {
                 break;
             }
             if (line == null) {
-                System.out.println("-- No debuggee VM options found in file " +
+                System.out.println("-- No debuggee VM options found in file " + 
                                    wholePath);
                 break;
             }
             line = line.trim();
             if (line.length() != 0 && !line.startsWith("#")) {
-                System.out.println("-- Added debuggeeVM options from file " +
+                System.out.println("-- Added debuggeeVM options from file " + 
                                    wholePath + ": " + line);
                 retVal = line;
                 break;
@@ -146,7 +146,7 @@ class VMConnection {
             String value = token.substring(index + 1);
             Connector.Argument argument = (Connector.Argument)arguments.get(name);
             if (argument == null) {
-                throw new IllegalArgumentException("Argument " + name +
+                throw new IllegalArgumentException("Argument " + name + 
                                                "is not defined for connector: " +
                                                connector.name());
             }
@@ -169,14 +169,14 @@ class VMConnection {
 
         connector = findConnector(nameString);
         if (connector == null) {
-            throw new IllegalArgumentException("No connector named: " +
+            throw new IllegalArgumentException("No connector named: " + 
                                                nameString);
-        }
+        } 
 
         connectorArgs = parseConnectorArgs(connector, argString);
         this.traceFlags = traceFlags;
     }
-
+        
     synchronized VirtualMachine open() {
         if (connector instanceof LaunchingConnector) {
             vm = launchTarget();
@@ -226,7 +226,7 @@ class VMConnection {
         } else {
             return vm;
         }
-    }
+    }         
 
     boolean isOpen() {
         return (vm != null);
@@ -279,7 +279,7 @@ class VMConnection {
 
     private void dumpStream(InputStream stream) throws IOException {
         PrintStream outStream = System.out;
-        BufferedReader in =
+        BufferedReader in = 
             new BufferedReader(new InputStreamReader(stream));
         String line;
         while ((line = in.readLine()) != null) {
@@ -287,14 +287,14 @@ class VMConnection {
         }
     }
 
-    /**
-     *  Create a Thread that will retrieve and display any output.
-     *  Needs to be high priority, else debugger may exit before
-     *  it can be displayed.
+    /**	
+     *	Create a Thread that will retrieve and display any output.
+     *	Needs to be high priority, else debugger may exit before
+     *	it can be displayed.
      */
     private void displayRemoteOutput(final InputStream stream) {
-        Thread thr = new Thread("output reader") {
-            public void run() {
+	Thread thr = new Thread("output reader") { 
+	    public void run() {
                 try {
                     dumpStream(stream);
                 } catch (IOException ex) {
@@ -303,10 +303,10 @@ class VMConnection {
                 } finally {
                     notifyOutputComplete();
                 }
-            }
-        };
-        thr.setPriority(Thread.MAX_PRIORITY-1);
-        thr.start();
+	    }
+	};
+	thr.setPriority(Thread.MAX_PRIORITY-1);
+	thr.start();
     }
 
     private void dumpFailedLaunchInfo(Process process) {

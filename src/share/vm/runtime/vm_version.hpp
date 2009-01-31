@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // VM_Version provides information about the VM.
@@ -63,10 +66,5 @@ class Abstract_VM_Version: AllStatic {
   static unsigned int logical_processors_per_package() {
     return _logical_processors_per_package;
   }
-
-  // Number of page sizes efficiently supported by the hardware.  Most chips now
-  // support two sizes, thus this default implementation.  Processor-specific
-  // subclasses should define new versions to hide this one as needed.  Note
-  // that the O/S may support more sizes, but at most this many are used.
-  static uint page_size_count() { return 2; }
 };
+

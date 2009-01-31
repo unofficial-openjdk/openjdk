@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #ifndef _JAVASOFT_JVM_H_
@@ -40,20 +43,20 @@
 extern "C" {
 #endif
 
-/*
+/* 
  * This file contains additional functions exported from the VM.
  * These functions are complementary to the standard JNI support.
  * There are three parts to this file:
- *
+ * 
  * First, this file contains the VM-related functions needed by native
  * libraries in the standard Java API. For example, the java.lang.Object
  * class needs VM-level functions that wait for and notify monitors.
- *
+ * 
  * Second, this file contains the functions and constant definitions
  * needed by the byte code verifier and class file format checker.
  * These functions allow the verifier and format checker to be written
  * in a VM-independent way.
- *
+ * 
  * Third, this file contains various I/O and nerwork operations needed
  * by the standard Java I/O and network APIs.
  */
@@ -111,8 +114,8 @@ JNIEXPORT jlong JNICALL
 JVM_NanoTime(JNIEnv *env, jclass ignored);
 
 JNIEXPORT void JNICALL
-JVM_ArrayCopy(JNIEnv *env, jclass ignored, jobject src, jint src_pos,
-              jobject dst, jint dst_pos, jint length);
+JVM_ArrayCopy(JNIEnv *env, jclass ignored, jobject src, jint src_pos, 
+	      jobject dst, jint dst_pos, jint length);
 
 JNIEXPORT jobject JNICALL
 JVM_InitProperties(JNIEnv *env, jobject p);
@@ -170,13 +173,13 @@ JVM_MaxMemory(void);
 JNIEXPORT jint JNICALL
 JVM_ActiveProcessorCount(void);
 
-JNIEXPORT void * JNICALL
+JNIEXPORT void * JNICALL 
 JVM_LoadLibrary(const char *name);
 
-JNIEXPORT void JNICALL
+JNIEXPORT void JNICALL 
 JVM_UnloadLibrary(void * handle);
 
-JNIEXPORT void * JNICALL
+JNIEXPORT void * JNICALL 
 JVM_FindLibraryEntry(void *handle, const char *name);
 
 JNIEXPORT jboolean JNICALL
@@ -345,7 +348,7 @@ JVM_SetArrayElement(JNIEnv *env, jobject arr, jint index, jobject val);
 
 JNIEXPORT void JNICALL
 JVM_SetPrimitiveArrayElement(JNIEnv *env, jobject arr, jint index, jvalue v,
-                             unsigned char vCode);
+			     unsigned char vCode);
 
 JNIEXPORT jobject JNICALL
 JVM_NewArray(JNIEnv *env, jclass eltClass, jint length);
@@ -387,14 +390,14 @@ JVM_ResolveClass(JNIEnv *env, jclass cls);
  */
 JNIEXPORT jclass JNICALL
 JVM_FindClassFromClassLoader(JNIEnv *env, const char *name, jboolean init,
-                             jobject loader, jboolean throwError);
+			     jobject loader, jboolean throwError);
 
 /*
  * Find a class from a given class.
  */
 JNIEXPORT jclass JNICALL
 JVM_FindClassFromClass(JNIEnv *env, const char *name, jboolean init,
-                             jclass from);
+			     jclass from);
 
 /* Find a loaded class cached by the VM */
 JNIEXPORT jclass JNICALL
@@ -560,8 +563,8 @@ JNIEXPORT jstring JNICALL JVM_ConstantPoolGetUTF8At
  */
 
 JNIEXPORT jobject JNICALL
-JVM_DoPrivileged(JNIEnv *env, jclass cls,
-                 jobject action, jobject context, jboolean wrapException);
+JVM_DoPrivileged(JNIEnv *env, jclass cls, 
+		 jobject action, jobject context, jboolean wrapException);
 
 JNIEXPORT jobject JNICALL
 JVM_GetInheritedAccessControlContext(JNIEnv *env, jclass cls);
@@ -621,7 +624,7 @@ JVM_GetClassNameUTF(JNIEnv *env, jclass cb);
 
 /*
  * Returns the constant pool types in the buffer provided by "types."
- */
+ */  
 JNIEXPORT void JNICALL
 JVM_GetClassCPTypes(JNIEnv *env, jclass cb, unsigned char *types);
 
@@ -648,7 +651,7 @@ JVM_GetClassMethodsCount(JNIEnv *env, jclass cb);
  */
 JNIEXPORT void JNICALL
 JVM_GetMethodIxExceptionIndexes(JNIEnv *env, jclass cb, jint method_index,
-                                unsigned short *exceptions);
+				unsigned short *exceptions); 
 /*
  * Returns the number of exceptions raised by a given method.
  * The method is identified by method_index.
@@ -663,8 +666,8 @@ JVM_GetMethodIxExceptionsCount(JNIEnv *env, jclass cb, jint method_index);
  * The method is identified by method_index.
  */
 JNIEXPORT void JNICALL
-JVM_GetMethodIxByteCode(JNIEnv *env, jclass cb, jint method_index,
-                        unsigned char *code);
+JVM_GetMethodIxByteCode(JNIEnv *env, jclass cb, jint method_index, 
+			unsigned char *code);
 
 /*
  * Returns the length of the byte code sequence of a given method.
@@ -691,8 +694,8 @@ typedef struct {
  */
 JNIEXPORT void JNICALL
 JVM_GetMethodIxExceptionTableEntry(JNIEnv *env, jclass cb, jint method_index,
-                                   jint entry_index,
-                                   JVM_ExceptionTableEntryType *entry);
+				   jint entry_index,
+				   JVM_ExceptionTableEntryType *entry);
 
 /*
  * Returns the length of the exception table of a given method.
@@ -718,28 +721,28 @@ JVM_GetMethodIxModifiers(JNIEnv *env, jclass cb, int index);
 /*
  * Returns the number of local variables of a given method.
  * The method is identified by method_index.
- */
+ */ 
 JNIEXPORT jint JNICALL
 JVM_GetMethodIxLocalsCount(JNIEnv *env, jclass cb, int index);
 
 /*
  * Returns the number of arguments (including this pointer) of a given method.
  * The method is identified by method_index.
- */
+ */ 
 JNIEXPORT jint JNICALL
 JVM_GetMethodIxArgsSize(JNIEnv *env, jclass cb, int index);
 
-/*
+/* 
  * Returns the maximum amount of stack (in words) used by a given method.
  * The method is identified by method_index.
- */
+ */ 
 JNIEXPORT jint JNICALL
 JVM_GetMethodIxMaxStack(JNIEnv *env, jclass cb, int index);
 
 /*
  * Is a given method a constructor.
  * The method is identified by method_index.
- */
+ */ 
 JNIEXPORT jboolean JNICALL
 JVM_IsConstructorIx(JNIEnv *env, jclass cb, int index);
 
@@ -878,13 +881,13 @@ JNIEXPORT jint JNICALL
 JVM_GetCPMethodModifiers(JNIEnv *env, jclass cb, int index, jclass calledClass);
 
 /*
- * Releases the UTF string obtained from the VM.
+ * Releases the UTF string obtained from the VM. 
  */
 JNIEXPORT void JNICALL
 JVM_ReleaseUTF(const char *utf);
 
 /*
- * Compare if two classes are in the same package.
+ * Compare if two classes are in the same package. 
  */
 JNIEXPORT jboolean JNICALL
 JVM_IsSameClassPackage(JNIEnv *env, jclass class1, jclass class2);
@@ -905,7 +908,7 @@ JVM_IsSameClassPackage(JNIEnv *env, jclass class1, jclass class2);
 #define JVM_ACC_NATIVE        0x0100  /* implemented in C */
 #define JVM_ACC_INTERFACE     0x0200  /* class is an interface */
 #define JVM_ACC_ABSTRACT      0x0400  /* no definition provided */
-#define JVM_ACC_STRICT        0x0800  /* strict floating point */
+#define JVM_ACC_STRICT	      0x0800  /* strict floating point */
 #define JVM_ACC_SYNTHETIC     0x1000  /* compiler-generated class, method or field */
 #define JVM_ACC_ANNOTATION    0x2000  /* annotation type */
 #define JVM_ACC_ENUM          0x4000  /* field is declared as element of enum */
@@ -924,18 +927,18 @@ JVM_IsSameClassPackage(JNIEnv *env, jclass class1, jclass class2);
 #define JVM_ACC_NATIVE_BIT        8
 #define JVM_ACC_INTERFACE_BIT     9
 #define JVM_ACC_ABSTRACT_BIT      10
-#define JVM_ACC_STRICT_BIT        11
+#define JVM_ACC_STRICT_BIT	  11
 #define JVM_ACC_SYNTHETIC_BIT     12
-#define JVM_ACC_ANNOTATION_BIT    13
+#define JVM_ACC_ANNOTATION_BIT	  13
 #define JVM_ACC_ENUM_BIT          14
 
 // NOTE: replicated in SA in vm/agent/sun/jvm/hotspot/utilities/ConstantTag.java
 enum {
     JVM_CONSTANT_Utf8 = 1,
-    JVM_CONSTANT_Unicode,               /* unused */
+    JVM_CONSTANT_Unicode,		/* unused */
     JVM_CONSTANT_Integer,
     JVM_CONSTANT_Float,
-    JVM_CONSTANT_Long,
+    JVM_CONSTANT_Long,      
     JVM_CONSTANT_Double,
     JVM_CONSTANT_Class,
     JVM_CONSTANT_String,
@@ -958,38 +961,38 @@ enum {
 
 /* JVM method signatures */
 
-#define JVM_SIGNATURE_ARRAY             '['
-#define JVM_SIGNATURE_BYTE              'B'
-#define JVM_SIGNATURE_CHAR              'C'
-#define JVM_SIGNATURE_CLASS             'L'
-#define JVM_SIGNATURE_ENDCLASS          ';'
-#define JVM_SIGNATURE_ENUM              'E'
-#define JVM_SIGNATURE_FLOAT             'F'
+#define JVM_SIGNATURE_ARRAY		'['
+#define JVM_SIGNATURE_BYTE		'B'
+#define JVM_SIGNATURE_CHAR		'C'
+#define JVM_SIGNATURE_CLASS		'L'
+#define JVM_SIGNATURE_ENDCLASS	        ';'
+#define JVM_SIGNATURE_ENUM		'E'
+#define JVM_SIGNATURE_FLOAT		'F'
 #define JVM_SIGNATURE_DOUBLE            'D'
-#define JVM_SIGNATURE_FUNC              '('
-#define JVM_SIGNATURE_ENDFUNC           ')'
-#define JVM_SIGNATURE_INT               'I'
-#define JVM_SIGNATURE_LONG              'J'
-#define JVM_SIGNATURE_SHORT             'S'
-#define JVM_SIGNATURE_VOID              'V'
-#define JVM_SIGNATURE_BOOLEAN           'Z'
+#define JVM_SIGNATURE_FUNC		'('
+#define JVM_SIGNATURE_ENDFUNC	        ')'
+#define JVM_SIGNATURE_INT		'I'
+#define JVM_SIGNATURE_LONG		'J'
+#define JVM_SIGNATURE_SHORT		'S'
+#define JVM_SIGNATURE_VOID		'V'
+#define JVM_SIGNATURE_BOOLEAN	        'Z'
 
-/*
+/* 
  * A function defined by the byte-code verifier and called by the VM.
  * This is not a function implemented in the VM.
  *
  * Returns JNI_FALSE if verification fails. A detailed error message
  * will be places in msg_buf, whose length is specified by buf_len.
- */
-typedef jboolean (*verifier_fn_t)(JNIEnv *env,
-                                  jclass cb,
-                                  char * msg_buf,
-                                  jint buf_len);
+ */ 
+typedef jboolean (*verifier_fn_t)(JNIEnv *env, 
+				  jclass cb,
+				  char * msg_buf, 
+				  jint buf_len);
 
 
 /*
  * Support for a VM-independent class format checker.
- */
+ */ 
 typedef struct {
     unsigned long code;    /* byte code */
     unsigned long excs;    /* exceptions */
@@ -1010,9 +1013,9 @@ typedef struct {
     method_size_info main;     /* used everywhere else */
 } class_size_info;
 
-/*
+/* 
  * Functions defined in libjava.so to perform string conversions.
- *
+ * 
  */
 
 typedef jstring (*to_java_string_fn_t)(JNIEnv *env, char *str);
@@ -1022,7 +1025,7 @@ typedef char *(*to_c_string_fn_t)(JNIEnv *env, jstring s, jboolean *b);
 /* This is the function defined in libjava.so that performs class
  * format checks. This functions fills in size information about
  * the class file and returns:
- *
+ *  
  *   0: good
  *  -1: out of memory
  *  -2: bad format
@@ -1031,48 +1034,48 @@ typedef char *(*to_c_string_fn_t)(JNIEnv *env, jstring s, jboolean *b);
  */
 
 typedef jint (*check_format_fn_t)(char *class_name,
-                                  unsigned char *data,
-                                  unsigned int data_size,
-                                  class_size_info *class_size,
-                                  char *message_buffer,
-                                  jint buffer_length,
-                                  jboolean measure_only,
-                                  jboolean check_relaxed);
+				  unsigned char *data,
+				  unsigned int data_size,
+				  class_size_info *class_size,
+				  char *message_buffer,
+				  jint buffer_length,
+				  jboolean measure_only,
+				  jboolean check_relaxed);
 
 #define JVM_RECOGNIZED_CLASS_MODIFIERS (JVM_ACC_PUBLIC | \
-                                        JVM_ACC_FINAL | \
-                                        JVM_ACC_SUPER | \
-                                        JVM_ACC_INTERFACE | \
-                                        JVM_ACC_ABSTRACT | \
-                                        JVM_ACC_ANNOTATION | \
-                                        JVM_ACC_ENUM | \
-                                        JVM_ACC_SYNTHETIC)
-
+					JVM_ACC_FINAL | \
+					JVM_ACC_SUPER | \
+					JVM_ACC_INTERFACE | \
+					JVM_ACC_ABSTRACT | \
+					JVM_ACC_ANNOTATION | \
+					JVM_ACC_ENUM | \
+					JVM_ACC_SYNTHETIC)
+       
 #define JVM_RECOGNIZED_FIELD_MODIFIERS (JVM_ACC_PUBLIC | \
-                                        JVM_ACC_PRIVATE | \
-                                        JVM_ACC_PROTECTED | \
-                                        JVM_ACC_STATIC | \
-                                        JVM_ACC_FINAL | \
-                                        JVM_ACC_VOLATILE | \
-                                        JVM_ACC_TRANSIENT | \
-                                        JVM_ACC_ENUM | \
-                                        JVM_ACC_SYNTHETIC)
+					JVM_ACC_PRIVATE | \
+					JVM_ACC_PROTECTED | \
+					JVM_ACC_STATIC | \
+					JVM_ACC_FINAL | \
+					JVM_ACC_VOLATILE | \
+					JVM_ACC_TRANSIENT | \
+					JVM_ACC_ENUM | \
+					JVM_ACC_SYNTHETIC)
 
 #define JVM_RECOGNIZED_METHOD_MODIFIERS (JVM_ACC_PUBLIC | \
-                                         JVM_ACC_PRIVATE | \
-                                         JVM_ACC_PROTECTED | \
-                                         JVM_ACC_STATIC | \
-                                         JVM_ACC_FINAL | \
-                                         JVM_ACC_SYNCHRONIZED | \
-                                         JVM_ACC_BRIDGE | \
-                                         JVM_ACC_VARARGS | \
-                                         JVM_ACC_NATIVE | \
-                                         JVM_ACC_ABSTRACT | \
-                                         JVM_ACC_STRICT | \
-                                         JVM_ACC_SYNTHETIC)
+					 JVM_ACC_PRIVATE | \
+					 JVM_ACC_PROTECTED | \
+					 JVM_ACC_STATIC | \
+					 JVM_ACC_FINAL | \
+					 JVM_ACC_SYNCHRONIZED | \
+					 JVM_ACC_BRIDGE | \
+					 JVM_ACC_VARARGS | \
+					 JVM_ACC_NATIVE | \
+					 JVM_ACC_ABSTRACT | \
+					 JVM_ACC_STRICT | \
+					 JVM_ACC_SYNTHETIC)
 
-/*
- * This is the function defined in libjava.so to perform path
+/* 
+ * This is the function defined in libjava.so to perform path 
  * canonicalization. VM call this function before opening jar files
  * to load system classes.
  *
@@ -1086,17 +1089,17 @@ typedef int (*canonicalize_fn_t)(JNIEnv *env, char *orig, char *out, int len);
 
 /* Note that the JVM IO functions are expected to return JVM_IO_ERR
  * when there is any kind of error. The caller can then use the
- * platform specific support (e.g., errno) to get the detailed
+ * platform specific support (e.g., errno) to get the detailed 
  * error info.  The JVM_GetLastErrorString procedure may also be used
  * to obtain a descriptive error string.
  */
 #define JVM_IO_ERR  (-1)
 
 /* For interruptible IO. Returning JVM_IO_INTR indicates that an IO
- * operation has been disrupted by Thread.interrupt. There are a
+ * operation has been disrupted by Thread.interrupt. There are a 
  * number of technical difficulties related to interruptible IO that
  * need to be solved. For example, most existing programs do not handle
- * InterruptedIOExceptions specially, they simply treat those as any
+ * InterruptedIOExceptions specially, they simply treat those as any 
  * IOExceptions, which typically indicate fatal errors.
  *
  * There are also two modes of operation for interruptible IO. In the
@@ -1109,7 +1112,7 @@ typedef int (*canonicalize_fn_t)(JNIEnv *env, char *orig, char *out, int len);
  * easier, but it's not clear that's the right semantics.
  *
  * Interruptible IO is not supported on Win32.It can be enabled/disabled
- * using a compile-time flag on Solaris. Third-party JVM ports do not
+ * using a compile-time flag on Solaris. Third-party JVM ports do not 
  * need to implement interruptible IO.
  */
 #define JVM_IO_INTR (-2)
@@ -1137,7 +1140,7 @@ JVM_NativePath(char *);
 /*
  * Open a file descriptor. This function returns a negative error code
  * on error, and a non-negative integer that is the file descriptor on
- * success.
+ * success.  
  */
 JNIEXPORT jint JNICALL
 JVM_Open(const char *fname, jint flags, jint mode);
@@ -1290,12 +1293,12 @@ JVM_GetHostByName(char* name);
 JNIEXPORT int JNICALL
 JVM_GetHostName(char* name, int namelen);
 
-/*
+/* 
  * The standard printing functions supported by the Java VM. (Should they
- * be renamed to JVM_* in the future?
+ * be renamed to JVM_* in the future?  
  */
 
-/*
+/* 
  * BE CAREFUL! The following functions do not implement the
  * full feature set of standard C printf formats.
  */
@@ -1355,10 +1358,10 @@ JVM_GetClassField(JNIEnv *env, jclass cls, jstring name, jint which);
 
 JNIEXPORT jobject JNICALL
 JVM_GetClassMethod(JNIEnv *env, jclass cls, jstring name, jobjectArray types,
-                   jint which);
+		   jint which);
 JNIEXPORT jobject JNICALL
 JVM_GetClassConstructor(JNIEnv *env, jclass cls, jobjectArray types,
-                        jint which);
+			jint which);
 
 /*
  * Implements Class.newInstance
@@ -1435,13 +1438,13 @@ enum {
     JAVA_THREAD_STATE_WAITING       = 3,
     JAVA_THREAD_STATE_TIMED_WAITING = 4,
     JAVA_THREAD_STATE_TERMINATED    = 5,
-    JAVA_THREAD_STATE_COUNT         = 6
+    JAVA_THREAD_STATE_COUNT         = 6 
 };
 
 /*
  * Returns an array of the threadStatus values representing the
  * given Java thread state.  Returns NULL if the VM version is
- * incompatible with the JDK or doesn't support the given
+ * incompatible with the JDK or doesn't support the given 
  * Java thread state.
  */
 JNIEXPORT jintArray JNICALL
@@ -1450,17 +1453,17 @@ JVM_GetThreadStateValues(JNIEnv* env, jint javaThreadState);
 /*
  * Returns an array of the substate names representing the
  * given Java thread state.  Returns NULL if the VM version is
- * incompatible with the JDK or the VM doesn't support
+ * incompatible with the JDK or the VM doesn't support 
  * the given Java thread state.
  * values must be the jintArray returned from JVM_GetThreadStateValues
- * and javaThreadState.
+ * and javaThreadState.  
  */
 JNIEXPORT jobjectArray JNICALL
 JVM_GetThreadStateNames(JNIEnv* env, jint javaThreadState, jintArray values);
 
 /* =========================================================================
  * The following defines a private JVM interface that the JDK can query
- * for the JVM version and capabilities.  sun.misc.Version defines
+ * for the JVM version and capabilities.  sun.misc.Version defines 
  * the methods for getting the VM version and its capabilities.
  *
  * When a new bit is added, the following should be updated to provide
@@ -1468,7 +1471,7 @@ JVM_GetThreadStateNames(JNIEnv* env, jint javaThreadState, jintArray values);
  *    HS:   JVM_GetVersionInfo and Abstract_VM_Version class
  *    SDK:  Version class
  *
- * Similary, a private JDK interface JDK_GetVersionInfo0 is defined for
+ * Similary, a private JDK interface JDK_GetVersionInfo0 is defined for 
  * JVM to query for the JDK version and capabilities.
  *
  * When a new bit is added, the following should be updated to provide
@@ -1479,14 +1482,14 @@ JVM_GetThreadStateNames(JNIEnv* env, jint javaThreadState, jintArray values);
  * ==========================================================================
  */
 typedef struct {
-    /* HotSpot Express VM version string:
+    /* HotSpot Express VM version string: 
      * <major>.<minor>-bxx[-<identifier>][-<debug_flavor>]
      */
     unsigned int jvm_version; /* Consists of major.minor.0.build */
     unsigned int update_version : 8;         /* 0 in HotSpot Express VM */
     unsigned int special_update_version : 8; /* 0 in HotSpot Express VM */
-    unsigned int reserved1 : 16;
-    unsigned int reserved2;
+    unsigned int reserved1 : 16; 
+    unsigned int reserved2; 
 
     /* The following bits represents JVM supports that JDK has dependency on.
      * JDK can use these bits to determine which JVM version
@@ -1505,7 +1508,7 @@ typedef struct {
 #define JVM_VERSION_MAJOR(version) ((version & 0xFF000000) >> 24)
 #define JVM_VERSION_MINOR(version) ((version & 0x00FF0000) >> 16)
 // Micro version is 0 in HotSpot Express VM (set in jvm.cpp).
-#define JVM_VERSION_MICRO(version) ((version & 0x0000FF00) >> 8)
+#define JVM_VERSION_MICRO(version) ((version & 0x0000FF00) >> 8) 
 /* Build number is available in all HotSpot Express VM builds.
  * It is defined in make/hotspot_version file.
  */
@@ -1520,8 +1523,8 @@ typedef struct {
                                 /* and build number (xx) */
     unsigned int update_version : 8;         /* Update release version (uu) */
     unsigned int special_update_version : 8; /* Special update release version (c)*/
-    unsigned int reserved1 : 16;
-    unsigned int reserved2;
+    unsigned int reserved1 : 16; 
+    unsigned int reserved2; 
 
     /* The following bits represents new JDK supports that VM has dependency on.
      * VM implementation can use these bits to determine which JDK version
@@ -1545,15 +1548,15 @@ typedef struct {
  */
 #define JDK_VERSION_BUILD(version) ((version & 0x000000FF))
 
-/*
- * This is the function JDK_GetVersionInfo0 defined in libjava.so
- * that is dynamically looked up by JVM.
+/* 
+ * This is the function JDK_GetVersionInfo0 defined in libjava.so 
+ * that is dynamically looked up by JVM.  
  */
 typedef void (*jdk_version_info_fn_t)(jdk_version_info* info, size_t info_size);
 
 /*
  * This structure is used by the launcher to get the default thread
- * stack size from the VM using JNI_GetDefaultJavaVMInitArgs() with a
+ * stack size from the VM using JNI_GetDefaultJavaVMInitArgs() with a 
  * version of 1.1.  As it is not supported otherwise, it has been removed
  * from jni.h
  */

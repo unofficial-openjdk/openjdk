@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2004-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // This class keeps statistical information and computes the
@@ -27,38 +30,38 @@
 
 class GCAdaptivePolicyCounters : public GCPolicyCounters {
  protected:
-  PerfVariable*         _eden_size_counter;
+  PerfVariable* 	_eden_size_counter;
   PerfVariable*         _promo_size_counter;
 
-  PerfVariable*         _young_capacity_counter;
+  PerfVariable* 	_young_capacity_counter;
 
-  PerfVariable*         _minor_gc_cost_counter;
-  PerfVariable*         _major_gc_cost_counter;
-  PerfVariable*         _mutator_cost_counter;
+  PerfVariable*     	_minor_gc_cost_counter;
+  PerfVariable* 	_major_gc_cost_counter;
+  PerfVariable* 	_mutator_cost_counter;
 
   PerfVariable*         _avg_young_live_counter;
   PerfVariable*         _avg_old_live_counter;
 
-  PerfVariable*         _avg_minor_pause_counter;
-  PerfVariable*         _avg_minor_interval_counter;
+  PerfVariable* 	_avg_minor_pause_counter;
+  PerfVariable* 	_avg_minor_interval_counter;
 
-#ifdef NOT_PRODUCT
+#ifdef NOT_PRODUCT 
   PerfVariable*         _minor_pause_counter;
 #endif
 
-  PerfVariable*         _change_young_gen_for_min_pauses_counter;
-  PerfVariable*         _change_young_gen_for_throughput_counter;
-  PerfVariable*         _change_old_gen_for_maj_pauses_counter;
-  PerfVariable*         _change_old_gen_for_throughput_counter;
-  PerfVariable*         _decrease_for_footprint_counter;
+  PerfVariable* 	_change_young_gen_for_min_pauses_counter;
+  PerfVariable* 	_change_young_gen_for_throughput_counter;
+  PerfVariable* 	_change_old_gen_for_maj_pauses_counter;
+  PerfVariable* 	_change_old_gen_for_throughput_counter;
+  PerfVariable* 	_decrease_for_footprint_counter;
 
   PerfVariable*         _minor_pause_young_slope_counter;
   PerfVariable*         _major_pause_old_slope_counter;
 
   PerfVariable*         _decide_at_full_gc_counter;
 
-  PerfVariable*         _survived_counter;
-  PerfVariable*         _promoted_counter;
+  PerfVariable*     	_survived_counter;
+  PerfVariable*     	_promoted_counter;
 
   PerfVariable*         _avg_survived_avg_counter;
   PerfVariable*         _avg_survived_dev_counter;
@@ -93,7 +96,7 @@ class GCAdaptivePolicyCounters : public GCPolicyCounters {
       (size_policy()->avg_minor_interval()->average() * 1000.0));
   }
 
-#ifdef NOT_PRODUCT
+#ifdef NOT_PRODUCT 
   inline void update_minor_pause_counter() {
     _minor_pause_counter->set_value((jlong)
       (size_policy()->avg_minor_pause()->last_sample() * 1000.0));
@@ -156,9 +159,9 @@ class GCAdaptivePolicyCounters : public GCPolicyCounters {
   virtual AdaptiveSizePolicy* size_policy() { return _size_policy; }
 
  public:
-  GCAdaptivePolicyCounters(const char* name,
-                           int collectors,
-                           int generations,
+  GCAdaptivePolicyCounters(const char* name, 
+			   int collectors, 
+			   int generations,
                            AdaptiveSizePolicy* size_policy);
 
   inline void update_survived(size_t survived) {
@@ -218,7 +221,7 @@ class GCAdaptivePolicyCounters : public GCPolicyCounters {
 
   void set_size_policy(AdaptiveSizePolicy* v) { _size_policy = v; }
 
-  virtual GCPolicyCounters::Name kind() const {
-    return GCPolicyCounters::GCAdaptivePolicyCountersKind;
+  virtual GCPolicyCounters::Name kind() const { 
+    return GCPolicyCounters::GCAdaptivePolicyCountersKind; 
   }
 };

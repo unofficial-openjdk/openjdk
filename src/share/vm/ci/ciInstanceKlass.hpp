@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // ciInstanceKlass
@@ -46,7 +49,7 @@ private:
   bool                   _has_subklass;
   ciFlags                _flags;
   jint                   _nonstatic_field_size;
-
+  
   // Lazy fields get filled in only upon request.
   ciInstanceKlass*       _super;
   ciInstance*            _java_mirror;
@@ -74,7 +77,7 @@ protected:
 
   const char* type_string() { return "ciInstanceKlass"; }
 
-  void print_impl(outputStream* st);
+  void print_impl();
 
   ciConstantPoolCache* field_cache();
 
@@ -187,3 +190,4 @@ public:
   bool is_instance_klass() { return true; }
   bool is_java_klass()     { return true; }
 };
+

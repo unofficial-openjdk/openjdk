@@ -1891,6 +1891,7 @@ typedef struct {
     <p/><hr noshade="noshade" size="3"/>
     <h2>Change History</h2>
     Last update: <xsl:value-of select="@update"/><br/>
+    File version: <xsl:value-of select="@version"/><br/>
     Version: <xsl:call-template name="showversion"/>
     <p/>
     <xsl:apply-templates select="intro"/>

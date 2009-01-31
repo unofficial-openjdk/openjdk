@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -36,7 +39,7 @@ StackMapTable::StackMapTable(StackMapReader* reader, StackMapFrame* init_frame,
     StackMapFrame* pre_frame = init_frame;
     for (int32_t i = 0; i < _frame_count; i++) {
       StackMapFrame* frame = reader->next(
-        pre_frame, i == 0, max_locals, max_stack,
+        pre_frame, i == 0, max_locals, max_stack, 
         CHECK_VERIFY(pre_frame->verifier()));
       _frame_array[i] = frame;
       int offset = frame->offset();
@@ -62,12 +65,12 @@ int StackMapTable::get_index_from_offset(int32_t offset) const {
 }
 
 bool StackMapTable::match_stackmap(
-    StackMapFrame* frame, int32_t target,
+    StackMapFrame* frame, int32_t target, 
     bool match, bool update, TRAPS) const {
   int index = get_index_from_offset(target);
 
   return match_stackmap(
-    frame, target, index, match,
+    frame, target, index, match, 
     update, CHECK_VERIFY_(frame->verifier(), false));
 }
 
@@ -77,9 +80,9 @@ bool StackMapTable::match_stackmap(
 // The values of match and update are:                  _match__update_
 //
 // checking a branch target/exception handler:           true   false
-// linear bytecode verification following an
+// linear bytecode verification following an 
 // unconditional branch:                                 false  true
-// linear bytecode verification not following an
+// linear bytecode verification not following an 
 // unconditional branch:                                 true   true
 bool StackMapTable::match_stackmap(
     StackMapFrame* frame, int32_t target, int32_t frame_index,
@@ -98,7 +101,7 @@ bool StackMapTable::match_stackmap(
     result = frame->is_assignable_to(
       stackmap_frame, CHECK_VERIFY_(frame->verifier(), false));
   }
-  if (update) {
+  if (update) { 
     // Use the frame in stackmap table as current frame
     int lsize = stackmap_frame->locals_size();
     int ssize = stackmap_frame->stack_size();
@@ -121,7 +124,7 @@ void StackMapTable::check_jump_target(
     frame, target, true, false, CHECK_VERIFY(frame->verifier()));
   if (!match || (target < 0 || target >= _code_length)) {
     frame->verifier()->verify_error(frame->offset(),
-      "Inconsistent stackmap frames at branch target %d", target);
+      "Inconsistent stackmap frames at branch target %d", target); 
     return;
   }
   // check if uninitialized objects exist on backward branches
@@ -132,7 +135,7 @@ void StackMapTable::check_new_object(
     const StackMapFrame* frame, int32_t target, TRAPS) const {
   if (frame->offset() > target && frame->has_new_object()) {
     frame->verifier()->verify_error(frame->offset(),
-      "Uninitialized object exists on backward branch %d", target);
+      "Uninitialized object exists on backward branch %d", target); 
     return;
   }
 }
@@ -228,7 +231,7 @@ StackMapFrame* StackMapReader::next(
       frame->copy_locals(pre_frame);
     }
     return frame;
-  }
+  } 
   if (frame_type < 128) {
     // same_locals_1_stack_item_frame
     if (first) {
@@ -244,7 +247,7 @@ StackMapFrame* StackMapReader::next(
     }
     VerificationType* stack = NEW_RESOURCE_ARRAY_IN_THREAD(
       THREAD, VerificationType, 2);
-    u2 stack_size = 1;
+    u2 stack_size = 1; 
     stack[0] = parse_verification_type(NULL, CHECK_VERIFY_(_verifier, NULL));
     if (stack[0].is_category2()) {
       stack[1] = stack[0].to_category2_2nd();
@@ -284,7 +287,7 @@ StackMapFrame* StackMapReader::next(
     }
     VerificationType* stack = NEW_RESOURCE_ARRAY_IN_THREAD(
       THREAD, VerificationType, 2);
-    u2 stack_size = 1;
+    u2 stack_size = 1; 
     stack[0] = parse_verification_type(NULL, CHECK_VERIFY_(_verifier, NULL));
     if (stack[0].is_category2()) {
       stack[1] = stack[0].to_category2_2nd();
@@ -334,7 +337,7 @@ StackMapFrame* StackMapReader::next(
       offset = pre_frame->offset() + offset_delta + 1;
     }
     frame = new StackMapFrame(
-      offset, flags, new_length, 0, max_locals, max_stack,
+      offset, flags, new_length, 0, max_locals, max_stack, 
       locals, NULL, _verifier);
     if (first && locals != NULL) {
       frame->copy_locals(pre_frame);
@@ -368,7 +371,7 @@ StackMapFrame* StackMapReader::next(
       offset = pre_frame->offset() + offset_delta + 1;
     }
     frame = new StackMapFrame(
-      offset, flags, real_length, 0, max_locals,
+      offset, flags, real_length, 0, max_locals, 
       max_stack, locals, NULL, _verifier);
     return frame;
   }
@@ -385,7 +388,7 @@ StackMapFrame* StackMapReader::next(
     for (i=0; i<locals_size; i++) {
       locals[real_locals_size] = parse_verification_type(&flags, THREAD);
       if (locals[real_locals_size].is_category2()) {
-        locals[real_locals_size + 1] =
+        locals[real_locals_size + 1] = 
           locals[real_locals_size].to_category2_2nd();
         ++real_locals_size;
       }
@@ -425,3 +428,4 @@ StackMapFrame* StackMapReader::next(
     "reserved frame type", CHECK_VERIFY_(pre_frame->verifier(), NULL));
   return NULL;
 }
+

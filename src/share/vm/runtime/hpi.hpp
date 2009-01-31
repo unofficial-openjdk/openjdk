@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,13 +22,13 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //
 // C++ wrapper to HPI.
 //
-
+               
 class hpi : AllStatic {
 
 private:
@@ -78,9 +81,9 @@ public:
                               struct sockaddr *to, int tolen);
   static inline int    socket_available(int fd, jint *pbytes);
 
-  static inline int    get_sock_opt(int fd, int level, int optname,
+  static inline int    get_sock_opt(int fd, int level, int optname, 
                               char *optval, int* optlen);
-  static inline int    set_sock_opt(int fd, int level, int optname,
+  static inline int    set_sock_opt(int fd, int level, int optname, 
                               const char *optval, int optlen);
   static inline int    get_host_name(char* name, int namelen);
   static inline struct hostent*  get_host_by_addr(const char* name, int len, int type);
@@ -158,7 +161,7 @@ HPIDECL(native_path, "native_path", _file, NativePath, char *, "%s",
         (char *path),
         ("path = %s", path),
         (path));
-
+    
 HPIDECL(file_type, "file_type", _file, FileType, int, "%d",
         (const char *path),
         ("path = %s", path),

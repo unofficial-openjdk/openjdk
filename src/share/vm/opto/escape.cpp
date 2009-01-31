@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -314,7 +317,7 @@ void ConnectionGraph::add_deferred_edge_to_fields(uint from_i, uint adr_i, int o
 // Search memory chain of "mem" to find a MemNode whose address
 // is the specified alias index.  Returns the MemNode found or the
 // first non-MemNode encountered.
-//
+// 
 Node *ConnectionGraph::find_mem(Node *mem, int alias_idx, PhaseGVN  *igvn) {
   if (mem == NULL)
     return mem;
@@ -469,7 +472,7 @@ PhiNode *ConnectionGraph::split_memory_phi(PhiNode *orig_phi, int alias_idx, Gro
 //
 //  Convert the types of unescaped object to instance types where possible,
 //  propagate the new type information through the graph, and update memory
-//  edges and MergeMem inputs to reflect the new type.
+//  edges and MergeMem inputs to reflect the new type.  
 //
 //  We start with allocations (and calls which may be allocations)  on alloc_worklist.
 //  The processing is done in 4 phases:
@@ -949,17 +952,17 @@ void ConnectionGraph::process_call_arguments(CallNode *call, PhaseTransform *pha
         for (uint i = TypeFunc::Parms; i < d->cnt(); i++) {
           const Type* at = d->field_at(i);
           int k = i - TypeFunc::Parms;
-
+  
           if (at->isa_oopptr() != NULL) {
             Node *arg = skip_casts(call->in(i));
-
+  
             if (!call_analyzer.is_arg_stack(k)) {
               // The argument global escapes, mark everything it could point to
               ptset.Clear();
               PointsTo(ptset, arg, phase);
               for( VectorSetI j(&ptset); j.test(); ++j ) {
                 uint pt = j.elem;
-
+  
                 set_escape_state(pt, PointsToNode::GlobalEscape);
               }
             } else if (!call_analyzer.is_arg_local(k)) {
@@ -1066,7 +1069,7 @@ void ConnectionGraph::process_call_result(ProjNode *resproj, PhaseTransform *pha
 
       // Note:  we use isa_ptr() instead of isa_oopptr()  here because the
       //        _multianewarray functions return a TypeRawPtr.
-      if (ret_type == NULL || ret_type->isa_ptr() == NULL)
+      if (ret_type == NULL || ret_type->isa_ptr() == NULL) 
         break;  // doesn't return a pointer type
 
       ciMethod *meth = call->as_CallJava()->method();
@@ -1085,10 +1088,10 @@ void ConnectionGraph::process_call_result(ProjNode *resproj, PhaseTransform *pha
           set_escape_state(call->_idx, PointsToNode::NoEscape);
           for (uint i = TypeFunc::Parms; i < d->cnt(); i++) {
             const Type* at = d->field_at(i);
-
+    
             if (at->isa_oopptr() != NULL) {
               Node *arg = skip_casts(call->in(i));
-
+    
               if (call_analyzer.is_arg_returned(i - TypeFunc::Parms)) {
                 PointsToNode *arg_esp = _nodes->adr_at(arg->_idx);
                 if (arg_esp->node_type() == PointsToNode::JavaObject)

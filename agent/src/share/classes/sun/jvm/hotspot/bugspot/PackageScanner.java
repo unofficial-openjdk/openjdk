@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.bugspot;
@@ -36,7 +36,7 @@ public class PackageScanner {
   public String scan(String filename) {
     return scan(new File(filename));
   }
-
+  
   /** Returns the String comprising the package name of the classes in
       this .java file. Returns the (non-null) empty string if any
       error occurs or if the classes are in the unnamed package. */

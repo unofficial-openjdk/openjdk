@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,19 +22,19 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
 # include "incls/_vframe.cpp.incl"
 
-vframe::vframe(const frame* fr, const RegisterMap* reg_map, JavaThread* thread)
+vframe::vframe(const frame* fr, const RegisterMap* reg_map, JavaThread* thread) 
 : _reg_map(reg_map), _thread(thread) {
   assert(fr != NULL, "must have frame");
   _fr = *fr;
 }
 
-vframe::vframe(const frame* fr, JavaThread* thread)
+vframe::vframe(const frame* fr, JavaThread* thread) 
 : _reg_map(thread), _thread(thread) {
   assert(fr != NULL, "must have frame");
   _fr = *fr;
@@ -41,18 +44,18 @@ vframe* vframe::new_vframe(const frame* f, const RegisterMap* reg_map, JavaThrea
   // Interpreter frame
   if (f->is_interpreted_frame()) {
     return new interpretedVFrame(f, reg_map, thread);
-  }
+  }  
 
   // Compiled frame
   CodeBlob* cb = f->cb();
-  if (cb != NULL) {
-    if (cb->is_nmethod()) {
-      nmethod* nm = (nmethod*)cb;
+  if (cb != NULL) {  
+    if (cb->is_nmethod()) {      
+      nmethod* nm = (nmethod*)cb;            
       return new compiledVFrame(f, reg_map, thread, nm);
     }
 
     if (f->is_runtime_frame()) {
-      // Skip this frame and try again.
+      // Skip this frame and try again.      
       RegisterMap temp_map = *reg_map;
       frame s = f->sender(&temp_map);
       return new_vframe(&s, &temp_map, thread);
@@ -65,7 +68,7 @@ vframe* vframe::new_vframe(const frame* f, const RegisterMap* reg_map, JavaThrea
 
 vframe* vframe::sender() const {
   RegisterMap temp_map = *register_map();
-  assert(is_top(), "just checking");
+  assert(is_top(), "just checking"); 
   if (_fr.is_entry_frame() && _fr.is_first_frame()) return NULL;
   frame s = _fr.real_sender(&temp_map);
   if (s.is_first_frame()) return NULL;
@@ -93,23 +96,23 @@ javaVFrame* vframe::java_sender() const {
 GrowableArray<MonitorInfo*>* javaVFrame::locked_monitors() {
   assert(SafepointSynchronize::is_at_safepoint() || JavaThread::current() == thread(),
          "must be at safepoint or it's a java frame of the current thread");
-
+                                                                                
   GrowableArray<MonitorInfo*>* mons = monitors();
   GrowableArray<MonitorInfo*>* result = new GrowableArray<MonitorInfo*>(mons->length());
   if (mons->is_empty()) return result;
-
+                                                                                
   bool found_first_monitor = false;
   ObjectMonitor *pending_monitor = thread()->current_pending_monitor();
   ObjectMonitor *waiting_monitor = thread()->current_waiting_monitor();
   oop pending_obj = (pending_monitor != NULL ? (oop) pending_monitor->object() : NULL);
   oop waiting_obj = (waiting_monitor != NULL ? (oop) waiting_monitor->object() : NULL);
-
+                                                                                
   for (int index = (mons->length()-1); index >= 0; index--) {
     MonitorInfo* monitor = mons->at(index);
     oop obj = monitor->owner();
     if (obj == NULL) continue; // skip unowned monitor
     //
-    // Skip the monitor that the thread is blocked to enter or waiting on
+    // Skip the monitor that the thread is blocked to enter or waiting on 
     //
     if (!found_first_monitor && (obj == pending_obj || obj == waiting_obj)) {
       continue;
@@ -133,21 +136,21 @@ static void print_locked_object_class_name(outputStream* st, Handle obj, const c
   }
 }
 
-void javaVFrame::print_lock_info_on(outputStream* st, int frame_count) {
+void javaVFrame::print_lock_info_on(outputStream* st, int frame_count) {        
   ResourceMark rm;
 
   // If this is the first frame, and java.lang.Object.wait(...) then print out the receiver.
   if (frame_count == 0) {
-    if (method()->name() == vmSymbols::wait_name() &&
+    if (method()->name() == vmSymbols::wait_name() && 
         instanceKlass::cast(method()->method_holder())->name() == vmSymbols::java_lang_Object()) {
-      StackValueCollection* locs = locals();
+      StackValueCollection* locs = locals();      
       if (!locs->is_empty()) {
         StackValue* sv = locs->at(0);
         if (sv->type() == T_OBJECT) {
-          Handle o = locs->at(0)->get_obj();
+          Handle o = locs->at(0)->get_obj();    
           print_locked_object_class_name(st, o, "waiting on");
         }
-      }
+      }        
     } else if (thread()->current_park_blocker() != NULL) {
       oop obj = thread()->current_park_blocker();
       Klass* k = Klass::cast(obj->klass());
@@ -155,7 +158,7 @@ void javaVFrame::print_lock_info_on(outputStream* st, int frame_count) {
     }
   }
 
-
+  
   // Print out all monitors that we have locked or are trying to lock
   GrowableArray<MonitorInfo*>* mons = monitors();
   if (!mons->is_empty()) {
@@ -171,17 +174,17 @@ void javaVFrame::print_lock_info_on(outputStream* st, int frame_count) {
 
         const char *lock_state = "locked"; // assume we have the monitor locked
         if (!found_first_monitor && frame_count == 0) {
-         markOop mark = monitor->owner()->mark();
-         if (mark->has_monitor() &&
-             mark->monitor() == thread()->current_pending_monitor()) {
+	 markOop mark = monitor->owner()->mark();
+	 if (mark->has_monitor() && 
+	     mark->monitor() == thread()->current_pending_monitor()) {
             lock_state = "waiting to lock";
-         }
+	 }
         }
 
         found_first_monitor = true;
-        print_locked_object_class_name(st, monitor->owner(), lock_state);
+        print_locked_object_class_name(st, monitor->owner(), lock_state); 
       }
-    }
+    }  
   }
 }
 
@@ -221,10 +224,10 @@ methodOop interpretedVFrame::method() const {
 
 StackValueCollection* interpretedVFrame::locals() const {
   int length = method()->max_locals();
-
+ 
   if (method()->is_native()) {
     // If the method is native, max_locals is not telling the truth.
-    // maxlocals then equals the size of parameters
+    // maxlocals then equals the size of parameters 
     length = method()->size_of_parameters();
   }
 
@@ -234,10 +237,10 @@ StackValueCollection* interpretedVFrame::locals() const {
   if (TaggedStackInterpreter) {
     for(int i=0; i < length; i++) {
       // Find stack location
-      intptr_t *addr = locals_addr_at(i);
+      intptr_t *addr = locals_addr_at(i); 
 
       // Depending on oop/int put it in the right package
-      StackValue *sv;
+      StackValue *sv;    
       frame::Tag tag = fr().interpreter_frame_local_tag(i);
       if (tag == frame::TagReference) {
         // oop value
@@ -261,10 +264,10 @@ StackValueCollection* interpretedVFrame::locals() const {
     // handle locals
     for(int i=0; i < length; i++) {
       // Find stack location
-      intptr_t *addr = locals_addr_at(i);
+      intptr_t *addr = locals_addr_at(i); 
 
       // Depending on oop/int put it in the right package
-      StackValue *sv;
+      StackValue *sv;    
       if (oop_mask.is_oop(i)) {
         // oop value
         Handle h(*(oop *)addr);
@@ -286,7 +289,7 @@ void interpretedVFrame::set_locals(StackValueCollection* values) const {
   int length = method()->max_locals();
   if (method()->is_native()) {
     // If the method is native, max_locals is not telling the truth.
-    // maxlocals then equals the size of parameters
+    // maxlocals then equals the size of parameters 
     length = method()->size_of_parameters();
   }
 
@@ -295,7 +298,7 @@ void interpretedVFrame::set_locals(StackValueCollection* values) const {
   // handle locals
   for (int i = 0; i < length; i++) {
     // Find stack location
-    intptr_t *addr = locals_addr_at(i);
+    intptr_t *addr = locals_addr_at(i); 
 
     // Depending on oop/int put it in the right package
     StackValue *sv = values->at(i);
@@ -326,7 +329,7 @@ StackValueCollection*  interpretedVFrame::expressions() const {
       frame::Tag tag = fr().interpreter_frame_expression_stack_tag(i);
 
       // Depending on oop/int put it in the right package
-      StackValue *sv;
+      StackValue *sv;    
       if (tag == frame::TagReference) {
         // oop value
         Handle h(*(oop *)addr);
@@ -353,7 +356,7 @@ StackValueCollection*  interpretedVFrame::expressions() const {
       intptr_t *addr = fr().interpreter_frame_expression_stack_at(i);
 
       // Depending on oop/int put it in the right package
-      StackValue *sv;
+      StackValue *sv;    
       if (oop_mask.is_oop(i + nof_locals)) {
         // oop value
         Handle h(*(oop *)addr);
@@ -361,7 +364,7 @@ StackValueCollection*  interpretedVFrame::expressions() const {
       } else {
         // integer
         sv = new StackValue(*addr);
-      }
+      }    
       assert(sv != NULL, "sanity check");
       result->add(sv);
     }
@@ -398,18 +401,18 @@ vframeStream::vframeStream(JavaThread* thread, frame top_frame,
 
 
 // Step back n frames, skip any pseudo frames in between.
-// This function is used in Class.forName, Class.newInstance, Method.Invoke,
+// This function is used in Class.forName, Class.newInstance, Method.Invoke, 
 // AccessController.doPrivileged.
 //
 // NOTE that in JDK 1.4 this has been exposed to Java as
 // sun.reflect.Reflection.getCallerClass(), which can be inlined.
-// Inlined versions must match this routine's logic.
+// Inlined versions must match this routine's logic. 
 // Native method prefixing logic does not need to match since
 // the method names don't match and inlining will not occur.
 // See, for example,
 // Parse::inline_native_Reflection_getCallerClass in
 // opto/library_call.cpp.
-void vframeStreamCommon::security_get_caller_frame(int depth) {
+void vframeStreamCommon::security_get_caller_frame(int depth) { 
   bool use_new_reflection = JDK_Version::is_gte_jdk14x_version() && UseNewReflection;
 
   while (!at_end()) {
@@ -433,7 +436,7 @@ void vframeStreamCommon::security_get_caller_frame(int depth) {
     }
   }
 }
-
+  
 
 void vframeStreamCommon::skip_prefixed_method_and_wrappers() {
   ResourceMark rm;
@@ -460,7 +463,7 @@ void vframeStreamCommon::skip_prefixed_method_and_wrappers() {
     for (; prefix_index >= 0; --prefix_index) {
       const char* possible_prefix = method_prefixes[prefix_index];
       size_t possible_prefix_len = strlen(possible_prefix);
-      if (possible_prefix_len == prefix_len &&
+      if (possible_prefix_len == prefix_len && 
           strncmp(possible_prefix, prefixed_name, prefix_len) == 0) {
         break; // matching prefix found
       }
@@ -494,8 +497,8 @@ void vframe::print_value() const {
   ((vframe*)this)->print();
 }
 
-
-void entryVFrame::print_value() const {
+ 
+void entryVFrame::print_value() const { 
   ((entryVFrame*)this)->print();
 }
 
@@ -518,7 +521,7 @@ static void print_stack_values(const char* title, StackValueCollection* values) 
 void javaVFrame::print() {
   ResourceMark rm;
   vframe::print();
-  tty->print("\t");
+  tty->print("\t"); 
   method()->print_value();
   tty->cr();
   tty->print_cr("\tbci:    %d", bci());
@@ -531,12 +534,12 @@ void javaVFrame::print() {
   tty->print_cr("\tmonitor list:");
   for (int index = (list->length()-1); index >= 0; index--) {
     MonitorInfo* monitor = list->at(index);
-    tty->print("\t  obj\t"); monitor->owner()->print_value();
+    tty->print("\t  obj\t"); monitor->owner()->print_value(); 
     tty->print("(" INTPTR_FORMAT ")", (address)monitor->owner());
     tty->cr();
     tty->print("\t  ");
     monitor->lock()->print_on(tty);
-    tty->cr();
+    tty->cr(); 
   }
 }
 
@@ -607,7 +610,7 @@ void javaVFrame::print_activation(int index) const {
   tty->print("%2d - ", index);
   ((vframe*)this)->print_value();
   tty->cr();
-
+    
   if (WizardMode) {
     ((vframe*)this)->print();
     tty->cr();

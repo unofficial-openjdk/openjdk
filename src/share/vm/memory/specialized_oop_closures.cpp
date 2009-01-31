@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -56,57 +59,57 @@ void SpecializationStats::print() {
   int all_numCalls_nv =
     _numCalls_nv[ik] + _numCalls_nv[irk] + _numCalls_nv[oa];
   gclog_or_tty->print_cr("\nOf %d oop_oop_iterate calls %d (%6.3f%%) are in (ik, irk, oa).",
-                _numCallsAll, all_numCallsTotal,
-                100.0 * (float)all_numCallsTotal / (float)_numCallsAll);
+		_numCallsAll, all_numCallsTotal,
+		100.0 * (float)all_numCallsTotal / (float)_numCallsAll);
   // irk calls are double-counted.
   int real_ik_numCallsTotal = _numCallsTotal[ik] - _numCallsTotal[irk];
   int real_ik_numCalls_nv   = _numCalls_nv[ik]   - _numCalls_nv[irk];
   gclog_or_tty->print_cr("");
   gclog_or_tty->print_cr(header_format, "oop_oop_iterate:", "calls", "non-virtual", "pct");
   gclog_or_tty->print_cr(header_format,
-                "----------",
-                "----------",
-                "-----------",
-                "----------");
-  gclog_or_tty->print_cr(line_format, "all",
-                all_numCallsTotal,
-                all_numCalls_nv,
-                100.0 * (float)all_numCalls_nv / (float)all_numCallsTotal);
-  gclog_or_tty->print_cr(line_format, "ik",
-                real_ik_numCallsTotal, real_ik_numCalls_nv,
-                100.0 * (float)real_ik_numCalls_nv /
-                (float)real_ik_numCallsTotal);
-  gclog_or_tty->print_cr(line_format, "irk",
-                _numCallsTotal[irk], _numCalls_nv[irk],
-                100.0 * (float)_numCalls_nv[irk] / (float)_numCallsTotal[irk]);
-  gclog_or_tty->print_cr(line_format, "oa",
-                _numCallsTotal[oa], _numCalls_nv[oa],
-                100.0 * (float)_numCalls_nv[oa] / (float)_numCallsTotal[oa]);
+		"----------",
+		"----------",
+		"-----------",
+		"----------");
+  gclog_or_tty->print_cr(line_format, "all", 
+		all_numCallsTotal,
+		all_numCalls_nv,
+		100.0 * (float)all_numCalls_nv / (float)all_numCallsTotal);
+  gclog_or_tty->print_cr(line_format, "ik", 
+		real_ik_numCallsTotal, real_ik_numCalls_nv,
+		100.0 * (float)real_ik_numCalls_nv /
+		(float)real_ik_numCallsTotal);
+  gclog_or_tty->print_cr(line_format, "irk", 
+		_numCallsTotal[irk], _numCalls_nv[irk],
+		100.0 * (float)_numCalls_nv[irk] / (float)_numCallsTotal[irk]);
+  gclog_or_tty->print_cr(line_format, "oa", 
+		_numCallsTotal[oa], _numCalls_nv[oa],
+		100.0 * (float)_numCalls_nv[oa] / (float)_numCallsTotal[oa]);
 
 
   gclog_or_tty->print_cr("");
   gclog_or_tty->print_cr(header_format, "do_oop:", "calls", "non-virtual", "pct");
   gclog_or_tty->print_cr(header_format,
-                "----------",
-                "----------",
-                "-----------",
-                "----------");
+		"----------",
+		"----------",
+		"-----------",
+		"----------");
   int all_numDoOopCallsTotal =
     _numDoOopCallsTotal[ik] + _numDoOopCallsTotal[irk] + _numDoOopCallsTotal[oa];
   int all_numDoOopCalls_nv =
     _numDoOopCalls_nv[ik] + _numDoOopCalls_nv[irk] + _numDoOopCalls_nv[oa];
-  gclog_or_tty->print_cr(line_format, "all",
-                all_numDoOopCallsTotal, all_numDoOopCalls_nv,
-                100.0 * (float)all_numDoOopCalls_nv /
-                (float)all_numDoOopCallsTotal);
+  gclog_or_tty->print_cr(line_format, "all", 
+		all_numDoOopCallsTotal, all_numDoOopCalls_nv,
+		100.0 * (float)all_numDoOopCalls_nv /
+		(float)all_numDoOopCallsTotal);
   const char* kind_names[] = { "ik", "irk", "oa" };
   for (int k = ik; k < NUM_Kinds; k++) {
     gclog_or_tty->print_cr(line_format, kind_names[k],
-                  _numDoOopCallsTotal[k], _numDoOopCalls_nv[k],
-                  (_numDoOopCallsTotal[k] > 0 ?
-                   100.0 * (float)_numDoOopCalls_nv[k] /
-                   (float)_numDoOopCallsTotal[k]
-                   : 0.0));
+		  _numDoOopCallsTotal[k], _numDoOopCalls_nv[k],
+		  (_numDoOopCallsTotal[k] > 0 ? 
+		   100.0 * (float)_numDoOopCalls_nv[k] /
+		   (float)_numDoOopCallsTotal[k]
+		   : 0.0));
   }
 }
 

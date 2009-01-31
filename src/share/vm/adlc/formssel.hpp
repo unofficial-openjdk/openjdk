@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // FORMSSEL.HPP - ADL Parser Instruction Selection Forms Classes
@@ -92,7 +95,7 @@ public:
   char          *_size;            // Size of instruction
   InsEncode     *_insencode;       // Encoding class instruction belongs to
   Attribute     *_attribs;         // List of Attribute rules
-  Predicate     *_predicate;       // Predicate test for this instruction
+  Predicate     *_predicate;  	   // Predicate test for this instruction
   FormDict       _effects;         // Dictionary of effect rules
   ExpandRule    *_exprule;         // Expand rule for this instruction
   RewriteRule   *_rewrule;         // Rewrite rule for this instruction
@@ -134,7 +137,7 @@ public:
   virtual bool        is_projection(FormDict &globals); // node requires projection
   virtual bool        is_parm(FormDict &globals); // node matches ideal 'Parm'
   // ideal opcode enumeration
-  virtual const char *ideal_Opcode(FormDict &globals)  const;
+  virtual const char *ideal_Opcode(FormDict &globals)  const; 
   virtual int         is_expensive() const;     // node matches ideal 'CosD'
   virtual int         is_empty_encoding() const; // _size=0 and/or _insencode empty
   virtual int         is_tls_instruction() const; // tlsLoadP rule or ideal ThreadLocal
@@ -168,7 +171,7 @@ public:
   // Check if a simple chain rule
   virtual bool        is_simple_chain_rule(FormDict &globals) const;
 
-  // check for structural rematerialization
+  // check for structural rematerialization 
   virtual bool        rematerialize(FormDict &globals, RegisterForm *registers);
 
   // loads from memory, so must check for anti-dependence
@@ -188,7 +191,7 @@ public:
 
   virtual const char *cost();      // Access ins_cost attribute
   virtual uint        num_opnds(); // Count of num_opnds for MachNode class
-  virtual uint        num_post_match_opnds();
+  virtual uint        num_post_match_opnds(); 
   virtual uint        num_consts(FormDict &globals) const;// Constants in match rule
   // Constants in match rule with specified type
   virtual uint        num_consts(FormDict &globals, Form::DataType type) const;
@@ -197,7 +200,7 @@ public:
   virtual const char *out_reg_class(FormDict &globals);
 
   // number of ideal node inputs to skip
-  virtual uint        oper_input_base(FormDict &globals);
+  virtual uint        oper_input_base(FormDict &globals); 
 
   // Does this instruction need a base-oop edge?
   int needs_base_oop_edge(FormDict &globals) const;
@@ -256,9 +259,9 @@ public:
   // Seach through operands to determine operands unique positions.
   void                set_unique_opnds();
   uint                num_unique_opnds() { return _num_uniq; }
-  uint                unique_opnds_idx(int idx) {
+  uint                unique_opnds_idx(int idx) { 
                         if( _uniq_idx != NULL && idx > 0 )
-                          return _uniq_idx[idx];
+                          return _uniq_idx[idx]; 
                         else
                           return idx;
                       }
@@ -271,12 +274,12 @@ public:
   }
 
   // --------------------------- FILE *output_routines
-  //
+  // 
   // Generate the format call for the replacement variable
   void                rep_var_format(FILE *fp, const char *rep_var);
   // Generate index values needed for determing the operand position
   void                index_temps   (FILE *fp, FormDict &globals, const char *prefix = "", const char *receiver = "");
-  // ---------------------------
+  // --------------------------- 
 
   virtual bool verify();           // Check consistency after parsing
 
@@ -318,12 +321,12 @@ public:
   // There is an entry in _strings, perhaps NULL, that precedes each _rep_vars
   NameList       _code;            // Strings passed through to tty->print
   NameList       _rep_vars;        // replacement variables
-
+                                   
   NameList       _parameters;      // Locally defined names
   FormDict       _localNames;      // Table of components & their types
-
-public:
-  // Public Data
+                                   
+public:                            
+  // Public Data                   
   const char    *_name;            // encoding class name
 
   // Public Methods
@@ -433,7 +436,7 @@ public:
 
   // --------------------------- Parameters
   // The following call depends upon position within encode_class_iteration
-  //
+  // 
   // Obtain parameter name from zero based index
   const char   *rep_var_name(InstructForm &inst, uint param_no);
   // ---------------------------
@@ -556,7 +559,7 @@ public:
   FormatRule    *_format;     // Format for assembly generation
   NameList       _classes;    // List of opclasses which contain this oper
 
-  ComponentList _components;  //
+  ComponentList _components;  // 
 
   // Public Methods
   OperandForm(const char *id);
@@ -586,11 +589,11 @@ public:
 
   // node matches ideal 'Bool', grab condition codes from the ideal world
   virtual bool        is_ideal_bool()  const;
-
+  
   // Has an integer constant suitable for spill offsets
-  bool has_conI(FormDict &globals) const {
+  bool has_conI(FormDict &globals) const { 
     return (num_consts(globals,idealI) == 1) && !is_ideal_bool(); }
-  bool has_conL(FormDict &globals) const {
+  bool has_conL(FormDict &globals) const { 
     return (num_consts(globals,idealL) == 1) && !is_ideal_bool(); }
 
   // Node is user-defined operand for an sRegX
@@ -599,7 +602,7 @@ public:
   // Return ideal type, if there is a single ideal type for this operand
   virtual const char *ideal_type(FormDict &globals, RegisterForm *registers = NULL) const;
   // If there is a single ideal type for this interface field, return it.
-  virtual const char *interface_ideal_type(FormDict   &globals,
+  virtual const char *interface_ideal_type(FormDict   &globals, 
                                            const char *field_name) const;
 
   // Return true if this operand represents a bound register class
@@ -648,17 +651,17 @@ public:
 
 
   // --------------------------- FILE *output_routines
-  //
+  // 
   // Output code for disp_is_oop, if true.
   void                disp_is_oop(FILE *fp, FormDict &globals);
   // Generate code for internal and external format methods
   void                int_format(FILE *fp, FormDict &globals, uint index);
   void                ext_format(FILE *fp, FormDict &globals, uint index);
   void                format_constant(FILE *fp, uint con_index, uint con_type);
-  // Output code to access the value of the index'th constant
+  // Output code to access the value of the index'th constant 
   void                access_constant(FILE *fp, FormDict &globals,
                                       uint con_index);
-  // ---------------------------
+  // --------------------------- 
 
 
   virtual void dump();             // Debug printer
@@ -779,7 +782,7 @@ public:
   const char *_greater_equal;
   const char *_less_equal;
   const char *_greater;
-
+  
   // Public Methods
   CondInterface(char *equal, char *not_equal, char *less, char *greater_equal,
                 char *less_equal, char *greater);
@@ -868,10 +871,10 @@ public:
 
 public:
   // Implementation depends upon working bit intersection and union.
-  enum use_def_enum {
-    INVALID = 0x0,
-    USE     = 0x1,
-    DEF     = 0x2, USE_DEF   = 0x3,
+  enum use_def_enum { 
+    INVALID = 0x0, 
+    USE     = 0x1, 
+    DEF     = 0x2, USE_DEF   = 0x3, 
     KILL    = 0x4, USE_KILL  = 0x5,
     SYNTHETIC = 0x8,
     TEMP = USE | SYNTHETIC
@@ -896,22 +899,22 @@ public:
   int         _commutative_id;     // id of commutative operation
 
   // Public Methods
-  MatchNode(ArchDesc &ad, const char *result = 0, const char *expr = 0,
-            const char *opType=0, MatchNode *lChild=NULL,
-            MatchNode *rChild=NULL);
+  MatchNode(ArchDesc &ad, const char *result = 0, const char *expr = 0, 
+            const char *opType=0, MatchNode *lChild=NULL, 
+	    MatchNode *rChild=NULL);
   MatchNode(ArchDesc &ad, MatchNode& mNode); // Shallow copy constructor;
   MatchNode(ArchDesc &ad, MatchNode& mNode, int clone); // Construct clone
   ~MatchNode();
 
-  // return 0 if not found:
+  // return 0 if not found:  
   // return 1 if found and position is incremented by operand offset in rule
   bool       find_name(const char *str, int &position) const;
   bool       find_type(const char *str, int &position) const;
-  void       append_components(FormDict &locals, ComponentList &components,
+  void       append_components(FormDict &locals, ComponentList &components, 
                                bool def_flag) const;
-  bool       base_operand(uint &position, FormDict &globals,
-                         const char * &result, const char * &name,
-                         const char * &opType) const;
+  bool       base_operand(uint &position, FormDict &globals, 
+                         const char * &result, const char * &name, 
+			 const char * &opType) const;
   // recursive count on operands
   uint       num_consts(FormDict &globals) const;
   uint       num_const_ptrs(FormDict &globals) const;
@@ -934,11 +937,11 @@ public:
   const char *reduce_left (FormDict &globals)  const;
 
   // Recursive version of check in MatchRule
-  int        cisc_spill_match(FormDict &globals, RegisterForm *registers,
-                              MatchNode *mRule2, const char * &operand,
-                              const char * &reg_type);
+  int        cisc_spill_match(FormDict &globals, RegisterForm *registers, 
+			      MatchNode *mRule2, const char * &operand, 
+			      const char * &reg_type);
   int        cisc_spill_merge(int left_result, int right_result);
-
+  
   bool       equivalent(FormDict &globals, MatchNode *mNode2);
 
   void       count_commutative_op(int& count);
@@ -969,8 +972,8 @@ public:
   void       append_components(FormDict &locals, ComponentList &components) const;
   // Recursive call on all operands' match rules in my match rule.
   bool       base_operand(uint &position, FormDict &globals,
-                         const char * &result, const char * &name,
-                         const char * &opType) const;
+                         const char * &result, const char * &name, 
+			 const char * &opType) const;
 
 
   bool       is_base_register(FormDict &globals) const;
@@ -992,14 +995,14 @@ public:
   Form::DataType is_ideal_load() const;// node matches ideal 'LoadXNode'
   Form::DataType is_ideal_store() const;// node matches ideal 'StoreXNode'
 
-  // Check if 'mRule2' is a cisc-spill variant of this MatchRule
-  int        cisc_spill_match(FormDict &globals, RegisterForm *registers,
-                              MatchRule *mRule2, const char * &operand,
-                              const char * &reg_type);
+  // Check if 'mRule2' is a cisc-spill variant of this MatchRule 
+  int        cisc_spill_match(FormDict &globals, RegisterForm *registers, 
+			      MatchRule *mRule2, const char * &operand, 
+			      const char * &reg_type);
 
   // Check if 'mRule2' is equivalent to this MatchRule
   bool       equivalent(FormDict &globals, MatchRule *mRule2);
-
+  
   void       swap_commutative_op(const char* instr_ident, int count, int& match_rules_cnt);
 
   void dump();

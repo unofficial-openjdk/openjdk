@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.utilities;
@@ -63,41 +63,41 @@ public class MessageQueueBackend {
 
     public Object readMessage() {
       synchronized(readList) {
-        while (readList.isEmpty()) {
-          try {
-            readList.wait();
-          }
-          catch (InterruptedException e) {
-          }
-        }
-        return readList.removeFirst();
+	while (readList.isEmpty()) {
+	  try {
+	    readList.wait();
+	  }
+	  catch (InterruptedException e) {
+	  }
+	}
+	return readList.removeFirst();
       }
     }
 
     public Object readMessageWithTimeout(long millis) {
       synchronized(readList) {
-        if (readList.isEmpty()) {
-          if (millis == 0) {
-            return null;
-          }
-          try {
-            readList.wait(millis);
-          }
-          catch (InterruptedException e) {
-          }
-        }
-        // If list is still empty after wait, return null
-        if (readList.isEmpty()) {
-          return null;
-        }
-        return readList.removeFirst();
+	if (readList.isEmpty()) {
+	  if (millis == 0) {
+	    return null;
+	  }
+	  try {
+	    readList.wait(millis);
+	  }
+	  catch (InterruptedException e) {
+	  }
+	}
+	// If list is still empty after wait, return null
+	if (readList.isEmpty()) {
+	  return null;
+	}
+	return readList.removeFirst();
       }
     }
 
     public void writeMessage(Object obj) {
       synchronized(writeList) {
-        writeList.addLast(obj);
-        writeList.notify();
+	writeList.addLast(obj);
+	writeList.notify();
       }
     }
   }

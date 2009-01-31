@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.jdi;
@@ -63,7 +63,7 @@ public class ArrayReferenceImpl extends ObjectReferenceImpl
     public List getValues() {
         return getValues(0, -1);
     }
-
+    
     /**
      * Validate that the range to set/get is valid.
      * length of -1 (meaning rest of array) has been converted
@@ -82,7 +82,7 @@ public class ArrayReferenceImpl extends ObjectReferenceImpl
         }
         if (index + len > length()) {
             throw new IndexOutOfBoundsException(
-                        "Invalid array range: " +
+                        "Invalid array range: " + 
                         index + " to " + (index + len - 1));
         }
     }
@@ -90,12 +90,12 @@ public class ArrayReferenceImpl extends ObjectReferenceImpl
     public List getValues(int index, int len) {
         if (len == -1) { // -1 means the rest of the array
            len = length() - index;
-        }
+        }   
         validateArrayAccess(index, len);
         List vals = new ArrayList();
-        if (len == 0) {
-            return vals;
-        }
+	if (len == 0) {
+	    return vals;
+	}
 
         sun.jvm.hotspot.oops.TypeArray typeArray = null;
         sun.jvm.hotspot.oops.ObjArray objArray = null;
@@ -110,7 +110,7 @@ public class ArrayReferenceImpl extends ObjectReferenceImpl
         char c = arrayType().componentSignature().charAt(0);
         BasicType variableType = BasicType.charToBasicType(c);
 
-        final int limit = index + len;
+	final int limit = index + len;	
         for (int ii = index; ii < limit; ii++) {
             ValueImpl valueImpl;
             if (variableType == BasicType.T_BOOLEAN) {
@@ -134,7 +134,7 @@ public class ArrayReferenceImpl extends ObjectReferenceImpl
                 // elements themselves may be arrays because every array is an Object.
                 valueImpl = (ObjectReferenceImpl) vm.objectMirror(objArray.getObjAt(ii));
             } else if (variableType == BasicType.T_ARRAY) {
-                valueImpl = (ArrayReferenceImpl) vm.arrayMirror((Array) objArray.getObjAt(ii));
+		valueImpl = (ArrayReferenceImpl) vm.arrayMirror((Array) objArray.getObjAt(ii));
             } else {
                 throw new RuntimeException("should not reach here");
             }
@@ -155,17 +155,17 @@ public class ArrayReferenceImpl extends ObjectReferenceImpl
         setValues(0, values, 0, -1);
     }
 
-    public void setValues(int index, List values,
+    public void setValues(int index, List values, 
                           int srcIndex, int length)
             throws InvalidTypeException,
                    ClassNotLoadedException {
 
         vm.throwNotReadOnlyException("ArrayReference.setValue(...)");
-
+        
     }
 
     public String toString() {
-        return "instance of " + arrayType().componentTypeName() +
+        return "instance of " + arrayType().componentTypeName() + 
                "[" + length() + "] (id=" + uniqueID() + ")";
     }
 }

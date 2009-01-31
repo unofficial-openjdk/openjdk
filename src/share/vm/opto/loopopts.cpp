@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -711,7 +714,7 @@ void PhaseIdealLoop::split_if_with_blocks_post( Node *n ) {
           get_ctrl(iff->in(3)) == n_ctrl )
         return;                 // Inputs not yet split-up
       if ( get_loop(n_ctrl) != get_loop(get_ctrl(iff)) ) {
-        return;                 // Loop-invar test gates loop-varying CMOVE
+	return;                 // Loop-invar test gates loop-varying CMOVE
       }
     } else {
       return;  // some other kind of node, such as an Allocate
@@ -1238,26 +1241,20 @@ void PhaseIdealLoop::clone_loop( IdealLoopTree *loop, Node_List &old_new, int dd
         assert( dd_r >= dom_depth(dom_lca(newuse,use)), "" );
 
         // The original user of 'use' uses 'r' instead.
-        for (DUIterator_Last lmin, l = use->last_outs(lmin); l >= lmin;) {
+        for (DUIterator_Last lmin, l = use->last_outs(lmin); l >= lmin; --l) {
           Node* useuse = use->last_out(l);
           _igvn.hash_delete(useuse);
           _igvn._worklist.push(useuse);
-          uint uses_found = 0;
           if( useuse->in(0) == use ) {
             useuse->set_req(0, r);
-            uses_found++;
             if( useuse->is_CFG() ) {
               assert( dom_depth(useuse) > dd_r, "" );
               set_idom(useuse, r, dom_depth(useuse));
             }
           }
-          for( uint k = 1; k < useuse->req(); k++ ) {
-            if( useuse->in(k) == use ) {
+          for( uint k = 1; k < useuse->req(); k++ )
+            if( useuse->in(k) == use )
               useuse->set_req(k, r);
-              uses_found++;
-            }
-          }
-          l -= uses_found;    // we deleted 1 or more copies of this edge
         }
 
         // Now finish up 'r'
@@ -2675,3 +2672,4 @@ void PhaseIdealLoop::reorg_offsets( IdealLoopTree *loop ) {
   }
 
 }
+

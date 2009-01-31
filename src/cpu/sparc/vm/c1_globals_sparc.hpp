@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //
@@ -48,7 +51,7 @@ define_pd_global(intx, OnStackReplacePercentage,     1400 );
 define_pd_global(bool, UseTLAB,                      true );
 define_pd_global(bool, ProfileInterpreter,           false);
 define_pd_global(intx, FreqInlineSize,               325  );
-define_pd_global(intx, NewRatio,                     8    ); // Design center runs on 1.3.1
+define_pd_global(intx, NewRatio,                     8    ); // Design center runs on 1.3.1  
 define_pd_global(bool, ResizeTLAB,                   true );
 define_pd_global(intx, ReservedCodeCacheSize,        32*M );
 define_pd_global(intx, CodeCacheExpansionSize,       32*K );

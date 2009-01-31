@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.bugspot;
@@ -42,11 +42,11 @@ public class RegisterPanel extends JPanel {
   private String nullAddressString;
   private ThreadProxy curThread;
   private JTable table;
-
+  
   static class RegisterInfo {
     private String name;
     private Address value;
-
+    
     RegisterInfo(String name, Address value) {
       this.name = name;
       this.value = value;
@@ -58,7 +58,7 @@ public class RegisterPanel extends JPanel {
 
   public RegisterPanel() {
     super();
-
+    
     registers = new ArrayList();
 
     dataModel = new AbstractTableModel() {

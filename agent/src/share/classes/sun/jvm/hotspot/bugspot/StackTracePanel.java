@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.bugspot;
@@ -88,7 +88,7 @@ public class StackTracePanel extends JPanel {
         }
       });
   }
-
+  
   /** Takes a List of StackTraceEntry objects */
   public void setTrace(java.util.List trace) {
     this.trace = trace;
@@ -96,7 +96,7 @@ public class StackTracePanel extends JPanel {
     list.setSelectedIndex(0);
     fireFrameChanged();
   }
-
+  
   public void addListener(Listener listener) {
     if (listeners == null) {
       listeners = new ArrayList();

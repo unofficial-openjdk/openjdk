@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Portions of code courtesy of Clifford Click
@@ -100,13 +103,13 @@ class JProjNode : public ProjNode {
   virtual const Node* is_block_proj() const { return in(0); }
   virtual const RegMask& out_RegMask() const;
   virtual uint  ideal_reg() const { return 0; }
-};
+};  
 
 //------------------------------PhiNode----------------------------------------
 // PhiNodes merge values from different Control paths.  Slot 0 points to the
 // controlling RegionNode.  Other slots map 1-for-1 with incoming control flow
-// paths to the RegionNode.  For speed reasons (to avoid another pass) we
-// can turn PhiNodes into copys in-place by NULL'ing out their RegionNode
+// paths to the RegionNode.  For speed reasons (to avoid another pass) we 
+// can turn PhiNodes into copys in-place by NULL'ing out their RegionNode 
 // input in slot 0.
 class PhiNode : public TypeNode {
   const TypePtr* const _adr_type; // non-null only for Type::MEMORY nodes.
@@ -167,7 +170,7 @@ public:
   virtual const RegMask &out_RegMask() const;
   virtual const RegMask &in_RegMask(uint) const;
 #ifndef PRODUCT
-  virtual void dump_spec(outputStream *st) const;
+  virtual void dump_spec() const;
 #endif
 #ifdef ASSERT
   void verify_adr_type(VectorSet& visited, const TypePtr* at) const;
@@ -207,11 +210,11 @@ public:
   virtual const Node *is_block_proj() const { return in(0); }
   virtual const RegMask &out_RegMask() const;
   virtual uint ideal_reg() const { return 0; }
-};
+}; 
 
 //---------------------------MultiBranchNode-----------------------------------
 // This class defines a MultiBranchNode, a MultiNode which yields multiple
-// control values. These are distinguished from other types of MultiNodes
+// control values. These are distinguished from other types of MultiNodes 
 // which yield multiple values, but control is always and only projection #0.
 class MultiBranchNode : public MultiNode {
 public:
@@ -234,18 +237,18 @@ public:
 #define PROB_UNLIKELY_MAG(N)    (1e- ## N ## f)
 #define PROB_LIKELY_MAG(N)      (1.0f-PROB_UNLIKELY_MAG(N))
 
-  // Maximum and minimum branch prediction probabilties
+  // Maximum and minimum branch prediction probabilties 
   // 1 in 1,000,000 (magnitude 6)
   //
   // Although PROB_NEVER == PROB_MIN and PROB_ALWAYS == PROB_MAX
   // they are used to distinguish different situations:
-  //
+  // 
   // The name PROB_MAX (PROB_MIN) is for probabilities which correspond to
   // very likely (unlikely) but with a concrete possibility of a rare
   // contrary case.  These constants would be used for pinning
   // measurements, and as measures for assertions that have high
   // confidence, but some evidence of occasional failure.
-  //
+  // 
   // The name PROB_ALWAYS (PROB_NEVER) is to stand for situations for which
   // there is no evidence at all that the contrary case has ever occurred.
 
@@ -255,7 +258,7 @@ public:
 #define PROB_MIN                PROB_UNLIKELY_MAG(6)
 #define PROB_MAX                PROB_LIKELY_MAG(6)
 
-  // Static branch prediction probabilities
+  // Static branch prediction probabilities 
   // 1 in 10 (magnitude 1)
 #define PROB_STATIC_INFREQUENT  PROB_UNLIKELY_MAG(1)
 #define PROB_STATIC_FREQUENT    PROB_LIKELY_MAG(1)
@@ -278,20 +281,20 @@ public:
   //     threshold for converting to conditional move
   //     likelihood of null check failure if a null HAS been seen before
   //     likelihood of slow path taken in library calls
-  //
+  // 
   // 1 in 10,000 probabilities (magnitude 4):
   //     threshold for making an uncommon trap probability more extreme
   //     threshold for for making a null check implicit
   //     likelihood of needing a gc if eden top moves during an allocation
   //     likelihood of a predicted call failure
-  //
+  // 
   // 1 in 100,000 probabilities (magnitude 5):
   //     threshold for ignoring counts when estimating path frequency
   //     likelihood of FP clipping failure
   //     likelihood of catching an exception from a try block
   //     likelihood of null check failure if a null has NOT been seen before
   //
-  // Magic manifest probabilities such as 0.83, 0.7, ... can be found in
+  // Magic manifest probabilities such as 0.83, 0.7, ... can be found in 
   // gen_subtype_check() and catch_inline_exceptions().
 
   float _prob;                  // Probability of true path being taken.
@@ -313,7 +316,7 @@ public:
   static Node* up_one_dom(Node* curr, bool linear_only = false);
 
 #ifndef PRODUCT
-  virtual void dump_spec(outputStream *st) const;
+  virtual void dump_spec() const;
 #endif
 };
 
@@ -323,7 +326,7 @@ public:
     init_class_id(Class_IfTrue);
   }
   virtual int Opcode() const;
-  virtual Node *Identity( PhaseTransform *phase );
+  virtual Node *Identity( PhaseTransform *phase );  
 };
 
 class IfFalseNode : public CProjNode {
@@ -332,7 +335,7 @@ public:
     init_class_id(Class_IfFalse);
   }
   virtual int Opcode() const;
-  virtual Node *Identity( PhaseTransform *phase );
+  virtual Node *Identity( PhaseTransform *phase );  
 };
 
 
@@ -363,7 +366,7 @@ public:
 
 //------------------------------JumpNode---------------------------------------
 // Indirect branch.  Uses PCTable above to implement a switch statement.
-// It emits as a table load and local branch.
+// It emits as a table load and local branch.  
 class JumpNode : public PCTableNode {
 public:
   JumpNode( Node* control, Node* switch_val, uint size) : PCTableNode(control, switch_val, size) {
@@ -378,7 +381,7 @@ class JumpProjNode : public JProjNode {
   virtual uint hash() const;
   virtual uint cmp( const Node &n ) const;
   virtual uint size_of() const { return sizeof(*this); }
-
+  
  private:
   const int  _dest_bci;
   const uint _proj_no;
@@ -395,7 +398,7 @@ class JumpProjNode : public JProjNode {
   int  switch_val()  const { return _switch_val; }
   uint proj_no()     const { return _proj_no; }
 #ifndef PRODUCT
-  virtual void dump_spec(outputStream *st) const;
+  virtual void dump_spec() const;
 #endif
 };
 
@@ -442,7 +445,7 @@ public:
   int  handler_bci() const        { return _handler_bci; }
   bool is_handler_proj() const    { return _handler_bci >= 0; }
 #ifndef PRODUCT
-  virtual void dump_spec(outputStream *st) const;
+  virtual void dump_spec() const;
 #endif
 };
 
@@ -476,6 +479,7 @@ public:
   virtual void emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const { }
   virtual uint size(PhaseRegAlloc *ra_) const { return 0; }
 #ifndef PRODUCT
-  virtual void format( PhaseRegAlloc *, outputStream *st ) const;
+  virtual void format( PhaseRegAlloc * ) const;
 #endif
 };
+

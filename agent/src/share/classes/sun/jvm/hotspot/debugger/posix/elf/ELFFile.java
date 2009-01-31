@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.posix.elf;
@@ -60,7 +60,7 @@ public interface ELFFile {
     /** Returns the 4 byte magic number for this file.  This value should
      * match the values in ELF_MAGIC_NUMBER. */
     public byte[] getMagicNumber();
-    /** Returns a byte identifying the size of objects used for this ELF
+    /** Returns a byte identifying the size of objects used for this ELF 
      * file.  The byte will be either CLASS_INVALID, CLASS_32 or CLASS_64. */
     public byte getObjectSize();
     /** Returns a byte identifying the data encoding of the processor specific

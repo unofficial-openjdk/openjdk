@@ -19,9 +19,12 @@
 // Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
 // CA 95054 USA or visit www.sun.com if you need additional information or
 // have any questions.
-//
+//  
 //
 
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 
 // archDesc.cpp - Internal format for architecture definition
 #include "adlc.hpp"
@@ -32,7 +35,7 @@ static FILE *errfile = stderr;
 inline char  toUpper(char lower) {
   return (('a' <= lower && lower <= 'z') ? (lower + ('A'-'a')) : lower);
 }
-char *toUpper(const char *str) {
+char *toUpper(const char *str) { 
   char *upper  = new char[strlen(str)+1];
   char *result = upper;
   const char *end    = str + strlen(str);
@@ -94,7 +97,7 @@ bool ChainList::iter(const char * &name, const char * &cost, const char * &rule)
   const char *n       = _name.iter();
   const char *c       = _cost.iter();
   const char *r       = _rule.iter();
-
+      
   if (n && c && r) {
     notDone = true;
     name = n;
@@ -132,17 +135,17 @@ void ChainList::output(FILE *fp) {
 
 
 //---------------------------MatchList Methods-------------------------------
-bool MatchList::search(const char *opc, const char *res, const char *lch,
-                       const char *rch, Predicate *pr) {
+bool MatchList::search(const char *opc, const char *res, const char *lch, 
+		       const char *rch, Predicate *pr) {
   bool tmp = false;
   if ((res == _resultStr) || (res && _resultStr && !strcmp(res, _resultStr))) {
     if ((lch == _lchild) || (lch && _lchild && !strcmp(lch, _lchild))) {
       if ((rch == _rchild) || (rch && _rchild && !strcmp(rch, _rchild))) {
-        char * predStr = get_pred();
-        char * prStr = pr?pr->_pred:NULL;
-        if ((prStr == predStr) || (prStr && predStr && !strcmp(prStr, predStr))) {
-          return true;
-        }
+	char * predStr = get_pred();
+	char * prStr = pr?pr->_pred:NULL;
+	if ((prStr == predStr) || (prStr && predStr && !strcmp(prStr, predStr))) {
+	  return true;
+	}
       }
     }
   }
@@ -165,15 +168,15 @@ void MatchList::output(FILE *fp) {
 //---------------------------ArchDesc Constructor and Destructor-------------
 
 ArchDesc::ArchDesc()
-  : _globalNames(cmpstr,hashstr, Form::arena),
-    _globalDefs(cmpstr,hashstr, Form::arena),
-    _preproc_table(cmpstr,hashstr, Form::arena),
+  : _globalNames(cmpstr,hashstr, Form::arena), 
+    _globalDefs(cmpstr,hashstr, Form::arena), 
+    _preproc_table(cmpstr,hashstr, Form::arena), 
     _idealIndex(cmpstr,hashstr, Form::arena),
     _internalOps(cmpstr,hashstr, Form::arena),
     _internalMatch(cmpstr,hashstr, Form::arena),
     _chainRules(cmpstr,hashstr, Form::arena),
     _cisc_spill_operand(NULL) {
-
+    
       // Initialize the opcode to MatchList table with NULLs
       for( int i=0; i<_last_opcode; ++i ) {
         _mlistab[i] = NULL;
@@ -254,7 +257,7 @@ void ArchDesc::generateMatchLists() {
 void ArchDesc::inspectOperands() {
 
   // Iterate through all operands
-  _operands.reset();
+  _operands.reset(); 
   OperandForm *op;
   for( ; (op = (OperandForm*)_operands.iter()) != NULL;) {
     // Construct list of top-level operands (components)
@@ -289,10 +292,10 @@ void ArchDesc::inspectOperands() {
 
     // Cost for this match
     const char *costStr     = op->cost();
-    const char *defaultCost =
+    const char *defaultCost = 
       ((AttributeForm*)_globalNames[AttributeForm::_op_cost])->_attrdef;
     const char *cost        =  costStr? costStr : defaultCost;
-
+    
     // Find result type for match.
     const char *result      = op->reduce_result();
     bool        has_root    = false;
@@ -306,7 +309,7 @@ void ArchDesc::inspectOperands() {
 void ArchDesc::inspectInstructions() {
 
   // Iterate through all instructions
-  _instructions.reset();
+  _instructions.reset(); 
   InstructForm *instr;
   for( ; (instr = (InstructForm*)_instructions.iter()) != NULL; ) {
     // Construct list of top-level operands (components)
@@ -324,10 +327,10 @@ void ArchDesc::inspectInstructions() {
 
     // Cost for this match
     const char *costStr = instr->cost();
-    const char *defaultCost =
+    const char *defaultCost = 
       ((AttributeForm*)_globalNames[AttributeForm::_ins_cost])->_attrdef;
     const char *cost    =  costStr? costStr : defaultCost;
-
+    
     // Find result type for match
     const char *result  = instr->reduce_result();
 
@@ -411,8 +414,8 @@ void ArchDesc::check_optype(MatchRule *mrule) {
 }
 
 //------------------------------add_chain_rule_entry--------------------------
-void ArchDesc::add_chain_rule_entry(const char *src, const char *cost,
-                                    const char *result) {
+void ArchDesc::add_chain_rule_entry(const char *src, const char *cost, 
+				    const char *result) {
   // Look-up the operation in chain rule table
   ChainList *lst = (ChainList *)_chainRules[src];
   if (lst == NULL) {
@@ -430,7 +433,7 @@ void ArchDesc::add_chain_rule_entry(const char *src, const char *cost,
 //------------------------------build_chain_rule-------------------------------
 void ArchDesc::build_chain_rule(OperandForm *oper) {
   MatchRule     *rule;
-
+  
   // Check for chain rules here
   // If this is only a chain rule
   if ((oper->_matrule) && (oper->_matrule->_lChild == NULL) &&
@@ -474,9 +477,9 @@ void ArchDesc::build_chain_rule(OperandForm *oper) {
 
 //------------------------------buildMatchList---------------------------------
 // operands and instructions provide the result
-void ArchDesc::buildMatchList(MatchRule *mrule, const char *resultStr,
-                              const char *rootOp, Predicate *pred,
-                              const char *cost) {
+void ArchDesc::buildMatchList(MatchRule *mrule, const char *resultStr, 
+                              const char *rootOp, Predicate *pred, 
+			      const char *cost) {
   const char *leftstr, *rightstr;
   MatchNode  *mnode;
 
@@ -497,13 +500,13 @@ void ArchDesc::buildMatchList(MatchRule *mrule, const char *resultStr,
 
   // Check that this will be placed appropriately in the DFA
   if (index >= _last_opcode) {
-    fprintf(stderr, "Invalid match rule %s <-- ( %s )\n",
+    fprintf(stderr, "Invalid match rule %s <-- ( %s )\n", 
             resultStr ? resultStr : " ",
             rootOp    ? rootOp    : " ");
     assert(index < _last_opcode, "Matching item not in ideal graph\n");
     return;
   }
-
+  
 
   // Walk the MatchRule, generating MatchList entries for each level
   // of the rule (each nesting of parentheses)
@@ -527,21 +530,21 @@ void ArchDesc::buildMatchList(MatchRule *mrule, const char *resultStr,
     rightstr = mnode->_internalop ? mnode->_internalop : mnode->_opType;
   }
   // Search for an identical matchlist entry already on the list
-  if ((_mlistab[index] == NULL) ||
-      (_mlistab[index] &&
+  if ((_mlistab[index] == NULL) || 
+      (_mlistab[index] && 
        !_mlistab[index]->search(rootOp, resultStr, leftstr, rightstr, pred))) {
     // Place this match rule at front of list
-    MatchList *mList =
-      new MatchList(_mlistab[index], pred, cost,
+    MatchList *mList = 
+      new MatchList(_mlistab[index], pred, cost, 
                     rootOp, resultStr, leftstr, rightstr);
     _mlistab[index] = mList;
   }
 }
 
 // Recursive call for construction of match lists
-void ArchDesc::buildMList(MatchNode *node, const char *rootOp,
-                          const char *resultOp, Predicate *pred,
-                          const char *cost) {
+void ArchDesc::buildMList(MatchNode *node, const char *rootOp, 
+			  const char *resultOp, Predicate *pred, 
+			  const char *cost) {
   const char *leftstr, *rightstr;
   const char *resultop;
   const char *opcode;
@@ -593,7 +596,7 @@ void ArchDesc::buildMList(MatchNode *node, const char *rootOp,
   if ((_mlistab[index] == NULL) || (_mlistab[index] &&
                                     !_mlistab[index]->search(opcode, resultop, leftstr, rightstr, pred))) {
     // Place this match rule at front of list
-    MatchList *mList =
+    MatchList *mList = 
       new MatchList(_mlistab[index],pred,cost,
                     opcode, resultop, leftstr, rightstr);
     _mlistab[index] = mList;
@@ -660,29 +663,29 @@ void ArchDesc::set_preproc_def(const char* flag, const char* def) {
 
 bool ArchDesc::verify() {
 
-  if (_register)
+  if (_register) 
     assert( _register->verify(), "Register declarations failed verification");
   if (!_quiet_mode)
     fprintf(stderr,"\n");
   // fprintf(stderr,"---------------------------- Verify Operands ---------------\n");
-  // _operands.verify();
-  // fprintf(stderr,"\n");
+  // _operands.verify();                                             
+  // fprintf(stderr,"\n");                                           
   // fprintf(stderr,"---------------------------- Verify Operand Classes --------\n");
-  // _opclass.verify();
-  // fprintf(stderr,"\n");
+  // _opclass.verify();                                              
+  // fprintf(stderr,"\n");                                           
   // fprintf(stderr,"---------------------------- Verify Attributes  ------------\n");
-  // _attributes.verify();
-  // fprintf(stderr,"\n");
+  // _attributes.verify();                                           
+  // fprintf(stderr,"\n");                                           
   if (!_quiet_mode)
     fprintf(stderr,"---------------------------- Verify Instructions ----------------------------\n");
-  _instructions.verify();
+  _instructions.verify();                                         
   if (!_quiet_mode)
-    fprintf(stderr,"\n");
-  // if ( _encode ) {
+    fprintf(stderr,"\n");                                           
+  // if ( _encode ) {                                                
   //   fprintf(stderr,"---------------------------- Verify Encodings --------------\n");
   //   _encode->verify();
   // }
-
+  
   //if (_pipeline) _pipeline->verify();
 
   return true;
@@ -751,7 +754,7 @@ void ArchDesc::internal_err(const char *fmt, ...) {
   va_list args;
 
   va_start(args, fmt);
-  _internal_errs += emit_msg(0, INTERNAL_ERR, 0, fmt, args);
+  _internal_errs += emit_msg(0, INTERNAL_ERR, 0, fmt, args);  
   va_end(args);
 
   _no_output = 1;
@@ -763,7 +766,7 @@ void ArchDesc::syntax_err(int lineno, const char *fmt, ...) {
   va_list args;
 
   va_start(args, fmt);
-  _internal_errs += emit_msg(0, SYNERR, lineno, fmt, args);
+  _internal_errs += emit_msg(0, SYNERR, lineno, fmt, args);  
   va_end(args);
 
   _no_output = 1;
@@ -771,9 +774,9 @@ void ArchDesc::syntax_err(int lineno, const char *fmt, ...) {
 
 //------------------------------emit_msg---------------------------------------
 // Emit a user message, typically a warning or error
-int ArchDesc::emit_msg(int quiet, int flag, int line, const char *fmt,
+int ArchDesc::emit_msg(int quiet, int flag, int line, const char *fmt, 
     va_list args) {
-  static int  last_lineno = -1;
+  static int  last_lineno = -1; 
   int         i;
   const char *pref;
 
@@ -855,13 +858,13 @@ const char *ArchDesc::reg_mask(OperandForm  &opForm) {
 // Obtain the name of the RegMask for an InstructForm
 const char *ArchDesc::reg_mask(InstructForm &inForm) {
   const char *result = inForm.reduce_result();
-  assert( result,
+  assert( result, 
           "Did not find result operand or RegMask for this instruction");
 
   // Instructions producing 'Universe' use RegMask::Empty
   if( strcmp(result,"Universe")==0 ) {
     return "RegMask::Empty";
-  }
+  } 
 
   // Lookup this result operand and get its register class
   Form *form = (Form*)_globalNames[result];
@@ -893,7 +896,7 @@ void ArchDesc::set_stack_or_reg(const char *reg_class_name) {
     reg_class->_stack_or_reg = true;
   }
 }
-
+    
 
 // Return the type signature for the ideal operation
 const char *ArchDesc::getIdealType(const char *idealOp) {
@@ -924,7 +927,7 @@ const char *ArchDesc::getIdealType(const char *idealOp) {
 
 
 
-OperandForm *ArchDesc::constructOperand(const char *ident,
+OperandForm *ArchDesc::constructOperand(const char *ident, 
                                         bool  ideal_only) {
   OperandForm *opForm = new OperandForm(ident, ideal_only);
   _globalNames.Insert(ident, opForm);
@@ -944,7 +947,7 @@ void ArchDesc::initBaseOpTypes() {
   // Create InstructForm and assign type for each ideal instruction.
   for ( int j = _last_machine_leaf+1; j < _last_opcode; ++j) {
     char         *ident    = (char *)NodeClassNames[j];
-    if(!strcmp(ident, "ConI") || !strcmp(ident, "ConP") ||
+    if(!strcmp(ident, "ConI") || !strcmp(ident, "ConP") || 
        !strcmp(ident, "ConF") || !strcmp(ident, "ConD") ||
        !strcmp(ident, "ConL") || !strcmp(ident, "Con" ) ||
        !strcmp(ident, "Bool") ) {
@@ -1008,14 +1011,14 @@ void ArchDesc::initBaseOpTypes() {
     _globalNames.Insert(ident, eForm);
   }
 
-  //
+  // 
   // Build mapping from ideal names to ideal indices
   int idealIndex = 0;
   for (idealIndex = 1; idealIndex < _last_machine_leaf; ++idealIndex) {
     const char *idealName = NodeClassNames[idealIndex];
     _idealIndex.Insert((void*)idealName, (void*)idealIndex);
   }
-  for ( idealIndex = _last_machine_leaf+1;
+  for ( idealIndex = _last_machine_leaf+1; 
         idealIndex < _last_opcode; ++idealIndex) {
     const char *idealName = NodeClassNames[idealIndex];
     _idealIndex.Insert((void*)idealName, (void*)idealIndex);
@@ -1026,11 +1029,17 @@ void ArchDesc::initBaseOpTypes() {
 
 //---------------------------addSUNcopyright-------------------------------
 // output SUN copyright info
-void ArchDesc::addSunCopyright(char* legal, int size, FILE *fp) {
-  fwrite(legal, size, 1, fp);
-  fprintf(fp,"\n");
+void ArchDesc::addSunCopyright(FILE *fp) {
   fprintf(fp,"// Machine Generated File.  Do Not Edit!\n");
   fprintf(fp,"\n");
+  fprintf(fp,"// Copyright 1997-2006 Sun Microsystems, Inc.  All rights reserved.\n");
+  fprintf(fp,"// SUN PROPRIETARY/CONFIDENTIAL.  Use is subject to license terms.\n");
+  fprintf(fp,"// This software is the confidential and proprietary information of Sun\n");
+  fprintf(fp,"// Microsystems, Inc. (\"Confidential Information\").  You shall not\n");
+  fprintf(fp,"// disclose such Confidential Information and shall use it only in\n");
+  fprintf(fp,"// accordance with the terms of the license agreement you entered into\n");
+  fprintf(fp,"// with Sun.\n");
+  fprintf(fp,"//\n");
 }
 
 //---------------------------machineDependentIncludes--------------------------
@@ -1046,7 +1055,7 @@ void ArchDesc::machineDependentIncludes(ADLFILE &adlfile) {
   fprintf(adlfile._fp, "#include \"incls/_precompiled.incl\"\n");
   fprintf(adlfile._fp, "#include \"incls/_%s.incl\"\n",basename);
   fprintf(adlfile._fp, "\n");
-
+  
 }
 
 
@@ -1069,9 +1078,9 @@ void ArchDesc::addPreprocessorChecks(FILE *fp) {
           fprintf(fp, "-D%s=%s\n", flag, def);
     else  fprintf(fp, "-U%s\n", flag);
     fprintf(fp, "#%s %s\n",
-            def ? "ifndef" : "ifdef", flag);
+	    def ? "ifndef" : "ifdef", flag);
     fprintf(fp, "#  error \"%s %s be defined\"\n",
-            flag, def ? "must" : "must not");
+	    flag, def ? "must" : "must not");
     fprintf(fp, "#endif // %s\n", flag);
   }
 }
@@ -1114,7 +1123,7 @@ void ArchDesc::buildMustCloneMap(FILE *fp_hpp, FILE *fp_cpp) {
          || strcmp(idealName,"CmpF") == 0
          || strcmp(idealName,"FastLock") == 0
          || strcmp(idealName,"FastUnlock") == 0
-         || strcmp(idealName,"Bool") == 0
+         || strcmp(idealName,"Bool") == 0 
          || strcmp(idealName,"Binary") == 0 ) {
       // Removed ConI from the must_clone list.  CPUs that cannot use
       // large constants as immediates manifest the constant as an
@@ -1122,8 +1131,8 @@ void ArchDesc::buildMustCloneMap(FILE *fp_hpp, FILE *fp_cpp) {
       // floating up out of loops.
       must_clone = 1;
     }
-    fprintf(fp_cpp, "  %d%s // %s: %d\n", must_clone,
-      (idealIndex != (_last_opcode - 1)) ? "," : " // no trailing comma",
+    fprintf(fp_cpp, "  %d%s // %s: %d\n", must_clone, 
+      (idealIndex != (_last_opcode - 1)) ? "," : " // no trailing comma", 
       idealName, idealIndex);
   }
   // Finish defining table

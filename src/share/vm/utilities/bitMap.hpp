@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Closure for iterating over BitMaps
@@ -40,7 +43,7 @@ class BitMap VALUE_OBJ_CLASS_SPEC {
   friend class BitMap2D;
 
  public:
-  typedef size_t idx_t;         // Type used for bit and word indices.
+  typedef size_t idx_t;		// Type used for bit and word indices.
 
   // Hints for range sizes.
   typedef enum {
@@ -191,7 +194,7 @@ class BitMap VALUE_OBJ_CLASS_SPEC {
   // Clearing
   void clear();
   void clear_large();
-
+  
   // Iteration support
   void iterate(BitMapClosure* blk, idx_t leftIndex, idx_t rightIndex);
   inline void iterate(BitMapClosure* blk) {
@@ -298,7 +301,7 @@ inline void BitMap::par_set_range(idx_t beg, idx_t end, RangeSizeHint hint) {
 // Convenience class wrapping BitMap which provides multiple bits per slot.
 class BitMap2D VALUE_OBJ_CLASS_SPEC {
  public:
-  typedef size_t idx_t;         // Type used for bit and word indices.
+  typedef size_t idx_t;		// Type used for bit and word indices.
 
  private:
   BitMap _map;
@@ -358,7 +361,7 @@ class BitMap2D VALUE_OBJ_CLASS_SPEC {
     verify_bit_within_slot_index(bit_within_slot_index);
     _map.at_put_grow(bit_index(slot_index, bit_within_slot_index), value);
   }
-
+  
   void clear() {
     _map.clear();
   }
@@ -394,3 +397,4 @@ inline void BitMap::par_clear_range(idx_t beg, idx_t end, RangeSizeHint hint) {
     }
   }
 }
+

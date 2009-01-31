@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 
 /*
  * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -20,7 +23,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -289,7 +292,7 @@ static HeuristicsResult update_heuristics(oop o, bool allow_rebias) {
   if (revocation_count <= BiasedLockingBulkRevokeThreshold) {
     revocation_count = k->atomic_incr_biased_lock_revocation_count();
   }
-
+    
   if (revocation_count == BiasedLockingBulkRevokeThreshold) {
     return HR_BULK_REVOKE;
   }
@@ -444,7 +447,7 @@ public:
     , _status_code(BiasedLocking::NOT_BIASED) {}
 
   virtual VMOp_Type type() const { return VMOp_RevokeBias; }
-
+  
   virtual bool doit_prologue() {
     // Verify that there is actual work to do since the callers just
     // give us locked object(s). If we don't find any biased objects
@@ -500,7 +503,7 @@ public:
     , _bulk_rebias(bulk_rebias)
     , _attempt_rebias_of_object(attempt_rebias_of_object) {}
 
-  virtual VMOp_Type type() const { return VMOp_BulkRevokeBias; }
+  virtual VMOp_Type type() const { return VMOp_BulkRevokeBias; }  
   virtual bool doit_prologue()   { return true; }
 
   virtual void doit() {
@@ -570,7 +573,7 @@ BiasedLocking::Condition BiasedLocking::revoke_and_rebias(Handle obj, bool attem
         }
       }
     }
-  }
+  }    
 
   HeuristicsResult heuristics = update_heuristics(obj(), attempt_rebias);
   if (heuristics == HR_NOT_BIASED) {

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -44,7 +47,7 @@ GrowableArray<methodOop>* collected_profiled_methods;
 
 void collect_profiled_methods(methodOop m) {
   methodHandle mh(Thread::current(), m);
-  if ((m->method_data() != NULL) &&
+  if ((m->method_data() != NULL) && 
       (PrintMethodData || CompilerOracle::should_print(mh))) {
     collected_profiled_methods->push(m);
   }
@@ -69,7 +72,7 @@ void print_method_invocation_histogram() {
   tty->print_cr("Histogram Over MethodOop Invocation Counters (cutoff = %d):", MethodHistogramCutoff);
   tty->cr();
   tty->print_cr("____Count_(I+C)____Method________________________Module_________________");
-  unsigned total = 0, int_total = 0, comp_total = 0, static_total = 0, final_total = 0,
+  unsigned total = 0, int_total = 0, comp_total = 0, static_total = 0, final_total = 0, 
       synch_total = 0, nativ_total = 0, acces_total = 0;
   for (int index = 0; index < collected_invoked_methods->length(); index++) {
     methodOop m = collected_invoked_methods->at(index);
@@ -104,7 +107,7 @@ void print_method_profiling_data() {
   collected_profiled_methods = new GrowableArray<methodOop>(1024);
   SystemDictionary::methods_do(collect_profiled_methods);
   collected_profiled_methods->sort(&compare_methods);
-
+  
   int count = collected_profiled_methods->length();
   if (count > 0) {
     for (int index = 0; index < count; index++) {
@@ -133,7 +136,7 @@ AllocStats alloc_stats;
 // General statistics printing (profiling ...)
 
 void print_statistics() {
-
+  
 #ifdef ASSERT
 
   if (CountRuntimeCalls) {
@@ -209,7 +212,7 @@ void print_statistics() {
   }
   if (TimeOopMap) {
     GenerateOopMap::print_time();
-  }
+  }  
   if (ProfilerCheckIntervals) {
     PeriodicTask::print_intervals();
   }
@@ -218,7 +221,7 @@ void print_statistics() {
   }
   if (CountBytecodes || TraceBytecodes || StopInterpreterAt) {
     BytecodeCounter::print();
-  }
+  }  
   if (PrintBytecodePairHistogram) {
     BytecodePairHistogram::print();
   }
@@ -324,7 +327,7 @@ static ExitProc* exit_procs = NULL;
 extern "C" {
   void register_on_exit_function(void (*func)(void)) {
     ExitProc *entry = new ExitProc(func);
-    // Classic vm does not throw an exception in case the allocation failed,
+    // Classic vm does not throw an exception in case the allocation failed, 
     if (entry != NULL) {
       entry->set_next(exit_procs);
       exit_procs = entry;
@@ -342,9 +345,9 @@ void before_exit(JavaThread * thread) {
   static jint volatile _before_exit_status = BEFORE_EXIT_NOT_RUN;
 
   // Note: don't use a Mutex to guard the entire before_exit(), as
-  // JVMTI post_thread_end_event and post_vm_death_event will run native code.
-  // A CAS or OSMutex would work just fine but then we need to manipulate
-  // thread state for Safepoint. Here we use Monitor wait() and notify_all()
+  // JVMTI post_thread_end_event and post_vm_death_event will run native code. 
+  // A CAS or OSMutex would work just fine but then we need to manipulate 
+  // thread state for Safepoint. Here we use Monitor wait() and notify_all() 
   // for synchronization.
   { MutexLocker ml(BeforeExit_lock);
     switch (_before_exit_status) {
@@ -362,7 +365,7 @@ void before_exit(JavaThread * thread) {
     }
   }
 
-  // The only difference between this and Win32's _onexit procs is that
+  // The only difference between this and Win32's _onexit procs is that 
   // this version is invoked before any threads get killed.
   ExitProc* current = exit_procs;
   while (current != NULL) {
@@ -371,7 +374,7 @@ void before_exit(JavaThread * thread) {
     delete current;
     current = next;
   }
-
+ 
   // Hang forever on exit if we're reporting an error.
   if (ShowMessageBoxOnError && is_error_reported()) {
     os::infinite_sleep();
@@ -381,7 +384,7 @@ void before_exit(JavaThread * thread) {
   WatcherThread::stop();
 
   // Print statistics gathered (profiling ...)
-  if (Arguments::has_profile()) {
+  if (Arguments::has_profile()) {    
     FlatProfiler::disengage();
     FlatProfiler::print(10);
   }
@@ -411,7 +414,7 @@ void before_exit(JavaThread * thread) {
 
   if (Arguments::has_alloc_profile()) {
     HandleMark hm;
-    // Do one last collection to enumerate all the objects
+    // Do one last collection to enumerate all the objects 
     // allocated since the last one.
     Universe::heap()->collect(GCCause::_allocation_profiler);
     AllocationProfiler::disengage();
@@ -449,7 +452,7 @@ void before_exit(JavaThread * thread) {
   #undef BEFORE_EXIT_DONE
 }
 
-void vm_exit(int code) {
+void vm_exit(int code) {  
   Thread* thread = ThreadLocalStorage::thread_index() == -1 ? NULL
     : ThreadLocalStorage::get_thread_slow();
   if (thread == NULL) {
@@ -473,7 +476,7 @@ void vm_exit(int code) {
 }
 
 void notify_vm_shutdown() {
-  // For now, just a dtrace probe.
+  // For now, just a dtrace probe.  
   HS_DTRACE_PROBE(hotspot, vm__shutdown);
 }
 
@@ -514,7 +517,7 @@ void vm_abort() {
 }
 
 void vm_notify_during_shutdown(const char* error, const char* message) {
-  if (error != NULL) {
+  if (error != NULL) { 
     tty->print_cr("Error occurred during initialization of VM");
     tty->print("%s", error);
     if (message != NULL) {
@@ -568,7 +571,7 @@ int  JDK_Version::_jdk_version = 0;
 
 void JDK_Version::initialize() {
   void *lib_handle = os::native_java_library();
-  jdk_version_info_fn_t func =
+  jdk_version_info_fn_t func = 
     CAST_TO_FN_PTR(jdk_version_info_fn_t, hpi::dll_lookup(lib_handle, "JDK_GetVersionInfo0"));
 
   if (func == NULL) {

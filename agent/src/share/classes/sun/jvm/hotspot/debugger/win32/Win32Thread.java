@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.win32;
@@ -123,7 +123,7 @@ class Win32Thread implements ThreadProxy {
         throw new DebuggerException(e);
       }
     }
-
+    
     return id;
   }
 }

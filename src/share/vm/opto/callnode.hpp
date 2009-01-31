@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Portions of code courtesy of Clifford Click
@@ -72,7 +75,7 @@ public:
   virtual Node *match( const ProjNode *proj, const Matcher *m );
   virtual uint ideal_reg() const { return 0; }
 #ifndef PRODUCT
-  virtual void  dump_spec(outputStream *st) const;
+  virtual void  dump_spec() const;
 #endif
 };
 
@@ -96,7 +99,7 @@ public:
   virtual bool  is_CFG() const { return (_con == TypeFunc::Control); }
   virtual uint ideal_reg() const;
 #ifndef PRODUCT
-  virtual void dump_spec(outputStream *st) const;
+  virtual void dump_spec() const;
 #endif
 };
 
@@ -263,12 +266,9 @@ public:
   JVMState* clone_shallow(Compile* C) const; // retains uncloned caller
 
 #ifndef PRODUCT
-  void      format(PhaseRegAlloc *regalloc, const Node *n, outputStream* st) const;
-  void      dump_spec(outputStream *st) const;
-  void      dump_on(outputStream* st) const;
-  void      dump() const {
-    dump_on(tty);
-  }
+  void      format(PhaseRegAlloc *regalloc, const Node *n) const;
+  void      dump_spec() const;
+  void      dump() const;
 #endif
 };
 
@@ -291,7 +291,7 @@ public:
   {
     init_class_id(Class_SafePoint);
   }
-
+  
   OopMap*         _oop_map;   // Array of OopMap info (8-bit char) for GC
   JVMState* const _jvms;      // Pointer to list of JVM State objects
   const TypePtr*  _adr_type;  // What type of memory does this node produce?
@@ -393,7 +393,7 @@ public:
   static  bool           needs_polling_address_input();
 
 #ifndef PRODUCT
-  virtual void              dump_spec(outputStream *st) const;
+  virtual void              dump_spec() const;
 #endif
 };
 
@@ -445,7 +445,7 @@ public:
 
 #ifndef PRODUCT
   virtual void        dump_req()  const;
-  virtual void        dump_spec(outputStream *st) const;
+  virtual void        dump_spec() const;
 #endif
 };
 
@@ -476,7 +476,7 @@ public:
   bool  is_optimized_virtual() const      { return _optimized_virtual; }
 
 #ifndef PRODUCT
-  virtual void  dump_spec(outputStream *st) const;
+  virtual void  dump_spec() const;
 #endif
 };
 
@@ -498,7 +498,7 @@ public:
     init_class_id(Class_CallStaticJava);
     // This node calls a runtime stub, which often has narrow memory effects.
     _adr_type = adr_type;
-  }
+  }  
   const char *_name;            // Runtime wrapper name
 
   // If this is an uncommon trap, return the request code, else zero.
@@ -507,7 +507,7 @@ public:
 
   virtual int         Opcode() const;
 #ifndef PRODUCT
-  virtual void        dump_spec(outputStream *st) const;
+  virtual void        dump_spec() const;
 #endif
 };
 
@@ -524,7 +524,7 @@ public:
   int _vtable_index;
   virtual int   Opcode() const;
 #ifndef PRODUCT
-  virtual void  dump_spec(outputStream *st) const;
+  virtual void  dump_spec() const;
 #endif
 };
 
@@ -547,7 +547,7 @@ public:
   virtual void  calling_convention( BasicType* sig_bt, VMRegPair *parm_regs, uint argcnt ) const;
 
 #ifndef PRODUCT
-  virtual void  dump_spec(outputStream *st) const;
+  virtual void  dump_spec() const;
 #endif
 };
 
@@ -565,7 +565,7 @@ public:
   virtual int   Opcode() const;
   virtual bool        guaranteed_safepoint()  { return false; }
 #ifndef PRODUCT
-  virtual void  dump_spec(outputStream *st) const;
+  virtual void  dump_spec() const;
 #endif
 };
 
@@ -592,7 +592,7 @@ public:
 //  the _is_io_use flag in the projection.)  This is needed when expanding the node in
 //  order to differentiate the uses of the projection on the normal control path from
 //  those on the exception return path.
-//
+//  
 class AllocateNode : public CallNode {
 public:
   enum {
@@ -602,6 +602,7 @@ public:
     AllocSize   = TypeFunc::Parms,    // size (in bytes) of the new object
     KlassNode,                        // type (maybe dynamic) of the obj.
     InitialTest,                      // slow-path test (may be constant)
+    ALengthRaw,                       // possibly negative array length
     ALength,                          // array length (or TOP if none)
     ParmLimit
   };
@@ -611,7 +612,8 @@ public:
     fields[AllocSize]   = TypeInt::POS;
     fields[KlassNode]   = TypeInstPtr::NOTNULL;
     fields[InitialTest] = TypeInt::BOOL;
-    fields[ALength]     = TypeInt::INT;  // length (can be a bad length)
+    fields[ALengthRaw]  = TypeInt::INT;  // length
+    fields[ALength]     = TypeInt::POS;  // length >= 0
 
     const TypeTuple *domain = TypeTuple::make(ParmLimit, fields);
 
@@ -679,12 +681,13 @@ class AllocateArrayNode : public AllocateNode {
 public:
   AllocateArrayNode(Compile* C, const TypeFunc *atype, Node *ctrl, Node *mem, Node *abio,
                     Node* size, Node* klass_node, Node* initial_test,
-                    Node* count_val
+                    Node* raw_count_val, Node* count_val
                     )
     : AllocateNode(C, atype, ctrl, mem, abio, size, klass_node,
                    initial_test)
   {
     init_class_id(Class_AllocateArray);
+    set_req(AllocateNode::ALengthRaw, raw_count_val);
     set_req(AllocateNode::ALength,        count_val);
   }
   virtual int Opcode() const;

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Forward decl.
@@ -72,12 +75,12 @@ public:
     }
   }
 
-  // Undo the last allocation in the buffer, which is required to be of the
+  // Undo the last allocation in the buffer, which is required to be of the 
   // "obj" of the given "word_sz".
   void undo_allocation(HeapWord* obj, size_t word_sz) {
     assert(_top - word_sz >= _bottom
-           && _top - word_sz == obj,
-           "Bad undo_allocation");
+	   && _top - word_sz == obj,
+	   "Bad undo_allocation");
     _top = _top - word_sz;
   }
 
@@ -152,7 +155,7 @@ class PLABStats VALUE_OBJ_CLASS_SPEC {
   size_t _desired_plab_sz;// output of filter (below), suitably trimmed and quantized
   AdaptiveWeightedAverage
          _filter;         // integrator with decay
-
+  
  public:
   PLABStats(size_t desired_plab_sz_, unsigned wt) :
     _allocated(0),

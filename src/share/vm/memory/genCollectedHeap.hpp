@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class SubTasksDone;
@@ -61,13 +64,13 @@ public:
   // The generational collector policy.
   GenCollectorPolicy* _gen_policy;
 
-  // If a generation would bail out of an incremental collection,
-  // it sets this flag.  If the flag is set, satisfy_failed_allocation
+  // If a generation would bail out of an incremental collection, 
+  // it sets this flag.  If the flag is set, satisfy_failed_allocation 
   // will attempt allocating in all generations before doing a full GC.
   bool _incremental_collection_will_fail;
   bool _last_incremental_collection_failed;
 
-  // In support of ExplicitGCInvokesConcurrent functionality
+  // In support of ExplicitGCInvokesConcurrent functionality 
   unsigned int _full_collections_completed;
 
   // Data structure for claiming the (potentially) parallel tasks in
@@ -97,7 +100,7 @@ protected:
                      bool   clear_all_soft_refs,
                      size_t size,
                      bool   is_tlab,
-                     int    max_level);
+		     int    max_level);
 
   // Callback from VM_GenCollectForAllocation operation.
   // This function does everything necessary/possible to satisfy an
@@ -123,7 +126,7 @@ public:
   char* allocate(size_t alignment, PermanentGenerationSpec* perm_gen_spec,
                  size_t* _total_reserved, int* _n_covered_regions,
                  ReservedSpace* heap_rs);
-
+  
   // Does operations required after initialization has been done.
   void post_initialize();
 
@@ -138,7 +141,7 @@ public:
   GenCollectorPolicy* gen_policy() const { return _gen_policy; }
 
   // Adaptive size policy
-  virtual AdaptiveSizePolicy* size_policy() {
+  virtual AdaptiveSizePolicy* size_policy() { 
     return gen_policy()->size_policy();
   }
 
@@ -154,7 +157,7 @@ public:
   HeapWord* mem_allocate(size_t size,
                          bool   is_large_noref,
                          bool   is_tlab,
-                         bool*  gc_overhead_limit_was_exceeded);
+			 bool*  gc_overhead_limit_was_exceeded);
 
   // We may support a shared contiguous allocation area, if the youngest
   // generation does.
@@ -223,13 +226,13 @@ public:
   // possible to find its size, and thus to progress forward to the next
   // block.  (Blocks may be of different sizes.)  Thus, blocks may
   // represent Java objects, or they might be free blocks in a
-  // free-list-based heap (or subheap), as long as the two kinds are
+  // free-list-based heap (or subheap), as long as the two kinds are 
   // distinguishable and the size of each is determinable.
 
   // Returns the address of the start of the "block" that contains the
   // address "addr".  We say "blocks" instead of "object" since some heaps
   // may not pack objects densely; a chunk may either be an object or a
-  // non-object.
+  // non-object. 
   virtual HeapWord* block_start(const void* addr) const;
 
   // Requires "addr" to be the start of a chunk, and returns its size.
@@ -251,7 +254,7 @@ public:
   virtual size_t unsafe_max_tlab_alloc(Thread* thr) const;
   virtual HeapWord* allocate_new_tlab(size_t size);
 
-  // The "requestor" generation is performing some garbage collection
+  // The "requestor" generation is performing some garbage collection 
   // action for which it would be useful to have scratch space.  The
   // requestor promises to allocate no more than "max_alloc_words" in any
   // older generation (via promotion say.)   Any blocks of space that can
@@ -337,7 +340,7 @@ public:
   // maximal committed limit that they can reach, without a garbage
   // collection.
   virtual bool is_maximal_no_gc() const;
-
+  
   // Return the generation before "gen", or else NULL.
   Generation* prev_gen(Generation* gen) const {
     int l = gen->level();
@@ -369,7 +372,7 @@ public:
   static GenCollectedHeap* heap();
 
   void set_par_threads(int t);
-
+  
 
   // Invoke the "do_oop" method of one of the closures "not_older_gens"
   // or "older_gens" on root locations for the generation at
@@ -389,16 +392,16 @@ public:
   // "SO_Symbols_and_Strings" applies the closure to all entries in
   // SymbolsTable and StringTable.
   void gen_process_strong_roots(int level, bool younger_gens_as_roots,
-                                bool collecting_perm_gen,
-                                SharedHeap::ScanningOption so,
-                                OopsInGenClosure* older_gens,
-                                OopsInGenClosure* not_older_gens);
+				bool collecting_perm_gen,
+				SharedHeap::ScanningOption so,
+				OopsInGenClosure* older_gens,
+				OopsInGenClosure* not_older_gens);
 
   // Apply "blk" to all the weak roots of the system.  These include
   // JNI weak roots, the code cache, system dictionary, symbol table,
-  // string table, and referents of reachable weak refs.
+  // string table, and referents of reachable weak refs. 
   void gen_process_weak_roots(OopClosure* root_closure,
-                              OopClosure* non_root_closure);
+			      OopClosure* non_root_closure);
 
   // Set the saved marks of generations, if that makes sense.
   // In particular, if any generation might iterate over the oops
@@ -410,10 +413,10 @@ public:
   // "level" (including the permanent generation.)  The "cur" closure is
   // applied to references in the generation at "level", and the "older"
   // closure to older (and permanent) generations.
-#define GCH_SINCE_SAVE_MARKS_ITERATE_DECL(OopClosureType, nv_suffix)    \
-  void oop_since_save_marks_iterate(int level,                          \
-                                    OopClosureType* cur,                \
-                                    OopClosureType* older);
+#define GCH_SINCE_SAVE_MARKS_ITERATE_DECL(OopClosureType, nv_suffix)	\
+  void oop_since_save_marks_iterate(int level,				\
+			            OopClosureType* cur,		\
+				    OopClosureType* older);
 
   ALL_SINCE_SAVE_MARKS_CLOSURES(GCH_SINCE_SAVE_MARKS_ITERATE_DECL)
 
@@ -424,7 +427,7 @@ public:
   // call to "save_marks".
   bool no_allocs_since_save_marks(int level);
 
-  // If a generation bails out of an incremental collection,
+  // If a generation bails out of an incremental collection, 
   // it sets this flag.
   bool incremental_collection_will_fail() {
     return _incremental_collection_will_fail;
@@ -451,9 +454,9 @@ public:
   // Otherwise, try expand-and-allocate for obj in each generation starting at
   // gen; return the new location of obj if successful.  Otherwise, return NULL.
   oop handle_failed_promotion(Generation* gen,
-                              oop obj,
-                              size_t obj_size,
-                              oop* ref);
+			      oop obj,
+			      size_t obj_size,
+			      oop* ref);
 
 private:
   // Accessor for memory state verification support
@@ -485,7 +488,7 @@ private:
 protected:
   virtual void gc_prologue(bool full);
   virtual void gc_epilogue(bool full);
-
+  
 public:
   virtual void preload_and_dump(TRAPS) KERNEL_RETURN;
 };

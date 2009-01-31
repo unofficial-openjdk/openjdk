@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.runtime;
@@ -33,7 +33,7 @@ import sun.jvm.hotspot.utilities.*;
     only the callee-saved ones. </P>
 
     <P> Use: </P>
-
+   
     <PRE>
     for(StackFrameStream fst = new StackFrameStream(thread); !fst.isDone(); fst.next()) {
       ...
@@ -44,7 +44,7 @@ import sun.jvm.hotspot.utilities.*;
 public class StackFrameStream {
   private Frame       fr;
   private RegisterMap regMap;
-  private boolean     isDone;
+  private boolean     isDone;  
 
   /** Equivalent to StackFrameStream(thread, true) */
   public StackFrameStream(JavaThread thread) {
@@ -54,9 +54,9 @@ public class StackFrameStream {
   public StackFrameStream(JavaThread thread, boolean update) {
     if (!VM.getVM().isDebugging()) {
       if (Assert.ASSERTS_ENABLED) {
-        Assert.that(thread.hasLastJavaFrame(), "sanity check");
+        Assert.that(thread.hasLastJavaFrame(), "sanity check");  
       }
-      fr = thread.getLastFrame();
+      fr = thread.getLastFrame(); 
       regMap = thread.newRegisterMap(update);
       isDone = false;
     } else {

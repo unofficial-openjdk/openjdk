@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class Compile;
@@ -84,7 +87,7 @@ public:
 
   Node  *sentinel() { return _sentinel; }
 
-#ifndef PRODUCT
+#ifndef PRODUCT  
   Node  *find_index(uint idx);  // For debugging
   void   dump();                // For debugging, dump statistics
 #endif
@@ -104,7 +107,7 @@ public:
 //-----------------------------------------------------------------------------
 // Map dense integer indices to Types.  Uses classic doubling-array trick.
 // Abstractly provides an infinite array of Type*'s, initialized to NULL.
-// Note that the constructor just zeros things, and since I use Arena
+// Note that the constructor just zeros things, and since I use Arena 
 // allocation I do not need a destructor to reclaim storage.
 // Despite the general name, this class is customized for use by PhaseTransform.
 class Type_Array : public StackObj {
@@ -143,7 +146,7 @@ public:
 
 //------------------------------PhaseTransform---------------------------------
 // Phases that analyze, then transform.  Constructing the Phase object does any
-// global or slow analysis.  The results are cached later for a fast
+// global or slow analysis.  The results are cached later for a fast 
 // transformation pass.  When the Phase object is deleted the cached analysis
 // results are deleted.
 class PhaseTransform : public Phase {
@@ -237,10 +240,10 @@ public:
   ConNode* zerocon(BasicType bt);
 
   // Return a node which computes the same function as this node, but
-  // in a faster or cheaper fashion.
+  // in a faster or cheaper fashion.  
   virtual Node *transform( Node *n ) = 0;
 
-  // Return whether two Nodes are equivalent.
+  // Return whether two Nodes are equivalent.  
   // Must not be recursive, since the recursive version is built from this.
   // For pessimistic optimizations this is simply pointer equivalence.
   bool eqv(const Node* n1, const Node* n2) const { return n1 == n2; }
@@ -371,7 +374,7 @@ public:
   PhaseGVN( PhaseGVN *gvn, const char *dummy ) : PhaseValues( gvn, dummy ) {}
 
   // Return a node which computes the same function as this node, but
-  // in a faster or cheaper fashion.
+  // in a faster or cheaper fashion.  
   Node  *transform( Node *n );
   Node  *transform_no_reclaim( Node *n );
 
@@ -403,11 +406,11 @@ public:
   PhaseIterGVN( PhaseGVN *gvn ); // Used after Parser
   PhaseIterGVN( PhaseIterGVN *igvn, const char *dummy ); // Used after +VerifyOpto
 
-  virtual PhaseIterGVN *is_IterGVN() { return this; }
+  virtual PhaseIterGVN *is_IterGVN() { return this; } 
 
-  Unique_Node_List _worklist;       // Iterative worklist
+  Unique_Node_List _worklist;       // Iterative worklist 
 
-  // Given def-use info and an initial worklist, apply Node::Ideal,
+  // Given def-use info and an initial worklist, apply Node::Ideal, 
   // Node::Value, Node::Identity, hash-based value numbering, Node::Ideal_DU
   // and dominator info to a fixed point.
   void optimize();
@@ -514,3 +517,4 @@ public:
   static void print_statistics();
 #endif
 };
+

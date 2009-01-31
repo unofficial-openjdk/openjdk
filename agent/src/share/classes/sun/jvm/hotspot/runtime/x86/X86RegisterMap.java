@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.runtime.x86;
@@ -43,7 +43,7 @@ public class X86RegisterMap extends RegisterMap {
     X86RegisterMap retval = new X86RegisterMap(this);
     return retval;
   }
-
+  
   // no PD state to clear or copy:
   protected void clearPD() {}
   protected void initializePD() {}

@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.ui;
@@ -42,7 +42,7 @@ public class SAEditorPane extends JEditorPane {
     setContentType("text/html");
   }
 
-  /**
+  /** 
       Override getSelectedText so that <br> elements produce \n when
       text is copied out of the window.
    */
@@ -50,14 +50,14 @@ public class SAEditorPane extends JEditorPane {
   public String getSelectedText() {
     StringBuffer result = new StringBuffer();
     Document doc = getDocument();
-
+    
     int start = getSelectionStart();
     int end = getSelectionEnd();
-
+    
     try {
       // Create an iterator using the root element
       ElementIterator it = new ElementIterator(doc.getDefaultRootElement());
-
+      
       // Iterate all content elements (which are leaves)
       Element e;
       String separator = System.getProperty("line.separator");
@@ -65,7 +65,7 @@ public class SAEditorPane extends JEditorPane {
         if (e.isLeaf()) {
           int rangeStart = e.getStartOffset();
           int rangeEnd = e.getEndOffset();
-
+          
           if (rangeEnd < start || rangeStart > end) continue;
           if (end < rangeEnd) rangeEnd = end;
           if (start > rangeStart) rangeStart = start;
@@ -73,7 +73,7 @@ public class SAEditorPane extends JEditorPane {
             String line = getText(rangeStart, rangeEnd-rangeStart);
             if (e.getName().equals("br"))
               result.append(separator);
-            else
+            else 
               result.append(line);
           } catch (BadLocationException ex) {
           }

@@ -35,55 +35,43 @@
 #
 # Please refer to ./makefiles/sa.make
 
-# If we haven't set an ARCH yet use x86
-# create.bat and build.bat will set it, if used.
-!ifndef ARCH
-ARCH=x86
-!endif
 
-
-# Must be one of these values (if value comes in from env, can't trust it)
-!if "$(ARCH)" != "x86"
-!if "$(ARCH)" != "ia64"
-ARCH=x86
-!endif
-!endif
-
-# At this point we should be certain that ARCH has a definition
-# now determine the BUILDARCH
-#
-
-# the default BUILDARCH
-BUILDARCH=i486
 
 # Allow control workspace to force Itanium or AMD64 builds with LP64
 ARCH_TEXT=
 !ifdef LP64
 !if "$(LP64)" == "1"
 ARCH_TEXT=64-Bit
-!if "$(ARCH)" == "x86"
-BUILDARCH=amd64
+!if "$(ARCH)" == "amd64"
+ARCH=amd64
 !else
-BUILDARCH=ia64
+ARCH=ia64
 !endif
+!else
 !endif
 !endif
 
-!if "$(BUILDARCH)" != "amd64"
-!if "$(BUILDARCH)" != "ia64"
+# If we haven't set an ARCH yet use i486
+# create.bat and build.bat will set it, if used.
+!ifndef ARCH
+ARCH=i486
+!endif
+
+!if "$(ARCH)" != "amd64"
+!if "$(ARCH)" != "ia64"
 !ifndef CC_INTERP
 FORCE_TIERED=1
 !endif
 !endif
 !endif
 
-!if "$(BUILDARCH)" == "amd64"
-Platform_arch=x86
-Platform_arch_model=x86_64
+# Must be one of these values (if value comes in from env, can't trust it)
+!if "$(ARCH)" != "amd64"
+!if "$(ARCH)" != "ia64"
+!if "$(ARCH)" != "i486"
+ARCH=i486
 !endif
-!if "$(BUILDARCH)" == "i486"
-Platform_arch=x86
-Platform_arch_model=x86_32
+!endif
 !endif
 
 # Supply these from the command line or the environment
@@ -92,7 +80,7 @@ Variant=
 #  It doesn't make sense to default this one
 WorkSpace=
 
-variantDir = windows_$(BUILDARCH)_$(Variant)
+variantDir = windows_$(ARCH)_$(Variant)
 
 realVariant=$(Variant)
 VARIANT_TEXT=Core
@@ -117,16 +105,6 @@ VARIANT_TEXT=Kernel
 # They are overridden by RE during the control builds.
 #
 !include "$(WorkSpace)/make/hotspot_version"
-
-# Define HOTSPOT_VM_DISTRO based on settings in build/hotspot_distro
-# or build/closed/hotspot_distro.
-!ifndef HOTSPOT_VM_DISTRO
-!if exists($(WorkSpace)\build\closed)
-!include $(WorkSpace)\build\closed\hotspot_distro
-!else
-!include $(WorkSpace)\build\hotspot_distro
-!endif
-!endif
 
 # Following the Web Start / Plugin model here....
 # We can have update versions like "01a", but Windows requires
@@ -173,6 +151,10 @@ HOTSPOT_RELEASE_VERSION=$(HS_MAJOR_VER).$(HS_MINOR_VER)-b$(HS_BUILD_NUMBER)
 HS_BUILD_VER=$(HOTSPOT_RELEASE_VERSION)
 !else
 HS_BUILD_VER=$(HOTSPOT_RELEASE_VERSION)-$(HOTSPOT_BUILD_VERSION)
+!endif
+
+!if "$(SA_BUILD_VERSION)" == ""
+SA_BUILD_VERSION=$(HS_BUILD_VER)
 !endif
 
 # End VERSIONINFO parameters
@@ -235,11 +217,6 @@ checkSA::
 defaultTarget: product
 
 # The product or release build is an optimized build, and is the default
-
-# note that since all the build targets depend on local.make that BUILDARCH
-# and Platform_arch and Platform_arch_model will get set in local.make
-# and there is no need to pass them thru here on the command line
-#
 product release optimized: checks $(variantDir) $(variantDir)\local.make sanity
 	cd $(variantDir)
 	nmake -nologo -f $(WorkSpace)\build\windows\makefiles\top.make BUILD_FLAVOR=product ARCH=$(ARCH)
@@ -279,20 +256,16 @@ $(variantDir)\local.make: checks
 	@ echo HS_DOTVER=$(HS_DOTVER)				>> $@
 	@ echo HS_COMPANY=$(COMPANY_NAME)			>> $@
 	@ echo HS_FILEDESC=$(HS_FILEDESC)			>> $@
-	@ echo HOTSPOT_VM_DISTRO=$(HOTSPOT_VM_DISTRO)		>> $@
 	@ echo HS_COPYRIGHT=$(HOTSPOT_VM_COPYRIGHT)		>> $@
 	@ echo HS_NAME=$(PRODUCT_NAME) $(JDK_MKTG_VERSION)	>> $@
 	@ echo HS_BUILD_VER=$(HS_BUILD_VER)			>> $@
 	@ echo BUILD_WIN_SA=$(BUILD_WIN_SA)    			>> $@
-	@ echo SA_BUILD_VERSION=$(HS_BUILD_VER)                 >> $@
+	@ echo SA_BUILD_VERSION=$(SA_BUILD_VERSION)             >> $@
 	@ echo SA_INCLUDE=$(SA_INCLUDE)      			>> $@
 	@ echo SA_LIB=$(SA_LIB)         			>> $@
 	@ echo JDK_VER=$(JDK_VER)				>> $@
 	@ echo JDK_DOTVER=$(JDK_DOTVER)				>> $@
 	@ echo JRE_RELEASE_VER=$(JRE_RELEASE_VER)		>> $@
-	@ echo BUILDARCH=$(BUILDARCH)         			>> $@
-	@ echo Platform_arch=$(Platform_arch)        		>> $@
-	@ echo Platform_arch_model=$(Platform_arch_model)	>> $@
 	@ sh $(WorkSpace)/build/windows/get_msc_ver.sh		>> $@
 
 checks: checkVariant checkWorkSpace checkSA

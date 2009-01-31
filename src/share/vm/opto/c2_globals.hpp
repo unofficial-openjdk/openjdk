@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //
@@ -142,14 +145,10 @@
           "of rounds of unroll,optimize,..")                                \
                                                                             \
   develop(intx, UnrollLimitForProfileCheck, 1,                              \
-          "Don't use profile_trip_cnt() to restrict unrolling until "       \
-          "unrolling would push the number of unrolled iterations above "   \
+	  "Don't use profile_trip_cnt() to restrict unrolling until "       \
+	  "unrolling would push the number of unrolled iterations above "   \
           "UnrollLimitForProfileCheck. A higher value allows more "         \
           "unrolling. Zero acts as a very large value." )                   \
-                                                                            \
-  product(intx, MultiArrayExpandLimit, 6,                                   \
-          "Maximum number of individual allocations in an inline-expanded " \
-          "multianewarray instruction")                                     \
                                                                             \
   notproduct(bool, TraceProfileTripCount, false,                            \
           "Trace profile loop trip count information")                      \
@@ -185,7 +184,7 @@
   notproduct(bool, VerifyGraphEdges , false,                                \
           "Verify Bi-directional Edges")                                    \
                                                                             \
-  notproduct(bool, VerifyDUIterators, true,                                 \
+  notproduct(bool, VerifyDUIterators, false,                                \
           "Verify the safety of all iterations of Bi-directional Edges")    \
                                                                             \
   notproduct(bool, VerifyHashTableKeys, true,                               \
@@ -248,20 +247,6 @@
                                                                             \
   develop(bool, SparcV9RegsHiBitsZero, true,                                \
           "Assume Sparc V9 I&L registers on V8+ systems are zero-extended") \
-                                                                            \
-  develop(intx, PrintIdealGraphLevel, 0,                                    \
-          "Print ideal graph to XML file / network interface. "             \
-          "By default attempts to connect to the visualizer on a socket.")  \
-                                                                            \
-  develop(intx, PrintIdealGraphPort, 4444,                                  \
-          "Ideal graph printer to network port")                            \
-                                                                            \
-  develop(ccstr, PrintIdealGraphAddress, "127.0.0.1",                       \
-          "IP address to connect to visualizer")                            \
-                                                                            \
-  develop(ccstr, PrintIdealGraphFile, NULL,                                 \
-          "File to dump ideal graph to.  If set overrides the "             \
-          "use of the network")                                             \
                                                                             \
   product(bool, UseOldInlining, true,                                       \
           "Enable the 1.3 inlining strategy")                               \
@@ -376,7 +361,8 @@
   product(bool, EliminateAllocations, true,                                 \
           "Use escape analysis to eliminate allocations")                   \
                                                                             \
-  product(intx, MaxLabelRootDepth, 1100,                                    \
+  product(intx, MaxLabelRootDepth, 1100, 				    \
           "Maximum times call Label_Root to prevent stack overflow")        \
 
 C2_FLAGS(DECLARE_DEVELOPER_FLAG, DECLARE_PD_DEVELOPER_FLAG, DECLARE_PRODUCT_FLAG, DECLARE_PD_PRODUCT_FLAG, DECLARE_DIAGNOSTIC_FLAG, DECLARE_NOTPRODUCT_FLAG)
+

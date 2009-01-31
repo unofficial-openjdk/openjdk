@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.code;
@@ -54,12 +54,12 @@ public class CompressedStream {
   public static final int LogBitsPerByte = 3;
   public static final int BitsPerByte = 1 << 3;
 
-  // Constants for UNSIGNED5 coding of Pack200
+  // Constants for UNSIGNED5 coding of Pack200 
   public static final int lg_H = 6;
   public static final int H = 1<<lg_H;  // number of high codes (64)
   public static final int L = (1<<BitsPerByte) - H; // number of low codes (192)
   public static final int MAX_i = 4;      // bytes are numbered in (0..4)
-
+ 
   // Positioning
   public int getPosition() {
     return position;
@@ -86,6 +86,6 @@ public class CompressedStream {
     i = (i & 0x33333333) << 3 | (i >>> 2) & 0x33333333;
     i = (i & 0x0f0f0f0f) << 4 | (i >>> 4) & 0x0f0f0f0f;
     i = (i << 24) | ((i & 0xff00) << 8) | ((i >>> 8) & 0xff00) | (i >>> 24);
-    return i;
+    return i; 
   }
 }

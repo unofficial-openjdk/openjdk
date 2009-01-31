@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -28,14 +31,14 @@
 
 ///////////////////////////////////////////////////////////////
 //
-// class JvmtiFramePop
+// class JvmtiFramePop 
 //
 
 #ifndef PRODUCT
 void JvmtiFramePop::print() {
   tty->print_cr("_frame_number=%d", _frame_number);
 }
-#endif
+#endif  
 
 
 ///////////////////////////////////////////////////////////////
@@ -43,7 +46,7 @@ void JvmtiFramePop::print() {
 // class JvmtiFramePops - private methods
 //
 
-void
+void 
 JvmtiFramePops::set(JvmtiFramePop& fp) {
   if (_pops->find(fp.frame_number()) < 0) {
     _pops->append(fp.frame_number());
@@ -51,15 +54,15 @@ JvmtiFramePops::set(JvmtiFramePop& fp) {
 }
 
 
-void
+void 
 JvmtiFramePops::clear(JvmtiFramePop& fp) {
   assert(_pops->length() > 0, "No more frame pops");
 
   _pops->remove(fp.frame_number());
 }
 
-
-int
+  
+int 
 JvmtiFramePops::clear_to(JvmtiFramePop& fp) {
   int cleared = 0;
   int index = 0;
@@ -126,7 +129,7 @@ JvmtiEnvThreadState::JvmtiEnvThreadState(JavaThread *thread, JvmtiEnvBase *env) 
   _agent_thread_local_storage_data = NULL;
 }
 
-JvmtiEnvThreadState::~JvmtiEnvThreadState()   {
+JvmtiEnvThreadState::~JvmtiEnvThreadState()   { 
   delete _frame_pops;
   _frame_pops = NULL;
 }
@@ -137,7 +140,7 @@ JvmtiEnvThreadState::~JvmtiEnvThreadState()   {
 // - instruction rewrites
 // - breakpoint followed by single step
 // - single step at a breakpoint
-void JvmtiEnvThreadState::compare_and_set_current_location(methodOop new_method,
+void JvmtiEnvThreadState::compare_and_set_current_location(methodOop new_method, 
                                                            address new_location, jvmtiEvent event) {
 
   int new_bci = new_location - new_method->code_base();
@@ -160,7 +163,7 @@ void JvmtiEnvThreadState::compare_and_set_current_location(methodOop new_method,
       // If step is pending for popframe then it may not be
       // a repeat step. The new_bci and method_id is same as current_bci
       // and current method_id after pop and step for recursive calls.
-      // This has been handled by clearing the location
+      // This has been handled by clearing the location 
       _single_stepping_posted = true;
       break;
     default:
@@ -195,7 +198,7 @@ bool JvmtiEnvThreadState::has_frame_pops() {
   return _frame_pops == NULL? false : (_frame_pops->length() > 0);
 }
 
-void JvmtiEnvThreadState::set_frame_pop(int frame_number) {
+void JvmtiEnvThreadState::set_frame_pop(int frame_number) { 
 #ifdef ASSERT
   uint32_t debug_bits = 0;
 #endif
@@ -206,7 +209,7 @@ void JvmtiEnvThreadState::set_frame_pop(int frame_number) {
 }
 
 
-void JvmtiEnvThreadState::clear_frame_pop(int frame_number) {
+void JvmtiEnvThreadState::clear_frame_pop(int frame_number) { 
 #ifdef ASSERT
   uint32_t debug_bits = 0;
 #endif
@@ -217,7 +220,7 @@ void JvmtiEnvThreadState::clear_frame_pop(int frame_number) {
 }
 
 
-void JvmtiEnvThreadState::clear_to_frame_pop(int frame_number)  {
+void JvmtiEnvThreadState::clear_to_frame_pop(int frame_number)  { 
 #ifdef ASSERT
   uint32_t debug_bits = 0;
 #endif
@@ -277,7 +280,7 @@ void JvmtiEnvThreadState::reset_current_location(jvmtiEvent event_type, bool ena
   // 2) single-step to a bytecode that will be transformed to a fast version
   // We skip to avoid posting the duplicate single-stepping event.
 
-  // If single-stepping is disabled, clear current location so that
+  // If single-stepping is disabled, clear current location so that 
   // single-stepping to the same method and bcp at a later time will be
   // detected if single-stepping is enabled at that time (see 4388912).
 
@@ -300,7 +303,7 @@ void JvmtiEnvThreadState::reset_current_location(jvmtiEvent event_type, bool ena
       jmethodID method_id;
       int bci;
       // The java thread stack may not be walkable for a running thread
-      // so get current location at safepoint.
+      // so get current location at safepoint. 
       VM_GetCurrentLocation op(_thread);
       VMThread::execute(&op);
       op.get_current_location(&method_id, &bci);
@@ -311,3 +314,4 @@ void JvmtiEnvThreadState::reset_current_location(jvmtiEvent event_type, bool ena
     clear_current_location();
   }
 }
+

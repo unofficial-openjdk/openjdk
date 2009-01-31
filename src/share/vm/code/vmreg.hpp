@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 //------------------------------VMReg------------------------------------------
@@ -33,7 +36,7 @@
 class VMRegImpl;
 typedef VMRegImpl* VMReg;
 
-class VMRegImpl {
+class VMRegImpl { 
 // friend class OopMap;
 friend class VMStructs;
 friend class OptoReg;
@@ -73,7 +76,7 @@ public:
   // A concrete register is a value that returns true for is_reg() and is
   // also a register you could use in the assembler. On machines with
   // 64bit registers only one half of the VMReg (and OptoReg) is considered
-  // concrete.
+  // concrete. 
   bool is_concrete();
 
   // VMRegs are 4 bytes wide on all platforms
@@ -112,19 +115,19 @@ public:
   }
 
   // Convert register numbers to stack slots and vice versa
-  static VMReg stack2reg( int idx ) {
+  static VMReg stack2reg( int idx ) { 
     return (VMReg) (intptr_t) (stack0->value() + idx);
   }
 
   uintptr_t reg2stack() {
     assert( is_stack(), "Not a stack-based register" );
-    return value() - stack0->value();
+    return value() - stack0->value(); 
   }
 
   static void set_regName();
 
 #include "incls/_vmreg_pd.hpp.incl"
-
+  
 };
 
 //---------------------------VMRegPair-------------------------------------------

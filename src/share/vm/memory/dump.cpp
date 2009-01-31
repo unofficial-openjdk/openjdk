@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -113,7 +116,7 @@ static bool mark_object(oop obj) {
     obj->set_mark(markOopDesc::prototype()->set_marked());
     return true;
   }
-
+  
   return false;
 }
 
@@ -456,7 +459,7 @@ public:
         mark_and_move_for_policy(OP_favor_startup, k->klass_part()->name(), _move_ro);
         do_object(k);
       }
-
+      
       objArrayOop methods = ik->methods();
       for(i = 0; i < methods->length(); i++) {
         methodOop m = methodOop(methods->obj_at(i));
@@ -475,7 +478,7 @@ public:
 
       mark_and_move_for_policy(OP_favor_startup, ik->transitive_interfaces(), _move_ro);
       mark_and_move_for_policy(OP_favor_startup, ik->fields(), _move_ro);
-
+      
       mark_and_move_for_policy(OP_favor_runtime, ik->secondary_supers(),  _move_ro);
       mark_and_move_for_policy(OP_favor_runtime, ik->method_ordering(),   _move_ro);
       mark_and_move_for_policy(OP_favor_runtime, ik->class_annotations(), _move_ro);
@@ -500,7 +503,7 @@ public:
     if (obj->is_klass() && obj->blueprint()->oop_is_instanceKlass()) {
       instanceKlass* ik = instanceKlass::cast((klassOop)obj);
       int i;
-
+      
       mark_and_move_for_policy(OP_favor_startup, ik->as_klassOop(), _move_rw);
 
       if (ik->super() != NULL) {
@@ -572,14 +575,14 @@ void sort_methods(instanceKlass* ik, TRAPS) {
                               ik->methods_parameter_annotations(),
                               ik->methods_default_annotations(),
                               true /* idempotent, slow */);
-
+  
   // Itable indices are calculated based on methods array order
   // (see klassItable::compute_itable_index()).  Must reinitialize.
   // We assume that since checkconstraints is false, this method
   // cannot throw an exception.  An exception here would be
   // problematic since this is the VMThread, not a JavaThread.
   ik->itable()->initialize_itable(false, THREAD);
-}
+}  
 
 // Sort methods if the oop is an instanceKlass.
 
@@ -774,7 +777,7 @@ static void print_contents() {
     tty->cr(); tty->print_cr("ReadWrite space:");
     gen->rw_space()->object_iterate(&coc);
     coc.print();
-
+  
     // Reset counters
 
     ClearAllocCountClosure cacc;
@@ -828,7 +831,7 @@ public:
     _md_vs = md_vs;
     _klass_objects = new GrowableArray<klassOop>();
   }
-
+  
 
   void do_object(oop obj) {
     if (obj->is_klass()) {
@@ -879,7 +882,7 @@ public:
     _md_vs = md_vs;
     _mc_vs = mc_vs;
   }
-
+  
   VMOp_Type type() const { return VMOp_PopulateDumpSharedSpace; }
   void doit() {
     Thread* THREAD = VMThread::vm_thread();
@@ -918,14 +921,14 @@ public:
     MarkStringObjects mark_strings;
     MoveMarkedObjects move_ro(_ro_space, true);
     MoveMarkedObjects move_rw(_rw_space, false);
-
+    
     // The SharedOptimizeColdStart VM option governs the new layout
     // algorithm for promoting classes into the shared archive.
     // The general idea is to minimize cold start time by laying
     // out the objects in the order they are accessed at startup time.
     // By doing this we are trying to eliminate out-of-order accesses
     // in the shared archive.  This benefits cold startup time by making
-    // disk reads as sequential as possible during class loading and
+    // disk reads as sequential as possible during class loading and 
     // bootstrapping activities.  There may also be a small secondary
     // effect of better "packing" of more commonly used data on a smaller
     // number of pages, although no direct benefit has been measured from
@@ -933,7 +936,7 @@ public:
     //
     // At the class level of granularity, the promotion order is dictated
     // by the classlist file whose generation is discussed elsewhere.
-    //
+    // 
     // At smaller granularity, optimal ordering was determined by an
     // offline analysis of object access order in the shared archive.
     // The dbx watchpoint facility, combined with SA post-processing,
@@ -1023,7 +1026,7 @@ public:
         mark_and_move_ordered_rw.do_object(obj);
       }
       tty->print_cr("done. ");
-    }
+    } 
     tty->print("Moving read-write objects to shared space at " PTR_FORMAT " ... ",
                _rw_space->top());
     Universe::oops_do(&mark_all, true);
@@ -1088,7 +1091,7 @@ public:
                                                   &mc_top, mc_end);
 
     // Fix (forward) all of the references in these shared objects (which
-    // are required to point ONLY to objects in the shared spaces).
+    // are required to point ONLY to objects in the shared spaces). 
     // Also, create a list of all objects which might later contain a
     // reference to a younger generation object.
 
@@ -1108,7 +1111,7 @@ public:
     // Now, we reorder methods as a separate step after ALL forwarding
     // pointer resolution, so that methods can be promoted in any order
     // with respect to their holder classes.
-
+    
     SortMethodsClosure sort(THREAD);
     gen->ro_space()->object_iterate(&sort);
     gen->rw_space()->object_iterate(&sort);
@@ -1168,7 +1171,7 @@ public:
     }
 
     // Write the oop data to the output array.
-
+    
     WriteClosure wc(md_top, md_end);
     CompactingPermGenGen::serialize_oops(&wc);
     md_top = wc.get_top();
@@ -1195,10 +1198,10 @@ public:
     _ro_space->set_saved_mark();
     mapinfo->write_space(CompactingPermGenGen::rw, _rw_space, false);
     _rw_space->set_saved_mark();
-    mapinfo->write_region(CompactingPermGenGen::md, _md_vs->low(),
+    mapinfo->write_region(CompactingPermGenGen::md, _md_vs->low(), 
                           md_top - _md_vs->low(), SharedMiscDataSize,
                           false, false);
-    mapinfo->write_region(CompactingPermGenGen::mc, _mc_vs->low(),
+    mapinfo->write_region(CompactingPermGenGen::mc, _mc_vs->low(), 
                           mc_top - _mc_vs->low(), SharedMiscCodeSize,
                           true, true);
 
@@ -1207,10 +1210,10 @@ public:
     mapinfo->write_header();
     mapinfo->write_space(CompactingPermGenGen::ro, _ro_space, true);
     mapinfo->write_space(CompactingPermGenGen::rw, _rw_space, false);
-    mapinfo->write_region(CompactingPermGenGen::md, _md_vs->low(),
+    mapinfo->write_region(CompactingPermGenGen::md, _md_vs->low(), 
                           md_top - _md_vs->low(), SharedMiscDataSize,
                           false, false);
-    mapinfo->write_region(CompactingPermGenGen::mc, _mc_vs->low(),
+    mapinfo->write_region(CompactingPermGenGen::mc, _mc_vs->low(), 
                           mc_top - _mc_vs->low(), SharedMiscCodeSize,
                           true, true);
     mapinfo->close();
@@ -1282,12 +1285,12 @@ jsum(jlong start, const char *buf, const int len)
     jlong h = start;
     char *p = (char *)buf, *e = p + len;
     while (p < e) {
-        char c = *p++;
-        if (c <= ' ') {
-            /* Skip spaces and control characters */
-            continue;
-        }
-        h = 31 * h + c;
+	char c = *p++;
+	if (c <= ' ') {
+	    /* Skip spaces and control characters */
+	    continue;
+	}
+	h = 31 * h + c;
     }
     return h;
 }
@@ -1341,8 +1344,8 @@ void GenCollectedHeap::preload_and_dump(TRAPS) {
     StringTable::intern("([Ljava/lang/String;)V", THREAD);
     StringTable::intern("Ljava/lang/Class;", THREAD);
 
-    StringTable::intern("I", THREAD);   // Needed for StringBuffer persistence?
-    StringTable::intern("Z", THREAD);   // Needed for StringBuffer persistence?
+    StringTable::intern("I", THREAD);	// Needed for StringBuffer persistence?
+    StringTable::intern("Z", THREAD);	// Needed for StringBuffer persistence?
 
     // sun.io.Converters
     static const char obj_array_sig[] = "[[Ljava/lang/Object;";
@@ -1359,7 +1362,7 @@ void GenCollectedHeap::preload_and_dump(TRAPS) {
         jint fsh, fsl;
         if (sscanf(class_name, "# %8x%8x\n", &fsh, &fsl) == 2) {
           file_jsum = ((jlong)(fsh) << 32) | (fsl & 0xffffffff);
-        }
+        }        
 
         continue;
       }

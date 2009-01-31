@@ -51,11 +51,11 @@ else
     MAKE_ARGS += LP64=1
     PLATFORM=solaris-amd64
     VM_PLATFORM=solaris_amd64
-    HS_ARCH=x86
+    HS_ARCH=amd64
   else
     PLATFORM=solaris-i586
     VM_PLATFORM=solaris_i486
-    HS_ARCH=x86
+    HS_ARCH=i486
   endif
 endif
 

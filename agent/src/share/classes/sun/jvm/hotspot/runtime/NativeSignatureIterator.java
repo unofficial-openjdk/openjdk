@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.runtime;
@@ -33,7 +33,7 @@ public abstract class NativeSignatureIterator extends SignatureIterator {
 // [RGV] We need seperate JNI and Java offset values because in 64 bit mode, the argument offsets
 //       are not in sync with the Java stack.  For example a long takes up 1 "C" stack entry
 //       but 2 Java stack entries.
-  private int offset;     // The java stack offset
+  private int offset;     // The java stack offset 
   private int prepended;  // number of prepended JNI parameters (1 JNIEnv, plus 1 mirror if static)
   private int jni_offset; // the current parameter offset, starting with 0
 

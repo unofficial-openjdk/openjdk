@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -64,17 +67,17 @@ bool ciType::is_subtype_of(ciType* type) {
 // ciType::print_impl
 //
 // Implementation of the print method.
-void ciType::print_impl(outputStream* st) {
-  st->print(" type=");
-  print_name_on(st);
+void ciType::print_impl() {
+  tty->print(" type=");
+  print_name();
 }
 
 // ------------------------------------------------------------------
 // ciType::print_name
 //
 // Print the name of this type
-void ciType::print_name_on(outputStream* st) {
-  st->print(type2name(basic_type()));
+void ciType::print_name() {
+  tty->print(type2name(basic_type()));
 }
 
 
@@ -133,8 +136,8 @@ ciReturnAddress::ciReturnAddress(int bci) : ciType(T_ADDRESS) {
 // ciReturnAddress::print_impl
 //
 // Implementation of the print method.
-void ciReturnAddress::print_impl(outputStream* st) {
-  st->print(" bci=%d", _bci);
+void ciReturnAddress::print_impl() {
+  tty->print(" bci=%d", _bci);
 }
 
 // ------------------------------------------------------------------

@@ -36,11 +36,7 @@ ifneq ($(shell $(ECHO) $(PROCESSOR_IDENTIFIER) | $(GREP) x86),)
   ARCH_DATA_MODEL=32
   PLATFORM=windows-i586
   VM_PLATFORM=windows_i486
-  HS_ARCH=x86
-  MAKE_ARGS += ARCH=x86
-  MAKE_ARGS += BUILDARCH=i486
-  MAKE_ARGS += Platform_arch=x86
-  MAKE_ARGS += Platform_arch_model=x86_32
+  HS_ARCH=i486
 endif
 
 ifneq ($(shell $(ECHO) $(PROCESSOR_IDENTIFIER) | $(GREP) ia64),)
@@ -50,21 +46,15 @@ ifneq ($(shell $(ECHO) $(PROCESSOR_IDENTIFIER) | $(GREP) ia64),)
   HS_ARCH=ia64
   MAKE_ARGS += LP64=1
   MAKE_ARGS += ARCH=ia64
-  MAKE_ARGS += BUILDARCH=ia64
-  MAKE_ARGS += Platform_arch=ia64
-  MAKE_ARGS += Platform_arch_model=ia64
 endif
 
 ifneq ($(shell $(ECHO) $(PROCESSOR_IDENTIFIER) | $(GREP) AMD64),)
   ARCH_DATA_MODEL=64
   PLATFORM=windows-amd64
   VM_PLATFORM=windows_amd64
-  HS_ARCH=x86
+  HS_ARCH=amd64
   MAKE_ARGS += LP64=1
-  MAKE_ARGS += ARCH=x86
-  MAKE_ARGS += BUILDARCH=amd64
-  MAKE_ARGS += Platform_arch=x86
-  MAKE_ARGS += Platform_arch_model=x86_64
+  MAKE_ARGS += ARCH=amd64
 endif
 
 JDK_INCLUDE_SUBDIR=win32

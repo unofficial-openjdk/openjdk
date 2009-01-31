@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2003 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // A Simple Windows Debug Server.
@@ -82,8 +85,8 @@ longToDotFormat(long addr)
   char *temp_s = new char[20];
 
   sprintf(temp_s, "%d.%d.%d.%d", ((addr & 0xff000000) >> 24),
-          ((addr & 0x00ff0000) >> 16), ((addr & 0x0000ff00) >> 8),
-          (addr & 0x000000ff));
+	  ((addr & 0x00ff0000) >> 16), ((addr & 0x0000ff00) >> 8),
+	  (addr & 0x000000ff));
 
   return temp_s;
 }
@@ -156,7 +159,7 @@ setupListeningSocket(short port) {
   serverInfo.sin_addr.s_addr = INADDR_ANY;
   serverInfo.sin_family = AF_INET;
   serverInfo.sin_port = htons(port);
-
+  
   if (bind(listening, (struct sockaddr *) &serverInfo, sizeof(serverInfo)) < 0) {
     cerr << "Error binding socket" << endl;
     exit(1);
@@ -245,7 +248,7 @@ startChildProcess(DWORD pidToDebug,
   saAttr.nLength = sizeof(SECURITY_ATTRIBUTES);
   saAttr.bInheritHandle = TRUE;
   saAttr.lpSecurityDescriptor = NULL;
-
+  
   // The steps for redirecting child process's STDOUT:
   //   1. Save current STDOUT, to be restored later.
   //   2. Create anonymous pipe to be STDOUT for child process.
@@ -378,7 +381,7 @@ bool
 forwardReplyToClient(ChildInfo* child, ClientInfo* client) {
   DWORD total = 0;
   IOBuf::FillState ret;
-
+  
   do {
     DWORD temp;
     ret = client->getIOBuf()->fillFromFileHandle(child->getReadFromStdoutHandle(),
@@ -519,7 +522,7 @@ ServerHandler::procList(char* arg) {
     ioBuf->writeSpace();
     writeString(entry.getNameLength(), entry.getName());
   }
-
+  
   ioBuf->writeEOL();
   ioBuf->flush();
 }
@@ -542,7 +545,7 @@ ServerHandler::attach(char* arg) {
     ioBuf->flush();
     return;
   }
-
+   
   // See whether this pid is already forked
   ListsLocker ll;
   ChildInfo* childInfo = childList.getChildByPid(pid);
@@ -632,7 +635,7 @@ ServerHandler::attach(char* arg) {
     ioBuf->flush();
     return;
   }
-}
+}  
 
 void
 ServerHandler::detach(char* arg) {

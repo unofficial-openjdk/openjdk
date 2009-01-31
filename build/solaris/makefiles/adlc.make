@@ -37,10 +37,10 @@ OUTDIR  = $(GENERATED)/adfiles
 ARCH = $(Platform_arch)
 OS = $(Platform_os_family)
 
-SOURCE.AD = $(OUTDIR)/$(OS)_$(Platform_arch_model).ad 
+SOURCE.AD = $(OUTDIR)/$(OS)_$(ARCH).ad 
 
-SOURCES.AD = $(GAMMADIR)/src/cpu/$(ARCH)/vm/$(Platform_arch_model).ad \
-	     $(GAMMADIR)/src/os_cpu/$(OS)_$(ARCH)/vm/$(OS)_$(Platform_arch_model).ad 
+SOURCES.AD = $(GAMMADIR)/src/cpu/$(ARCH)/vm/$(ARCH).ad \
+	     $(GAMMADIR)/src/os_cpu/$(OS)_$(ARCH)/vm/$(OS)_$(ARCH).ad 
 
 Src_Dirs += $(GAMMADIR)/src/share/vm/adlc
 
@@ -97,17 +97,17 @@ OBJECTNAMES = \
 OBJECTS = $(OBJECTNAMES:%=$(OUTDIR)/%)
 
 GENERATEDNAMES = \
-        ad_$(Platform_arch_model).cpp \
-        ad_$(Platform_arch_model).hpp \
-        ad_$(Platform_arch_model)_clone.cpp \
-        ad_$(Platform_arch_model)_expand.cpp \
-        ad_$(Platform_arch_model)_format.cpp \
-        ad_$(Platform_arch_model)_gen.cpp \
-        ad_$(Platform_arch_model)_misc.cpp \
-        ad_$(Platform_arch_model)_peephole.cpp \
-        ad_$(Platform_arch_model)_pipeline.cpp \
-        adGlobals_$(Platform_arch_model).hpp \
-        dfa_$(Platform_arch_model).cpp \
+        ad_$(ARCH).cpp \
+        ad_$(ARCH).hpp \
+        ad_$(ARCH)_clone.cpp \
+        ad_$(ARCH)_expand.cpp \
+        ad_$(ARCH)_format.cpp \
+        ad_$(ARCH)_gen.cpp \
+        ad_$(ARCH)_misc.cpp \
+        ad_$(ARCH)_peephole.cpp \
+        ad_$(ARCH)_pipeline.cpp \
+        adGlobals_$(ARCH).hpp \
+        dfa_$(ARCH).cpp \
 
 GENERATEDFILES = $(GENERATEDNAMES:%=$(OUTDIR)/%)
 
@@ -169,19 +169,19 @@ refresh_adfiles: $(EXEC) $(SOURCE.AD)
 	@rm -rf $(TEMPDIR); mkdir $(TEMPDIR)
 	$(QUIETLY) [ -f $(ADLC_UPDATER) ] || ( cp $(ADLC_UPDATER_DIRECTORY)/$(ADLC_UPDATER) . ; chmod +x $(ADLC_UPDATER) )
 	$(QUIETLY) $(EXEC) $(ADLCFLAGS) $(SOURCE.AD) \
- -c$(TEMPDIR)/ad_$(Platform_arch_model).cpp -h$(TEMPDIR)/ad_$(Platform_arch_model).hpp -a$(TEMPDIR)/dfa_$(Platform_arch_model).cpp -v$(TEMPDIR)/adGlobals_$(Platform_arch_model).hpp \
+ -c$(TEMPDIR)/ad_$(ARCH).cpp -h$(TEMPDIR)/ad_$(ARCH).hpp -a$(TEMPDIR)/dfa_$(ARCH).cpp -v$(TEMPDIR)/adGlobals_$(ARCH).hpp \
 	    || { rm -rf $(TEMPDIR); exit 1; }
-	$(QUIETLY) ./$(ADLC_UPDATER) ad_$(Platform_arch_model).cpp $(TEMPDIR) $(OUTDIR)
-	$(QUIETLY) ./$(ADLC_UPDATER) ad_$(Platform_arch_model).hpp $(TEMPDIR) $(OUTDIR)
-	$(QUIETLY) ./$(ADLC_UPDATER) ad_$(Platform_arch_model)_clone.cpp $(TEMPDIR) $(OUTDIR)
-	$(QUIETLY) ./$(ADLC_UPDATER) ad_$(Platform_arch_model)_expand.cpp $(TEMPDIR) $(OUTDIR)
-	$(QUIETLY) ./$(ADLC_UPDATER) ad_$(Platform_arch_model)_format.cpp $(TEMPDIR) $(OUTDIR)
-	$(QUIETLY) ./$(ADLC_UPDATER) ad_$(Platform_arch_model)_gen.cpp $(TEMPDIR) $(OUTDIR)
-	$(QUIETLY) ./$(ADLC_UPDATER) ad_$(Platform_arch_model)_misc.cpp $(TEMPDIR) $(OUTDIR)
-	$(QUIETLY) ./$(ADLC_UPDATER) ad_$(Platform_arch_model)_peephole.cpp $(TEMPDIR) $(OUTDIR)
-	$(QUIETLY) ./$(ADLC_UPDATER) ad_$(Platform_arch_model)_pipeline.cpp $(TEMPDIR) $(OUTDIR)
-	$(QUIETLY) ./$(ADLC_UPDATER) adGlobals_$(Platform_arch_model).hpp $(TEMPDIR) $(OUTDIR)
-	$(QUIETLY) ./$(ADLC_UPDATER) dfa_$(Platform_arch_model).cpp $(TEMPDIR) $(OUTDIR)
+	$(QUIETLY) ./$(ADLC_UPDATER) ad_$(ARCH).cpp $(TEMPDIR) $(OUTDIR)
+	$(QUIETLY) ./$(ADLC_UPDATER) ad_$(ARCH).hpp $(TEMPDIR) $(OUTDIR)
+	$(QUIETLY) ./$(ADLC_UPDATER) ad_$(ARCH)_clone.cpp $(TEMPDIR) $(OUTDIR)
+	$(QUIETLY) ./$(ADLC_UPDATER) ad_$(ARCH)_expand.cpp $(TEMPDIR) $(OUTDIR)
+	$(QUIETLY) ./$(ADLC_UPDATER) ad_$(ARCH)_format.cpp $(TEMPDIR) $(OUTDIR)
+	$(QUIETLY) ./$(ADLC_UPDATER) ad_$(ARCH)_gen.cpp $(TEMPDIR) $(OUTDIR)
+	$(QUIETLY) ./$(ADLC_UPDATER) ad_$(ARCH)_misc.cpp $(TEMPDIR) $(OUTDIR)
+	$(QUIETLY) ./$(ADLC_UPDATER) ad_$(ARCH)_peephole.cpp $(TEMPDIR) $(OUTDIR)
+	$(QUIETLY) ./$(ADLC_UPDATER) ad_$(ARCH)_pipeline.cpp $(TEMPDIR) $(OUTDIR)
+	$(QUIETLY) ./$(ADLC_UPDATER) adGlobals_$(ARCH).hpp $(TEMPDIR) $(OUTDIR)
+	$(QUIETLY) ./$(ADLC_UPDATER) dfa_$(ARCH).cpp $(TEMPDIR) $(OUTDIR)
 	$(QUIETLY) [ -f $(TEMPDIR)/made-change ] \
 		|| echo "Rescanned $(SOURCE.AD) but encountered no changes."
 	$(QUIETLY) rm -rf $(TEMPDIR)

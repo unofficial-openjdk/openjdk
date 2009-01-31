@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.asm.sparc;
@@ -33,4 +33,4 @@ class V9IntegerBranchDecoder extends V9CCBranchDecoder {
     int getConditionFlag(int instruction) {
         return ((BPcc_CC_MASK & instruction) >>> BPcc_CC_START_BIT) + icc;
     }
-}
+}  

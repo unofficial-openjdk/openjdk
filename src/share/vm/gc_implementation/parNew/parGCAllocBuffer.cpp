@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -63,9 +66,9 @@ void ParGCAllocBuffer::retire(bool end_of_gc, bool retain) {
     } else {
       // Is there wasted space we'd like to retain for the next GC?
       if (pointer_delta(_end, _top) > FillerHeaderSize) {
-        _retained = true;
-        _retained_filler = MemRegion(_top, FillerHeaderSize);
-        _top = _top + FillerHeaderSize;
+	_retained = true;
+	_retained_filler = MemRegion(_top, FillerHeaderSize);
+	_top = _top + FillerHeaderSize;
       } else {
         invalidate();
       }
@@ -134,7 +137,7 @@ MIN2(CardTableModRefBS::par_chunk_heapword_alignment() * HeapWordSize,
      (size_t)Generation::GenGrain);
 
 ParGCAllocBufferWithBOT::ParGCAllocBufferWithBOT(size_t word_sz,
-                                                 BlockOffsetSharedArray* bsa) :
+						 BlockOffsetSharedArray* bsa) :
   ParGCAllocBuffer(word_sz),
   _bsa(bsa),
   _bt(bsa, MemRegion(_bottom, _hard_end)),
@@ -153,7 +156,7 @@ ParGCAllocBufferWithBOT::ParGCAllocBufferWithBOT(size_t word_sz,
 // parameter below to directly manipulate the shared array without
 // modifying the _next_threshold state in the BOT.
 void ParGCAllocBufferWithBOT::fill_region_with_block(MemRegion mr,
-                                                     bool contig) {
+						     bool contig) {
   SharedHeap::fill_region_with_object(mr);
   if (contig) {
     _bt.alloc_block(mr.start(), mr.end());
@@ -166,8 +169,8 @@ HeapWord* ParGCAllocBufferWithBOT::allocate_slow(size_t word_sz) {
   HeapWord* res = NULL;
   if (_true_end > _hard_end) {
     assert((HeapWord*)align_size_down(intptr_t(_hard_end),
-                                      ChunkSizeInBytes) == _hard_end,
-           "or else _true_end should be equal to _hard_end");
+				      ChunkSizeInBytes) == _hard_end,
+	   "or else _true_end should be equal to _hard_end");
     assert(_retained, "or else _true_end should be equal to _hard_end");
     assert(_retained_filler.end() <= _top, "INVARIANT");
     SharedHeap::fill_region_with_object(_retained_filler);
@@ -201,7 +204,7 @@ void ParGCAllocBufferWithBOT::retire(bool end_of_gc, bool retain) {
   if (_retained) {
     // We're about to make the retained_filler into a block.
     _bt.BlockOffsetArray::alloc_block(_retained_filler.start(),
-                                      _retained_filler.end());
+				      _retained_filler.end());
   }
   // Reset _hard_end to _true_end (and update _end)
   if (retain && _hard_end != NULL) {
@@ -228,7 +231,7 @@ void ParGCAllocBufferWithBOT::retire(bool end_of_gc, bool retain) {
     HeapWord* first_card_start = _bsa->address_for_index(first_card_index);
     if (first_card_start < pre_top) {
       HeapWord* second_card_start =
-        _bsa->address_for_index(first_card_index + 1);
+	_bsa->address_for_index(first_card_index + 1);
 
       // Ensure enough room to fill with the smallest block
       second_card_start = MAX2(second_card_start, pre_top + AlignmentReserve);
@@ -240,8 +243,8 @@ void ParGCAllocBufferWithBOT::retire(bool end_of_gc, bool retain) {
         second_card_start = _hard_end;
       }
       if (pre_top < second_card_start) {
-        MemRegion first_card_suffix(pre_top, second_card_start);
-        fill_region_with_block(first_card_suffix, true);
+	MemRegion first_card_suffix(pre_top, second_card_start);
+	fill_region_with_block(first_card_suffix, true);
       }
       pre_top = second_card_start;
       _top = pre_top;
@@ -266,8 +269,8 @@ void ParGCAllocBufferWithBOT::retire(bool end_of_gc, bool retain) {
         last_card_start = _top;
       }
       if (last_card_start < _hard_end) {
-        MemRegion last_card_prefix(last_card_start, _hard_end);
-        fill_region_with_block(last_card_prefix, false);
+	MemRegion last_card_prefix(last_card_start, _hard_end);
+	fill_region_with_block(last_card_prefix, false);
       }
       _hard_end = last_card_start;
       _end      = MAX2(_top, _hard_end - AlignmentReserve);
@@ -285,10 +288,10 @@ void ParGCAllocBufferWithBOT::retire(bool end_of_gc, bool retain) {
       _top = pre_top + ParGCAllocBuffer::FillerHeaderSize;
       // If there's no space left, don't retain.
       if (_top >= _end) {
-        _retained = false;
+	_retained = false;
         invalidate();
-        return;
-      }
+	return;
+      } 
       _retained_filler = MemRegion(pre_top, _top);
       _bt.set_region(MemRegion(_top, _hard_end));
       _bt.initialize_threshold();
@@ -304,30 +307,30 @@ void ParGCAllocBufferWithBOT::retire(bool end_of_gc, bool retain) {
 
       // "chunk_boundary" is the address of the first chunk boundary less
       // than "hard_end".
-      HeapWord* chunk_boundary =
-        (HeapWord*)align_size_down(intptr_t(_hard_end-1), ChunkSizeInBytes);
-      assert(chunk_boundary < _hard_end, "Or else above did not work.");
+      HeapWord* chunk_boundary = 
+        (HeapWord*)align_size_down(intptr_t(_hard_end-1), ChunkSizeInBytes); 
+      assert(chunk_boundary < _hard_end, "Or else above did not work."); 
       assert(pointer_delta(_true_end, chunk_boundary) >= AlignmentReserve,
              "Consequence of last card handling above.");
-
-      if (_top <= chunk_boundary) {
-        assert(_true_end == _hard_end, "Invariant.");
-        while (_top <= chunk_boundary) {
+ 
+      if (_top <= chunk_boundary) { 
+	assert(_true_end == _hard_end, "Invariant.");
+	while (_top <= chunk_boundary) {
           assert(pointer_delta(_hard_end, chunk_boundary) >= AlignmentReserve,
                  "Consequence of last card handling above.");
-          MemRegion chunk_portion(chunk_boundary, _hard_end);
-          _bt.BlockOffsetArray::alloc_block(chunk_portion.start(),
+	  MemRegion chunk_portion(chunk_boundary, _hard_end);
+	  _bt.BlockOffsetArray::alloc_block(chunk_portion.start(),
                                             chunk_portion.end());
-          SharedHeap::fill_region_with_object(chunk_portion);
-          _hard_end = chunk_portion.start();
-          chunk_boundary -= ChunkSizeInWords;
-        }
+	  SharedHeap::fill_region_with_object(chunk_portion);
+	  _hard_end = chunk_portion.start();
+	  chunk_boundary -= ChunkSizeInWords;
+	}
         _end = _hard_end - AlignmentReserve;
         assert(_top <= _end, "Invariant.");
-        // Now reset the initial filler chunk so it doesn't overlap with
-        // the one(s) inserted above.
-        MemRegion new_filler(pre_top, _hard_end);
-        fill_region_with_block(new_filler, false);
+	// Now reset the initial filler chunk so it doesn't overlap with
+	// the one(s) inserted above.
+	MemRegion new_filler(pre_top, _hard_end);
+	fill_region_with_block(new_filler, false);
       }
     } else {
       _retained = false;
@@ -335,7 +338,7 @@ void ParGCAllocBufferWithBOT::retire(bool end_of_gc, bool retain) {
     }
   } else {
     assert(!end_of_gc ||
-           (!_retained && _true_end == _hard_end), "Checking.");
+	   (!_retained && _true_end == _hard_end), "Checking.");
   }
   assert(_end <= _hard_end, "Invariant.");
   assert(_top < _end || _top == _hard_end, "Invariant");

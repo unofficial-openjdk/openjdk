@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -44,7 +47,7 @@ void* ResourceObj::operator new(size_t size, allocation_type type) {
    case C_HEAP:
     res = (address)AllocateHeap(size, "C_Heap: ResourceOBJ");
     break;
-   case RESOURCE_AREA:
+   case RESOURCE_AREA: 
     res = (address)operator new(size);
     break;
    default:
@@ -79,7 +82,7 @@ bool warn_new_operator = false; // see vm_main
 
 // MT-safe pool of chunks to reduce malloc/free thrashing
 // NB: not using Mutex because pools are used before Threads are initialized
-class ChunkPool {
+class ChunkPool { 
   Chunk*       _first;        // first cached Chunk; its first word points to next chunk
   size_t       _num_chunks;   // number of unused chunks in pool
   size_t       _num_used;     // number of chunks currently checked out
@@ -91,23 +94,23 @@ class ChunkPool {
   static ChunkPool* _small_pool;
 
   // return first element or null
-  void* get_first() {
-    Chunk* c = _first;
-    if (_first) {
-      _first = _first->next();
-      _num_chunks--;
+  void* get_first() { 
+    Chunk* c = _first; 
+    if (_first) { 
+      _first = _first->next(); 
+      _num_chunks--; 
     }
-    return c;
+    return c; 
   }
-
+  
  public:
   // All chunks in a ChunkPool has the same size
    ChunkPool(size_t size) : _size(size) { _first = NULL; _num_chunks = _num_used = 0; }
-
+  
   // Allocate a new chunk from the pool (might expand the pool)
   void* allocate(size_t bytes) {
     assert(bytes == _size, "bad size");
-    void* p = NULL;
+    void* p = NULL;    
     { ThreadCritical tc;
       _num_used++;
       p = get_first();
@@ -126,28 +129,28 @@ class ChunkPool {
     _num_used--;
 
     // Add chunk to list
-    chunk->set_next(_first);
-    _first = chunk;
-    _num_chunks++;
+    chunk->set_next(_first); 
+    _first = chunk; 
+    _num_chunks++;     
   }
 
   // Prune the pool
   void free_all_but(size_t n) {
-    // if we have more than n chunks, free all of them
+    // if we have more than n chunks, free all of them 
     ThreadCritical tc;
     if (_num_chunks > n) {
       // free chunks at end of queue, for better locality
       Chunk* cur = _first;
       for (size_t i = 0; i < (n - 1) && cur != NULL; i++) cur = cur->next();
-
+      
       if (cur != NULL) {
-        Chunk* next = cur->next();
-        cur->set_next(NULL);
+        Chunk* next = cur->next();        
+        cur->set_next(NULL);              
         cur = next;
 
         // Free all remaining chunks
         while(cur != NULL) {
-          next = cur->next();
+          next = cur->next();        
           os::free(cur);
           _num_chunks--;
           cur = next;
@@ -170,7 +173,7 @@ class ChunkPool {
 
 ChunkPool* ChunkPool::_large_pool  = NULL;
 ChunkPool* ChunkPool::_medium_pool = NULL;
-ChunkPool* ChunkPool::_small_pool  = NULL;
+ChunkPool* ChunkPool::_small_pool  = NULL; 
 
 
 void chunkpool_init() {
@@ -199,7 +202,7 @@ class ChunkPoolCleaner : public PeriodicTask {
 // Chunk implementation
 
 void* Chunk::operator new(size_t requested_size, size_t length) {
-  // requested_size is equal to sizeof(Chunk) but in order for the arena
+  // requested_size is equal to sizeof(Chunk) but in order for the arena 
   // allocations to come out aligned as expected the size must be aligned
   // to expected arean alignment.
   // expect requested_size but if sizeof(Chunk) doesn't match isn't proper size we must align it.
@@ -269,18 +272,18 @@ Arena::Arena(size_t init_size) {
   _hwm = _chunk->bottom();      // Save the cached hwm, max
   _max = _chunk->top();
   set_size_in_bytes(init_size);
-}
+} 
 
 Arena::Arena() {
   _first = _chunk = new (Chunk::init_size) Chunk(Chunk::init_size);
   _hwm = _chunk->bottom();      // Save the cached hwm, max
   _max = _chunk->top();
   set_size_in_bytes(Chunk::init_size);
-}
+} 
 
-Arena::Arena(Arena *a) : _chunk(a->_chunk), _hwm(a->_hwm), _max(a->_max), _first(a->_first) {
+Arena::Arena(Arena *a) : _chunk(a->_chunk), _hwm(a->_hwm), _max(a->_max), _first(a->_first) { 
   set_size_in_bytes(a->size_in_bytes());
-}
+} 
 
 Arena *Arena::move_contents(Arena *copy) {
   copy->destruct_contents();
@@ -304,7 +307,7 @@ void Arena::destruct_contents() {
     char* end = _first->next() ? _first->top() : _hwm;
     free_malloced_objects(_first, _first->bottom(), end, _hwm);
   }
-  _first->chop();
+  _first->chop(); 
   reset();
 }
 
@@ -344,7 +347,7 @@ void* Arena::grow( size_t x ) {
 
 
 
-// Reallocate storage in Arena.
+// Reallocate storage in Arena.  
 void *Arena::Arealloc(void* old_ptr, size_t old_size, size_t new_size) {
   assert(new_size >= 0, "bad size");
   if (new_size == 0) return NULL;
@@ -404,7 +407,7 @@ bool Arena::contains( const void *ptr ) const {
     return false;
   }
 #endif
-  if( (void*)_chunk->bottom() <= ptr && ptr < (void*)_hwm )
+  if( (void*)_chunk->bottom() <= ptr && ptr < (void*)_hwm ) 
     return true;                // Check for in this chunk
   for (Chunk *c = _first; c; c = c->next()) {
     if (c == _chunk) continue;  // current chunk has been processed
@@ -425,14 +428,14 @@ void* Arena::malloc(size_t size) {
 }
 
 // for debugging with UseMallocOnly
-void* Arena::internal_malloc_4(size_t x) {
+void* Arena::internal_malloc_4(size_t x) { 
   assert( (x&(sizeof(char*)-1)) == 0, "misaligned size" );
   if (_hwm + x > _max) {
     return grow(x);
   } else {
-    char *old = _hwm;
-    _hwm += x;
-    return old;
+    char *old = _hwm; 
+    _hwm += x; 
+    return old; 
   }
 }
 #endif
@@ -446,14 +449,14 @@ void* Arena::internal_malloc_4(size_t x) {
 // a memory leak.  Use CHeapObj as the base class of such objects to make it explicit
 // that they're allocated on the C heap.
 // Commented out in product version to avoid conflicts with third-party C++ native code.
-// %% note this is causing a problem on solaris debug build. the global
+// %% note this is causing a problem on solaris debug build. the global 
 // new is being called from jdk source and causing data corruption.
 // src/share/native/sun/awt/font/fontmanager/textcache/hsMemory.cpp::hsSoftNew
 // define CATCH_OPERATOR_NEW_USAGE if you want to use this.
 #ifdef CATCH_OPERATOR_NEW_USAGE
 void* operator new(size_t size){
   static bool warned = false;
-  if (!warned && warn_new_operator)
+  if (!warned && warn_new_operator) 
     warning("should not call global (default) operator new");
   warned = true;
   return (void *) AllocateHeap(size, "global operator new");
@@ -481,11 +484,11 @@ AllocStats::AllocStats() {
 }
 
 int     AllocStats::num_mallocs() { return os::num_mallocs - start_mallocs; }
-size_t  AllocStats::alloc_bytes() { return os::alloc_bytes - start_malloc_bytes; }
-size_t  AllocStats::resource_bytes() { return Arena::_bytes_allocated - start_res_bytes; }
-int     AllocStats::num_frees() { return os::num_frees - start_frees; }
+size_t  AllocStats::alloc_bytes() { return os::alloc_bytes - start_malloc_bytes; } 
+size_t  AllocStats::resource_bytes() { return Arena::_bytes_allocated - start_res_bytes; } 
+int     AllocStats::num_frees() { return os::num_frees - start_frees; } 
 void    AllocStats::print() {
-  tty->print("%d mallocs (%ldK), %d frees, %ldK resrc",
+  tty->print("%d mallocs (%ldK), %d frees, %ldK resrc", 
              num_mallocs(), alloc_bytes()/K, num_frees(), resource_bytes()/K);
 }
 
@@ -537,3 +540,4 @@ void ReallocMark::check() {
 }
 
 #endif // Non-product
+

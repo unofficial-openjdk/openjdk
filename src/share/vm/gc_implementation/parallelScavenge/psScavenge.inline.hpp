@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 
@@ -62,8 +65,8 @@ inline void PSScavenge::copy_and_push_safe_barrier(PSPromotionManager* pm,
   } else {
     *p = pm->copy_to_survivor_space(o, pm->depth_first());
   }
-
-  // We cannot mark without test, as some code passes us pointers
+  
+  // We cannot mark without test, as some code passes us pointers 
   // that are outside the heap.
   if ((!PSScavenge::is_obj_in_young((HeapWord*) p)) &&
       Universe::heap()->is_in_reserved(p)) {

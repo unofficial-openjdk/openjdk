@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.win32.coff;
@@ -56,4 +56,4 @@ public interface AuxSectionDefinitionsRecord extends AuxSymbolRecord {
       section. See {@link
       sun.jvm.hotspot.debugger.win32.coff.COMDATSelectionTypes}. */
   public byte getSelection();
-}
+}  

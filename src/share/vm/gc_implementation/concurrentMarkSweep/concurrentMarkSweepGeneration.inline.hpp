@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 inline void CMSBitMap::clear_all() {
@@ -66,56 +69,56 @@ inline void CMSBitMap::par_clear(HeapWord* addr) {
 inline void CMSBitMap::mark_range(MemRegion mr) {
   NOT_PRODUCT(region_invariant(mr));
   // Range size is usually just 1 bit.
-  _bm.set_range(heapWordToOffset(mr.start()), heapWordToOffset(mr.end()),
+  _bm.set_range(heapWordToOffset(mr.start()), heapWordToOffset(mr.end()), 
                 BitMap::small_range);
 }
 
 inline void CMSBitMap::clear_range(MemRegion mr) {
   NOT_PRODUCT(region_invariant(mr));
   // Range size is usually just 1 bit.
-  _bm.clear_range(heapWordToOffset(mr.start()), heapWordToOffset(mr.end()),
+  _bm.clear_range(heapWordToOffset(mr.start()), heapWordToOffset(mr.end()), 
                   BitMap::small_range);
 }
 
 inline void CMSBitMap::par_mark_range(MemRegion mr) {
   NOT_PRODUCT(region_invariant(mr));
   // Range size is usually just 1 bit.
-  _bm.par_set_range(heapWordToOffset(mr.start()), heapWordToOffset(mr.end()),
+  _bm.par_set_range(heapWordToOffset(mr.start()), heapWordToOffset(mr.end()), 
                     BitMap::small_range);
 }
 
 inline void CMSBitMap::par_clear_range(MemRegion mr) {
   NOT_PRODUCT(region_invariant(mr));
   // Range size is usually just 1 bit.
-  _bm.par_clear_range(heapWordToOffset(mr.start()), heapWordToOffset(mr.end()),
+  _bm.par_clear_range(heapWordToOffset(mr.start()), heapWordToOffset(mr.end()), 
                       BitMap::small_range);
 }
 
 inline void CMSBitMap::mark_large_range(MemRegion mr) {
   NOT_PRODUCT(region_invariant(mr));
   // Range size must be greater than 32 bytes.
-  _bm.set_range(heapWordToOffset(mr.start()), heapWordToOffset(mr.end()),
+  _bm.set_range(heapWordToOffset(mr.start()), heapWordToOffset(mr.end()), 
                 BitMap::large_range);
 }
 
 inline void CMSBitMap::clear_large_range(MemRegion mr) {
   NOT_PRODUCT(region_invariant(mr));
   // Range size must be greater than 32 bytes.
-  _bm.clear_range(heapWordToOffset(mr.start()), heapWordToOffset(mr.end()),
+  _bm.clear_range(heapWordToOffset(mr.start()), heapWordToOffset(mr.end()), 
                   BitMap::large_range);
 }
 
 inline void CMSBitMap::par_mark_large_range(MemRegion mr) {
   NOT_PRODUCT(region_invariant(mr));
   // Range size must be greater than 32 bytes.
-  _bm.par_set_range(heapWordToOffset(mr.start()), heapWordToOffset(mr.end()),
+  _bm.par_set_range(heapWordToOffset(mr.start()), heapWordToOffset(mr.end()), 
                     BitMap::large_range);
 }
 
 inline void CMSBitMap::par_clear_large_range(MemRegion mr) {
   NOT_PRODUCT(region_invariant(mr));
   // Range size must be greater than 32 bytes.
-  _bm.par_clear_range(heapWordToOffset(mr.start()), heapWordToOffset(mr.end()),
+  _bm.par_clear_range(heapWordToOffset(mr.start()), heapWordToOffset(mr.end()), 
                       BitMap::large_range);
 }
 
@@ -262,11 +265,11 @@ inline void CMSCollector::save_sweep_limits() {
 inline bool CMSCollector::is_dead_obj(oop obj) const {
   HeapWord* addr = (HeapWord*)obj;
   assert((_cmsGen->cmsSpace()->is_in_reserved(addr)
-          && _cmsGen->cmsSpace()->block_is_obj(addr))
-         ||
+	  && _cmsGen->cmsSpace()->block_is_obj(addr))
+	 ||
          (_permGen->cmsSpace()->is_in_reserved(addr)
-          && _permGen->cmsSpace()->block_is_obj(addr)),
-         "must be object");
+	  && _permGen->cmsSpace()->block_is_obj(addr)),
+	 "must be object");
   return  cms_should_unload_classes() &&
           _collectorState == Sweeping &&
          !_markBitMap.isMarked(addr);
@@ -295,7 +298,7 @@ inline bool CMSStats::valid() const {
 inline void CMSStats::record_gc0_begin() {
   if (_gc0_begin_time.is_updated()) {
     float last_gc0_period = _gc0_begin_time.seconds();
-    _gc0_period = AdaptiveWeightedAverage::exp_avg(_gc0_period,
+    _gc0_period = AdaptiveWeightedAverage::exp_avg(_gc0_period, 
       last_gc0_period, _gc0_alpha);
     _gc0_alpha = _saved_alpha;
     _valid_bits |= _GC0_VALID;
@@ -307,7 +310,7 @@ inline void CMSStats::record_gc0_begin() {
 
 inline void CMSStats::record_gc0_end(size_t cms_gen_bytes_used) {
   float last_gc0_duration = _gc0_begin_time.seconds();
-  _gc0_duration = AdaptiveWeightedAverage::exp_avg(_gc0_duration,
+  _gc0_duration = AdaptiveWeightedAverage::exp_avg(_gc0_duration, 
     last_gc0_duration, _gc0_alpha);
 
   // Amount promoted.
@@ -316,13 +319,13 @@ inline void CMSStats::record_gc0_end(size_t cms_gen_bytes_used) {
   size_t promoted_bytes = 0;
   if (_cms_used_at_gc0_end >= _cms_used_at_gc0_begin) {
     promoted_bytes = _cms_used_at_gc0_end - _cms_used_at_gc0_begin;
-  }
+  } 
 
   // If the younger gen collections were skipped, then the
   // number of promoted bytes will be 0 and adding it to the
   // average will incorrectly lessen the average.  It is, however,
   // also possible that no promotion was needed.
-  //
+  // 
   // _gc0_promoted used to be calculated as
   // _gc0_promoted = AdaptiveWeightedAverage::exp_avg(_gc0_promoted,
   //  promoted_bytes, _gc0_alpha);
@@ -332,7 +335,7 @@ inline void CMSStats::record_gc0_end(size_t cms_gen_bytes_used) {
   // Amount directly allocated.
   size_t allocated_bytes = _cms_gen->direct_allocated_words() * HeapWordSize;
   _cms_gen->reset_direct_allocated_words();
-  _cms_allocated = AdaptiveWeightedAverage::exp_avg(_cms_allocated,
+  _cms_allocated = AdaptiveWeightedAverage::exp_avg(_cms_allocated, 
     allocated_bytes, _gc0_alpha);
 }
 
@@ -342,7 +345,7 @@ inline void CMSStats::record_cms_begin() {
   // This is just an approximate value, but is good enough.
   _cms_used_at_cms_begin = _cms_used_at_gc0_end;
 
-  _cms_period = AdaptiveWeightedAverage::exp_avg((float)_cms_period,
+  _cms_period = AdaptiveWeightedAverage::exp_avg((float)_cms_period, 
     (float) _cms_timer.seconds(), _cms_alpha);
   _cms_begin_time.update();
 
@@ -354,14 +357,14 @@ inline void CMSStats::record_cms_end() {
   _cms_timer.stop();
 
   float cur_duration = _cms_timer.seconds();
-  _cms_duration = AdaptiveWeightedAverage::exp_avg(_cms_duration,
+  _cms_duration = AdaptiveWeightedAverage::exp_avg(_cms_duration, 
     cur_duration, _cms_alpha);
 
   // Avoid division by 0.
   const size_t cms_used_mb = MAX2(_cms_used_at_cms_begin / M, (size_t)1);
   _cms_duration_per_mb = AdaptiveWeightedAverage::exp_avg(_cms_duration_per_mb,
-                                 cur_duration / cms_used_mb,
-                                 _cms_alpha);
+				 cur_duration / cms_used_mb,
+				 _cms_alpha);
 
   _cms_end_time.update();
   _cms_alpha = _saved_alpha;
@@ -450,7 +453,7 @@ inline bool ScanMarkedObjectsAgainCarefullyClosure::do_yield_check() {
       !_collector->foregroundGCIsActive() &&
       _yield) {
     // Sample young gen size before and after yield
-    _collector->sample_eden();
+    _collector->sample_eden(); 
     do_yield_work();
     _collector->sample_eden();
     return _collector->should_abort_preclean();

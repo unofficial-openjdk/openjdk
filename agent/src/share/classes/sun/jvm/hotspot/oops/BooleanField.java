@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.oops;
@@ -33,7 +33,7 @@ public class BooleanField extends Field {
   }
 
   public BooleanField(sun.jvm.hotspot.types.JBooleanField vmField, long startOffset) {
-    super(new NamedFieldIdentifier(vmField.getName()), vmField.getOffset() + startOffset, true);
+    super(new NamedFieldIdentifier(vmField.getName()), vmField.getOffset() + startOffset, true); 
   }
 
   public BooleanField(InstanceKlass holder, int fieldArrayIndex) {
@@ -45,3 +45,4 @@ public class BooleanField extends Field {
     // Fix this: setJBooleanAt is missing in Address
   }
 }
+

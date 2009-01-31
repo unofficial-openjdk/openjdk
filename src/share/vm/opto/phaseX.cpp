@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -28,13 +31,13 @@
 //=============================================================================
 #define NODE_HASH_MINIMUM_SIZE    255
 //------------------------------NodeHash---------------------------------------
-NodeHash::NodeHash(uint est_max_size) :
+NodeHash::NodeHash(uint est_max_size) : 
   _max( round_up(est_max_size < NODE_HASH_MINIMUM_SIZE ? NODE_HASH_MINIMUM_SIZE : est_max_size) ),
   _a(Thread::current()->resource_area()),
-  _table( NEW_ARENA_ARRAY( _a , Node* , _max ) ), // (Node**)_a->Amalloc(_max * sizeof(Node*)) ),
+  _table( NEW_ARENA_ARRAY( _a , Node* , _max ) ), // (Node**)_a->Amalloc(_max * sizeof(Node*)) ), 
   _inserts(0), _insert_limit( insert_limit() ),
-  _look_probes(0), _lookup_hits(0), _lookup_misses(0),
-  _total_insert_probes(0), _total_inserts(0),
+  _look_probes(0), _lookup_hits(0), _lookup_misses(0), 
+  _total_insert_probes(0), _total_inserts(0), 
   _insert_probes(0), _grows(0) {
   // _sentinel must be in the current node space
   _sentinel = new (Compile::current(), 1) ProjNode(NULL, TypeFunc::Control);
@@ -42,14 +45,14 @@ NodeHash::NodeHash(uint est_max_size) :
 }
 
 //------------------------------NodeHash---------------------------------------
-NodeHash::NodeHash(Arena *arena, uint est_max_size) :
+NodeHash::NodeHash(Arena *arena, uint est_max_size) : 
   _max( round_up(est_max_size < NODE_HASH_MINIMUM_SIZE ? NODE_HASH_MINIMUM_SIZE : est_max_size) ),
   _a(arena),
-  _table( NEW_ARENA_ARRAY( _a , Node* , _max ) ),
+  _table( NEW_ARENA_ARRAY( _a , Node* , _max ) ), 
   _inserts(0), _insert_limit( insert_limit() ),
-  _look_probes(0), _lookup_hits(0), _lookup_misses(0),
-  _delete_probes(0), _delete_hits(0), _delete_misses(0),
-  _total_insert_probes(0), _total_inserts(0),
+  _look_probes(0), _lookup_hits(0), _lookup_misses(0), 
+  _delete_probes(0), _delete_hits(0), _delete_misses(0), 
+  _total_insert_probes(0), _total_inserts(0), 
   _insert_probes(0), _grows(0) {
   // _sentinel must be in the current node space
   _sentinel = new (Compile::current(), 1) ProjNode(NULL, TypeFunc::Control);
@@ -73,7 +76,7 @@ Node *NodeHash::hash_find( const Node *n ) {
     debug_only( _lookup_misses++ );
     return NULL;
   }
-  uint key = hash & (_max-1);
+  uint key = hash & (_max-1); 
   uint stride = key | 0x01;
   debug_only( _look_probes++ );
   Node *k = _table[key];        // Get hashed value
@@ -81,7 +84,7 @@ Node *NodeHash::hash_find( const Node *n ) {
     debug_only( _lookup_misses++ );
     return NULL;                // Miss!
   }
-
+  
   int op = n->Opcode();
   uint req = n->req();
   while( 1 ) {                  // While probing hash table
@@ -118,7 +121,7 @@ Node *NodeHash::hash_find_insert( Node *n ) {
     debug_only( _lookup_misses++ );
     return NULL;
   }
-  uint key = hash & (_max-1);
+  uint key = hash & (_max-1); 
   uint stride = key | 0x01;     // stride must be relatively prime to table siz
   uint first_sentinel = 0;      // replace a sentinel if seen.
   debug_only( _look_probes++ );
@@ -133,7 +136,7 @@ Node *NodeHash::hash_find_insert( Node *n ) {
   else if( k == _sentinel ) {
     first_sentinel = key;      // Can insert here
   }
-
+  
   int op = n->Opcode();
   uint req = n->req();
   while( 1 ) {                  // While probing hash table
@@ -162,7 +165,7 @@ Node *NodeHash::hash_find_insert( Node *n ) {
     else if( first_sentinel == 0 && k == _sentinel ) {
       first_sentinel = key;    // Can insert here
     }
-
+      
   }
   ShouldNotReachHere();
   return NULL;
@@ -179,9 +182,9 @@ void NodeHash::hash_insert( Node *n ) {
     return;
   }
   check_grow();
-  uint key = hash & (_max-1);
+  uint key = hash & (_max-1); 
   uint stride = key | 0x01;
-
+  
   while( 1 ) {                  // While probing hash table
     debug_only( _insert_probes++ );
     Node *k = _table[key];      // Get hashed value
@@ -204,7 +207,7 @@ bool NodeHash::hash_delete( const Node *n ) {
     debug_only( _delete_misses++ );
     return false;
   }
-  uint key = hash & (_max-1);
+  uint key = hash & (_max-1); 
   uint stride = key | 0x01;
   debug_only( uint counter = 0; );
   for( ; /* (k != NULL) && (k != _sentinal) */; ) {
@@ -305,7 +308,7 @@ void NodeHash::remove_useless_nodes(VectorSet &useful) {
   }
 }
 
-#ifndef PRODUCT
+#ifndef PRODUCT  
 //------------------------------dump-------------------------------------------
 // Dump statistics for the hash table
 void NodeHash::dump() {
@@ -314,7 +317,7 @@ void NodeHash::dump() {
   if( PrintCompilation && PrintOptoStatistics && Verbose && (_inserts > 0) ) { // PrintOptoGVN
     if( PrintCompilation2 ) {
       for( uint i=0; i<_max; i++ )
-      if( _table[i] )
+      if( _table[i] ) 
         tty->print("%d/%d/%d ",i,_table[i]->hash()&(_max-1),_table[i]->_idx);
     }
     tty->print("\nGVN Hash stats:  %d grows to %d max_size\n", _grows, _max);
@@ -400,7 +403,7 @@ PhaseRemoveUseless::PhaseRemoveUseless( PhaseGVN *gvn, Unique_Node_List *worklis
 
 //=============================================================================
 //------------------------------PhaseTransform---------------------------------
-PhaseTransform::PhaseTransform( PhaseNumber pnum ) : Phase(pnum),
+PhaseTransform::PhaseTransform( PhaseNumber pnum ) : Phase(pnum), 
   _arena(Thread::current()->resource_area()),
   _nodes(_arena),
   _types(_arena)
@@ -416,7 +419,7 @@ PhaseTransform::PhaseTransform( PhaseNumber pnum ) : Phase(pnum),
 }
 
 //------------------------------PhaseTransform---------------------------------
-PhaseTransform::PhaseTransform( Arena *arena, PhaseNumber pnum ) : Phase(pnum),
+PhaseTransform::PhaseTransform( Arena *arena, PhaseNumber pnum ) : Phase(pnum), 
   _arena(arena),
   _nodes(arena),
   _types(arena)
@@ -433,7 +436,7 @@ PhaseTransform::PhaseTransform( Arena *arena, PhaseNumber pnum ) : Phase(pnum),
 
 //------------------------------PhaseTransform---------------------------------
 // Initialize with previously generated type information
-PhaseTransform::PhaseTransform( PhaseTransform *pt, PhaseNumber pnum ) : Phase(pnum),
+PhaseTransform::PhaseTransform( PhaseTransform *pt, PhaseNumber pnum ) : Phase(pnum), 
   _arena(pt->_arena),
   _nodes(pt->_nodes),
   _types(pt->_types)
@@ -550,7 +553,7 @@ PhaseValues::~PhaseValues() {
   if( PrintCompilation && Verbose && WizardMode ) {
     tty->print("\n%sValues: %d nodes ---> %d/%d (%d)",
       is_IterGVN() ? "Iter" : "    ", C->unique(), made_progress(), made_transforms(), made_new_values());
-    if( made_transforms() != 0 ) {
+    if( made_transforms() != 0 ) { 
       tty->print_cr("  ratio %f", made_progress()/(float)made_transforms() );
     } else {
       tty->cr();
@@ -564,7 +567,7 @@ ConNode* PhaseTransform::makecon(const Type *t) {
   assert(t->singleton(), "must be a constant");
   assert(!t->empty() || t == Type::TOP, "must not be vacuous range");
   switch (t->base()) {  // fast paths
-  case Type::Half:
+  case Type::Half: 
   case Type::Top:  return (ConNode*) C->top();
   case Type::Int:  return intcon( t->is_int()->get_con() );
   case Type::Long: return longcon( t->is_long()->get_con() );
@@ -616,7 +619,7 @@ ConINode* PhaseTransform::intcon(int i) {
 }
 
 //------------------------------longcon----------------------------------------
-// Fast long constant.
+// Fast long constant.  
 ConLNode* PhaseTransform::longcon(jlong l) {
   // Small integer?  Check cache! Check that cached node is not dead
   if (l >= _lcon_min && l <= _lcon_max) {
@@ -648,12 +651,12 @@ ConNode* PhaseTransform::zerocon(BasicType bt) {
 //=============================================================================
 //------------------------------transform--------------------------------------
 // Return a node which computes the same function as this node, but in a
-// faster or cheaper fashion.  The Node passed in here must have no other
+// faster or cheaper fashion.  The Node passed in here must have no other 
 // pointers to it, as its storage will be reclaimed if the Node can be
 // optimized away.
 Node *PhaseGVN::transform( Node *n ) {
   NOT_PRODUCT( set_transforms(); )
-
+  
   // Apply the Ideal call in a loop until it no longer applies
   Node *k = n;
   NOT_PRODUCT( uint loop_count = 0; )
@@ -725,7 +728,7 @@ Node *PhaseGVN::transform( Node *n ) {
 
 //------------------------------transform--------------------------------------
 // Return a node which computes the same function as this node, but
-// in a faster or cheaper fashion.
+// in a faster or cheaper fashion.  
 Node *PhaseGVN::transform_no_reclaim( Node *n ) {
   NOT_PRODUCT( set_transforms(); )
 
@@ -824,14 +827,14 @@ PhaseIterGVN::PhaseIterGVN( PhaseIterGVN *igvn, const char *dummy ) : PhaseGVN(i
 
 //------------------------------PhaseIterGVN-----------------------------------
 // Initialize with previous PhaseIterGVN info; used by PhaseCCP
-PhaseIterGVN::PhaseIterGVN( PhaseIterGVN *igvn ) : PhaseGVN(igvn),
+PhaseIterGVN::PhaseIterGVN( PhaseIterGVN *igvn ) : PhaseGVN(igvn), 
   _worklist( igvn->_worklist )
 {
 }
 
 //------------------------------PhaseIterGVN-----------------------------------
 // Initialize with previous PhaseGVN info from Parser
-PhaseIterGVN::PhaseIterGVN( PhaseGVN *gvn ) : PhaseGVN(gvn),
+PhaseIterGVN::PhaseIterGVN( PhaseGVN *gvn ) : PhaseGVN(gvn), 
   _worklist(*C->for_igvn())
 {
   uint max;
@@ -850,7 +853,7 @@ PhaseIterGVN::PhaseIterGVN( PhaseGVN *gvn ) : PhaseGVN(gvn),
   }
 
   // Any Phis or Regions on the worklist probably had uses that could not
-  // make more progress because the uses were made while the Phis and Regions
+  // make more progress because the uses were made while the Phis and Regions 
   // were in half-built states.  Put all uses of Phis and Regions on worklist.
   max = _worklist.size();
   for( uint j = 0; j < max; j++ ) {
@@ -916,7 +919,7 @@ void PhaseIterGVN::optimize() {
   }
 #endif
 
-  // Pull from worklist; transform node;
+  // Pull from worklist; transform node; 
   // If node has changed: update edge info and put uses on worklist.
   while( _worklist.size() ) {
     Node *n  = _worklist.pop();
@@ -1001,7 +1004,7 @@ void PhaseIterGVN::optimize() {
       igvn2.set_allow_progress(false);
       igvn2.optimize();
       igvn2.set_allow_progress(true);
-    }
+    } 
   }
   if ( VerifyIterativeGVN && PrintOpto ) {
     if ( _verify_counter == _verify_full_passes )
@@ -1082,7 +1085,7 @@ Node *PhaseIterGVN::transform_old( Node *n ) {
     assert((i->_idx >= k->_idx) || i->is_top(), "Idealize should return new nodes, use Identity to return old nodes");
     // Made a change; put users of original Node on worklist
     add_users_to_worklist( k );
-    // Replacing root of transform tree?
+    // Replacing root of transform tree?  
     if( k != i ) {
       // Make users of old Node now use new.
       subsume_node( k, i );
@@ -1104,7 +1107,7 @@ Node *PhaseIterGVN::transform_old( Node *n ) {
   // See what kind of values 'k' takes on at runtime
   const Type *t = k->Value(this);
   assert(t != NULL, "value sanity");
-
+  
   // Since I just called 'Value' to compute the set of run-time values
   // for this Node, and 'Value' is non-local (and therefore expensive) I'll
   // cache Value.  Later requests for the local phase->type of this Node can
@@ -1126,7 +1129,7 @@ Node *PhaseIterGVN::transform_old( Node *n ) {
     add_users_to_worklist( k );
     subsume_node( k, con );     // Everybody using k now uses con
     return con;
-  }
+  } 
 
   // Now check for Identities
   i = k->Identity(this);        // Look for a nearby replacement
@@ -1176,7 +1179,7 @@ void PhaseIterGVN::remove_globally_dead_node( Node *dead ) {
         dead->set_req(i,NULL);  // Kill the edge
         if (in->outcnt() == 0 && in != C->top()) {// Made input go dead?
           remove_dead_node(in); // Recursively remove
-        } else if (in->outcnt() == 1 &&
+        } else if (in->outcnt() == 1 && 
                    in->has_special_unique_user()) {
           _worklist.push(in->unique_out());
         } else if (in->outcnt() <= 2 && dead->is_Phi()) {
@@ -1272,7 +1275,7 @@ void PhaseIterGVN::add_users_to_worklist( Node *n ) {
 
     if( use->is_Multi() ||      // Multi-definer?  Push projs on worklist
         use->is_Store() )       // Enable store/load same address
-      add_users_to_worklist0(use);
+      add_users_to_worklist0(use); 
 
     // If we changed the receiver type to a call, we need to revisit
     // the Catch following the call.  It's looking for a non-NULL
@@ -1281,7 +1284,7 @@ void PhaseIterGVN::add_users_to_worklist( Node *n ) {
     if (use->is_CallDynamicJava() && n == use->in(TypeFunc::Parms)) {
       Node* p = use->as_CallDynamicJava()->proj_out(TypeFunc::Control);
       if (p != NULL) {
-        add_users_to_worklist0(p);
+        add_users_to_worklist0(p); 
       }
     }
 
@@ -1306,7 +1309,7 @@ void PhaseIterGVN::add_users_to_worklist( Node *n ) {
         }
       }
     }
-
+  
     uint use_op = use->Opcode();
     // If changed Cast input, check Phi users for simple cycles
     if( use->is_ConstraintCast() || use->Opcode() == Op_CheckCastPP ) {
@@ -1453,7 +1456,7 @@ void PhaseCCP::do_transform() {
 // Convert any of his old-space children into new-space children.
 Node *PhaseCCP::transform( Node *n ) {
   Node *new_node = _nodes[n->_idx]; // Check for transformed node
-  if( new_node != NULL )
+  if( new_node != NULL ) 
     return new_node;                // Been there, done that, return old answer
   new_node = transform_once(n);     // Check for constant
   _nodes.map( n->_idx, new_node );  // Flag as having been cloned
@@ -1496,8 +1499,8 @@ Node *PhaseCCP::transform_once( Node *n ) {
         set_type(C->top(), Type::TOP);
       }
       nn = C->top();
-    }
-    if( !n->is_Con() ) {
+    } 
+    if( !n->is_Con() ) { 
       if( t != Type::TOP ) {
         nn = makecon(t);        // ConNode::make(t);
         NOT_PRODUCT( inc_constants(); )
@@ -1734,7 +1737,7 @@ void Node::replace_by(Node *new_node) {
 //=============================================================================
 //-----------------------------------------------------------------------------
 void Type_Array::grow( uint i ) {
-  if( !_max ) {
+  if( !_max ) { 
     _max = 1;
     _types = (const Type**)_a->Amalloc( _max * sizeof(Type*) );
     _types[0] = NULL;

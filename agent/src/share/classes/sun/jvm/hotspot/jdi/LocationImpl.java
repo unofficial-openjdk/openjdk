@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.jdi;
@@ -35,8 +35,8 @@ public class LocationImpl extends MirrorImpl implements Location {
     private long codeIndex;
     private LineInfo baseLineInfo = null;
     private LineInfo otherLineInfo = null;
-
-    LocationImpl(VirtualMachine vm,
+    
+    LocationImpl(VirtualMachine vm, 
                  Method method, long codeIndex) {
         super(vm);
 
@@ -47,8 +47,8 @@ public class LocationImpl extends MirrorImpl implements Location {
 
     /*
      * This constructor allows lazy creation of the method mirror. This
-     * can be a performance savings if the method mirror does not yet
-     * exist.
+     * can be a performance savings if the method mirror does not yet 
+     * exist. 
      */
     LocationImpl(VirtualMachine vm, ReferenceType declaringType,
                  sun.jvm.hotspot.oops.Method methodRef, long codeIndex) {
@@ -85,9 +85,9 @@ public class LocationImpl extends MirrorImpl implements Location {
             long diff = codeIndex() - other.codeIndex();
             if (diff < 0)
                 return -1;
-            else if (diff > 0)
+            else if (diff > 0) 
                 return 1;
-            else
+            else 
                 return 0;
         }
         return rc;
@@ -141,7 +141,7 @@ public class LocationImpl extends MirrorImpl implements Location {
 
         /* check if there is cached info to use */
         lineInfo = otherLineInfo; // copy because of concurrency
-        if (lineInfo != null &&
+        if (lineInfo != null && 
                            stratum.id().equals(lineInfo.liStratum())) {
             return lineInfo;
         }
@@ -150,7 +150,7 @@ public class LocationImpl extends MirrorImpl implements Location {
                   stratum.lineStratum(declaringType, baseLineNumber);
 
         if (lineStratum != null && lineStratum.lineNumber() != -1) {
-            lineInfo = new StratumLineInfo(stratum.id(),
+            lineInfo = new StratumLineInfo(stratum.id(), 
                                            lineStratum.lineNumber(),
                                            lineStratum.sourceName(),
                                            lineStratum.sourcePath());
@@ -162,7 +162,7 @@ public class LocationImpl extends MirrorImpl implements Location {
         }
 
         /* cache it */
-        addStratumLineInfo(lineInfo);
+        addStratumLineInfo(lineInfo); 
 
         return lineInfo;
     }

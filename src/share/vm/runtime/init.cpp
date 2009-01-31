@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -42,7 +45,7 @@ void codeCache_init();
 void VM_Version_init();
 void JDK_Version_init();
 void stubRoutines_init1();
-jint universe_init();  // dependent on codeCache_init and stubRoutines_init
+jint universe_init();  // dependent on codeCache_init and stubRoutines_init 
 void interpreter_init();  // before any methods loaded
 void invocationCounter_init();  // before any methods loaded
 void marksweep_init();
@@ -63,7 +66,7 @@ void compilationPolicy_init();
 // Initialization after compiler initialization
 bool universe_post_init();  // must happen after compiler_init
 void javaClasses_init();  // must happen after vtable initialization
-void stubRoutines_init2(); // note: StubRoutines need 2-phase init
+void stubRoutines_init2(); // note: StubRoutines need 2-phase init 
 
 // Do not disable thread-local-storage, as it is important for some
 // JNI/JVM/JVMTI functions and signal handlers to work properly
@@ -81,7 +84,7 @@ void vm_init_globals() {
 }
 
 
-jint init_globals() {
+jint init_globals() { 
   HandleMark hm;
   management_init();
   vtune_init();
@@ -91,7 +94,7 @@ jint init_globals() {
   VM_Version_init();
   JDK_Version_init();
   stubRoutines_init1();
-  jint status = universe_init();  // dependent on codeCache_init and stubRoutines_init
+  jint status = universe_init();  // dependent on codeCache_init and stubRoutines_init 
   if (status != JNI_OK)
     return status;
 
@@ -115,17 +118,17 @@ jint init_globals() {
   compilationPolicy_init();
   VMRegImpl::set_regName();
 
-  if (!universe_post_init()) {
+  if (!universe_post_init()) { 
     return JNI_ERR;
   }
   javaClasses_init();  // must happen after vtable initialization
-  stubRoutines_init2(); // note: StubRoutines need 2-phase init
+  stubRoutines_init2(); // note: StubRoutines need 2-phase init 
 
   // Although we'd like to, we can't easily do a heap verify
   // here because the main thread isn't yet a JavaThread, so
   // its TLAB may not be made parseable from the usual interfaces.
   if (VerifyBeforeGC && !UseTLAB &&
-      Universe::heap()->total_collections() >= VerifyGCStartAt) {
+      Universe::heap()->total_collections() >= VerifyGCStartAt) { 
     Universe::heap()->prepare_for_verify();
     Universe::verify();   // make sure we're starting with a clean slate
   }

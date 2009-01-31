@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -57,7 +60,7 @@ JvmtiThreadState::JvmtiThreadState(JavaThread* thread)
   _vm_object_alloc_event_collector = NULL;
   _the_class_for_redefinition_verification = NULL;
   _scratch_class_for_redefinition_verification = NULL;
-
+  
   // JVMTI ForceEarlyReturn support
   _pending_step_for_earlyret = false;
   _earlyret_state = earlyret_inactive;
@@ -67,7 +70,7 @@ JvmtiThreadState::JvmtiThreadState(JavaThread* thread)
 
   // add all the JvmtiEnvThreadState to the new JvmtiThreadState
   {
-    JvmtiEnvIterator it;
+    JvmtiEnvIterator it; 
     for (JvmtiEnvBase* env = it.first(); env != NULL; env = it.next(env)) {
       if (env->is_valid()) {
         add_env(env);
@@ -94,19 +97,19 @@ JvmtiThreadState::JvmtiThreadState(JavaThread* thread)
 }
 
 
-JvmtiThreadState::~JvmtiThreadState()   {
+JvmtiThreadState::~JvmtiThreadState()   { 
   assert(JvmtiThreadState_lock->is_locked(), "sanity check");
 
   // clear this as the state for the thread
   get_thread()->set_jvmti_thread_state(NULL);
 
   // zap our env thread states
-  {
+  { 
     JvmtiEnvBase::entering_dying_thread_env_iteration();
     JvmtiEnvThreadStateIterator it(this);
     for (JvmtiEnvThreadState* ets = it.first(); ets != NULL; ) {
       JvmtiEnvThreadState* zap = ets;
-      ets = it.next(ets);
+      ets = it.next(ets);     
       delete zap;
     }
     JvmtiEnvBase::leaving_dying_thread_env_iteration();
@@ -145,7 +148,7 @@ JvmtiThreadState::periodic_clean_up() {
   for (JvmtiThreadState *state = _head; state != NULL; state = state->next()) {
     // For each environment thread state corresponding to an invalid environment
     // unlink it from the list and deallocate it.
-    JvmtiEnvThreadStateIterator it(state);
+    JvmtiEnvThreadStateIterator it(state); 
     JvmtiEnvThreadState* previous_ets = NULL;
     JvmtiEnvThreadState* ets = it.first();
     while (ets != NULL) {
@@ -177,7 +180,7 @@ void JvmtiThreadState::add_env(JvmtiEnvBase *env) {
     // list deallocation (which occurs at a safepoint) cannot occur simultaneously
     debug_only(No_Safepoint_Verifier nosafepoint;)
 
-    JvmtiEnvThreadStateIterator it(this);
+    JvmtiEnvThreadStateIterator it(this); 
     JvmtiEnvThreadState* previous_ets = NULL;
     for (JvmtiEnvThreadState* ets = it.first(); ets != NULL; ets = it.next(ets)) {
       previous_ets = ets;
@@ -193,13 +196,13 @@ void JvmtiThreadState::add_env(JvmtiEnvBase *env) {
 
 
 
-void JvmtiThreadState::enter_interp_only_mode() {
+void JvmtiThreadState::enter_interp_only_mode() { 
   assert(_thread->get_interp_only_mode() == 0, "entering interp only when mode not zero");
   _thread->increment_interp_only_mode();
 }
 
 
-void JvmtiThreadState::leave_interp_only_mode() {
+void JvmtiThreadState::leave_interp_only_mode() { 
   assert(_thread->get_interp_only_mode() == 1, "leaving interp only when mode not one");
   _thread->decrement_interp_only_mode();
 }
@@ -220,7 +223,7 @@ int JvmtiThreadState::count_frames() {
   RegisterMap reg_map(get_thread());
   javaVFrame *jvf = get_thread()->last_java_vframe(&reg_map);
   int n = 0;
-  // tty->print_cr("CSD: counting frames on %s ...",
+  // tty->print_cr("CSD: counting frames on %s ...", 
   //               JvmtiTrace::safe_get_thread_name(get_thread()));
   while (jvf != NULL) {
     methodOop method = jvf->method();
@@ -273,7 +276,7 @@ void JvmtiThreadState::decr_cur_stack_depth() {
   }
 }
 
-int JvmtiThreadState::cur_stack_depth() {
+int JvmtiThreadState::cur_stack_depth() { 
   uint32_t debug_bits = 0;
   guarantee(JavaThread::current() == get_thread() ||
     JvmtiEnv::is_thread_fully_suspended(get_thread(), false, &debug_bits),
@@ -317,7 +320,7 @@ void JvmtiThreadState::process_pending_step_for_popframe() {
   // a repeat step. The new_bci and method_id is same as current_bci
   // and current method_id after pop and step for recursive calls.
   // Force the step by clearing the last location.
-  JvmtiEnvThreadStateIterator it(this);
+  JvmtiEnvThreadStateIterator it(this); 
   for (JvmtiEnvThreadState* ets = it.first(); ets != NULL; ets = it.next(ets)) {
     ets->clear_current_location();
   }
@@ -339,7 +342,7 @@ void JvmtiThreadState::update_for_pop_top_frame() {
     // in any environment
     int popframe_number = cur_stack_depth();
     {
-      JvmtiEnvThreadStateIterator it(this);
+      JvmtiEnvThreadStateIterator it(this); 
       for (JvmtiEnvThreadState* ets = it.first(); ets != NULL; ets = it.next(ets)) {
         if (ets->is_frame_pop(popframe_number)) {
           ets->clear_frame_pop(popframe_number);
@@ -383,7 +386,7 @@ void JvmtiThreadState::process_pending_step_for_earlyret() {
   // The new_bci and method_id is same as current_bci and current
   // method_id after earlyret and step for recursive calls.
   // Force the step by clearing the last location.
-  JvmtiEnvThreadStateIterator it(this);
+  JvmtiEnvThreadStateIterator it(this); 
   for (JvmtiEnvThreadState* ets = it.first(); ets != NULL; ets = it.next(ets)) {
     ets->clear_current_location();
   }

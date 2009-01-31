@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.cdbg;
@@ -96,7 +96,7 @@ public interface ProcessControl {
       handling it via a call to debugEventContinue. This ensures that
       the state of the thread which generated the debug event is
       precisely what it was when the event was generated.
-
+      
       @return The pending debug event, or null if none pending. */
   public DebugEvent debugEventPoll() throws DebuggerException;
 

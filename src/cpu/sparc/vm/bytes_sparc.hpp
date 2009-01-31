@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class Bytes: AllStatic {
@@ -27,7 +30,7 @@ class Bytes: AllStatic {
   // Efficient reading and writing of unaligned unsigned data in platform-specific byte ordering
   // Sparc needs to check for alignment.
 
-  // can I count on address always being a pointer to an unsigned char? Yes
+  // can I count on address always being a pointer to an unsigned char? Yes 
 
   // Returns true, if the byte ordering used by Java is different from the nativ byte ordering
   // of the underlying machine. For example, true for Intel x86, False, for Solaris on Sparc.
@@ -38,10 +41,10 @@ class Bytes: AllStatic {
   static inline u4   swap_u4(u4 x)  { return x; }
   static inline u8   swap_u8(u8 x)  { return x; }
 
-  static inline u2   get_native_u2(address p){
+  static inline u2   get_native_u2(address p){ 
     return (intptr_t(p) & 1) == 0
              ?   *(u2*)p
-             :   ( u2(p[0]) << 8 )
+             :   ( u2(p[0]) << 8 ) 
                | ( u2(p[1])      );
   }
 
@@ -49,11 +52,11 @@ class Bytes: AllStatic {
     switch (intptr_t(p) & 3) {
      case 0:  return *(u4*)p;
 
-     case 2:  return (  u4( ((u2*)p)[0] ) << 16  )
+     case 2:  return (  u4( ((u2*)p)[0] ) << 16  ) 
                    | (  u4( ((u2*)p)[1] )                  );
 
     default:  return ( u4(p[0]) << 24 )
-                   | ( u4(p[1]) << 16 )
+                   | ( u4(p[1]) << 16 ) 
                    | ( u4(p[2]) <<  8 )
                    |   u4(p[3]);
     }
@@ -84,7 +87,7 @@ class Bytes: AllStatic {
 
 
 
-  static inline void put_native_u2(address p, u2 x)   {
+  static inline void put_native_u2(address p, u2 x)   { 
     if ( (intptr_t(p) & 1) == 0 )  *(u2*)p = x;
     else {
       p[0] = x >> 8;
@@ -102,8 +105,8 @@ class Bytes: AllStatic {
              break;
 
     default: ((u1*)p)[0] = x >> 24;
-             ((u1*)p)[1] = x >> 16;
-             ((u1*)p)[2] = x >>  8;
+             ((u1*)p)[1] = x >> 16; 
+             ((u1*)p)[2] = x >>  8; 
              ((u1*)p)[3] = x;
              break;
     }

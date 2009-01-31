@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,14 +22,14 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
 # include "incls/_jvmtiCodeBlobEvents.cpp.incl"
 
 // Support class to collect a list of the non-nmethod CodeBlobs in
-// the CodeCache.
+// the CodeCache. 
 //
 // This class actually creates a list of JvmtiCodeBlobDesc - each JvmtiCodeBlobDesc
 // describes a single CodeBlob in the CodeCache. Note that collection is
@@ -53,16 +56,16 @@ class CodeBlobCollector : StackObj {
 
   // used during a collection
   static GrowableArray<JvmtiCodeBlobDesc*>* _global_code_blobs;
-  static void do_blob(CodeBlob* cb);
- public:
-  CodeBlobCollector() {
-    _code_blobs = NULL;
+  static void do_blob(CodeBlob* cb);  
+ public:     
+  CodeBlobCollector() {    
+    _code_blobs = NULL;    
     _pos = -1;
   }
   ~CodeBlobCollector() {
     if (_code_blobs != NULL) {
       for (int i=0; i<_code_blobs->length(); i++) {
-        FreeHeap(_code_blobs->at(i));
+	FreeHeap(_code_blobs->at(i));
       }
       delete _code_blobs;
     }
@@ -89,7 +92,7 @@ class CodeBlobCollector : StackObj {
     }
     return _code_blobs->at(++_pos);
   }
-
+     
 };
 
 // used during collection
@@ -102,7 +105,7 @@ GrowableArray<JvmtiCodeBlobDesc*>* CodeBlobCollector::_global_code_blobs;
 // other CodeBlobs. This function also filters out CodeBlobs that have
 // a duplicate starting address as previous blobs. This is needed to
 // handle the case where multiple stubs are generated into a single
-// BufferBlob.
+// BufferBlob. 
 
 void CodeBlobCollector::do_blob(CodeBlob* cb) {
 
@@ -111,7 +114,7 @@ void CodeBlobCollector::do_blob(CodeBlob* cb) {
     return;
   }
 
-  // check if this starting address has been seen already - the
+  // check if this starting address has been seen already - the 
   // assumption is that stubs are inserted into the list before the
   // enclosing BufferBlobs.
   address addr = cb->instructions_begin();
@@ -122,18 +125,18 @@ void CodeBlobCollector::do_blob(CodeBlob* cb) {
     }
   }
 
-  // we must name the CodeBlob - some CodeBlobs already have names :-
+  // we must name the CodeBlob - some CodeBlobs already have names :- 
   // - stubs used by compiled code to call a (static) C++ runtime routine
   // - non-relocatable machine code such as the interpreter, stubroutines, etc.
   // - various singleton blobs
   //
   // others are unnamed so we create a name :-
-  // - OSR adapter (interpreter frame that has been on-stack replaced)
+  // - OSR adapter (interpreter frame that has been on-stack replaced) 
   // - I2C and C2I adapters
   const char* name = NULL;
-  if (cb->is_runtime_stub()) {
-    name = ((RuntimeStub*)cb)->name();
-  }
+  if (cb->is_runtime_stub()) {    
+    name = ((RuntimeStub*)cb)->name();   
+  }  
   if (cb->is_buffer_blob()) {
     name = ((BufferBlob*)cb)->name();
   }
@@ -146,7 +149,7 @@ void CodeBlobCollector::do_blob(CodeBlob* cb) {
 
   // record the CodeBlob details as a JvmtiCodeBlobDesc
   JvmtiCodeBlobDesc* scb = new JvmtiCodeBlobDesc(name, cb->instructions_begin(),
-                                                 cb->instructions_end());
+						 cb->instructions_end());
   _global_code_blobs->append(scb);
 }
 
@@ -164,9 +167,9 @@ void CodeBlobCollector::do_blob(CodeBlob* cb) {
 // the enclosing container we first iterate over the stub code descriptors so
 // that the stubs go into the list first. do_blob will then filter out the
 // enclosing blobs if the starting address of the enclosing blobs matches the
-// starting address of first stub generated in the enclosing blob.
+// starting address of first stub generated in the enclosing blob. 
 
-void CodeBlobCollector::collect() {
+void CodeBlobCollector::collect() {   
   assert_locked_or_safepoint(CodeCache_lock);
   assert(_global_code_blobs == NULL, "checking");
 
@@ -176,7 +179,7 @@ void CodeBlobCollector::collect() {
   // iterate over the stub code descriptors and put them in the list first.
   int index = 0;
   StubCodeDesc* desc;
-  while ((desc = StubCodeDesc::desc_for_index(++index)) != NULL) {
+  while ((desc = StubCodeDesc::desc_for_index(++index)) != NULL) {   
     _global_code_blobs->append(new JvmtiCodeBlobDesc(desc->name(), desc->begin(), desc->end()));
   }
 
@@ -189,7 +192,7 @@ void CodeBlobCollector::collect() {
   // for other iterations.
   _code_blobs = _global_code_blobs;
   _global_code_blobs = NULL;
-}
+}  
 
 
 // Generate a DYNAMIC_CODE_GENERATED event for each non-nmethod code blob.
@@ -207,7 +210,7 @@ jvmtiError JvmtiCodeBlobEvents::generate_dynamic_code_events(JvmtiEnv* env) {
   JvmtiCodeBlobDesc* blob = collector.first();
   while (blob != NULL) {
     JvmtiExport::post_dynamic_code_generated(env, blob->name(), blob->code_begin(), blob->code_end());
-    blob = collector.next();
+    blob = collector.next();					   
   }
   return JVMTI_ERROR_NONE;
 }
@@ -223,24 +226,24 @@ class nmethodDesc: public CHeapObj {
   jvmtiAddrLocationMap* _map;
   jint _map_length;
  public:
-  nmethodDesc(methodHandle method, address code_begin, address code_end,
-              jvmtiAddrLocationMap* map, jint map_length) {
+  nmethodDesc(methodHandle method, address code_begin, address code_end, 
+	      jvmtiAddrLocationMap* map, jint map_length) {
     _method = method;
     _code_begin = code_begin;
     _code_end = code_end;
     _map = map;
     _map_length = map_length;
   }
-  methodHandle method() const           { return _method; }
-  address code_begin() const            { return _code_begin; }
-  address code_end() const              { return _code_end; }
-  jvmtiAddrLocationMap* map() const     { return _map; }
-  jint map_length() const               { return _map_length; }
+  methodHandle method() const		{ return _method; }
+  address code_begin() const		{ return _code_begin; }
+  address code_end() const		{ return _code_end; }
+  jvmtiAddrLocationMap*	map() const	{ return _map; }
+  jint map_length() const		{ return _map_length; }
 };
 
 
 // Support class to collect a list of the nmethod CodeBlobs in
-// the CodeCache.
+// the CodeCache. 
 //
 // Usage :-
 //
@@ -255,24 +258,24 @@ class nmethodDesc: public CHeapObj {
 //
 class nmethodCollector : StackObj {
  private:
-  GrowableArray<nmethodDesc*>* _nmethods;           // collect nmethods
-  int _pos;                                         // iteration support
+  GrowableArray<nmethodDesc*>* _nmethods;	    // collect nmethods
+  int _pos;					    // iteration support
 
   // used during a collection
   static GrowableArray<nmethodDesc*>* _global_nmethods;
-  static void do_nmethod(nmethod* nm);
- public:
-  nmethodCollector() {
+  static void do_nmethod(nmethod* nm);  
+ public:     
+  nmethodCollector() {    
     _nmethods = NULL;
     _pos = -1;
   }
   ~nmethodCollector() {
     if (_nmethods != NULL) {
       for (int i=0; i<_nmethods->length(); i++) {
-        nmethodDesc* blob = _nmethods->at(i);
-        if (blob->map()!= NULL) {
-          FREE_C_HEAP_ARRAY(jvmtiAddrLocationMap, blob->map());
-        }
+	nmethodDesc* blob = _nmethods->at(i);
+	if (blob->map()!= NULL) {
+	  FREE_C_HEAP_ARRAY(jvmtiAddrLocationMap, blob->map());
+	}
       }
       delete _nmethods;
     }
@@ -298,7 +301,7 @@ class nmethodCollector : StackObj {
       return NULL;
     }
     return _nmethods->at(++_pos);
-  }
+  }  
 };
 
 // used during collection
@@ -322,13 +325,13 @@ void nmethodCollector::do_nmethod(nmethod* nm) {
   jint map_length;
   JvmtiCodeBlobEvents::build_jvmti_addr_location_map(nm, &map, &map_length);
 
-  // record the nmethod details
+  // record the nmethod details 
   methodHandle mh(nm->method());
   nmethodDesc* snm = new nmethodDesc(mh,
-                                     nm->code_begin(),
-                                     nm->code_end(),
-                                     map,
-                                     map_length);
+				     nm->code_begin(),
+				     nm->code_end(),
+				     map,
+				     map_length);
   _global_nmethods->append(snm);
 }
 
@@ -337,7 +340,7 @@ void nmethodCollector::do_nmethod(nmethod* nm) {
 // The created list is growable array of nmethodDesc - each one describes
 // a nmethod and includs its JVMTI address location map.
 
-void nmethodCollector::collect() {
+void nmethodCollector::collect() {   
   assert_locked_or_safepoint(CodeCache_lock);
   assert(_global_nmethods == NULL, "checking");
 
@@ -347,12 +350,12 @@ void nmethodCollector::collect() {
   // any a descriptor for each nmethod to the list.
   CodeCache::nmethods_do(do_nmethod);
 
-  // make the list the instance list
+  // make the list the instance list 
   _nmethods = _global_nmethods;
   _global_nmethods = NULL;
-}
+}  
 
-// Generate a COMPILED_METHOD_LOAD event for each nnmethod
+// Generate a COMPILED_METHOD_LOAD event for each nnmethod 
 
 jvmtiError JvmtiCodeBlobEvents::generate_compiled_method_load_events(JvmtiEnv* env) {
   HandleMark hm;
@@ -367,23 +370,23 @@ jvmtiError JvmtiCodeBlobEvents::generate_compiled_method_load_events(JvmtiEnv* e
   // iterate over the  list and post an event for each nmethod
   nmethodDesc* nm_desc = collector.first();
   while (nm_desc != NULL) {
-    methodOop method = nm_desc->method()();
+    methodOop method = nm_desc->method()();    
     jmethodID mid = method->jmethod_id();
     assert(mid != NULL, "checking");
     JvmtiExport::post_compiled_method_load(env, mid,
-                                           (jint)(nm_desc->code_end() - nm_desc->code_begin()),
-                                           nm_desc->code_begin(), nm_desc->map_length(),
-                                           nm_desc->map());
+					   (jint)(nm_desc->code_end() - nm_desc->code_begin()),
+					   nm_desc->code_begin(), nm_desc->map_length(),
+					   nm_desc->map());	
     nm_desc = collector.next();
-  }
+  }  
   return JVMTI_ERROR_NONE;
 }
 
 
 // create a C-heap allocated address location map for an nmethod
-void JvmtiCodeBlobEvents::build_jvmti_addr_location_map(nmethod *nm,
-                                                        jvmtiAddrLocationMap** map_ptr,
-                                                        jint *map_length_ptr)
+void JvmtiCodeBlobEvents::build_jvmti_addr_location_map(nmethod *nm, 
+							jvmtiAddrLocationMap** map_ptr, 
+							jint *map_length_ptr)
 {
   ResourceMark rm;
   jvmtiAddrLocationMap* map = NULL;
@@ -407,13 +410,13 @@ void JvmtiCodeBlobEvents::build_jvmti_addr_location_map(nmethod *nm,
       while( !sd->is_top() ) { sd = sd->sender(); }
       int bci = sd->bci();
       if (bci != InvocationEntryBci) {
-        assert(map_length < pcds_in_method, "checking");
+	assert(map_length < pcds_in_method, "checking");
         map[map_length].start_address = (const void*)pcd->real_pc(nm);
         map[map_length].location = bci;
         ++map_length;
       }
     }
-  }
+  } 
 
   *map_ptr = map;
   *map_length_ptr = map_length;

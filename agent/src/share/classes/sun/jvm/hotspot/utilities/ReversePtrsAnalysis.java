@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.utilities;
@@ -111,7 +111,7 @@ public class ReversePtrsAnalysis {
                      new RootVisitor("Global JNI handle root"));
     doJNIHandleBlock(handles.weakGlobalHandles(),
                      new RootVisitor("Weak global JNI handle root"));
-
+    
     // Do Java-level static fields in perm gen
     heap.iteratePerm(new DefaultHeapVisitor() {
         public boolean doObj(Oop obj) {
@@ -145,7 +145,7 @@ public class ReversePtrsAnalysis {
                  },
                false);
           }
-                  return false;
+		  return false;
         }
       });
 
@@ -206,45 +206,45 @@ public class ReversePtrsAnalysis {
     // stack for saving new objects to be analyzed.
 
     final Stack workList = new Stack();
-
+    
     // Next object to be visited.
     Oop next = obj;
 
     try {
-      // Node in the list currently being visited.
-
+      // Node in the list currently being visited.  
+    
       while (true) {
         final Oop currObj = next;
-
+  
         // For the progress meter
         if (progressThunk != null) {
           visitedSize += currObj.getObjectSize();
           double curFrac = (double) visitedSize / (double) usedSize;
-          if (curFrac >
-              lastNotificationFraction + MINIMUM_NOTIFICATION_FRACTION) {
+          if (curFrac > 
+  	      lastNotificationFraction + MINIMUM_NOTIFICATION_FRACTION) {
             progressThunk.heapIterationFractionUpdate(curFrac);
             lastNotificationFraction = curFrac;
           }
         }
-
+    
         if (DEBUG) {
           ++depth;
           printHeader();
-          System.err.println("ReversePtrs.markAndTraverse(" +
-              currObj.getHandle() + ")");
+          System.err.println("ReversePtrs.markAndTraverse(" + 
+  	      currObj.getHandle() + ")");
         }
-
+  
         // Iterate over the references in the object.  Do the
-        // reverse pointer analysis for each reference.
+	// reverse pointer analysis for each reference.
         // Add the reference to the work-list so that its
-        // references will be visited.
+	// references will be visited.
         currObj.iterate(new DefaultOopVisitor() {
           public void doOop(OopField field, boolean isVMField) {
-            // "field" refers to a reference in currObj
-            Oop next = field.getValue(currObj);
+	    // "field" refers to a reference in currObj
+      	    Oop next = field.getValue(currObj);
             rp.put(new LivenessPathElement(currObj, field.getID()), next);
             if ((next != null) && markBits.mark(next)) {
-              workList.push(next);
+      	      workList.push(next);
             }
           }
         }, false);
@@ -253,16 +253,16 @@ public class ReversePtrsAnalysis {
           --depth;
         }
 
-        // Get the next object to visit.
+	// Get the next object to visit.
         next = (Oop) workList.pop();
       }
     } catch (EmptyStackException e) {
       // Done
     } catch (NullPointerException e) {
-      System.err.println("ReversePtrs: WARNING: " + e +
+      System.err.println("ReversePtrs: WARNING: " + e + 
         " during traversal");
     } catch (Exception e) {
-      System.err.println("ReversePtrs: WARNING: " + e +
+      System.err.println("ReversePtrs: WARNING: " + e + 
         " during traversal");
     }
   }
@@ -272,7 +272,7 @@ public class ReversePtrsAnalysis {
     RootVisitor(String baseRootDescription) {
       this.baseRootDescription = baseRootDescription;
     }
-
+    
     public void visitAddress(Address addr) {
       Oop next = heap.newOop(addr.getOopHandleAt(0));
       LivenessPathElement lp = new LivenessPathElement(null,

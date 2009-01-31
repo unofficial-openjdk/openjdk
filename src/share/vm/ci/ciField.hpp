@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // ciField
@@ -57,7 +60,7 @@ private:
   void initialize_from(fieldDescriptor* fd);
 
   // The implementation of the print method.
-  void print_impl(outputStream* st);
+  void print_impl();
 
 public:
   ciFlags flags() { return _flags; }
@@ -82,7 +85,7 @@ public:
   //
   //   A java compiler is permitted to compile the access to
   //   field f as:
-  //
+  //   
   //     getfield B.f
   //
   //   In that case the declared holder of f would be B and

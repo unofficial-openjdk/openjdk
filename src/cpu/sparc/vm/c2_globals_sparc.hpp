@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 // Sets the default values for platform dependent flags used by the server compiler.
@@ -59,15 +62,15 @@ define_pd_global(intx, FLOATPRESSURE,                52);  // C2 on V9 gets to u
 define_pd_global(intx, FreqInlineSize,               175);
 define_pd_global(intx, INTPRESSURE,                  48);  // large register set
 define_pd_global(intx, InteriorEntryAlignment,       16);  // = CodeEntryAlignment
-define_pd_global(intx, NewRatio,                     2);
+define_pd_global(intx, NewRatio,		     2);
 define_pd_global(intx, NewSizeThreadIncrease, ScaleForWordSize(4*K));
 // The default setting 16/16 seems to work best.
 // (For _228_jack 16/16 is 2% better than 4/4, 16/4, 32/32, 32/16, or 16/32.)
 define_pd_global(intx, OptoLoopAlignment,            16);  // = 4*wordSize
-define_pd_global(intx, RegisterCostAreaRatio,        12000);
+define_pd_global(intx, RegisterCostAreaRatio,	     12000);
 define_pd_global(bool, UseTLAB,                      true);
 define_pd_global(bool, ResizeTLAB,                   true);
-define_pd_global(intx, LoopUnrollLimit,              60); // Design center runs on 1.3.1
+define_pd_global(intx, LoopUnrollLimit,	     	     60); // Design center runs on 1.3.1
 
 // Peephole and CISC spilling both break the graph, and so makes the
 // scheduler sick.
@@ -77,10 +80,10 @@ define_pd_global(bool, OptoBundling,                 false);
 define_pd_global(bool, OptoScheduling,               true);
 
 #ifdef _LP64
-// We need to make sure that all generated code is within
+// We need to make sure that all generated code is within 
 // 2 gigs of the libjvm.so runtime routines so we can use
 // the faster "call" instruction rather than the expensive
-// sequence of instructions to load a 64 bit pointer.
+// sequence of instructions to load a 64 bit pointer. 
 //
 // InitialCodeCacheSize derived from specjbb2000 run.
 define_pd_global(intx, InitialCodeCacheSize,     2048*K); // Integral multiple of CodeCacheExpansionSize

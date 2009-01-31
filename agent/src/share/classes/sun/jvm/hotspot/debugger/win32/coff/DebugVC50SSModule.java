@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.debugger.win32.coff;
@@ -47,7 +47,7 @@ public interface DebugVC50SSModule extends DebugVC50Subsection {
   /** Fetch description of segment to which this module contributes
       code (0..getNumCodeSegments - 1) */
   public DebugVC50SegInfo getSegInfo(int i);
-
+      
   /** Name of the module */
   public String getName();
 }

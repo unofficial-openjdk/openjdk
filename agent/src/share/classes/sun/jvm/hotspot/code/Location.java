@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.code;
@@ -58,7 +58,7 @@ public class Location {
     if (Assert.ASSERTS_ENABLED) {
       Assert.that(!VM.getVM().isCore(), "Debug info not used in core build");
     }
-
+    
     OFFSET_MASK  = db.lookupIntConstant("Location::OFFSET_MASK").intValue();
     OFFSET_SHIFT = db.lookupIntConstant("Location::OFFSET_SHIFT").intValue();
     TYPE_MASK    = db.lookupIntConstant("Location::TYPE_MASK").intValue();
@@ -106,7 +106,7 @@ public class Location {
       } else {
          throw new RuntimeException("should not reach here");
       }
-    }
+    } 
   }
 
   // type safe enum for "Type"
@@ -135,7 +135,7 @@ public class Location {
 
     public String toString() {
       return value;
-    }
+    } 
 
     public int getValue() {
       if (this == NORMAL) {
@@ -268,14 +268,14 @@ public class Location {
     }
     return getOffset() << VM.getVM().getLogAddressSize();
   }
-
+  
   public int getRegisterNumber() {
     if (Assert.ASSERTS_ENABLED) {
       Assert.that(getWhere() == Where.IN_REGISTER, "wrong Where");
     }
     return getOffset();
   }
-
+  
   public void print() {
     printOn(System.out);
   }
@@ -319,7 +319,7 @@ public class Location {
 
   // FIXME: not yet implementable
   // void write_on(DebugInfoWriteStream* stream);
-
+  
 
   //--------------------------------------------------------------------------------
   // Internals only below this point
@@ -332,7 +332,7 @@ public class Location {
   private void setType(Type type) {
     value |= (type.getValue() << TYPE_SHIFT);
   }
-
+  
   private void setOffset(int offset) {
     value |= (offset << OFFSET_SHIFT);
   }

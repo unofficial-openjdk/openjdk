@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "incls/_precompiled.incl"
@@ -41,7 +44,7 @@
 #endif
 
 
-ValueMap::ValueMap()
+ValueMap::ValueMap() 
   : _nesting(0)
   , _entries(ValueMapInitialSize, NULL)
   , _killed_values()
@@ -51,7 +54,7 @@ ValueMap::ValueMap()
 }
 
 
-ValueMap::ValueMap(ValueMap* old)
+ValueMap::ValueMap(ValueMap* old) 
   : _nesting(old->_nesting + 1)
   , _entries(old->_entries.length())
   , _killed_values()
@@ -115,10 +118,10 @@ Value ValueMap::find_insert(Value x) {
 
         if (!is_killed(f) && f->is_equal(x)) {
           NOT_PRODUCT(_number_of_hits++);
-          TRACE_VALUE_NUMBERING(tty->print_cr("Value Numbering: %s %c%d equal to %c%d  (size %d, entries %d, nesting-diff %d)", x->name(), x->type()->tchar(), x->id(), f->type()->tchar(), f->id(), size(), entry_count(), nesting() - entry->nesting()));
+          TRACE_VALUE_NUMBERING(tty->print_cr("Value Numbering: %s %c%d equal to %c%d  (size %d, entries %d, nesting-diff %d)", x->name(), x->type()->tchar(), x->id(), f->type()->tchar(), f->id(), size(), entry_count(), nesting() - entry->nesting())); 
 
           if (entry->nesting() != nesting() && f->as_Constant() == NULL) {
-            // non-constant values of of another block must be pinned,
+            // non-constant values of of another block must be pinned, 
             // otherwise it is possible that they are not evaluated
             f->pin(Instruction::PinGlobalValueNumbering);
           }
@@ -137,7 +140,7 @@ Value ValueMap::find_insert(Value x) {
     _entries.at_put(idx, new ValueMapEntry(hash, x, nesting(), entry_at(idx)));
     _entry_count++;
 
-    TRACE_VALUE_NUMBERING(tty->print_cr("Value Numbering: insert %s %c%d  (size %d, entries %d, nesting %d)", x->name(), x->type()->tchar(), x->id(), size(), entry_count(), nesting()));
+    TRACE_VALUE_NUMBERING(tty->print_cr("Value Numbering: insert %s %c%d  (size %d, entries %d, nesting %d)", x->name(), x->type()->tchar(), x->id(), size(), entry_count(), nesting())); 
   }
 
   return x;
@@ -281,7 +284,7 @@ class ShortLoopOptimizer : public ValueNumberingVisitor {
   void      kill_array(ValueType* type)          { current_map()->kill_array(type); };
 
  public:
-  ShortLoopOptimizer(GlobalValueNumbering* gvn)
+  ShortLoopOptimizer(GlobalValueNumbering* gvn) 
     : _gvn(gvn)
     , _loop_blocks(ValueMapMaxLoopSize)
     , _too_complicated_loop(false)
@@ -337,7 +340,7 @@ bool ShortLoopOptimizer::process(BlockBegin* loop_header) {
 }
 
 
-GlobalValueNumbering::GlobalValueNumbering(IR* ir)
+GlobalValueNumbering::GlobalValueNumbering(IR* ir) 
   : _current_map(NULL)
   , _value_maps(ir->linear_scan_order()->length(), NULL)
 {
@@ -373,7 +376,7 @@ GlobalValueNumbering::GlobalValueNumbering(IR* ir)
     if (num_preds == 1) {
       assert(dominator == block->pred_at(0), "dominator must be equal to predecessor");
       // nothing to do here
-
+    
     } else if (block->is_set(BlockBegin::linear_scan_loop_header_flag)) {
       // block has incoming backward branches -> try to optimize short loops
       if (!short_loop_optimizer.process(block)) {

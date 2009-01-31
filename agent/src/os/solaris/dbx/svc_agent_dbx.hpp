@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2001 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 #include "shell_imp.h"
@@ -52,7 +55,7 @@ public:
   bool run();
 
 private:
-
+  
   // This must be shared between the Java and C layers
   static const int PORT = 21928;
 
@@ -114,7 +117,7 @@ private:
 
   // The shell interpreter on which we can invoke commands (?)
   shell_imp_interp_t _interp;
-
+  
   // The "command line" arguments passed to us by dbx (?)
   int _argc;
   char **_argv;

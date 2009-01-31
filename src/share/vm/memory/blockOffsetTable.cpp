@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_SRC
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,7 +22,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 # include "incls/_precompiled.incl"
@@ -30,7 +33,7 @@
 //////////////////////////////////////////////////////////////////////
 
 BlockOffsetSharedArray::BlockOffsetSharedArray(MemRegion reserved,
-                                               size_t init_word_size):
+					       size_t init_word_size):
   _reserved(reserved), _end(NULL)
 {
   size_t size = compute_size(reserved.word_size());
@@ -53,7 +56,7 @@ BlockOffsetSharedArray::BlockOffsetSharedArray(MemRegion reserved,
     gclog_or_tty->print_cr("  "
                   "  _vs.low_boundary(): " INTPTR_FORMAT
                   "  _vs.high_boundary(): " INTPTR_FORMAT,
-                  _vs.low_boundary(),
+                  _vs.low_boundary(), 
                   _vs.high_boundary());
   }
 }
@@ -103,7 +106,7 @@ void BlockOffsetSharedArray::serialize(SerializeOopClosure* soc,
 //////////////////////////////////////////////////////////////////////
 
 BlockOffsetArray::BlockOffsetArray(BlockOffsetSharedArray* array,
-                                   MemRegion mr, bool init_to_zero) :
+				   MemRegion mr, bool init_to_zero) :
   BlockOffsetTable(mr.start(), mr.end()),
   _array(array),
   _init_to_zero(init_to_zero)
@@ -130,14 +133,14 @@ set_remainder_to_point_to_start(HeapWord* start, HeapWord* end) {
     return;
   }
 
-  // Write the backskip value for each region.
+  // Write the backskip value for each region.  
   //
-  //    offset
+  //	offset
   //    card             2nd                       3rd
   //     | +- 1st        |                         |
   //     v v             v                         v
   //    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+     +-+-+-+-+-+-+-+-+-+-+-
-  //    |x|0|0|0|0|0|0|0|1|1|1|1|1|1| ... |1|1|1|1|2|2|2|2|2|2| ...
+  //    |x|0|0|0|0|0|0|0|1|1|1|1|1|1| ... |1|1|1|1|2|2|2|2|2|2| ... 
   //    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+     +-+-+-+-+-+-+-+-+-+-+-
   //    11              19                        75
   //      12
@@ -151,7 +154,7 @@ set_remainder_to_point_to_start(HeapWord* start, HeapWord* end) {
   //    3rd - start of third logarithmic region
   //      2 corresponds to logarithmic value N_words + 2 and 2**(3 * 2) = 64
   //
-  //    integer below the block offset entry is an example of
+  //    integer below the block offset entry is an example of 
   //    the index of the entry
   //
   //    Given an address,
@@ -160,7 +163,7 @@ set_remainder_to_point_to_start(HeapWord* start, HeapWord* end) {
   //      Convert the entry to a back slide
   //        (e.g., with today's, offset = 0x81 =>
   //          back slip = 2**(3*(0x81 - N_words)) = 2**3) = 8
-  //      Move back N (e.g., 8) entries and repeat with the
+  //      Move back N (e.g., 8) entries and repeat with the 
   //        value of the new entry
   //
   size_t start_card = _array->index_for(start);
@@ -206,7 +209,7 @@ BlockOffsetArray::set_remainder_to_point_to_start_incl(size_t start_card, size_t
 // is an expensive check -- use with care and only under protection of
 // suitable flag.
 void BlockOffsetArray::check_all_cards(size_t start_card, size_t end_card) const {
-
+  
   if (end_card < start_card) {
     return;
   }
@@ -274,7 +277,7 @@ BlockOffsetArray::do_block_internal(HeapWord* blk_start,
     assert(boundary <= (HeapWord*)boundary_before_end, "tautology");
     switch (action) {
       case Action_mark: {
-        if (init_to_zero()) {
+	if (init_to_zero()) {
           _array->set_offset_array(start_index, boundary, blk_start);
           break;
         } // Else fall through to the next case
@@ -284,10 +287,10 @@ BlockOffsetArray::do_block_internal(HeapWord* blk_start,
         // We have finished marking the "offset card". We need to now
         // mark the subsequent cards that this blk spans.
         if (start_index < end_index) {
-          HeapWord* rem_st = _array->address_for_index(start_index) + N_words;
-          HeapWord* rem_end = _array->address_for_index(end_index) + N_words;
+	  HeapWord* rem_st = _array->address_for_index(start_index) + N_words;
+	  HeapWord* rem_end = _array->address_for_index(end_index) + N_words;
           set_remainder_to_point_to_start(rem_st, rem_end);
-        }
+	}
         break;
       }
       case Action_check: {
@@ -341,14 +344,14 @@ void BlockOffsetArray::verify() const {
     // First check if the start is an allocated block and only
     // then if it is a valid object.
     oop o = oop(start);
-    assert(!Universe::is_fully_initialized() ||
-           _sp->is_free_block(start) ||
-           o->is_oop_or_null(), "Bad object was found");
+    assert(!Universe::is_fully_initialized() || 
+	   _sp->is_free_block(start) ||
+	   o->is_oop_or_null(), "Bad object was found");
     next_index++;
     last_p = p;
     last_start = start;
     last_o = o;
-  }
+  }  
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -373,9 +376,9 @@ BlockOffsetArrayNonContigSpace::alloc_block(HeapWord* blk_start,
 // Adjust BOT to show that a previously whole block has been split
 // into two.  We verify the BOT for the first part (prefix) and
 // update the  BOT for the second part (suffix).
-//      blk is the start of the block
-//      blk_size is the size of the original block
-//      left_blk_size is the size of the first part of the split
+// 	blk is the start of the block
+//	blk_size is the size of the original block
+//	left_blk_size is the size of the first part of the split
 void BlockOffsetArrayNonContigSpace::split_block(HeapWord* blk,
                                                  size_t blk_size,
                                                  size_t left_blk_size) {
@@ -424,7 +427,7 @@ void BlockOffsetArrayNonContigSpace::split_block(HeapWord* blk,
 
   // Calculate the # cards that the prefix and suffix affect.
   size_t num_pref_cards = suff_index - pref_index;
-
+  
   size_t num_suff_cards = end_index  - suff_index;
   // Change the cards that need changing
   if (num_suff_cards > 0) {
@@ -442,7 +445,7 @@ void BlockOffsetArrayNonContigSpace::split_block(HeapWord* blk,
         // the "offset card" in the suffix block.
         set_remainder_to_point_to_start_incl(suff_index + 1,
           suff_index + num_pref_cards - 1);
-        // Fix the appropriate cards in the remainder of the
+        // Fix the appropriate cards in the remainder of the 
         // suffix block -- these are the last num_pref_cards
         // cards in each power block of the "new" range plumbed
         // from suff_addr.
@@ -523,7 +526,7 @@ HeapWord* BlockOffsetArrayNonContigSpace::block_start_unsafe(
   size_t index = _array->index_for(addr);
   HeapWord* q = _array->address_for_index(index);
 
-  uint offset = _array->offset_array(index);    // Extend u_char to uint.
+  uint offset = _array->offset_array(index);	// Extend u_char to uint.
   while (offset >= N_words) {
     // The excess of the offset from N_words indicates a power of Base
     // to go back by.
@@ -595,7 +598,7 @@ void BlockOffsetArrayNonContigSpace::verify_single_block(
   if (VerifyBlockOffsetArray) {
     do_block_internal(blk_start, blk_end, Action_check);
   }
-}
+} 
 
 void BlockOffsetArrayNonContigSpace::verify_single_block(
   HeapWord* blk, size_t size) {
@@ -641,7 +644,7 @@ HeapWord* BlockOffsetArrayContigSpace::block_start_unsafe(const void* addr) cons
   index = MIN2(index, _next_offset_index-1);
   HeapWord* q = _array->address_for_index(index);
 
-  uint offset = _array->offset_array(index);    // Extend u_char to uint.
+  uint offset = _array->offset_array(index);	// Extend u_char to uint.
   while (offset > N_words) {
     // The excess of the offset from N_words indicates a power of Base
     // to go back by.
@@ -671,34 +674,34 @@ HeapWord* BlockOffsetArrayContigSpace::block_start_unsafe(const void* addr) cons
   return q;
 }
 
-//
-//              _next_offset_threshold
-//              |   _next_offset_index
-//              v   v
-//      +-------+-------+-------+-------+-------+
-//      | i-1   |   i   | i+1   | i+2   | i+3   |
-//      +-------+-------+-------+-------+-------+
-//       ( ^    ]
-//         block-start
-//
+//		
+//		_next_offset_threshold
+// 		|   _next_offset_index
+//	    	v   v
+//	+-------+-------+-------+-------+-------+
+//	| i-1	|   i	| i+1	| i+2	| i+3	|
+//	+-------+-------+-------+-------+-------+
+//	 ( ^    ]
+//	   block-start
+//		
 
 void BlockOffsetArrayContigSpace::alloc_block_work(HeapWord* blk_start,
-                                        HeapWord* blk_end) {
+					HeapWord* blk_end) {
   assert(blk_start != NULL && blk_end > blk_start,
          "phantom block");
   assert(blk_end > _next_offset_threshold,
-         "should be past threshold");
+	 "should be past threshold");
   assert(blk_start <= _next_offset_threshold,
-         "blk_start should be at or before threshold")
+	 "blk_start should be at or before threshold")
   assert(pointer_delta(_next_offset_threshold, blk_start) <= N_words,
-         "offset should be <= BlockOffsetSharedArray::N");
+	 "offset should be <= BlockOffsetSharedArray::N");
   assert(Universe::heap()->is_in_reserved(blk_start),
-         "reference must be into the heap");
+	 "reference must be into the heap");
   assert(Universe::heap()->is_in_reserved(blk_end-1),
-         "limit must be within the heap");
+	 "limit must be within the heap");
   assert(_next_offset_threshold ==
-         _array->_reserved.start() + _next_offset_index*N_words,
-         "index must agree with threshold");
+	 _array->_reserved.start() + _next_offset_index*N_words,
+	 "index must agree with threshold");
 
   debug_only(size_t orig_next_offset_index = _next_offset_index;)
 
@@ -730,21 +733,21 @@ void BlockOffsetArrayContigSpace::alloc_block_work(HeapWord* blk_start,
   _next_offset_threshold = _array->address_for_index(end_index) +
     N_words;
   assert(_next_offset_threshold >= blk_end, "Incorrent offset threshold");
-
+  
 #ifdef ASSERT
   // The offset can be 0 if the block starts on a boundary.  That
   // is checked by an assertion above.
   size_t start_index = _array->index_for(blk_start);
   HeapWord* boundary    = _array->address_for_index(start_index);
   assert((_array->offset_array(orig_next_offset_index) == 0 &&
-          blk_start == boundary) ||
-          (_array->offset_array(orig_next_offset_index) > 0 &&
-         _array->offset_array(orig_next_offset_index) <= N_words),
+	  blk_start == boundary) ||
+	  (_array->offset_array(orig_next_offset_index) > 0 &&
+	 _array->offset_array(orig_next_offset_index) <= N_words),
          "offset array should have been set");
   for (size_t j = orig_next_offset_index + 1; j <= end_index; j++) {
-    assert(_array->offset_array(j) > 0 &&
-           _array->offset_array(j) <= (u_char) (N_words+N_powers-1),
-           "offset array should have been set");
+    assert(_array->offset_array(j) > 0 && 
+  	   _array->offset_array(j) <= (u_char) (N_words+N_powers-1), 
+	   "offset array should have been set");
   }
 #endif
 }

@@ -1,3 +1,6 @@
+#ifdef USE_PRAGMA_IDENT_HDR
+#pragma ident "%W% %E% %U% JVM"
+#endif
 /*
  * Copyright 1997-2000 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -19,20 +22,20 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 class PrivilegedElement VALUE_OBJ_CLASS_SPEC {
- private:
-  klassOop  _klass;                // klass for method
-  oop       _privileged_context;   // context for operation
+ private:  
+  klassOop  _klass;                // klass for method 
+  oop       _privileged_context;   // context for operation  
   intptr_t*     _frame_id;             // location on stack
   PrivilegedElement* _next;        // Link to next one on stack
  public:
-  void initialize(vframeStream* vf, oop context, PrivilegedElement* next, TRAPS);
-  void oops_do(OopClosure* f);
+  void initialize(vframeStream* vf, oop context, PrivilegedElement* next, TRAPS);  
+  void oops_do(OopClosure* f);    
   intptr_t* frame_id() const           { return _frame_id; }
-  oop  privileged_context() const  { return _privileged_context; }
+  oop  privileged_context() const  { return _privileged_context; }  
   oop  class_loader() const        { return instanceKlass::cast(_klass)->class_loader(); }
   oop  protection_domain() const   { return instanceKlass::cast(_klass)->protection_domain(); }
   PrivilegedElement *next() const  { return _next; }
@@ -41,3 +44,4 @@ class PrivilegedElement VALUE_OBJ_CLASS_SPEC {
   void print_on(outputStream* st) const   PRODUCT_RETURN;
   bool contains(address addr)             PRODUCT_RETURN0;
 };
+

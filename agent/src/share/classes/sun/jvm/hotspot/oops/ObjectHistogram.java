@@ -19,7 +19,7 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
- *
+ *  
  */
 
 package sun.jvm.hotspot.oops;
@@ -39,7 +39,7 @@ public class ObjectHistogram implements HeapVisitor {
     Klass klass = obj.getKlass();
     if (!map.containsKey(klass)) map.put(klass, new ObjectHistogramElement(klass));
     ((ObjectHistogramElement) map.get(klass)).updateWith(obj);
-        return false;
+	return false;
   }
 
   public void epilogue() {}
@@ -66,6 +66,6 @@ public class ObjectHistogram implements HeapVisitor {
     Iterator iterator = list.listIterator();
     while (iterator.hasNext()) {
       ((ObjectHistogramElement) iterator.next()).printOn(tty);
-    }
+    }    
   }
 }
