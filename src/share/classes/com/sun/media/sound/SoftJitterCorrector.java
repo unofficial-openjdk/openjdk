@@ -24,6 +24,7 @@
  */
 package com.sun.media.sound;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -47,7 +48,7 @@ public class SoftJitterCorrector extends AudioInputStream {
         int writepos = 0;
         int readpos = 0;
         byte[][] buffers;
-        byte[] nullbuff;
+        Object buffers_mutex = new Object();
 
         // Adapative Drift Statistics
         int w_count = 1000;
@@ -61,7 +62,7 @@ public class SoftJitterCorrector extends AudioInputStream {
         byte[] bbuffer = null;
 
         public byte[] nextReadBuffer() {
-            synchronized (buffers) {
+            synchronized (buffers_mutex) {
                 if (writepos > readpos) {
                     int w_m = writepos - readpos;
                     if (w_m < w_min)
@@ -81,7 +82,7 @@ public class SoftJitterCorrector extends AudioInputStream {
                     //e.printStackTrace();
                     return null;
                 }
-                synchronized (buffers) {
+                synchronized (buffers_mutex) {
                     if (writepos > readpos) {
                         w = 0;
                         w_min = -1;
@@ -95,13 +96,13 @@ public class SoftJitterCorrector extends AudioInputStream {
         }
 
         public byte[] nextWriteBuffer() {
-            synchronized (buffers) {
+            synchronized (buffers_mutex) {
                 return buffers[writepos % buffers.length];
             }
         }
 
         public void commit() {
-            synchronized (buffers) {
+            synchronized (buffers_mutex) {
                 writepos++;
                 if ((writepos - readpos) > buffers.length) {
                     int newsize = (writepos - readpos) + 10;
@@ -119,7 +120,6 @@ public class SoftJitterCorrector extends AudioInputStream {
             this.buffers
                     = new byte[(buffersize/smallbuffersize)+10][smallbuffersize];
             this.bbuffer_max = MAX_BUFFER_SIZE / smallbuffersize;
-            this.nullbuff = new byte[smallbuffersize];
             this.stream = s;
 
 
@@ -181,7 +181,16 @@ public class SoftJitterCorrector extends AudioInputStream {
                         else {
                             byte[] buff = nextWriteBuffer();
                             try {
-                                stream.read(buff, 0, buff.length);
+                                int n = 0;
+                                while (n != buff.length) {
+                                    int s = stream.read(buff, n, buff.length
+                                            - n);
+                                    if (s < 0)
+                                        throw new EOFException();
+                                    if (s == 0)
+                                        Thread.yield();
+                                    n += s;
+                                }
                             } catch (IOException e1) {
                                 //e1.printStackTrace();
                             }

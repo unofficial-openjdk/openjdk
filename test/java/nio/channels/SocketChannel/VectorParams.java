@@ -24,7 +24,7 @@
 /* @test
  * @bug 4865031
  * @summary Test ScatteringByteChannel/GatheringByteChannel read/write
- * @library ..
+ * @library ../../../..
  */
 
 import java.net.*;
@@ -38,7 +38,7 @@ public class VectorParams {
     static java.io.PrintStream out = System.out;
 
     static final int DAYTIME_PORT = 13;
-    static final String DAYTIME_HOST = TestUtil.HOST;
+    static final String DAYTIME_HOST = TestEnv.getProperty("host");
     static final int testSize = 10;
     static ByteBuffer[] bufs = null;
     static InetSocketAddress isa = null;

@@ -24,7 +24,7 @@
 /* @test
  * @bug 4514230
  * @summary Test setting illegal buffer sizes
- * @library ..
+ * @library ../../../..
  */
 
 import java.nio.channels.*;
@@ -33,7 +33,7 @@ import java.net.*;
 public class BufferSize {
 
     static final int DAYTIME_PORT = 13;
-    static final String DAYTIME_HOST = TestUtil.HOST;
+    static final String DAYTIME_HOST = TestEnv.getProperty("host");
 
     public static void main(String[] args) throws Exception {
         InetSocketAddress isa

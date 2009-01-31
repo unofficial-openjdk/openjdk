@@ -24,7 +24,7 @@
 /* @test
  * @bug 4737146 4750573
  * @summary Test if isConnectable returns true after connected
- * @library ..
+ * @library ../../../..
  */
 
 import java.net.*;
@@ -37,7 +37,7 @@ import java.util.*;
 public class IsConnectable {
 
     static final int DAYTIME_PORT = 13;
-    static final String DAYTIME_HOST = TestUtil.HOST;
+    static final String DAYTIME_HOST = TestEnv.getProperty("host");
 
     static void test() throws Exception {
         InetSocketAddress isa

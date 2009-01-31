@@ -194,6 +194,20 @@ public class SoftChannel implements MidiChannel, ModelDirectedPlayer {
             return v;
         }
     };
+    
+    private static int restrict7Bit(int value)
+    {
+        if(value < 0) return 0;
+        if(value > 127) return 127;
+        return value;
+    }
+    
+    private static int restrict14Bit(int value)
+    {
+        if(value < 0) return 0;
+        if(value > 16256) return 16256;
+        return value;
+    }
 
     public SoftChannel(SoftSynthesizer synth, int channel) {
         this.channel = channel;
@@ -272,9 +286,9 @@ public class SoftChannel implements MidiChannel, ModelDirectedPlayer {
         } else {
             // Default Voice Allocation
             //  * Find voice that is on
-            //          and Find voice which has lowest voiceID ( oldest voice)
+            //  	and Find voice which has lowest voiceID ( oldest voice)
             //  * Or find voice that is off
-            //          and Find voice which has lowest voiceID ( oldest voice)
+            //  	and Find voice which has lowest voiceID ( oldest voice)
 
             int voiceNo = -1;
 
@@ -386,7 +400,8 @@ public class SoftChannel implements MidiChannel, ModelDirectedPlayer {
     }
 
     public void noteOn(int noteNumber, int velocity) {
-
+        noteNumber = restrict7Bit(noteNumber);
+        velocity = restrict7Bit(velocity);        
         noteOn_internal(noteNumber, velocity);
         if (current_mixer != null)
             current_mixer.noteOn(noteNumber, velocity);
@@ -414,7 +429,7 @@ public class SoftChannel implements MidiChannel, ModelDirectedPlayer {
                 sustain = true;
             }
 
-            mainmixer.msec_last_activity = mainmixer.msec_pos;
+            mainmixer.activity();
 
             if (mono) {
                 if (portamento) {
@@ -514,6 +529,8 @@ public class SoftChannel implements MidiChannel, ModelDirectedPlayer {
     }
 
     public void noteOff(int noteNumber, int velocity) {
+        noteNumber = restrict7Bit(noteNumber);
+        velocity = restrict7Bit(velocity);        
         noteOff_internal(noteNumber, velocity);
 
         if (current_mixer != null)
@@ -532,7 +549,7 @@ public class SoftChannel implements MidiChannel, ModelDirectedPlayer {
                 }
             }
 
-            mainmixer.msec_last_activity = mainmixer.msec_pos;
+            mainmixer.activity();
             for (int i = 0; i < voices.length; i++) {
                 if (voices[i].on && voices[i].channel == channel
                         && voices[i].note == noteNumber
@@ -610,15 +627,19 @@ public class SoftChannel implements MidiChannel, ModelDirectedPlayer {
     }
 
     public void noteOff(int noteNumber) {
+        if(noteNumber < 0 || noteNumber > 127) return;
         noteOff_internal(noteNumber, 64);
     }
 
     public void setPolyPressure(int noteNumber, int pressure) {
+        noteNumber = restrict7Bit(noteNumber);
+        pressure = restrict7Bit(pressure);        
+
         if (current_mixer != null)
             current_mixer.setPolyPressure(noteNumber, pressure);
 
         synchronized (control_mutex) {
-            mainmixer.msec_last_activity = mainmixer.msec_pos;
+            mainmixer.activity();
             co_midi[noteNumber].get(0, "poly_pressure")[0] = pressure*(1.0/128.0);
             polypressure[noteNumber] = pressure;
             for (int i = 0; i < voices.length; i++) {
@@ -634,11 +655,12 @@ public class SoftChannel implements MidiChannel, ModelDirectedPlayer {
         }
     }
 
-    public void setChannelPressure(int pressure) {
+    public void setChannelPressure(int pressure) {        
+        pressure = restrict7Bit(pressure);                
         if (current_mixer != null)
             current_mixer.setChannelPressure(pressure);
         synchronized (control_mutex) {
-            mainmixer.msec_last_activity = mainmixer.msec_pos;
+            mainmixer.activity();
             co_midi_channel_pressure[0] = pressure * (1.0 / 128.0);
             channelpressure = pressure;
             for (int i = 0; i < voices.length; i++) {
@@ -1003,6 +1025,8 @@ public class SoftChannel implements MidiChannel, ModelDirectedPlayer {
     }
 
     public void controlChange(int controller, int value) {
+        controller = restrict7Bit(controller);
+        value = restrict7Bit(value);
         if (current_mixer != null)
             current_mixer.controlChange(controller, value);
 
@@ -1169,7 +1193,7 @@ public class SoftChannel implements MidiChannel, ModelDirectedPlayer {
             co_midi_cc_cc[controller][0] = value * (1.0 / 128.0);
 
             if (controller == 0x00) {
-                bank = (bank & 127) + (value << 7);
+                bank = /*(bank & 127) +*/ (value << 7);
                 return;
             }
 
@@ -1179,6 +1203,8 @@ public class SoftChannel implements MidiChannel, ModelDirectedPlayer {
             }
 
             this.controller[controller] = value;
+            if(controller < 0x20)
+                this.controller[controller + 0x20] = 0;	
 
             for (int i = 0; i < voices.length; i++)
                 if (voices[i].active)
@@ -1203,13 +1229,15 @@ public class SoftChannel implements MidiChannel, ModelDirectedPlayer {
         }
     }
 
-    public void programChange(int program) {
+    public void programChange(int program) {        
         programChange(bank, program);
     }
 
     public void programChange(int bank, int program) {
+        bank = restrict7Bit(bank);
+        program = restrict7Bit(program);        
         synchronized (control_mutex) {
-            mainmixer.msec_last_activity = mainmixer.msec_pos;
+            mainmixer.activity();
             this.bank = bank;
             this.program = program;
             current_instrument = null;
@@ -1223,10 +1251,11 @@ public class SoftChannel implements MidiChannel, ModelDirectedPlayer {
     }
 
     public void setPitchBend(int bend) {
-        if (current_mixer != null)
+        bend = restrict14Bit(bend);
+        if (current_mixer != null)            
             current_mixer.setPitchBend(bend);
         synchronized (control_mutex) {
-            mainmixer.msec_last_activity = mainmixer.msec_pos;
+            mainmixer.activity();
             co_midi_pitch[0] = bend * (1.0 / 16384.0);
             pitchbend = bend;
             for (int i = 0; i < voices.length; i++)
@@ -1342,7 +1371,7 @@ public class SoftChannel implements MidiChannel, ModelDirectedPlayer {
 
     public void resetAllControllers(boolean allControls) {
         synchronized (control_mutex) {
-            mainmixer.msec_last_activity = mainmixer.msec_pos;
+            mainmixer.activity();
 
             for (int i = 0; i < 128; i++) {
                 setPolyPressure(i, 0);

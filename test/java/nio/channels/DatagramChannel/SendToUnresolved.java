@@ -24,7 +24,7 @@
 /* @test
  * @bug 4675045
  * @summary Test DatagramChannel send to unresolved address
- * @library ..
+ * @library ../../../..
  */
 
 import java.io.*;
@@ -34,7 +34,7 @@ import java.nio.channels.*;
 
 public class SendToUnresolved {
     public static void main(String [] argv) throws Exception {
-        String host = TestUtil.UNRESOLVABLE_HOST;
+        String host = TestEnv.getProperty("unresovable_host");
         DatagramChannel dc = DatagramChannel.open();
         ByteBuffer bb = ByteBuffer.allocate(4);
         InetSocketAddress sa = new InetSocketAddress (host, 37);

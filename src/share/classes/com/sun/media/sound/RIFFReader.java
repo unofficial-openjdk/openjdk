@@ -52,8 +52,8 @@ public class RIFFReader extends InputStream {
             root = this;
 
         this.stream = stream;
-        avail = stream.available();
-        ckSize = stream.available();
+        avail = Integer.MAX_VALUE;
+        ckSize = Integer.MAX_VALUE;
 
         // Check for RIFF null paddings,
         int b;
@@ -73,7 +73,7 @@ public class RIFFReader extends InputStream {
 
         byte[] fourcc = new byte[4];
         fourcc[0] = (byte) b;
-        read(fourcc, 1, 3);
+        readFully(fourcc, 1, 3);
         this.fourcc = new String(fourcc, "ascii");
         ckSize = readUnsignedInt();
 
@@ -81,7 +81,7 @@ public class RIFFReader extends InputStream {
 
         if (getFormat().equals("RIFF") || getFormat().equals("LIST")) {
             byte[] format = new byte[4];
-            read(format);
+            readFully(format);
             this.riff_type = new String(format, "ascii");
         }
     }
@@ -137,14 +137,47 @@ public class RIFFReader extends InputStream {
                 filepointer += rlen;
             avail = 0;
             return rlen;
-        } else {
-            avail -= len;
+        } else {            
             int ret = stream.read(b, offset, len);
             if (ret == -1)
                 return -1;
+            avail -= ret;
             filepointer += ret;
             return ret;
         }
+    }
+
+    public final void readFully(byte b[]) throws IOException {
+        readFully(b, 0, b.length);
+    }
+
+    public final void readFully(byte b[], int off, int len) throws IOException {
+        if (len < 0)
+            throw new IndexOutOfBoundsException();
+        while (len > 0) {
+            int s = read(b, off, len);
+            if (s < 0)
+                throw new EOFException();
+            if (s == 0)
+                Thread.yield();
+            off += s;
+            len -= s;
+        }
+    }
+
+    public final long skipBytes(long n) throws IOException {
+        if (n < 0)
+            return 0;
+        long skipped = 0;
+        while (skipped != n) {
+            long s = skip(n - skipped);
+            if (s < 0)
+                break;
+            if (s == 0)
+                Thread.yield();
+            skipped += s;
+        }
+        return skipped;
     }
 
     public long skip(long n) throws IOException {
@@ -157,10 +190,10 @@ public class RIFFReader extends InputStream {
             avail = 0;
             return len;
         } else {
-            avail -= n;
             long ret = stream.skip(n);
             if (ret == -1)
                 return -1;
+            avail -= ret;
             filepointer += ret;
             return ret;
         }
@@ -172,17 +205,14 @@ public class RIFFReader extends InputStream {
 
     public void finish() throws IOException {
         if (avail != 0) {
-            long ret = stream.skip(avail);
-            if (ret != -1)
-                filepointer += ret;
-            avail = 0;
+            skipBytes(avail);
         }
     }
 
     // Read ASCII chars from stream
     public String readString(int len) throws IOException {
         byte[] buff = new byte[len];
-        read(buff);
+        readFully(buff);
         for (int i = 0; i < buff.length; i++) {
             if (buff[i] == 0) {
                 return new String(buff, 0, i, "ascii");

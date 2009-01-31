@@ -62,8 +62,6 @@ public class SF2SoundbankReader extends SoundbankReader {
 
     public Soundbank getSoundbank(File file)
             throws InvalidMidiDataException, IOException {
-        if (!file.getPath().toLowerCase().endsWith(".sf2"))
-            return null;
         try {
             return new SF2Soundbank(file);
         } catch (RIFFInvalidFormatException e) {

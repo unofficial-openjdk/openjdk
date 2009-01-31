@@ -24,7 +24,7 @@
 /* @test
  * @bug 4468875
  * @summary Simple test of DatagramChannel isBound
- * @library ..
+ * @library ../../../..
  */
 
 import java.net.*;
@@ -35,7 +35,7 @@ import java.nio.channels.*;
 public class IsBound {
     public static void main(String argv[]) throws Exception {
         InetSocketAddress isa = new InetSocketAddress(
-            InetAddress.getByName(TestUtil.HOST), 13);
+            InetAddress.getByName(TestEnv.getProperty("host")), 13);
         ByteBuffer bb = ByteBuffer.allocateDirect(256);
         bb.put("hello".getBytes());
         bb.flip();

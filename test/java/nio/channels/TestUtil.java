@@ -34,13 +34,6 @@ import java.util.Random;
 
 public class TestUtil {
 
-    // Test hosts used by the channels tests - change these when
-    // executing in a different network.
-    public static final String HOST = "javaweb.sfbay.sun.com";
-    public static final String REFUSING_HOST = "jano.sfbay.sun.com";
-    public static final String FAR_HOST = "theclub.ireland.sun.com";
-    public static final String UNRESOLVABLE_HOST = "blah-blah.blah-blah.blah";
-
     private TestUtil() { }
 
     // Repeatedly try random ports until we bind to one.  You might be tempted

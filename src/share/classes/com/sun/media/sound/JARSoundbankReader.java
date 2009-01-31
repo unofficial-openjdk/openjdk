@@ -74,23 +74,30 @@ public class JARSoundbankReader extends SoundbankReader {
                 "META-INF/services/javax.sound.midi.Soundbank");
         if (stream == null)
             return null;
-        BufferedReader r = new BufferedReader(new InputStreamReader(stream));
-        String line = r.readLine();
-        while (line != null) {
-            if (!line.startsWith("#")) {
-                try {
-                    Class c = Class.forName(line.trim(), true, ucl);
-                    Object o = c.newInstance();
-                    if (o instanceof Soundbank) {
-                        soundbanks.add((Soundbank) o);
+        try
+        {
+            BufferedReader r = new BufferedReader(new InputStreamReader(stream));
+            String line = r.readLine();
+            while (line != null) {
+                if (!line.startsWith("#")) {
+                    try {
+                        Class c = Class.forName(line.trim(), true, ucl);
+                        Object o = c.newInstance();
+                        if (o instanceof Soundbank) {
+                            soundbanks.add((Soundbank) o);
+                        }
+                    } catch (ClassNotFoundException  e) {
+                    } catch (InstantiationException  e) {
+                    } catch (IllegalAccessException  e) {
                     }
-                } catch (Exception e) {
-                    //e.printStackTrace();
                 }
+                line = r.readLine();
             }
-            line = r.readLine();
         }
-        stream.close();
+        finally
+        {
+            stream.close();
+        }
         if (soundbanks.size() == 0)
             return null;
         if (soundbanks.size() == 1)

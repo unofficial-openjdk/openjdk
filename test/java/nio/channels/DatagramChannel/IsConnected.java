@@ -24,7 +24,7 @@
 /* @test
  * @bug 4446035
  * @summary Simple test of DatagramSocket connection consistency
- * @library ..
+ * @library ../../../..
  */
 
 import java.net.*;
@@ -35,7 +35,7 @@ import java.nio.channels.*;
 public class IsConnected {
     public static void main(String argv[]) throws Exception {
         InetSocketAddress isa = new InetSocketAddress(
-            InetAddress.getByName(TestUtil.HOST), 13);
+            InetAddress.getByName(TestEnv.getProperty("host")), 13);
         DatagramChannel dc = DatagramChannel.open();
         dc.configureBlocking(true);
         dc.connect(isa);

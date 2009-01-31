@@ -50,7 +50,7 @@ public class GetLatency {
 		
 	public static void main(String[] args) throws Exception {
 		AudioSynthesizer synth = new SoftSynthesizer();
-		synth.open();
+        synth.open(new DummySourceDataLine(), null);
 		assertTrue(synth.getLatency() != -1);
 		synth.close();
 		

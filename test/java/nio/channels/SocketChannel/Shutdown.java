@@ -24,7 +24,7 @@
 /* @test
  * @bug 4618960
  * @summary Test isInputShutdown
- * @library ..
+ * @library ../../../..
  */
 
 import java.net.*;
@@ -35,7 +35,7 @@ public class Shutdown {
 
     public static void main(String args[]) throws Exception {
         InetSocketAddress sa = new InetSocketAddress(
-                                InetAddress.getByName(TestUtil.HOST), 23);
+            InetAddress.getByName(TestEnv.getProperty("host")), 23);
         SocketChannel sc = SocketChannel.open(sa);
         boolean before = sc.socket().isInputShutdown();
         sc.socket().shutdownInput();

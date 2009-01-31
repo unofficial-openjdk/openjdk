@@ -3661,3 +3661,140 @@ CleanUp:
     CopyMemory(Icc, &Keep, sizeof(LCMSICCPROFILE));
     return FALSE;
 }
+
+BOOL LCMSEXPORT _cmsModifyTagData(cmsHPROFILE hProfile, icTagSignature sig,
+				  void *data, size_t size)
+{
+  BOOL isNew;
+  int i, idx, delta, count;
+  LPBYTE padChars[3] = {0, 0, 0};
+  LPBYTE beforeBuf, afterBuf, ptr;
+  size_t beforeSize, afterSize;
+  icUInt32Number profileSize, temp;
+  LPLCMSICCPROFILE Icc = (LPLCMSICCPROFILE) (LPSTR) hProfile;
+
+  isNew = FALSE;
+  idx = _cmsSearchTag(Icc, sig, FALSE);
+  if (idx < 0)
+    {
+      isNew = TRUE;
+      idx = Icc->TagCount++;
+      if (Icc->TagCount >= MAX_TABLE_TAG)
+	{
+	  fprintf(stderr, "Too many tags (%d)\n", Icc->TagCount);
+	  Icc->TagCount = MAX_TABLE_TAG-1;
+	  return FALSE;
+	}
+    }
+
+  /* Read in size from header */
+  Icc->Seek(Icc, 0);
+  Icc->Read(&profileSize, sizeof(icUInt32Number), 1, Icc);
+  AdjustEndianess32((LPBYTE) &profileSize);
+
+  /* Compute the change in profile size */
+  if (isNew)
+    delta = sizeof(icTag) + ALIGNLONG(size);
+  else
+    delta = ALIGNLONG(size) - ALIGNLONG(Icc->TagSizes[idx]);
+
+  /* Add tag to internal structures */
+  ptr = malloc(size);
+  CopyMemory(ptr, data, size);
+  Icc->TagSizes[idx] = size;
+  Icc->TagNames[idx] = sig;
+  if (Icc->TagPtrs[idx])
+    free(Icc->TagPtrs[idx]);
+  Icc->TagPtrs[idx] = ptr;
+  if (isNew)
+    Icc->TagOffsets[idx] = profileSize;
+
+  /* Compute size of tag data before/after the modified tag */
+  beforeSize = Icc->TagOffsets[idx] - Icc->TagOffsets[0];
+  if (Icc->TagCount == (idx + 1))
+    afterSize = 0;
+  else
+    afterSize = profileSize - Icc->TagOffsets[idx+1];
+
+  /* Make copies of the data before/after the modified tag */
+  if (beforeSize > 0)
+    {
+      beforeBuf = malloc(beforeSize);
+      Icc->Seek(Icc, Icc->TagOffsets[0]);
+      Icc->Read(beforeBuf, beforeSize, 1, Icc);
+    }
+  
+  if (afterSize > 0)
+    {
+      afterBuf = malloc(afterSize);
+      Icc->Seek(Icc, Icc->TagOffsets[idx+1]);
+      Icc->Read(afterBuf, afterSize, 1, Icc);
+    }
+
+  /* Update the profile size in the header */
+  profileSize += delta;
+  Icc->Seek(Icc, 0);
+  temp = TransportValue32(profileSize);
+  Icc->Write(Icc, sizeof(icUInt32Number), &temp);
+
+  Icc->Grow(Icc, delta);
+
+  /* Adjust tag offsets: if the tag is new, we must account
+     for the new tag table entry; otherwise, only those tags after
+     the modified tag are changed (by delta) */
+  if (isNew)
+    {
+      for (i = 0; i < Icc->TagCount; ++i)
+	Icc->TagOffsets[i] += sizeof(icTag);
+    }
+  else
+    {
+      for (i = idx+1; i < Icc->TagCount; ++i)
+	Icc->TagOffsets[i] += delta;
+    }
+
+  /* Write out a new tag table */
+  count = 0;
+  for (i = 0; i < Icc->TagCount; ++i)
+    {
+      if (Icc->TagNames[i] != 0)
+	++count;
+    }
+  Icc->Seek(Icc, sizeof(icHeader));
+  temp = TransportValue32(count);
+  Icc->Write(Icc, sizeof(icUInt32Number), &temp);
+
+  for (i = 0; i < Icc->TagCount; ++i)
+    {
+      if (Icc->TagNames[i] != 0)
+	{
+	  icTag tag;
+	  tag.sig = TransportValue32(Icc->TagNames[i]);
+	  tag.offset = TransportValue32((icInt32Number) Icc->TagOffsets[i]);
+	  tag.size = TransportValue32((icInt32Number) Icc->TagSizes[i]);
+	  Icc->Write(Icc, sizeof(icTag), &tag);
+	}
+    }
+
+  /* Write unchanged data before the modified tag */
+  if (beforeSize > 0)
+    {
+      Icc->Write(Icc, beforeSize, beforeBuf);
+      free(beforeBuf);
+    }
+
+  /* Write modified tag data */
+  Icc->Write(Icc, size, data);
+  if (size % 4)
+    Icc->Write(Icc, 4 - (size % 4), padChars);
+
+  /* Write unchanged data after the modified tag */
+  if (afterSize > 0)
+    {
+      Icc->Write(Icc, afterSize, afterBuf);
+      free(afterBuf);
+    }
+
+  return TRUE;
+}
+

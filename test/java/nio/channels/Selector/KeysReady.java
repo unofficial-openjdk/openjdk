@@ -24,7 +24,7 @@
 /* @test
  * @bug 4530007
  * @summary Test if keys reported ready multiple times
- * @library ..
+ * @library ../../../..
  */
 
 import java.net.*;
@@ -37,7 +37,7 @@ import java.nio.channels.spi.SelectorProvider;
 public class KeysReady {
 
     static final int DAYTIME_PORT = 13;
-    static final String DAYTIME_HOST = TestUtil.HOST;
+    static final String DAYTIME_HOST = TestEnv.getProperty("host");
 
     static void test() throws Exception {
         InetSocketAddress isa

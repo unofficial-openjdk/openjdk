@@ -24,6 +24,7 @@
 /* @test
  * @summary Unit test for socket-channel adaptors
  * @library ..
+ * @library ../../../..
  */
 
 import java.io.*;
@@ -39,8 +40,8 @@ public class AdaptSocket {
 
     static final int ECHO_PORT = 7;
     static final int DAYTIME_PORT = 13;
-    static final String REMOTE_HOST = TestUtil.HOST;
-    static final String VERY_REMOTE_HOST = TestUtil.FAR_HOST;
+    static final String REMOTE_HOST = TestEnv.getProperty("host");
+    static final String VERY_REMOTE_HOST = TestEnv.getProperty("far_host");
 
     static void test(String hn, int timeout, boolean shouldTimeout)
         throws Exception

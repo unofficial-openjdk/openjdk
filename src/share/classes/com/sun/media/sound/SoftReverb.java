@@ -35,7 +35,7 @@ import java.util.Arrays;
  */
 public class SoftReverb implements SoftAudioProcessor {
 
-    private class Delay {
+    private static class Delay {
 
         private float[] delaybuffer;
         private int rovepos = 0;
@@ -73,7 +73,7 @@ public class SoftReverb implements SoftAudioProcessor {
         }
     }
 
-    private class AllPass {
+    private static class AllPass {
 
         private float[] delaybuffer;
         private int delaybuffersize;
@@ -125,7 +125,7 @@ public class SoftReverb implements SoftAudioProcessor {
         }
     }
 
-    private class Comb {
+    private static class Comb {
 
         private float[] delaybuffer;
         private int delaybuffersize;
@@ -209,16 +209,15 @@ public class SoftReverb implements SoftAudioProcessor {
     private SoftAudioBuffer inputA;
     private SoftAudioBuffer left;
     private SoftAudioBuffer right;
-    private SoftSynthesizer synth;
     private boolean dirty = true;
     private float dirty_roomsize;
     private float dirty_damp;
     private float dirty_predelay;
     private float dirty_gain;
+    private float samplerate;
 
-    public void init(SoftSynthesizer synth) {
-        this.synth = synth;
-        double samplerate = synth.getFormat().getSampleRate();
+    public void init(float samplerate, float controlrate) {
+        this.samplerate = samplerate;
 
         double freqscale = ((double) samplerate) / 44100.0;
         // freqscale = 1.0/ freqscale;
@@ -282,21 +281,21 @@ public class SoftReverb implements SoftAudioProcessor {
     public void setMixMode(boolean mix) {
         this.mix = mix;
     }
-    private double silentcounter = 1000;
+    
+    private boolean silent = true;
 
     public void processAudio() {
-        if (this.inputA.isSilent()) {
-            silentcounter += 1 / synth.getControlRate();
-
-            if (silentcounter > 60) {
-                if (!mix) {
-                    left.clear();
-                    right.clear();
-                }
-                return;
+        boolean silent_input = this.inputA.isSilent();
+        if(!silent_input)
+            silent = false;
+        if(silent)
+        {
+            if (!mix) {
+                left.clear();
+                right.clear();
             }
-        } else
-            silentcounter = 0;
+            return;            
+        }
 
         float[] inputA = this.inputA.array();
         float[] left = this.left.array();
@@ -340,7 +339,7 @@ public class SoftReverb implements SoftAudioProcessor {
             combL[i].processMix(input, outL);
         for (int i = 0; i < allpassL.length; i++)
             allpassL[i].processReplace(outL, outL);
-
+        
         if (mix) {
             for (int i = 0; i < numsamples; i++)
                 left[i] += outL[i];
@@ -349,6 +348,15 @@ public class SoftReverb implements SoftAudioProcessor {
                 left[i] = outL[i];
         }
 
+        if (silent_input) {
+            float avgpower = 0; 
+            for (int i = 0; i < numsamples; i++)
+                avgpower += outL[i]*outL[i];
+            avgpower /= numsamples;
+            avgpower = (float)Math.sqrt(avgpower);
+            if(avgpower < 0.00001)
+                silent = true;
+        } 
 
     }
 
@@ -439,7 +447,7 @@ public class SoftReverb implements SoftAudioProcessor {
     }
 
     public void setPreDelay(float value) {
-        delay.setDelay((int)(value * synth.getFormat().getSampleRate()));
+        delay.setDelay((int)(value * samplerate));
     }
 
     public void setGain(float gain) {
@@ -447,7 +455,7 @@ public class SoftReverb implements SoftAudioProcessor {
     }
 
     public void setDamp(float value) {
-        double x = (value / synth.getFormat().getSampleRate()) * (2 * Math.PI);
+        double x = (value / samplerate) * (2 * Math.PI);
         double cx = 2 - Math.cos(x);
         damp = (float)(cx - Math.sqrt(cx * cx - 1));
         if (damp > 1)

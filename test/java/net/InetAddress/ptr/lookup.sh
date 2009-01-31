@@ -26,19 +26,19 @@
 
 # @test
 # @bug 4773521
-# @build Lookup
+# @library ../../../../
+# @build Lookup TestEnv
 # @run shell lookup.sh
 # @summary Test that reverse lookups of IPv4 addresses work when IPv6
 #          is enabled. 
 
 # The host that we try to resolve
 
-HOST=javaweb.sfbay.sun.com
-
 CLASSPATH=${TESTCLASSES}
 export CLASSPATH
 JAVA="${TESTJAVA}/bin/java"
 
+HOST=`$JAVA TestEnv -get host`
 
 # First check that host resolves to IPv4 address.
 

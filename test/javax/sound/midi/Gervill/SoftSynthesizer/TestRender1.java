@@ -26,7 +26,10 @@
 /* @test
  @summary Test SoftSynthesizer simple note rendering in many settings */
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.BufferedInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -131,16 +134,21 @@ public class TestRender1 {
 	static Soundbank soundbank;
 
 	static Sequence sequence;
+	
+	public static InputStream getInputStream(String filename) throws IOException
+	{
+		File file = new File(System.getProperty("test.src", "."), filename);
+		FileInputStream fis = new FileInputStream(file);
+		return new BufferedInputStream(fis);
+	}
 
 	public static void main(String[] args) throws Exception {
 
-		InputStream sb = new BufferedInputStream(TestRender1.class
-				.getResourceAsStream("/ding.sf2"));
+		InputStream sb = getInputStream("ding.sf2");
 		soundbank = MidiSystem.getSoundbank(sb);
 		sb.close();
 
-		InputStream si = new BufferedInputStream(TestRender1.class
-				.getResourceAsStream("/expresso.mid"));
+		InputStream si = getInputStream("expresso.mid");
 		sequence = MidiSystem.getSequence(si);
 		si.close();
 

@@ -89,17 +89,21 @@ public class DLSSoundbank implements Soundbank {
             d.i1 = riff.readUnsignedInt();
             d.s1 = riff.readUnsignedShort();
             d.s2 = riff.readUnsignedShort();
-            d.x1 = riff.readByte();
-            d.x2 = riff.readByte();
-            d.x3 = riff.readByte();
-            d.x4 = riff.readByte();
-            d.x5 = riff.readByte();
-            d.x6 = riff.readByte();
-            d.x7 = riff.readByte();
-            d.x8 = riff.readByte();
+            d.x1 = riff.readUnsignedByte();
+            d.x2 = riff.readUnsignedByte();
+            d.x3 = riff.readUnsignedByte();
+            d.x4 = riff.readUnsignedByte();
+            d.x5 = riff.readUnsignedByte();
+            d.x6 = riff.readUnsignedByte();
+            d.x7 = riff.readUnsignedByte();
+            d.x8 = riff.readUnsignedByte();
             return d;
         }
 
+        public int hashCode() {
+            return (int)i1;
+        }
+                
         public boolean equals(Object obj) {
             if (!(obj instanceof DLSID)) {
                 return false;
@@ -304,80 +308,80 @@ public class DLSSoundbank implements Soundbank {
             case DLS_CDL_AND:
                 x = stack.pop();
                 y = stack.pop();
-                stack.push(new Long(((x != 0) & (y != 0)) ? 1 : 0));
+                stack.push(Long.valueOf(((x != 0) && (y != 0)) ? 1 : 0));
                 break;
             case DLS_CDL_OR:
                 x = stack.pop();
                 y = stack.pop();
-                stack.push(new Long(((x != 0) | (y != 0)) ? 1 : 0));
+                stack.push(Long.valueOf(((x != 0) || (y != 0)) ? 1 : 0));
                 break;
             case DLS_CDL_XOR:
                 x = stack.pop();
                 y = stack.pop();
-                stack.push(new Long(((x != 0) ^ (y != 0)) ? 1 : 0));
+                stack.push(Long.valueOf(((x != 0) ^ (y != 0)) ? 1 : 0));
                 break;
             case DLS_CDL_ADD:
                 x = stack.pop();
                 y = stack.pop();
-                stack.push(new Long(x + y));
+                stack.push(Long.valueOf(x + y));
                 break;
             case DLS_CDL_SUBTRACT:
                 x = stack.pop();
                 y = stack.pop();
-                stack.push(new Long(x - y));
+                stack.push(Long.valueOf(x - y));
                 break;
             case DLS_CDL_MULTIPLY:
                 x = stack.pop();
                 y = stack.pop();
-                stack.push(new Long(x * y));
+                stack.push(Long.valueOf(x * y));
                 break;
             case DLS_CDL_DIVIDE:
                 x = stack.pop();
                 y = stack.pop();
-                stack.push(new Long(x / y));
+                stack.push(Long.valueOf(x / y));
                 break;
             case DLS_CDL_LOGICAL_AND:
                 x = stack.pop();
                 y = stack.pop();
-                stack.push(new Long(((x != 0) & (y != 0)) ? 1 : 0));
+                stack.push(Long.valueOf(((x != 0) && (y != 0)) ? 1 : 0));
                 break;
             case DLS_CDL_LOGICAL_OR:
                 x = stack.pop();
                 y = stack.pop();
-                stack.push(new Long(((x != 0) | (y != 0)) ? 1 : 0));
+                stack.push(Long.valueOf(((x != 0) || (y != 0)) ? 1 : 0));
                 break;
             case DLS_CDL_LT:
                 x = stack.pop();
                 y = stack.pop();
-                stack.push(new Long((x < y) ? 1 : 0));
+                stack.push(Long.valueOf((x < y) ? 1 : 0));
                 break;
             case DLS_CDL_LE:
                 x = stack.pop();
                 y = stack.pop();
-                stack.push(new Long((x <= y) ? 1 : 0));
+                stack.push(Long.valueOf((x <= y) ? 1 : 0));
                 break;
             case DLS_CDL_GT:
                 x = stack.pop();
                 y = stack.pop();
-                stack.push(new Long((x > y) ? 1 : 0));
+                stack.push(Long.valueOf((x > y) ? 1 : 0));
                 break;
             case DLS_CDL_GE:
                 x = stack.pop();
                 y = stack.pop();
-                stack.push(new Long((x >= y) ? 1 : 0));
+                stack.push(Long.valueOf((x >= y) ? 1 : 0));
                 break;
             case DLS_CDL_EQ:
                 x = stack.pop();
                 y = stack.pop();
-                stack.push(new Long((x == y) ? 1 : 0));
+                stack.push(Long.valueOf((x == y) ? 1 : 0));
                 break;
             case DLS_CDL_NOT:
                 x = stack.pop();
                 y = stack.pop();
-                stack.push(new Long((x == 0) ? 1 : 0));
+                stack.push(Long.valueOf((x == 0) ? 1 : 0));
                 break;
             case DLS_CDL_CONST:
-                stack.push(new Long(riff.readUnsignedInt()));
+                stack.push(Long.valueOf(riff.readUnsignedInt()));
                 break;
             case DLS_CDL_QUERY:
                 uuid = DLSID.read(riff);
@@ -385,7 +389,7 @@ public class DLSSoundbank implements Soundbank {
                 break;
             case DLS_CDL_QUERYSUPPORTED:
                 uuid = DLSID.read(riff);
-                stack.push(new Long(cdlIsQuerySupported(uuid) ? 1 : 0));
+                stack.push(Long.valueOf(cdlIsQuerySupported(uuid) ? 1 : 0));
                 break;
             default:
                 break;
@@ -511,7 +515,7 @@ public class DLSSoundbank implements Soundbank {
             } else {
                 if (format.equals("dlid")) {
                     instrument.guid = new byte[16];
-                    chunk.read(instrument.guid);
+                    chunk.readFully(instrument.guid);
                 }
                 if (format.equals("insh")) {
                     chunk.readUnsignedInt(); // Read Region Count - ignored
@@ -544,7 +548,7 @@ public class DLSSoundbank implements Soundbank {
         long count = riff.readUnsignedInt();
 
         if (size - 8 != 0)
-            riff.skip(size - 8);
+            riff.skipBytes(size - 8);
 
         for (int i = 0; i < count; i++) {
             DLSModulator modulator = new DLSModulator();
@@ -564,7 +568,7 @@ public class DLSSoundbank implements Soundbank {
         long count = riff.readUnsignedInt();
 
         if (size - 8 != 0)
-            riff.skip(size - 8);
+            riff.skipBytes(size - 8);
 
         for (int i = 0; i < count; i++) {
             DLSModulator modulator = new DLSModulator();
@@ -657,7 +661,7 @@ public class DLSSoundbank implements Soundbank {
         long loops = riff.readInt();
 
         if (size > 20)
-            riff.skip(size - 20);
+            riff.skipBytes(size - 20);
 
         for (int i = 0; i < loops; i++) {
             DLSSampleLoop loop = new DLSSampleLoop();
@@ -667,7 +671,7 @@ public class DLSSoundbank implements Soundbank {
             loop.length = riff.readUnsignedInt();
             sampleOptions.loops.add(loop);
             if (size2 > 16)
-                riff.skip(size2 - 16);
+                riff.skipBytes(size2 - 16);
         }
     }
 
@@ -747,7 +751,7 @@ public class DLSSoundbank implements Soundbank {
             } else {
                 if (format.equals("dlid")) {
                     sample.guid = new byte[16];
-                    chunk.read(sample.guid);
+                    chunk.readFully(sample.guid);
                 }
 
                 if (format.equals("fmt ")) {
@@ -790,17 +794,17 @@ public class DLSSoundbank implements Soundbank {
                                 chunk.getFilePointer(), chunk.available()));
                     } else {
                         byte[] buffer = new byte[chunk.available()];
-                        //      chunk.read(buffer);
+                        //  chunk.read(buffer);
                         sample.setData(buffer);
 
                         int read = 0;
                         int avail = chunk.available();
                         while (read != avail) {
                             if (avail - read > 65536) {
-                                chunk.read(buffer, read, 65536);
+                                chunk.readFully(buffer, read, 65536);
                                 read += 65536;
                             } else {
-                                chunk.read(buffer, read, avail - read);
+                                chunk.readFully(buffer, read, avail - read);
                                 read = avail;
                             }
                         }
@@ -900,7 +904,7 @@ public class DLSSoundbank implements Soundbank {
         long off = wvpl.getFilePointer();
         List<Long> offsettable = new ArrayList<Long>();
         for (DLSSample sample : samples) {
-            offsettable.add(new Long(wvpl.getFilePointer() - off));
+            offsettable.add(Long.valueOf(wvpl.getFilePointer() - off));
             writeSample(wvpl.writeList("wave"), sample);
         }
 
@@ -967,10 +971,7 @@ public class DLSSoundbank implements Soundbank {
         fmt_chunk.writeUnsignedShort(sampleformat);
         fmt_chunk.writeUnsignedShort(audioformat.getChannels());
         fmt_chunk.writeUnsignedInt((long) audioformat.getSampleRate());
-        long srate = (long)audioformat.getSampleRate();
-        srate *= audioformat.getChannels();
-        srate *= audioformat.getSampleSizeInBits() / 8;
-        //fmt_chunk.writeUnsignedInt((long)audioformat.getFrameRate());
+        long srate = ((long)audioformat.getFrameRate())*audioformat.getFrameSize();
         fmt_chunk.writeUnsignedInt(srate);
         fmt_chunk.writeUnsignedShort(audioformat.getFrameSize());
         fmt_chunk.writeUnsignedShort(audioformat.getSampleSizeInBits());

@@ -55,11 +55,6 @@ public class SoftAudioPusher implements Runnable {
         active = true;
         audiothread = new Thread(this);
         audiothread.setPriority(Thread.MAX_PRIORITY);
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-            //e.printStackTrace();
-        }
         audiothread.start();
     }
 
@@ -82,9 +77,10 @@ public class SoftAudioPusher implements Runnable {
         try {
             while (active) {
                 // Read from audio source
-                ais.read(buffer);
+                int count = ais.read(buffer);
+                if(count < 0) break;
                 // Write byte buffer to source output
-                sourceDataLine.write(buffer, 0, buffer.length);
+                sourceDataLine.write(buffer, 0, count);
             }
         } catch (IOException e) {
             active = false;

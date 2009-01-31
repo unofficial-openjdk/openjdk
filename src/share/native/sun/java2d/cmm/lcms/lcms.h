@@ -1244,7 +1244,8 @@ LCMSAPI BOOL LCMSEXPORT _cmsSaveProfile(cmsHPROFILE hProfile, const char* FileNa
 LCMSAPI BOOL LCMSEXPORT _cmsSaveProfileToMem(cmsHPROFILE hProfile, void *MemPtr,
                                                                 size_t* BytesNeeded);
 
-
+// Modify data for a tag in a profile
+LCMSAPI BOOL LCMSEXPORT _cmsModifyTagData(cmsHPROFILE hProfile, icTagSignature sig, void *data, size_t size);
 
 // PostScript ColorRenderingDictionary and ColorSpaceArray
 
@@ -1838,6 +1839,7 @@ typedef struct _lcms_iccprofile_struct {
                BOOL   (* Seek)(struct _lcms_iccprofile_struct* Icc, size_t offset);
                BOOL   (* Close)(struct _lcms_iccprofile_struct* Icc);
                size_t (* Tell)(struct _lcms_iccprofile_struct* Icc);
+               BOOL   (* Grow)(struct _lcms_iccprofile_struct* Icc, size_t amount);
 
                // Writting
 

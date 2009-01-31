@@ -24,7 +24,7 @@
 /* @test
  * @bug 4755720
  * @summary Test if OP_READ is detected with OP_WRITE in interestOps
- * @library ..
+ * @library ../../../..
  */
 
 import java.net.*;
@@ -37,7 +37,7 @@ import java.util.*;
 public class OpRead {
 
     static final int DAYTIME_PORT = 13;
-    static final String DAYTIME_HOST = TestUtil.HOST;
+    static final String DAYTIME_HOST = TestEnv.getProperty("host");
 
     static void test() throws Exception {
         InetSocketAddress isa

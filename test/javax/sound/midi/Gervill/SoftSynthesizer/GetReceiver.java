@@ -51,7 +51,7 @@ public class GetReceiver {
 		
 	public static void main(String[] args) throws Exception {
 		AudioSynthesizer synth = new SoftSynthesizer();
-		synth.open(null,null);
+        synth.open(new DummySourceDataLine(), null);
 		Receiver recv = synth.getReceiver();
 		assertTrue(recv != null);
 		Receiver recv2 = synth.getReceiver();

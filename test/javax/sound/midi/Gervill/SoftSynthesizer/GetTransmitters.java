@@ -50,7 +50,7 @@ public class GetTransmitters {
 		
 	public static void main(String[] args) throws Exception {
 		AudioSynthesizer synth = new SoftSynthesizer();
-		synth.open(null,null);
+        synth.open(new DummySourceDataLine(), null);
 		assertTrue(synth.getTransmitters().size() == 0);
 		synth.close();			
 		

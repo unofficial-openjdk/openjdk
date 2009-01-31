@@ -23,7 +23,7 @@
 
 /* @test
  * @summary Unit test for socket channels
- * @library ..
+ * @library ../../../..
  */
 
 import java.net.*;
@@ -37,7 +37,7 @@ public class Basic {
     static java.io.PrintStream out = System.out;
 
     static final int DAYTIME_PORT = 13;
-    static final String DAYTIME_HOST = TestUtil.HOST;
+    static final String DAYTIME_HOST = TestEnv.getProperty("host");
 
     static void test() throws Exception {
         InetSocketAddress isa

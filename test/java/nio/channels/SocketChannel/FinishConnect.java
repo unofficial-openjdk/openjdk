@@ -23,7 +23,7 @@
 
 /* @test
  * @summary Test SocketChannel.finishConnect
- * @library ..
+ * @library ../../../..
  */
 
 import java.net.*;
@@ -37,7 +37,7 @@ import java.util.*;
 public class FinishConnect {
 
     static final int DAYTIME_PORT = 13;
-    static final String DAYTIME_HOST = TestUtil.HOST;
+    static final String DAYTIME_HOST = TestEnv.getProperty("host");
 
     public static void main(String[] args) throws Exception {
         test1(true, true);

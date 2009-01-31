@@ -23,7 +23,7 @@
 
 /* @test
  * @summary Unit test for datagram-socket-channel adaptors
- * @library ..
+ * @library ../../../..
  */
 
 import java.io.*;
@@ -42,7 +42,7 @@ public class AdaptDatagramSocket {
 
     static final int ECHO_PORT = 7;
     static final int DISCARD_PORT = 9;
-    static final String REMOTE_HOST = TestUtil.HOST;
+    static final String REMOTE_HOST = TestEnv.getProperty("host");
 
     static final InetSocketAddress echoAddress
         = new InetSocketAddress(REMOTE_HOST, ECHO_PORT);

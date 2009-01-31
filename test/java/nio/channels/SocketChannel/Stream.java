@@ -24,7 +24,7 @@
 /* @test
  * @bug 4430139
  * @summary Test result of read on stream from nonblocking channel
- * @library ..
+ * @library ../../../..
  */
 
 import java.net.*;
@@ -37,7 +37,7 @@ import java.nio.charset.*;
 public class Stream {
 
     static final int DAYTIME_PORT = 13;
-    static final String DAYTIME_HOST = TestUtil.HOST;
+    static final String DAYTIME_HOST = TestEnv.getProperty("host");
 
     static void test() throws Exception {
         InetSocketAddress isa

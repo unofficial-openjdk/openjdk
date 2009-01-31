@@ -26,6 +26,8 @@
 /* @test
    @summary Test SoftSynthesizer open method */
 
+import java.lang.reflect.Field;
+
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Patch;
@@ -49,6 +51,10 @@ public class Open {
 	}
 		
 	public static void main(String[] args) throws Exception {
+        Field f = SoftSynthesizer.class.getDeclaredField("testline");
+        f.setAccessible(true);
+        f.set(null, new DummySourceDataLine());
+        
 		AudioSynthesizer synth = new SoftSynthesizer();
 		synth.open();
 		assertTrue(synth.isOpen());

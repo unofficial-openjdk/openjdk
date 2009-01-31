@@ -23,7 +23,7 @@
 
 /* @test
  * @summary Test socket-channel connection-state transitions
- * @library ..
+ * @library ../../../..
  */
 
 import java.io.*;
@@ -36,7 +36,7 @@ public class ConnectState {
 
     static PrintStream log = System.err;
 
-    static String REMOTE_HOST = TestUtil.HOST;
+    static String REMOTE_HOST = TestEnv.getProperty("host");
     static int REMOTE_PORT = 7;                         // echo
     static InetSocketAddress remote;
 

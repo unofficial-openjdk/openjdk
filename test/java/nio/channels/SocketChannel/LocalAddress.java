@@ -24,7 +24,7 @@
 /* @test
  * @bug 4672609 5076965 4739238
  * @summary Test getLocalAddress getLocalPort
- * @library ..
+ * @library ../../../..
  */
 
 import java.net.*;
@@ -40,7 +40,7 @@ public class LocalAddress {
         InetAddress bogus = InetAddress.getByName("0.0.0.0");
         SocketChannel sc = SocketChannel.open();
         InetSocketAddress saddr = new InetSocketAddress(
-            InetAddress.getByName(TestUtil.HOST), 23);
+            InetAddress.getByName(TestEnv.getProperty("host")), 23);
 
         //Test1: connect only
         sc.connect(saddr);

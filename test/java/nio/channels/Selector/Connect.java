@@ -24,7 +24,7 @@
 /* @test
  * @bug 4511624
  * @summary Test Making lots of Selectors
- * @library ..
+ * @library ../../../..
  * @run main/timeout=240 Connect
  */
 
@@ -45,7 +45,7 @@ public class Connect {
     }
 
     public static void scaleTest() throws Exception {
-        InetAddress myAddress=InetAddress.getByName(TestUtil.HOST);
+        InetAddress myAddress=InetAddress.getByName(TestEnv.getProperty("host"));
         InetSocketAddress isa = new InetSocketAddress(myAddress,13);
 
         for (int j=0; j<LIMIT; j++) {

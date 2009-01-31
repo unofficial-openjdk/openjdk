@@ -31,7 +31,6 @@ package com.sun.media.sound;
  */
 public class SoftLanczosResampler extends SoftAbstractResampler {
 
-    double[] din;
     float[][] sinc_table;
     int sinc_table_fsize = 2000;
     int sinc_table_size = 5;

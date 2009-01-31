@@ -24,7 +24,7 @@
 /* @test
  * @bug 4513011
  * @summary Registering and cancelling same fd many times
- * @library ..
+ * @library ../../../..
  */
 
 import java.io.*;
@@ -45,7 +45,7 @@ public class Alias {
 
     public static void test1() throws Exception {
         Selector selector = SelectorProvider.provider().openSelector();
-        InetAddress myAddress=InetAddress.getByName(TestUtil.HOST);
+        InetAddress myAddress=InetAddress.getByName(TestEnv.getProperty("host"));
         InetSocketAddress isa = new InetSocketAddress(myAddress,13);
 
         for (int j=0; j<LIMIT; j++) {

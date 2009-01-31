@@ -182,6 +182,8 @@ JNIEXPORT jlong JNICALL Java_sun_java2d_cmm_lcms_LCMS_loadProfile
 
     sProf.pf = cmsOpenProfileFromMem((LPVOID)dataArray, (DWORD) dataSize);
 
+    (*env)->ReleaseByteArrayElements (env, data, dataArray, 0);
+
     if (sProf.pf == NULL) {
         JNU_ThrowIllegalArgumentException(env, "Invalid profile data");
     }
@@ -345,7 +347,22 @@ JNIEXPORT void JNICALL Java_sun_java2d_cmm_lcms_LCMS_getTagData
 JNIEXPORT void JNICALL Java_sun_java2d_cmm_lcms_LCMS_setTagData
   (JNIEnv *env, jobject obj, jlong id, jint tagSig, jbyteArray data)
 {
-    fprintf(stderr, "setTagData operation is not implemented");
+    cmsHPROFILE profile;
+    storeID_t sProf;
+    jbyte* dataArray;
+    int tagSize;
+
+    if (tagSig == SigHead) {
+      fprintf(stderr, "setTagData on icSigHead not permitted");
+      return;
+    }
+
+    sProf.j = id;
+    profile = (cmsHPROFILE) sProf.pf;
+    dataArray = (*env)->GetByteArrayElements(env, data, 0);    
+    tagSize =(*env)->GetArrayLength(env, data);
+    _cmsModifyTagData(profile, (icTagSignature) tagSig, dataArray, tagSize);
+    (*env)->ReleaseByteArrayElements(env, data, dataArray, 0);
 }
 
 void* getILData (JNIEnv *env, jobject img, jint* pDataType,

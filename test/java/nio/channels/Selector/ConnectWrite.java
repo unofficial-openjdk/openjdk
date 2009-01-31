@@ -24,7 +24,7 @@
 /* @test
  * @bug 4505829
  * @summary Test ready for connect followed by ready for write
- * @library ..
+ * @library ../../../..
  */
 
 import java.io.*;
@@ -43,7 +43,7 @@ public class ConnectWrite {
 
     public static void test1(int port) throws Exception {
         Selector selector = SelectorProvider.provider().openSelector();
-        InetAddress myAddress=InetAddress.getByName(TestUtil.HOST);
+        InetAddress myAddress=InetAddress.getByName(TestEnv.getProperty("host"));
         InetSocketAddress isa = new InetSocketAddress(myAddress, port);
         try {
             SocketChannel sc = SocketChannel.open();

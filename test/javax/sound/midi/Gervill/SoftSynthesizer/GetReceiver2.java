@@ -46,7 +46,7 @@ public class GetReceiver2 {
 		assertTrue(recv != null);
 		ShortMessage sm = new ShortMessage();
 		sm.setMessage(ShortMessage.NOTE_OFF, 0, 64, 64);
-		synth.open(null,null);
+        synth.open(new DummySourceDataLine(), null);
 		recv.send(sm, -1);		
 		synth.close();			
 		try

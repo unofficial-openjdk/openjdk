@@ -59,8 +59,10 @@ public class SoftMainMixer {
     public final static int CHANNEL_CHANNELMIXER_LEFT = 14;
     public final static int CHANNEL_CHANNELMIXER_RIGHT = 15;
     protected boolean active_sensing_on = false;
-    protected long msec_last_activity = -1;
-    protected long msec_pos = 0;
+    private long msec_last_activity = -1;
+    private boolean pusher_silent = false;
+    private int pusher_silent_count = 0;
+    private long msec_pos = 0;
     protected boolean readfully = true;
     private Object control_mutex;
     private SoftSynthesizer synth;
@@ -72,8 +74,6 @@ public class SoftMainMixer {
     private SoftAudioProcessor agc;
     private long msec_buffer_len = 0;
     protected TreeMap<Long, Object> midimessages = new TreeMap<Long, Object>();
-    double finetuning = 0;
-    double coarsetuning = 0;
     double last_volume_left = 1.0;
     double last_volume_right = 1.0;
     private double[] co_master_balance = new double[1];
@@ -108,7 +108,7 @@ public class SoftMainMixer {
 
     private void processSystemExclusiveMessage(byte[] data) {
         synchronized (synth.control_mutex) {
-            msec_last_activity = msec_pos;
+            activity();
 
             // Universal Non-Real-Time SysEx
             if ((data[1] & 0xFF) == 0x7E) {
@@ -599,10 +599,39 @@ public class SoftMainMixer {
 
             }
         }
+        
+        if(buffers[CHANNEL_LEFT].isSilent()
+            && buffers[CHANNEL_RIGHT].isSilent())
+        {            
+            pusher_silent_count++;
+            if(pusher_silent_count > 5)
+            {
+                pusher_silent_count = 0;
+                synchronized (control_mutex) {
+                    pusher_silent = true;
+                    if(synth.weakstream != null)
+                        synth.weakstream.setInputStream(null);
+                }                    
+            }
+        }
+        else
+            pusher_silent_count = 0;
 
         if (synth.agc_on)
             agc.processAudio();
 
+    }
+        
+    // Must only we called within control_mutex synchronization
+    public void activity()
+    {        
+        msec_last_activity = msec_pos;
+        if(pusher_silent)
+        {
+            pusher_silent = false;
+            if(synth.weakstream != null)
+                synth.weakstream.setInputStream(ais);
+        }
     }
 
     public void stopMixer(ModelChannelMixer mixer) {
@@ -646,9 +675,11 @@ public class SoftMainMixer {
         chorus = new SoftChorus();
         agc = new SoftLimiter();
 
-        reverb.init(synth);
-        chorus.init(synth);
-        agc.init(synth);
+        float samplerate = synth.getFormat().getSampleRate();
+        float controlrate = synth.getControlRate();
+        reverb.init(samplerate, controlrate);
+        chorus.init(samplerate, controlrate);
+        agc.init(samplerate, controlrate);
 
         reverb.setMixMode(true);
         chorus.setMixMode(true);
@@ -686,7 +717,13 @@ public class SoftMainMixer {
             private byte[] single = new byte[1];
 
             public void fillBuffer() {
-                processAudioBuffers();
+                /*
+                boolean pusher_silent2;
+                synchronized (control_mutex) {
+                    pusher_silent2 = pusher_silent;
+                }
+                if(!pusher_silent2)*/
+                processAudioBuffers(); 
                 for (int i = 0; i < nrofchannels; i++)
                     buffers[i].get(bbuffer, i);
                 bbuffer_pos = 0;
@@ -884,7 +921,7 @@ public class SoftMainMixer {
 
     public void processMessage(int ch, int cmd, int data1, int data2) {
         synchronized (synth.control_mutex) {
-            msec_last_activity = msec_pos;
+            activity();
         }
 
         if (cmd == 0xF0) {

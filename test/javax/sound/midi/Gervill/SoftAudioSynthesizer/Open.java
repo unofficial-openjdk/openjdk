@@ -47,7 +47,7 @@ public class Open {
 		
 	public static void main(String[] args) throws Exception {
 		AudioSynthesizer synth = new SoftSynthesizer();
-		SourceDataLine line = AudioSystem.getSourceDataLine(new AudioFormat(44100, 16, 2, true, false));
+		SourceDataLine line = new DummySourceDataLine(); //AudioSystem.getSourceDataLine(new AudioFormat(44100, 16, 2, true, false));
 		synth.open(line, null);
 		synth.close();		
 	}

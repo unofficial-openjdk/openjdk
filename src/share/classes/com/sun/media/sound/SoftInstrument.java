@@ -42,10 +42,6 @@ public class SoftInstrument extends Instrument {
     public SoftInstrument(ModelInstrument ins) {
         super(ins.getSoundbank(), ins.getPatch(), ins.getName(),
                 ins.getDataClass());
-        if (!(ins instanceof ModelInstrument)) {
-            throw new IllegalArgumentException(
-                    "Instrument doesn't implement ModelInstrument interface!");
-        }
         data = ins.getData();
         this.ins = ins;
         initPerformers(((ModelInstrument)ins).getPerformers());
@@ -55,10 +51,6 @@ public class SoftInstrument extends Instrument {
             ModelPerformer[] overrideperformers) {
         super(ins.getSoundbank(), ins.getPatch(), ins.getName(),
                 ins.getDataClass());
-        if (!(ins instanceof ModelInstrument)) {
-            throw new IllegalArgumentException(
-                    "Instrument doesn't implement ModelInstrument interface!");
-        }
         data = ins.getData();
         this.ins = ins;
         initPerformers(overrideperformers);

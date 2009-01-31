@@ -142,7 +142,6 @@ public final class FFT {
     private final static void calcF2E(int fftFrameSize, double[] data, int i,
             int nstep, double[] w) {
         int jmax = nstep;
-        nstep <<= 1;
         for (int n = 0; n < jmax; n += 2) {
             double wr = w[i++];
             double wi = w[i++];

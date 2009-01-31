@@ -24,7 +24,7 @@
 /* @test
  * @summary Test nonblocking connect and finishConnect
  * @bug 4457776
- * @library ..
+ * @library ../../../..
  */
 
 import java.io.*;
@@ -45,7 +45,7 @@ import java.util.*;
 public class BasicConnect {
 
     static final int PORT = 7;          // echo
-    static final String HOST = TestUtil.HOST;
+    static final String HOST = TestEnv.getProperty("host");
 
     public static void main(String[] args) throws Exception {
         Selector connectSelector =

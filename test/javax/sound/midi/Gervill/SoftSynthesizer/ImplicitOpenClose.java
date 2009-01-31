@@ -26,6 +26,8 @@
 /* @test
    @summary Test SoftSynthesizer implicit open/close using getReceiver. */
 
+import java.lang.reflect.Field;
+
 import javax.sound.midi.MidiDevice;
 import javax.sound.midi.MidiSystem;
 import javax.sound.midi.MidiUnavailableException;
@@ -40,6 +42,10 @@ import com.sun.media.sound.*;
 public class ImplicitOpenClose {
 			
 	public static void main(String[] args) throws Exception {
+        Field f = SoftSynthesizer.class.getDeclaredField("testline");
+        f.setAccessible(true);
+        f.set(null, new DummySourceDataLine());
+        
 		Synthesizer synth = new SoftSynthesizer();
 				
 		ReferenceCountingDevice rcd = (ReferenceCountingDevice)synth;		

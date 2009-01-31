@@ -24,7 +24,7 @@
 /* @test
  * @bug 4650679
  * @summary Unit test for socket channels
- * @library ..
+ * @library ../../../..
  */
 
 import java.nio.*;
@@ -37,9 +37,9 @@ public class Connect {
     private static final long INCREMENTAL_DELAY = 30L * 1000L;
 
     public static void main(String args[]) throws Exception {
-        test1(TestUtil.HOST);
+        test1(TestEnv.getProperty("host"));
         try {
-            test1(TestUtil.REFUSING_HOST);
+            test1(TestEnv.getProperty("refusing_host"));
             throw new Exception("Refused connection throws no exception");
         } catch (ConnectException ce) {
             // Correct result

@@ -25,6 +25,7 @@
 package com.sun.media.sound;
 
 import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,12 +40,12 @@ import javax.sound.sampled.UnsupportedAudioFileException;
 
 /**
  * Soundbank reader that uses audio files as soundbanks.
- *
+ * 
  * @author Karl Helgason
  */
 public class AudioFileSoundbankReader extends SoundbankReader {
 
-    public Soundbank getSoundbank(URL url)
+    public Soundbank getSoundbank(URL url) 
             throws InvalidMidiDataException, IOException {
         try {
             AudioInputStream ais = AudioSystem.getAudioInputStream(url);
@@ -76,41 +77,38 @@ public class AudioFileSoundbankReader extends SoundbankReader {
     public Soundbank getSoundbank(AudioInputStream ais)
             throws InvalidMidiDataException, IOException {
         try {
-            try {
-                byte[] buffer;
-                if (ais.getFrameLength() == -1) {
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    byte[] buff = new byte[1024
-                            - (1024 % ais.getFormat().getFrameSize())];
-                    int ret;
-                    while ((ret = ais.read(buff)) != -1) {
-                        baos.write(buff, 0, ret);
-                    }
-                    ais.close();
-                    buffer = baos.toByteArray();
-                } else {
-                    buffer = new byte[(int)(ais.getFrameLength()
-                                        * ais.getFormat().getFrameSize())];
-                    ais.read(buffer);
+            byte[] buffer;
+            if (ais.getFrameLength() == -1) {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                byte[] buff = new byte[1024 
+                        - (1024 % ais.getFormat().getFrameSize())];
+                int ret;
+                while ((ret = ais.read(buff)) != -1) {
+                    baos.write(buff, 0, ret);
                 }
-                ModelByteBufferWavetable osc = new ModelByteBufferWavetable(
-                        new ModelByteBuffer(buffer), ais.getFormat(), -4800);
-                ModelPerformer performer = new ModelPerformer();
-                performer.getOscillators().add(osc);
-
-                SimpleSoundbank sbk = new SimpleSoundbank();
-                SimpleInstrument ins = new SimpleInstrument();
-                ins.add(performer);
-                sbk.addInstrument(ins);
-                return sbk;
-            } finally {
+                ais.close();
+                buffer = baos.toByteArray();
+            } else {
+                buffer = new byte[(int) (ais.getFrameLength() 
+                                    * ais.getFormat().getFrameSize())];
+                new DataInputStream(ais).readFully(buffer);
             }
+            ModelByteBufferWavetable osc = new ModelByteBufferWavetable(
+                    new ModelByteBuffer(buffer), ais.getFormat(), -4800);
+            ModelPerformer performer = new ModelPerformer();
+            performer.getOscillators().add(osc);
+
+            SimpleSoundbank sbk = new SimpleSoundbank();
+            SimpleInstrument ins = new SimpleInstrument();
+            ins.add(performer);
+            sbk.addInstrument(ins);
+            return sbk;
         } catch (Exception e) {
             return null;
         }
     }
 
-    public Soundbank getSoundbank(File file)
+    public Soundbank getSoundbank(File file) 
             throws InvalidMidiDataException, IOException {
         try {
             AudioInputStream ais = AudioSystem.getAudioInputStream(file);

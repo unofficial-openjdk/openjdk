@@ -34,7 +34,7 @@ import java.util.Arrays;
  */
 public class SoftChorus implements SoftAudioProcessor {
 
-    private class VariableDelay {
+    private static class VariableDelay {
 
         private float[] delaybuffer;
         private int rovepos = 0;
@@ -113,7 +113,7 @@ public class SoftChorus implements SoftAudioProcessor {
         }
     }
 
-    private class LFODelay {
+    private static class LFODelay {
 
         private volatile double c_cos_delta;
         private volatile double c_sin_delta;
@@ -183,7 +183,6 @@ public class SoftChorus implements SoftAudioProcessor {
     private LFODelay vdelay1L;
     private LFODelay vdelay1R;
     private float rgain = 0;
-    private SoftSynthesizer synth;
     private boolean dirty = true;
     private double dirty_vdelay1L_rate;
     private double dirty_vdelay1R_rate;
@@ -193,11 +192,10 @@ public class SoftChorus implements SoftAudioProcessor {
     private float dirty_vdelay1R_feedback;
     private float dirty_vdelay1L_reverbsendgain;
     private float dirty_vdelay1R_reverbsendgain;
+    private float controlrate;
 
-    public void init(SoftSynthesizer synth) {
-        this.synth = synth;
-        double samplerate = synth.getFormat().getSampleRate();
-        double controlrate = synth.getControlRate();
+    public void init(float samplerate, float controlrate) {
+        this.controlrate = controlrate;
         vdelay1L = new LFODelay(samplerate, controlrate);
         vdelay1R = new LFODelay(samplerate, controlrate);
         vdelay1L.setGain(1.0f); // %
@@ -295,7 +293,7 @@ public class SoftChorus implements SoftAudioProcessor {
     public void processAudio() {
 
         if (inputA.isSilent()) {
-            silentcounter += 1 / synth.getControlRate();
+            silentcounter += 1 / controlrate;
 
             if (silentcounter > 1) {
                 if (!mix) {

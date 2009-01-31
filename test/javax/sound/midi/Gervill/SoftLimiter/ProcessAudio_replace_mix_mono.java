@@ -63,7 +63,7 @@ public class ProcessAudio_replace_mix_mono {
 		}
 		
 		SoftLimiter limiter = new SoftLimiter();
-		limiter.init(synth);
+		limiter.init(44100, 147);
 		limiter.setMixMode(true);
 		limiter.setInput(0, in1);
 		limiter.setOutput(0, out1);

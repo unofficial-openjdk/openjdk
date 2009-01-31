@@ -72,7 +72,6 @@ public class WaveFloatFileReader extends AudioFileReader {
 
         int channels = 1;
         long samplerate = 1;
-        long framerate = 1;
         int framesize = 1;
         int bits = 1;
 
@@ -87,7 +86,7 @@ public class WaveFloatFileReader extends AudioFileReader {
                     throw new UnsupportedAudioFileException();
                 channels = chunk.readUnsignedShort();
                 samplerate = chunk.readUnsignedInt();
-                framerate = chunk.readUnsignedInt();
+                /* framerate = */chunk.readUnsignedInt();
                 framesize = chunk.readUnsignedShort();
                 bits = chunk.readUnsignedShort();
             }
@@ -104,7 +103,7 @@ public class WaveFloatFileReader extends AudioFileReader {
 
         AudioFormat audioformat = new AudioFormat(
                 AudioFloatConverter.PCM_FLOAT, samplerate, bits, channels,
-                framesize, framerate, false);
+                framesize, samplerate, false);
         AudioFileFormat fileformat = new AudioFileFormat(
                 AudioFileFormat.Type.WAVE, audioformat,
                 AudioSystem.NOT_SPECIFIED);
