@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)ciInstanceKlass.hpp	1.35 07/05/05 17:05:13 JVM"
+#pragma ident "@(#)ciInstanceKlass.hpp	1.36 07/09/28 10:23:23 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -77,7 +77,7 @@ protected:
 
   const char* type_string() { return "ciInstanceKlass"; }
 
-  void print_impl();
+  void print_impl(outputStream* st);
 
   ciConstantPoolCache* field_cache();
 

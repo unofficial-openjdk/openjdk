@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)jniCheck.cpp	1.49 07/05/05 17:06:30 JVM"
+#pragma ident "@(#)jniCheck.cpp	1.50 07/08/31 11:20:56 JVM"
 #endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -236,6 +236,10 @@ checkInstanceFieldID(JavaThread* thr, jfieldID fid, jobject obj, int ftype)
     ReportJNIFatalError(thr, fatal_null_object);
   }
   klassOop k_oop = oopObj->klass();
+
+  if (!jfieldIDWorkaround::is_valid_jfieldID(k_oop, fid)) {
+    ReportJNIFatalError(thr, fatal_wrong_field);
+  }
 
   /* make sure the field exists */
   int offset = jfieldIDWorkaround::from_instance_jfieldID(k_oop, fid);

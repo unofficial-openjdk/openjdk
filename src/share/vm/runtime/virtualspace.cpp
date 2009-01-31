@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)virtualspace.cpp	1.62 07/05/05 17:07:03 JVM"
+#pragma ident "@(#)virtualspace.cpp	1.63 07/10/04 10:49:29 JVM"
 #endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -34,21 +34,156 @@ ReservedSpace::ReservedSpace(size_t size) {
   initialize(size, 0, false, NULL);
 }
 
-ReservedSpace::ReservedSpace(size_t size, size_t forced_base_alignment,
+ReservedSpace::ReservedSpace(size_t size, size_t alignment,
                              bool large, char* requested_address) {
-  initialize(size, forced_base_alignment, large, requested_address);
+  initialize(size, alignment, large, requested_address);
 }
 
-void ReservedSpace::initialize(size_t size, size_t forced_base_alignment,
-                               bool large, char* requested_address) {
+char *
+ReservedSpace::align_reserved_region(char* addr, const size_t len,
+				     const size_t prefix_size,
+				     const size_t prefix_align,
+				     const size_t suffix_size,
+				     const size_t suffix_align)
+{
+  assert(addr != NULL, "sanity");
+  const size_t required_size = prefix_size + suffix_size;
+  assert(len >= required_size, "len too small");
 
-  assert(size % os::vm_allocation_granularity() == 0,
-         "size not allocation aligned");
-  assert((forced_base_alignment % os::vm_allocation_granularity()) == 0,
-         "size not allocation aligned");
+  const size_t s = size_t(addr);
+  const size_t beg_ofs = s + prefix_size & suffix_align - 1;
+  const size_t beg_delta = beg_ofs == 0 ? 0 : suffix_align - beg_ofs;
+
+  if (len < beg_delta + required_size) {
+     return NULL; // Cannot do proper alignment.
+  }
+  const size_t end_delta = len - (beg_delta + required_size);
+
+  if (beg_delta != 0) {
+    os::release_memory(addr, beg_delta);
+  }
+
+  if (end_delta != 0) {
+    char* release_addr = (char*) (s + beg_delta + required_size);
+    os::release_memory(release_addr, end_delta);
+  }
+
+  return (char*) (s + beg_delta);
+}
+
+char* ReservedSpace::reserve_and_align(const size_t reserve_size,
+				       const size_t prefix_size,
+				       const size_t prefix_align,
+				       const size_t suffix_size,
+				       const size_t suffix_align)
+{
+  assert(reserve_size > prefix_size + suffix_size, "should not be here");
+
+  char* raw_addr = os::reserve_memory(reserve_size, NULL, prefix_align);
+  if (raw_addr == NULL) return NULL;
+
+  char* result = align_reserved_region(raw_addr, reserve_size, prefix_size,
+				       prefix_align, suffix_size,
+				       suffix_align);
+  if (result == NULL && !os::release_memory(raw_addr, reserve_size)) {
+    fatal("os::release_memory failed");
+  }
+
+#ifdef ASSERT
+  if (result != NULL) {
+    const size_t raw = size_t(raw_addr);
+    const size_t res = size_t(result);
+    assert(res >= raw, "alignment decreased start addr");
+    assert(res + prefix_size + suffix_size <= raw + reserve_size,
+	   "alignment increased end addr");
+    assert((res & prefix_align - 1) == 0, "bad alignment of prefix");
+    assert((res + prefix_size & suffix_align - 1) == 0,
+	   "bad alignment of suffix");
+  }
+#endif
+
+  return result;
+}
+
+ReservedSpace::ReservedSpace(const size_t prefix_size,
+			     const size_t prefix_align,
+			     const size_t suffix_size,
+			     const size_t suffix_align)
+{
+  assert(prefix_size != 0, "sanity");
+  assert(prefix_align != 0, "sanity");
+  assert(suffix_size != 0, "sanity");
+  assert(suffix_align != 0, "sanity");
+  assert((prefix_size & prefix_align - 1) == 0,
+    "prefix_size not divisible by prefix_align");
+  assert((suffix_size & suffix_align - 1) == 0,
+    "suffix_size not divisible by suffix_align");
+  assert((suffix_align & prefix_align - 1) == 0,
+    "suffix_align not divisible by prefix_align");
+
+  // On systems where the entire region has to be reserved and committed up
+  // front, the compound alignment normally done by this method is unnecessary.
+  const bool try_reserve_special = UseLargePages &&
+    prefix_align == os::large_page_size();
+  if (!os::can_commit_large_page_memory() && try_reserve_special) {
+    initialize(prefix_size + suffix_size, prefix_align, true);
+    return;
+  }
+
+  _base = NULL;
+  _size = 0;
+  _alignment = 0;
+  _special = false;
+
+  // Optimistically try to reserve the exact size needed.
+  const size_t size = prefix_size + suffix_size;
+  char* addr = os::reserve_memory(size, NULL, prefix_align);
+  if (addr == NULL) return;
+
+  // Check whether the result has the needed alignment (unlikely unless
+  // prefix_align == suffix_align).
+  const size_t ofs = size_t(addr) + prefix_size & suffix_align - 1;
+  if (ofs != 0) {
+    // Wrong alignment.  Release, allocate more space and do manual alignment.
+    // 
+    // On most operating systems, another allocation with a somewhat larger size
+    // will return an address "close to" that of the previous allocation.  The
+    // result is often the same address (if the kernel hands out virtual
+    // addresses from low to high), or an address that is offset by the increase
+    // in size.  Exploit that to minimize the amount of extra space requested.
+    if (!os::release_memory(addr, size)) {
+      fatal("os::release_memory failed");
+    }
+
+    const size_t extra = MAX2(ofs, suffix_align - ofs);
+    addr = reserve_and_align(size + extra, prefix_size, prefix_align,
+			     suffix_size, suffix_align);
+    if (addr == NULL) {
+      // Try an even larger region.  If this fails, address space is exhausted.
+      addr = reserve_and_align(size + suffix_align, prefix_size,
+			       prefix_align, suffix_size, suffix_align);
+    }
+  }
+
+  _base = addr;
+  _size = size;
+  _alignment = prefix_align;
+}
+
+void ReservedSpace::initialize(size_t size, size_t alignment, bool large,
+			       char* requested_address) {
+  const size_t granularity = os::vm_allocation_granularity();
+  assert((size & granularity - 1) == 0,
+         "size not aligned to os::vm_allocation_granularity()");
+  assert((alignment & granularity - 1) == 0,
+         "alignment not aligned to os::vm_allocation_granularity()");
+  assert(alignment == 0 || is_power_of_2((intptr_t)alignment),
+	 "not a power of 2");
+
   _base = NULL;
   _size = 0;
   _special = false;
+  _alignment = 0;
   if (size == 0) {
     return;
   }
@@ -68,8 +203,8 @@ void ReservedSpace::initialize(size_t size, size_t forced_base_alignment,
     
     if (base != NULL) {
       // Check alignment constraints
-      if (forced_base_alignment > 0) {
-        assert((uintptr_t) base % forced_base_alignment == 0, 
+      if (alignment > 0) {
+        assert((uintptr_t) base % alignment == 0, 
                "Large pages returned a non-aligned address"); 
       }
       _special = true;
@@ -90,23 +225,23 @@ void ReservedSpace::initialize(size_t size, size_t forced_base_alignment,
     if (requested_address != 0) {
       base = os::attempt_reserve_memory_at(size, requested_address);
     } else {
-      base = os::reserve_memory(size, NULL);
+      base = os::reserve_memory(size, NULL, alignment);
     }
 
     if (base == NULL) return;
 
     // Check alignment constraints
-    if (forced_base_alignment > 0 && ((uintptr_t) base % forced_base_alignment != 0)) {
+    if (alignment > 0 && ((size_t)base & alignment - 1) != 0) {
       // Base not aligned, retry
       if (!os::release_memory(base, size)) fatal("os::release_memory failed");
       // Reserve size large enough to do manual alignment and
       // increase size to a multiple of the desired alignment
-      size = align_size_up(size, forced_base_alignment);
-      size_t extra_size = size + forced_base_alignment;
-      char* extra_base = os::reserve_memory(extra_size);
+      size = align_size_up(size, alignment);
+      size_t extra_size = size + alignment;
+      char* extra_base = os::reserve_memory(extra_size, NULL, alignment);
       if (extra_base == NULL) return;
       // Do manual alignement
-      base = (char*) align_size_up((uintptr_t) extra_base, forced_base_alignment);
+      base = (char*) align_size_up((uintptr_t) extra_base, alignment);
       assert(base >= extra_base, "just checking");
       // Release unused areas
       size_t unused_bottom_size = base - extra_base;
@@ -126,6 +261,8 @@ void ReservedSpace::initialize(size_t size, size_t forced_base_alignment,
   // Done
   _base = base;
   _size = size;
+  _alignment = MAX2(alignment, (size_t) os::vm_page_size());
+
   assert(markOopDesc::encode_pointer_as_mark(_base)->decode_pointer() == _base,
 	 "area must be distinguisable from marks for mark-sweep");
   assert(markOopDesc::encode_pointer_as_mark(&_base[size])->decode_pointer() == &_base[size],
@@ -133,29 +270,33 @@ void ReservedSpace::initialize(size_t size, size_t forced_base_alignment,
 }
 
 
-ReservedSpace::ReservedSpace(char* base, size_t size, bool special) {
+ReservedSpace::ReservedSpace(char* base, size_t size, size_t alignment, 
+			     bool special) {
   assert((size % os::vm_allocation_granularity()) == 0,
          "size not allocation aligned");
   _base = base;
   _size = size;
+  _alignment = alignment;
   _special = special;
 }
 
 
-ReservedSpace ReservedSpace::first_part(size_t partition_size,
+ReservedSpace ReservedSpace::first_part(size_t partition_size, size_t alignment,
                                         bool split, bool realloc) {
   assert(partition_size <= size(), "partition failed");
   if (split) {
     os::split_reserved_memory(_base, _size, partition_size, realloc);
   }
-  ReservedSpace result(base(), partition_size, special());
+  ReservedSpace result(base(), partition_size, alignment, special());
   return result;
 }
 
 
-ReservedSpace ReservedSpace::last_part(size_t partition_size) {
+ReservedSpace
+ReservedSpace::last_part(size_t partition_size, size_t alignment) {
   assert(partition_size <= size(), "partition failed");
-  ReservedSpace result(base() + partition_size, size() - partition_size, special());
+  ReservedSpace result(base() + partition_size, size() - partition_size,
+		       alignment, special());
   return result;
 }
 
@@ -235,11 +376,7 @@ bool VirtualSpace::initialize(ReservedSpace rs, size_t committed_size) {
   // No attempt is made to force large page alignment at the very top and 
   // bottom of the space if they are not aligned so already. 
   _lower_alignment  = os::vm_page_size();
-  if (UseLargePages && rs.size() >= os::large_page_size()) {
-    _middle_alignment = os::large_page_size();
-  } else {
-    _middle_alignment = os::vm_page_size();
-  }
+  _middle_alignment = os::page_size_for_region(rs.size(), rs.size(), 1);
   _upper_alignment  = os::vm_page_size();
 
   // End of each region

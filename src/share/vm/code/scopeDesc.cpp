@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)scopeDesc.cpp	1.57 07/05/05 17:05:22 JVM"
+#pragma ident "@(#)scopeDesc.cpp	1.58 07/07/27 16:13:17 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -29,32 +29,51 @@
 # include "incls/_scopeDesc.cpp.incl"
 
 
+ScopeDesc::ScopeDesc(const nmethod* code, int decode_offset, int obj_decode_offset) {
+  _code          = code;
+  _decode_offset = decode_offset;
+  _objects       = decode_object_values(obj_decode_offset);
+  decode_body();
+}
+
 ScopeDesc::ScopeDesc(const nmethod* code, int decode_offset) {
   _code          = code;
   _decode_offset = decode_offset;
+  _objects       = decode_object_values(DebugInformationRecorder::serialized_null);
+  decode_body();
+}
 
-  if (decode_offset == DebugInformationRecorder::serialized_null) {
+
+ScopeDesc::ScopeDesc(const ScopeDesc* parent) {
+  _code          = parent->_code;
+  _decode_offset = parent->_sender_decode_offset;
+  _objects       = parent->_objects;
+  decode_body();
+}
+
+
+void ScopeDesc::decode_body() {
+  if (decode_offset() == DebugInformationRecorder::serialized_null) {
     // This is a sentinel record, which is only relevant to
     // approximate queries.  Decode a reasonable frame.
     _sender_decode_offset = DebugInformationRecorder::serialized_null;
-    _method = methodHandle(code->method());
+    _method = methodHandle(_code->method());
     _bci = InvocationEntryBci;
     _locals_decode_offset = DebugInformationRecorder::serialized_null;
     _expressions_decode_offset = DebugInformationRecorder::serialized_null;
     _monitors_decode_offset = DebugInformationRecorder::serialized_null;
-    return;
+  } else {
+    // decode header
+    DebugInfoReadStream* stream  = stream_at(decode_offset());
+
+    _sender_decode_offset = stream->read_int();
+    _method = methodHandle((methodOop) stream->read_oop());
+    _bci    = stream->read_bci();
+    // decode offsets for body and sender
+    _locals_decode_offset      = stream->read_int();
+    _expressions_decode_offset = stream->read_int();
+    _monitors_decode_offset    = stream->read_int();
   }
-
-  // decode header
-  DebugInfoReadStream* stream  = stream_at(_decode_offset);
-
-  _sender_decode_offset = stream->read_int();
-  _method = methodHandle((methodOop) stream->read_oop());
-  _bci    = stream->read_bci();
-  // decode offsets for body and sender
-  _locals_decode_offset      = stream->read_int();
-  _expressions_decode_offset = stream->read_int();
-  _monitors_decode_offset    = stream->read_int();
 }
 
 
@@ -66,6 +85,18 @@ GrowableArray<ScopeValue*>* ScopeDesc::decode_scope_values(int decode_offset) {
   for (int index = 0; index < length; index++) {
     result->push(ScopeValue::read_from(stream));
   }
+  return result;
+}
+
+GrowableArray<ScopeValue*>* ScopeDesc::decode_object_values(int decode_offset) {
+  if (decode_offset == DebugInformationRecorder::serialized_null) return NULL;
+  GrowableArray<ScopeValue*>* result = new GrowableArray<ScopeValue*>();
+  DebugInfoReadStream* stream = new DebugInfoReadStream(_code, decode_offset, result);
+  int length = stream->read_int();
+  for (int index = 0; index < length; index++) {
+    result->push(ScopeValue::read_from(stream));
+  }
+  assert(result->length() == length, "inconsistent debug information");
   return result;
 }
 
@@ -82,7 +113,7 @@ GrowableArray<MonitorValue*>* ScopeDesc::decode_monitor_values(int decode_offset
 }
 
 DebugInfoReadStream* ScopeDesc::stream_at(int decode_offset) const {
-  return new DebugInfoReadStream(_code, decode_offset);
+  return new DebugInfoReadStream(_code, decode_offset, _objects);
 }
 
 GrowableArray<ScopeValue*>* ScopeDesc::locals() {
@@ -97,13 +128,17 @@ GrowableArray<MonitorValue*>* ScopeDesc::monitors() {
   return decode_monitor_values(_monitors_decode_offset);
 }
 
+GrowableArray<ScopeValue*>* ScopeDesc::objects() {
+  return _objects;
+}
+
 bool ScopeDesc::is_top() const {
  return _sender_decode_offset == DebugInformationRecorder::serialized_null;
 }
 
 ScopeDesc* ScopeDesc::sender() const {
   if (is_top()) return NULL;
-  return new ScopeDesc(_code, _sender_decode_offset);
+  return new ScopeDesc(this);
 }
 
 
@@ -174,6 +209,18 @@ void ScopeDesc::print_on(outputStream* st, PcDesc* pd) const {
       }
     }
   }
+
+#ifdef COMPILER2
+  if (DoEscapeAnalysis && is_top() && _objects != NULL) {
+    tty->print_cr("Objects");
+    for (int i = 0; i < _objects->length(); i++) {
+      ObjectValue* sv = (ObjectValue*) _objects->at(i);
+      tty->print(" - %d: ", sv->id());
+      sv->print_fields_on(tty);
+      tty->cr();
+    }
+  }
+#endif // COMPILER2
 }
 
 #endif

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)ciTypeFlow.cpp	1.46 07/05/05 17:05:17 JVM"
+#pragma ident "@(#)ciTypeFlow.cpp	1.47 07/09/28 10:23:20 JVM"
 #endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -1869,7 +1869,7 @@ void ciTypeFlow::Block::print_value_on(outputStream* st) const {
 // ciTypeFlow::Block::print_on
 void ciTypeFlow::Block::print_on(outputStream* st) const {
   if ((Verbose || WizardMode)) {
-    outer()->method()->print_codes(start(), limit());
+    outer()->method()->print_codes_on(start(), limit(), st);
   }
   st->print_cr("  ====================================================  ");
   st->print ("  ");

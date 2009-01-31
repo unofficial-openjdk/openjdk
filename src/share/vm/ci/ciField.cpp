@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)ciField.cpp	1.33 07/05/05 17:05:13 JVM"
+#pragma ident "@(#)ciField.cpp	1.34 07/08/27 14:10:22 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -143,12 +143,9 @@ ciField::ciField(fieldDescriptor *fd): _known_to_link_with(NULL) {
   _cp_index = -1;
 
   // Get the field's name, signature, and type.
-  symbolOop name = fd->name();
-  symbolOop signature = fd->signature();
-
   ciEnv* env = CURRENT_ENV;
-  _name = env->get_object(name)->as_symbol();
-  _signature = env->get_object(signature)->as_symbol();
+  _name = env->get_object(fd->name())->as_symbol();
+  _signature = env->get_object(fd->signature())->as_symbol();
 
   BasicType field_type = fd->field_type();
 

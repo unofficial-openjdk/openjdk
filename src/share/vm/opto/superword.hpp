@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)superword.hpp	1.6 07/05/17 16:01:57 JVM"
+#pragma ident "@(#)superword.hpp	1.7 07/08/03 14:17:20 JVM"
 #endif
 /*
  * Copyright 2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -443,6 +443,9 @@ class SWPointer VALUE_OBJ_CLASS_SPEC {
   };
 
   SWPointer(MemNode* mem, SuperWord* slp);
+  // Following is used to create a temporary object during
+  // the pattern match of an address expression.
+  SWPointer(SWPointer* p);
 
   bool valid()  { return _adr != NULL; }
   bool has_iv() { return _scale != 0; }

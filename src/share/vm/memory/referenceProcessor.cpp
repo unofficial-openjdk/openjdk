@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)referenceProcessor.cpp	1.55 07/05/17 15:55:08 JVM"
+#pragma ident "@(#)referenceProcessor.cpp	1.57 07/08/17 12:30:18 JVM"
 #endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -404,7 +404,11 @@ public:
   inline bool is_referent_alive() const;
   
   // Loads data for the current reference.
-  inline void load_ptrs();
+  // The "allow_null_referent" argument tells us to allow for the possibility
+  // of a NULL referent in the discovered Reference object. This typically
+  // happens in the case of concurrent collectors that may have done the
+  // discovery concurrently or interleaved with mutator execution.
+  inline void load_ptrs(DEBUG_ONLY(bool allow_null_referent));
   
   // Move to the next discovered reference.
   inline void next();
@@ -475,7 +479,7 @@ inline bool DiscoveredListIterator::is_referent_alive() const
   return _is_alive->do_object_b(_referent);
 }
 
-inline void DiscoveredListIterator::load_ptrs()
+inline void DiscoveredListIterator::load_ptrs(DEBUG_ONLY(bool allow_null_referent))
 {
   _discovered_addr = java_lang_ref_Reference::discovered_addr(_ref);
   assert(_discovered_addr && (*_discovered_addr)->is_oop_or_null(),
@@ -485,7 +489,10 @@ inline void DiscoveredListIterator::load_ptrs()
   _referent = *_referent_addr;
   assert(Universe::heap()->is_in_reserved_or_null(_referent),
          "Wrong oop found in java.lang.Reference object");
-  assert(_referent->is_oop(), "bad referent");
+  assert(allow_null_referent ? 
+             _referent->is_oop_or_null() 
+           : _referent->is_oop(), 
+         "bad referent");
 }
 
 inline void DiscoveredListIterator::next()
@@ -536,8 +543,8 @@ ReferenceProcessor::process_phase1(DiscoveredList&    refs_list_addr,
   DiscoveredListIterator iter(refs_list_addr, keep_alive, is_alive);
   // Decide which softly reachable refs should be kept alive.
   while (iter.has_next()) {
-    iter.load_ptrs();
-    bool referent_is_dead = !iter.is_referent_alive();
+    iter.load_ptrs(DEBUG_ONLY(!discovery_is_atomic() /* allow_null_referent */));
+    bool referent_is_dead = (iter.referent() != NULL) && !iter.is_referent_alive();
     if (referent_is_dead && !policy->should_clear_reference(iter.obj())) {
       if (TraceReferenceGC) {
         gclog_or_tty->print_cr("Dropping reference (" INTPTR_FORMAT ": %s"  ") by policy",  
@@ -573,7 +580,7 @@ ReferenceProcessor::pp2_work(DiscoveredList&    refs_list_addr,
   assert(discovery_is_atomic(), "Error");
   DiscoveredListIterator iter(refs_list_addr, keep_alive, is_alive);
   while (iter.has_next()) {
-    iter.load_ptrs();
+    iter.load_ptrs(DEBUG_ONLY(false /* allow_null_referent */));
     DEBUG_ONLY(oop* next_addr = java_lang_ref_Reference::next_addr(iter.obj());)
     assert(*next_addr == NULL, "Should not discover inactive Reference");
     if (iter.is_referent_alive()) {
@@ -610,7 +617,7 @@ ReferenceProcessor::pp2_work_concurrent_discovery(
   assert(!discovery_is_atomic(), "Error");
   DiscoveredListIterator iter(refs_list_addr, keep_alive, is_alive);
   while (iter.has_next()) {
-    iter.load_ptrs();
+    iter.load_ptrs(DEBUG_ONLY(true /* allow_null_referent */));
     oop* next_addr = java_lang_ref_Reference::next_addr(iter.obj());
     if ((iter.referent() == NULL || iter.is_referent_alive() ||
          *next_addr != NULL)) {
@@ -646,7 +653,7 @@ ReferenceProcessor::process_phase3(DiscoveredList&    refs_list_addr,
   DiscoveredListIterator iter(refs_list_addr, keep_alive, is_alive);
   while (iter.has_next()) {
     iter.update_discovered();
-    iter.load_ptrs();
+    iter.load_ptrs(DEBUG_ONLY(false /* allow_null_referent */));
     if (clear_referent) {
       // NULL out referent pointer
       iter.clear_referent();
@@ -870,7 +877,7 @@ void ReferenceProcessor::clean_up_discovered_reflist(DiscoveredList& refs_list) 
   DiscoveredListIterator iter(refs_list, NULL, NULL);
   size_t length = refs_list.length();
   while (iter.has_next()) {
-    iter.load_ptrs();
+    iter.load_ptrs(DEBUG_ONLY(true /* allow_null_referent */));
     oop* next_addr = java_lang_ref_Reference::next_addr(iter.obj());
     assert((*next_addr)->is_oop_or_null(), "bad next field");
     // If referent has been cleared or Reference is not active,
@@ -1184,7 +1191,7 @@ void ReferenceProcessor::preclean_discovered_reflist(
   DiscoveredListIterator iter(refs_list, keep_alive, is_alive);
   size_t length = refs_list.length();
   while (iter.has_next()) {
-    iter.load_ptrs();
+    iter.load_ptrs(DEBUG_ONLY(true /* allow_null_referent */));
     oop* next_addr = java_lang_ref_Reference::next_addr(iter.obj());
     if (iter.referent() == NULL || iter.is_referent_alive() || 
         *next_addr != NULL) {

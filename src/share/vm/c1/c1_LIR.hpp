@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)c1_LIR.hpp	1.133 07/05/05 17:05:05 JVM"
+#pragma ident "@(#)c1_LIR.hpp	1.134 07/06/18 14:25:24 JVM"
 #endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -95,6 +95,15 @@ class LIR_Const: public LIR_OprPtr {
   LIR_Const(jfloat f)                            { _value.set_type(T_FLOAT);   _value.set_jfloat(f); }
   LIR_Const(jdouble d)                           { _value.set_type(T_DOUBLE);  _value.set_jdouble(d); }
   LIR_Const(jobject o)                           { _value.set_type(T_OBJECT);  _value.set_jobject(o); }
+  LIR_Const(void* p) {
+#ifdef _LP64
+    assert(sizeof(jlong) >= sizeof(p), "too small");;
+    _value.set_type(T_LONG);    _value.set_jlong((jlong)p);
+#else
+    assert(sizeof(jint) >= sizeof(p), "too small");;
+    _value.set_type(T_INT);     _value.set_jint((jint)p);
+#endif
+  }
                                        
   virtual BasicType type()       const { return _value.get_type(); }
   virtual LIR_Const* as_constant()     { return this; }
@@ -106,6 +115,13 @@ class LIR_Const: public LIR_OprPtr {
   jobject   as_jobject() const         { type_check(T_OBJECT); return _value.get_jobject(); }
   jint      as_jint_lo() const         { type_check(T_LONG  ); return low(_value.get_jlong()); }
   jint      as_jint_hi() const         { type_check(T_LONG  ); return high(_value.get_jlong()); }
+
+#ifdef _LP64
+  address   as_pointer() const         { type_check(T_LONG  ); return (address)_value.get_jlong(); }
+#else
+  address   as_pointer() const         { type_check(T_INT   ); return (address)_value.get_jint(); }
+#endif
+
 
   jint      as_jint_bits() const       { type_check(T_FLOAT, T_INT); return _value.get_jint(); }
   jint      as_jint_lo_bits() const    {
@@ -244,8 +260,6 @@ class LIR_OprDesc: public CompilationResourceObj {
   OprKind kind_field() const                     { return (OprKind)(value() & kind_mask); }
   OprSize size_field() const                     { return (OprSize)(value() & size_mask); }
 
-  intptr_t value_without_type() const            { return is_illegal() ? value() : value() & no_type_mask; }
-
   static char type_char(BasicType t);
 
  public:
@@ -286,7 +300,6 @@ class LIR_OprDesc: public CompilationResourceObj {
       case T_INT:
       case T_OBJECT:
       case T_ARRAY:
-      case T_ADDRESS:
         return single_size;
         break;
         
@@ -295,12 +308,6 @@ class LIR_OprDesc: public CompilationResourceObj {
       }
   }
 
-
-  // returns a new LIR_Opr with the OprType of from and all other information the current LIR_Opr
-  LIR_Opr with_type_of(LIR_Opr from) {
-    assert(!is_pointer() && !from->is_pointer(), "only simple LIR_Oprs");
-    return (LIR_Opr)(from->type_field() | value_without_type());
-  }
 
   void validate_type() const PRODUCT_RETURN;
 
@@ -316,23 +323,17 @@ class LIR_OprDesc: public CompilationResourceObj {
 
   char type_char() const                         { return type_char((is_pointer()) ? pointer()->type() : type()); }
 
-  bool is_same(LIR_Opr opr) const                { return this == opr; }
-  // checks whether types are same or one type is unknown
-  bool is_type_compatible(LIR_Opr opr) const     {
-    return type_field() == unknown_type ||
-      opr->type_field() == unknown_type ||
-      type_field() == opr->type_field();
+  bool is_equal(LIR_Opr opr) const         { return this == opr; }
+  // checks whether types are same
+  bool is_same_type(LIR_Opr opr) const     {
+    assert(type_field() != unknown_type &&
+           opr->type_field() != unknown_type, "shouldn't see unknown_type");
+    return type_field() == opr->type_field();
   }
-
-  // is_type_compatible and equal
-  bool is_equivalent(LIR_Opr opr) const {
-    if (!is_pointer()) {
-      if (is_type_compatible(opr) && data() == opr->data() && kind_field() == opr->kind_field() && is_xmm_register() == opr->is_xmm_register()) {
-        return true;
-      }
-    }
-    // could also do checks for other pointers types
-    return is_same(opr);
+  bool is_same_register(LIR_Opr opr) {
+    return (is_register() && opr->is_register() &&
+            kind_field() == opr->kind_field() &&
+            (value() & no_type_mask) == (opr->value() & no_type_mask));
   }
 
   bool is_pointer() const      { return check_value_mask(pointer_mask, pointer_value); }
@@ -408,6 +409,16 @@ class LIR_OprDesc: public CompilationResourceObj {
   Register as_register()    const;
   Register as_register_lo() const;
   Register as_register_hi() const;
+
+  Register as_pointer_register() {
+#ifdef _LP64
+    if (is_double_cpu()) {
+      assert(as_register_lo() == as_register_hi(), "should be a single register");
+      return as_register_lo();
+    }
+#endif
+    return as_register();
+  }
 
 #ifdef IA32
   XMMRegister as_xmm_float_reg() const;
@@ -606,6 +617,8 @@ class LIR_OprFact: public AllStatic {
   static LIR_Opr doubleConst(jdouble d)          { return (LIR_Opr)(new LIR_Const(d)); }
   static LIR_Opr oopConst(jobject o)             { return (LIR_Opr)(new LIR_Const(o)); }
   static LIR_Opr address(LIR_Address* a)         { return (LIR_Opr)a; }
+  static LIR_Opr intptrConst(void* p)            { return (LIR_Opr)(new LIR_Const(p)); }
+  static LIR_Opr intptrConst(intptr_t v)         { return (LIR_Opr)(new LIR_Const((void*)v)); }
   static LIR_Opr illegal()                       { return (LIR_Opr)-1; }
 
   static LIR_Opr value_type(ValueType* type);
@@ -713,7 +726,6 @@ enum LIR_Code {
       , lir_logic_or
       , lir_logic_xor
       , lir_shl
-      , lir_shlx
       , lir_shr
       , lir_ushr
       , lir_alloc_array
@@ -1534,7 +1546,6 @@ class LIR_OpCompareAndSwap : public LIR_Op {
   virtual void print_instr(outputStream* out) const PRODUCT_RETURN;
 };
 
-
 // LIR_OpProfileCall
 class LIR_OpProfileCall : public LIR_Op {
  friend class LIR_OpVisitState;
@@ -1572,7 +1583,6 @@ class LIR_OpProfileCall : public LIR_Op {
 
 
 class LIR_InsertionBuffer;
-
 
 //--------------------------------LIR_List---------------------------------------------------
 // Maintains a list of LIR instructions (one instance of LIR_List per basic block)

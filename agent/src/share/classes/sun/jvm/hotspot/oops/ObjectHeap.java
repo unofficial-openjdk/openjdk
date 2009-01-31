@@ -41,6 +41,12 @@ import sun.jvm.hotspot.utilities.*;
 
 public class ObjectHeap {
 
+  private static final boolean DEBUG;
+
+  static {
+    DEBUG = System.getProperty("sun.jvm.hotspot.oops.ObjectHeap.DEBUG") != null;
+  }
+
   private OopHandle              symbolKlassHandle;
   private OopHandle              methodKlassHandle;
   private OopHandle              constMethodKlassHandle;
@@ -369,10 +375,19 @@ public class ObjectHeap {
       }
     }
     
-    System.err.println("Unknown oop at " + handle);
-    System.err.println("Oop's klass is " + klass);
-
+    if (DEBUG) {
+      System.err.println("Unknown oop at " + handle);
+      System.err.println("Oop's klass is " + klass);
+    }
     throw new UnknownOopException();
+  }
+
+  public boolean isValidMethod(OopHandle handle) {
+    OopHandle klass = Oop.getKlassForOopHandle(handle);
+    if (klass != null && klass.equals(methodKlassHandle)) {
+      return true;
+    }
+    return false;
   }
 
   // Print all objects in the object heap

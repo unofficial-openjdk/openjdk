@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)ciType.hpp	1.14 07/05/05 17:05:16 JVM"
+#pragma ident "@(#)ciType.hpp	1.15 07/09/28 10:23:20 JVM"
 #endif
 /*
  * Copyright 2000-2001 Sun Microsystems, Inc.  All Rights Reserved.
@@ -43,7 +43,7 @@ private:
 
   const char* type_string() { return "ciType"; }
 
-  void print_impl();
+  void print_impl(outputStream* st);
 
   // Distinguished instances of primitive ciTypes..
   static ciType* _basic_types[T_CONFLICT+1];
@@ -76,7 +76,10 @@ public:
   bool is_type()                            { return true; }
   bool is_classless() const                 { return is_primitive_type(); }
 
-  virtual void print_name();
+  virtual void print_name_on(outputStream* st);
+  void print_name() {
+    print_name_on(tty);
+  }
 
   static ciType* make(BasicType t);
 };
@@ -97,7 +100,7 @@ private:
   
   const char* type_string() { return "ciReturnAddress"; }
 
-  void print_impl();
+  void print_impl(outputStream* st);
 
 public:
   bool is_return_address()  { return true; }

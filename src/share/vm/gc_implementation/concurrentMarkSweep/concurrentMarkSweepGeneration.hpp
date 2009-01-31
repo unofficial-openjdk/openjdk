@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)concurrentMarkSweepGeneration.hpp	1.161 07/07/17 11:44:43 JVM"
+#pragma ident "@(#)concurrentMarkSweepGeneration.hpp	1.163 08/09/25 13:47:54 JVM"
 #endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -438,20 +438,18 @@ class CMSStats VALUE_OBJ_CLASS_SPEC {
 // if the object is "live" (reachable). Used in weak
 // reference processing.
 class CMSIsAliveClosure: public BoolObjectClosure {
-  MemRegion  _span;
+  const MemRegion  _span;
   const CMSBitMap* _bit_map;
 
   friend class CMSCollector;
- protected:
-  void set_span(MemRegion span) { _span = span; }
  public:
-  CMSIsAliveClosure(CMSBitMap* bit_map):
-    _bit_map(bit_map) { }
-
   CMSIsAliveClosure(MemRegion span,
                     CMSBitMap* bit_map):
     _span(span),
-    _bit_map(bit_map) { }
+    _bit_map(bit_map) {
+      assert(!span.is_empty(), "Empty span could spell trouble");
+    }
+
   void do_object(oop obj) {
     assert(false, "not to be invoked");
   }
@@ -600,7 +598,7 @@ class CMSCollector: public CHeapObj {
   // ("Weak") Reference processing support
   ReferenceProcessor*            _ref_processor;
   CMSIsAliveClosure              _is_alive_closure;
-      // keep this textually after _markBitMap; c'tor dependency
+      // keep this textually after _markBitMap and _span; c'tor dependency
 
   ConcurrentMarkSweepThread*     _cmsThread;   // the thread doing the work
   ModUnionClosure    _modUnionClosure;
@@ -918,10 +916,10 @@ class CMSCollector: public CHeapObj {
   CollectorCounters* counters()    { return _gc_counters; }
 
   // timer stuff
-  void    startTimer() { _timer.start();   }
-  void    stopTimer()  { _timer.stop();    }
-  void    resetTimer() { _timer.reset();   }
-  double  timerValue() { return _timer.seconds(); }
+  void    startTimer() { assert(!_timer.is_active(), "Error"); _timer.start();   }
+  void    stopTimer()  { assert( _timer.is_active(), "Error"); _timer.stop();    }
+  void    resetTimer() { assert(!_timer.is_active(), "Error"); _timer.reset();   }
+  double  timerValue() { assert(!_timer.is_active(), "Error"); return _timer.seconds(); }
 
   int  yields()          { return _numYields; }
   void resetYields()     { _numYields = 0;    }

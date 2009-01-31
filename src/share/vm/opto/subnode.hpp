@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)subnode.hpp	1.85 07/05/05 17:06:29 JVM"
+#pragma ident "@(#)subnode.hpp	1.86 07/09/28 10:23:02 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -259,7 +259,7 @@ struct BoolTest VALUE_OBJ_CLASS_SPEC {
   mask negate( ) const { return mask(_test^4); }
   bool is_canonical( ) const { return (_test == BoolTest::ne || _test == BoolTest::lt || _test == BoolTest::le); }
 #ifndef PRODUCT
-  void dump() const;
+  void dump_on(outputStream *st) const;
 #endif
 };
 
@@ -289,7 +289,7 @@ public:
 
   bool is_counted_loop_exit_test();
 #ifndef PRODUCT
-  virtual void dump_spec() const;
+  virtual void dump_spec(outputStream *st) const;
 #endif
 };
 

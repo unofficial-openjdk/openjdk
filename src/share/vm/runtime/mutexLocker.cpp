@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)mutexLocker.cpp	1.178 07/06/19 03:54:19 JVM"
+#pragma ident "@(#)mutexLocker.cpp	1.181 07/07/11 13:22:55 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -28,7 +28,13 @@
 #include "incls/_precompiled.incl"
 #include "incls/_mutexLocker.cpp.incl"
 
-// Mutexes used in the VM (see comment in mutexLocker.hpp)
+// Mutexes used in the VM (see comment in mutexLocker.hpp):
+//
+// Note that the following pointers are effectively final -- after having been
+// set at JVM startup-time, they should never be subsequently mutated.
+// Instead of using pointers to malloc()ed monitors and mutexes we should consider
+// eliminating the indirection and using instances instead.  
+// Consider using GCC's __read_mostly.
 
 Mutex*   Patching_lock                = NULL;
 Monitor* SystemDictionary_lock        = NULL;
@@ -105,11 +111,11 @@ Mutex*   Management_lock              = NULL;
 Monitor* LowMemory_lock               = NULL;
 
 #define MAX_NUM_MUTEX 128
-static Mutex* _mutex_array[MAX_NUM_MUTEX];
+static Monitor * _mutex_array[MAX_NUM_MUTEX];
 static int _num_mutex;
 
 #ifdef ASSERT
-void assert_locked_or_safepoint(const Mutex* lock) {
+void assert_locked_or_safepoint(const Monitor * lock) {
   // check if this thread owns the lock (common case)
   if (IgnoreLockingAssertions) return;
   assert(lock != NULL, "Need non-NULL lock");
@@ -123,7 +129,7 @@ void assert_locked_or_safepoint(const Mutex* lock) {
 }
 
 // a stronger assertion than the above
-void assert_lock_strong(const Mutex* lock) {
+void assert_lock_strong(const Monitor * lock) {
   if (IgnoreLockingAssertions) return;
   assert(lock != NULL, "Need non-NULL lock");
   if (lock->owned_by_self()) return;
@@ -232,7 +238,7 @@ void mutex_init() {
 
 }
 
-GCMutexLocker::GCMutexLocker(Mutex* mutex) {
+GCMutexLocker::GCMutexLocker(Monitor * mutex) {
   if (SafepointSynchronize::is_at_safepoint()) {
     _locked = false;
   } else {
@@ -249,7 +255,7 @@ void print_owned_locks_on_error(outputStream* st) {
   bool none = true;
   for (int i = 0; i < _num_mutex; i++) {
      // see if it has an owner
-     if (_mutex_array[i]->owner() != Mutex::INVALID_THREAD) {
+     if (_mutex_array[i]->owner() != NULL) {
        if (none) {
           // print format used by Mutex::print_on_error()
           st->print_cr(" ([mutex/lock_event])");

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)ciType.cpp	1.16 07/05/05 17:05:16 JVM"
+#pragma ident "@(#)ciType.cpp	1.18 07/09/28 10:23:21 JVM"
 #endif
 /*
  * Copyright 2000-2002 Sun Microsystems, Inc.  All Rights Reserved.
@@ -67,17 +67,17 @@ bool ciType::is_subtype_of(ciType* type) {
 // ciType::print_impl
 //
 // Implementation of the print method.
-void ciType::print_impl() {
-  tty->print(" type=");
-  print_name();
+void ciType::print_impl(outputStream* st) {
+  st->print(" type=");
+  print_name_on(st);
 }
 
 // ------------------------------------------------------------------
 // ciType::print_name
 //
 // Print the name of this type
-void ciType::print_name() {
-  tty->print(type2name(basic_type()));
+void ciType::print_name_on(outputStream* st) {
+  st->print(type2name(basic_type()));
 }
 
 
@@ -87,7 +87,7 @@ void ciType::print_name() {
 //
 ciInstance* ciType::java_mirror() {
   VM_ENTRY_MARK;
-  return CURRENT_THREAD_ENV->get_object(SystemDictionary::java_mirror(basic_type()))->as_instance();
+  return CURRENT_THREAD_ENV->get_object(Universe::java_mirror(basic_type()))->as_instance();
 }
 
 // ------------------------------------------------------------------
@@ -136,8 +136,8 @@ ciReturnAddress::ciReturnAddress(int bci) : ciType(T_ADDRESS) {
 // ciReturnAddress::print_impl
 //
 // Implementation of the print method.
-void ciReturnAddress::print_impl() {
-  tty->print(" bci=%d", _bci);
+void ciReturnAddress::print_impl(outputStream* st) {
+  st->print(" bci=%d", _bci);
 }
 
 // ------------------------------------------------------------------

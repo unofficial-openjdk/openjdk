@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)c1_LIR.cpp	1.118 07/05/05 17:05:04 JVM"
+#pragma ident "@(#)c1_LIR.cpp	1.119 07/06/18 14:25:24 JVM"
 #endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -126,10 +126,17 @@ void LIR_Address::verify() const {
   assert(scale() == times_1, "Scaled addressing mode not available on SPARC and should not be used");
   assert(disp() == 0 || index()->is_illegal(), "can't have both");
 #endif
+#ifdef _LP64
+  assert(base()->is_cpu_register(), "wrong base operand");
+  assert(index()->is_illegal() || index()->is_double_cpu(), "wrong index operand");
+  assert(base()->type() == T_OBJECT || base()->type() == T_LONG,
+         "wrong type for addresses");
+#else
   assert(base()->is_single_cpu(), "wrong base operand");
   assert(index()->is_illegal() || index()->is_single_cpu(), "wrong index operand");
   assert(base()->type() == T_OBJECT || base()->type() == T_INT,
          "wrong type for addresses");
+#endif
 }
 #endif
 
@@ -183,7 +190,6 @@ void LIR_OprDesc::validate_type() const {
     case T_INT:
     case T_OBJECT:
     case T_ARRAY:
-    case T_ADDRESS:
       assert((kind_field() == cpu_register || kind_field() == stack_value) && size_field() == single_size, "must match");
       break;
 
@@ -216,6 +222,15 @@ bool LIR_OprDesc::is_oop() const {
 
 void LIR_Op2::verify() const {
 #ifdef ASSERT
+  switch (code()) {
+    case lir_cmove:
+      break;
+
+    default:
+      assert(!result_opr()->is_register() || !result_opr()->is_oop_register(),
+             "can't produce oops from arith");
+  }
+
   if (TwoOperandLIRForm) {
     switch (code()) {
     case lir_add:
@@ -229,7 +244,6 @@ void LIR_Op2::verify() const {
     case lir_logic_or:
     case lir_logic_xor:
     case lir_shl:
-    case lir_shlx:
     case lir_shr:
       assert(in_opr1() == result_opr(), "opr1 and result must match");
       assert(in_opr1()->is_valid() && in_opr2()->is_valid(), "must be valid");
@@ -561,7 +575,6 @@ void LIR_OpVisitState::visit(LIR_Op* op) {
     case lir_logic_or:
     case lir_logic_xor:
     case lir_shl:
-    case lir_shlx:
     case lir_shr:
     case lir_ushr:
     {
@@ -1567,7 +1580,6 @@ const char * LIR_Op::name() const {
      case lir_logic_or:              s = "logic_or";      break;
      case lir_logic_xor:             s = "logic_xor";     break;
      case lir_shl:                   s = "shift_left";    break;
-     case lir_shlx:                  s = "shift_left_long";break;
      case lir_shr:                   s = "shift_right";   break;
      case lir_ushr:                  s = "ushift_right";  break;
      case lir_alloc_array:           s = "alloc_array";   break;

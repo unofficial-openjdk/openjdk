@@ -74,9 +74,9 @@ MakeDepsIncludesPRIVATE=\
         -relativeInclude src\share\vm\utilities \
         -relativeInclude src\share\vm\libadt \
         -relativeInclude src\share\vm\opto \
-        -relativeInclude src\os\win32\vm \
-        -relativeInclude src\os_cpu\win32_$(ARCH)\vm \
-        -relativeInclude src\cpu\$(ARCH)\vm
+        -relativeInclude src\os\windows\vm \
+        -relativeInclude src\os_cpu\windows_$(Platform_arch)\vm \
+        -relativeInclude src\cpu\$(Platform_arch)\vm
 
 # This is referenced externally by both the IDE and batch builds
 MakeDepsOptions=
@@ -87,10 +87,12 @@ MakeDepsOptions=
 
 MakeDepsIDEOptions = \
         -useToGeneratePch  java.cpp \
-        -disablePch        os_win32.cpp \
-        -disablePch        os_win32_$(ARCH).cpp \
-        -disablePch        osThread_win32.cpp \
-	-disablePch        getThread_win32_$(ARCH).cpp \
+        -disablePch        os_windows.cpp \
+        -disablePch        os_windows_$(Platform_arch).cpp \
+        -disablePch        osThread_windows.cpp \
+        -disablePch        bytecodeInterpreter.cpp \
+        -disablePch        bytecodeInterpreterWithChecks.cpp \
+	-disablePch        getThread_windows_$(Platform_arch).cpp \
         -disablePch_compiler2     opcodes.cpp    
 
 # Common options for the IDE builds for core, c1, and c2
@@ -107,6 +109,8 @@ MakeDepsIDEOptions=\
         -additionalFile includeDB_compiler1 \
         -additionalFile includeDB_compiler2 \
         -additionalFile includeDB_core \
+        -additionalFile includeDB_features \
+        -additionalFile includeDB_jvmti \
         -additionalFile includeDB_gc \
         -additionalFile includeDB_gc_parallel \
         -additionalFile includeDB_gc_parallelScavenge \
@@ -119,7 +123,7 @@ MakeDepsIDEOptions=\
        $(MakeDepsIncludesPRIVATE)
 
 # Add in build-specific options
-!if "$(ARCH)" == "i486"
+!if "$(BUILDARCH)" == "i486"
 MakeDepsIDEOptions=$(MakeDepsIDEOptions) -define IA32
 !endif
 
@@ -142,18 +146,18 @@ MakeDepsIDEOptions=$(MakeDepsIDEOptions) \
 MakeDepsIDEOptions=$(MakeDepsIDEOptions) \
  -define_compiler2 COMPILER2 \
  -absoluteInclude_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls \
- -additionalFile_compiler2 win32_$(ARCH).ad \
- -additionalGeneratedFile_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls ad_$(ARCH).cpp \
- -additionalGeneratedFile_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls ad_$(ARCH).hpp \
- -additionalGeneratedFile_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls ad_$(ARCH)_clone.cpp \
- -additionalGeneratedFile_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls ad_$(ARCH)_expand.cpp \
- -additionalGeneratedFile_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls ad_$(ARCH)_format.cpp \
- -additionalGeneratedFile_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls ad_$(ARCH)_gen.cpp \
- -additionalGeneratedFile_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls ad_$(ARCH)_misc.cpp \
- -additionalGeneratedFile_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls ad_$(ARCH)_peephole.cpp \
- -additionalGeneratedFile_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls ad_$(ARCH)_pipeline.cpp \
- -additionalGeneratedFile_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls adGlobals_$(ARCH).hpp \
- -additionalGeneratedFile_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls dfa_$(ARCH).cpp 
+ -additionalFile_compiler2 $(Platform_arch_model).ad \
+ -additionalGeneratedFile_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls ad_$(Platform_arch_model).cpp \
+ -additionalGeneratedFile_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls ad_$(Platform_arch_model).hpp \
+ -additionalGeneratedFile_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls ad_$(Platform_arch_model)_clone.cpp \
+ -additionalGeneratedFile_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls ad_$(Platform_arch_model)_expand.cpp \
+ -additionalGeneratedFile_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls ad_$(Platform_arch_model)_format.cpp \
+ -additionalGeneratedFile_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls ad_$(Platform_arch_model)_gen.cpp \
+ -additionalGeneratedFile_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls ad_$(Platform_arch_model)_misc.cpp \
+ -additionalGeneratedFile_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls ad_$(Platform_arch_model)_peephole.cpp \
+ -additionalGeneratedFile_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls ad_$(Platform_arch_model)_pipeline.cpp \
+ -additionalGeneratedFile_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls adGlobals_$(Platform_arch_model).hpp \
+ -additionalGeneratedFile_compiler2 $(HOTSPOTBUILDSPACE)/%f/incls dfa_$(Platform_arch_model).cpp 
 
 # Add in the jvmti (JSR-163) options
 # NOTE: do not pull in jvmtiEnvRecommended.cpp.  This file is generated
@@ -165,4 +169,5 @@ MakeDepsIDEOptions=$(MakeDepsIDEOptions) \
  -additionalGeneratedFile $(HOTSPOTBUILDSPACE)/jvmtifiles jvmtiEnv.hpp \
  -additionalGeneratedFile $(HOTSPOTBUILDSPACE)/jvmtifiles jvmtiEnter.cpp \
  -additionalGeneratedFile $(HOTSPOTBUILDSPACE)/jvmtifiles jvmtiEnterTrace.cpp \
- -additionalGeneratedFile $(HOTSPOTBUILDSPACE)/jvmtifiles jvmti.h 
+ -additionalGeneratedFile $(HOTSPOTBUILDSPACE)/jvmtifiles jvmti.h \
+ -additionalGeneratedFile $(HOTSPOTBUILDSPACE)/jvmtifiles bytecodeInterpreterWithChecks.cpp 

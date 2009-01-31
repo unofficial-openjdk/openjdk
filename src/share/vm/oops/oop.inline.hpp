@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)oop.inline.hpp	1.141 07/06/12 15:40:38 JVM"
+#pragma ident "@(#)oop.inline.hpp	1.142 07/09/25 16:47:44 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -202,7 +202,8 @@ inline int oopDesc::size_given_klass(Klass* klass)  {
       // technique, or when G1 is integrated (and currently uses this array chunking
       // technique) we will need to suitably modify the assertion.
       assert((s == klass->oop_size(this)) ||
-             ((UseParNewGC && Universe::heap()->is_gc_active()) &&
+             (((UseParNewGC || UseParallelGC) &&
+                                           Universe::heap()->is_gc_active()) &&
               (is_typeArray() ||
                (is_objArray() && is_forwarded()))),
              "wrong array object size");

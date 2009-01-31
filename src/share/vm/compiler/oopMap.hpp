@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)oopMap.hpp	1.79 07/05/05 17:05:24 JVM"
+#pragma ident "@(#)oopMap.hpp	1.81 07/09/28 10:23:19 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -49,7 +49,7 @@ private:
 
 public:
   // Constants
-  enum { type_bits                = 5,
+  enum { type_bits                = 6,
          register_bits            = BitsPerShort - type_bits };
  
   enum { type_shift               = 0,
@@ -66,7 +66,8 @@ public:
          value_value = 2,
          dead_value = 4,
          callee_saved_value = 8,
-         derived_oop_value= 16 };
+         derived_oop_value= 16,
+         stack_obj = 32 };
 
   // Constructors
   OopMapValue () { set_value(0); set_content_reg(VMRegImpl::Bad()); }
@@ -95,12 +96,14 @@ public:
   bool is_dead()              { return mask_bits(value(), type_mask_in_place) == dead_value; } 
   bool is_callee_saved()      { return mask_bits(value(), type_mask_in_place) == callee_saved_value; } 
   bool is_derived_oop()       { return mask_bits(value(), type_mask_in_place) == derived_oop_value; } 
+  bool is_stack_obj()         { return mask_bits(value(), type_mask_in_place) == stack_obj; }
 
   void set_oop()              { set_value((value() & register_mask_in_place) | oop_value); } 
   void set_value()            { set_value((value() & register_mask_in_place) | value_value); } 
   void set_dead()             { set_value((value() & register_mask_in_place) | dead_value); } 
   void set_callee_saved()     { set_value((value() & register_mask_in_place) | callee_saved_value); } 
   void set_derived_oop()      { set_value((value() & register_mask_in_place) | derived_oop_value); } 
+  void set_stack_obj()        { set_value((value() & register_mask_in_place) | stack_obj); }
 
   VMReg reg() const { return VMRegImpl::as_VMReg(mask_bits(value(), register_mask_in_place) >> register_shift); }
   oop_types type() const      { return (oop_types)mask_bits(value(), type_mask_in_place); }
@@ -178,6 +181,7 @@ class OopMap: public ResourceObj {
   void set_dead ( VMReg local);
   void set_callee_saved( VMReg local, VMReg caller_machine_register );
   void set_derived_oop ( VMReg local, VMReg derived_from_local_register );
+  void set_stack_obj( VMReg local);
   void set_xxx(VMReg reg, OopMapValue::oop_types x, VMReg optional);
 
   int heap_size() const;
@@ -191,7 +195,8 @@ class OopMap: public ResourceObj {
   }
 
   // Printing
-  void print() const PRODUCT_RETURN;
+  void print_on(outputStream* st) const PRODUCT_RETURN;
+  void print() const { print_on(tty); }
 };
 
 
@@ -245,7 +250,8 @@ class OopMapSet : public ResourceObj {
                      OopClosure* value_fn, OopClosure* dead_fn);
 
   // Printing
-  void print() const PRODUCT_RETURN;
+  void print_on(outputStream* st) const PRODUCT_RETURN;
+  void print() const { print_on(tty); }
 };
 
 

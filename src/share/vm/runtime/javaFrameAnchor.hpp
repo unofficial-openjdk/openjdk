@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)javaFrameAnchor.hpp	1.16 07/05/05 17:06:50 JVM"
+#pragma ident "@(#)javaFrameAnchor.hpp	1.17 07/08/29 13:42:29 JVM"
 #endif
 /*
  * Copyright 2002-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -44,7 +44,7 @@ friend class StubGenerator;
 friend class JavaThread;
 friend class frame;
 friend class VMStructs;
-friend class cInterpreter;
+friend class BytecodeInterpreter;
 friend class JavaCallWrapper;
 
  private:

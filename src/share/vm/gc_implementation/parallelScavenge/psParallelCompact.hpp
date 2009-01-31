@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)psParallelCompact.hpp	1.47 07/05/05 17:05:30 JVM"
+#pragma ident "@(#)psParallelCompact.hpp	1.48 07/10/04 10:49:38 JVM"
 #endif
 /*
  * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -100,28 +100,33 @@ public:
   class ChunkData
   {
   public:
-    static const size_t Available;
-    static const size_t Claimed;
-    static const size_t Completed;
+    // Destination address of the chunk.
+    HeapWord* destination() const { return _destination; }
 
-  public:
+    // The first chunk containing data destined for this chunk.
+    size_t source_chunk() const { return _source_chunk; }
+
+    // The object (if any) starting in this chunk and ending in a different
+    // chunk that could not be updated during the main (parallel) compaction
+    // phase.  This is different from _partial_obj_addr, which is an object that
+    // extends onto a source chunk.  However, the two uses do not overlap in
+    // time, so the same field is used to save space.
+    HeapWord* deferred_obj_addr() const { return _partial_obj_addr; }
+
+    // The starting address of the partial object extending onto the chunk.
+    HeapWord* partial_obj_addr() const { return _partial_obj_addr; }
+
     // Size of the partial object extending onto the chunk (words).
     size_t partial_obj_size() const { return _partial_obj_size; }
-
-    // The starting address of the partial object.
-    HeapWord* partial_obj_addr() const { return _partial_obj_addr; }
 
     // Size of live data that lies within this chunk due to objects that start
     // in this chunk (words).  This does not include the partial object
     // extending onto the chunk (if any), or the part of an object that extends
     // onto the next chunk (if any).
-    size_t live_obj_size() const { return _live_obj_size; }
+    size_t live_obj_size() const { return _dc_and_los & los_mask; }
 
     // Total live data that lies within the chunk (words).
-    size_t data_size() const { return _partial_obj_size + _live_obj_size; }
-
-    // Destination address of the chunk.
-    HeapWord* destination() const { return _destination; }
+    size_t data_size() const { return partial_obj_size() + live_obj_size(); }
 
     // The destination_count is the number of other chunks to which data from
     // this chunk will be copied.  At the end of the summary phase, the valid
@@ -138,90 +143,74 @@ public:
     // then filled.
     // 
     // A chunk is claimed for processing by atomically changing the
-    // destination_count from Available to Claimed.  After a chunk has been
-    // filled, the destination_count should be set to ChunkData::Completed.
-    size_t destination_count() const { return _destination_count; }
-
-    // Cached address of the first live object starting in the chunk.  If the
-    // value has not been cached yet, returns NULL.  If there is no live object
-    // starting in the chunk, returns the address one past the end of the chunk.
-    HeapWord* first_live_obj() { return _first_live_obj; }
-
-    // Object that crosses this chunk's right (upper) boundary and whose
-    // starting address is in this chunk.  This is set during
-    // compaction when an object extends over the right (upper) boundary of
-    // a destination chunk.  This is different than _partial_obj_addr
-    // which extends over the left (lower) boundary of a source chunk.
-    // This object is unique to a chunk.
-    HeapWord* obj_not_updated() const { return _obj_not_updated; }
-
-    // The first chunk containing data destined for this chunk.
-    size_t source_chunk() const { return _source_chunk; }
+    // destination_count to the claimed value (dc_claimed).  After a chunk has
+    // been filled, the destination_count should be set to the completed value
+    // (dc_completed).
+    inline uint destination_count() const;
+    inline uint destination_count_raw() const;
 
     // The location of the java heap data that corresponds to this chunk.
-    HeapWord* data_location() const { return _data_location; }
+    inline HeapWord* data_location() const;
 
     // The highest address referenced by objects in this chunk.
-    HeapWord* highest_ref() const { return _highest_ref; }
+    inline HeapWord* highest_ref() const;
 
     // Whether this chunk is available to be claimed, has been claimed, or has
     // been completed.
-    bool available() const { return _destination_count == Available; }
-    bool claimed() const   { return _destination_count == Claimed; }
-    bool completed() const { return _destination_count == Completed; }
+    //
+    // Minor subtlety:  claimed() returns true if the chunk is marked
+    // completed(), which is desirable since a chunk must be claimed before it
+    // can be completed.
+    bool available() const { return _dc_and_los < dc_one; }
+    bool claimed() const   { return _dc_and_los >= dc_claimed; }
+    bool completed() const { return _dc_and_los >= dc_completed; }
 
     // These are not atomic.
-    void set_partial_obj_size(size_t words)  { _partial_obj_size = words; }
-    void set_partial_obj_addr(HeapWord* k)   { _partial_obj_addr = k; }
-    void set_live_obj_size(size_t words)     { _live_obj_size = words; }
-    void set_destination(HeapWord* addr)     { _destination = addr; }
-    void set_destination_count(size_t count) { _destination_count = count; }
-    void set_first_live_obj(HeapWord* v)     { _first_live_obj = v; }
-    void set_obj_not_updated(HeapWord* addr) { _obj_not_updated = addr; }
-    void set_source_chunk(size_t chunk)      { _source_chunk = chunk; }
-    void set_data_location(HeapWord* addr)   { _data_location = addr; }
+    void set_destination(HeapWord* addr)       { _destination = addr; }
+    void set_source_chunk(size_t chunk)        { _source_chunk = chunk; }
+    void set_deferred_obj_addr(HeapWord* addr) { _partial_obj_addr = addr; }
+    void set_partial_obj_addr(HeapWord* addr)  { _partial_obj_addr = addr; }
+    void set_partial_obj_size(size_t words)    {
+      _partial_obj_size = (chunk_sz_t) words;
+    }
+
+    inline void set_destination_count(uint count);
+    inline void set_live_obj_size(size_t words);
+    inline void set_data_location(HeapWord* addr);
     inline void set_completed();
     inline bool claim_unsafe();
 
     // These are atomic.
-    void add_live_obj(size_t words)          { add_live_obj((intptr_t)words); }
-
-    void set_highest_ref(HeapWord* addr) {
-      HeapWord* tmp = _highest_ref;
-      while (addr > tmp) {
-	tmp = (HeapWord*)Atomic::cmpxchg_ptr(addr, &_highest_ref, tmp);
-      }
-    }
-
-    void decrement_destination_count() {
-      assert(_destination_count < Claimed, "Chunk already claimed");
-      assert(_destination_count > 0, "count must not go negative");
-      Atomic::add_ptr(-1, &_destination_count);
-    }
-
-    bool claim() {
-      size_t old_val = cmpxchg_size_t(Claimed, &_destination_count, Available);
-      return old_val == Available;
-    }
+    inline void add_live_obj(size_t words);
+    inline void set_highest_ref(HeapWord* addr);
+    inline void decrement_destination_count();
+    inline bool claim();
 
   private:
-    static size_t cmpxchg_size_t(size_t new_val, volatile size_t* addr,
-				 size_t old_val) {
-      return size_t(Atomic::cmpxchg_ptr((void*)new_val, addr, (void*)old_val));
-    }
-    void add_live_obj(intptr_t sz) { Atomic::add_ptr(sz, &_live_obj_size); }
+    // The type used to represent object sizes within a chunk.
+    typedef uint chunk_sz_t;
 
-  private:
-    size_t          _partial_obj_size;
-    HeapWord*       _partial_obj_addr;
-    volatile size_t _live_obj_size;
-    HeapWord*       _destination;
-    HeapWord*       _first_live_obj;
-    HeapWord*	    _obj_not_updated;
-    size_t          _source_chunk;
-    HeapWord*       _data_location;
-    HeapWord*       _highest_ref;
-    volatile size_t _destination_count;
+    // Constants for manipulating the _dc_and_los field, which holds both the
+    // destination count and live obj size.  The live obj size lives at the
+    // least significant end so no masking is necessary when adding.
+    static const chunk_sz_t dc_shift;		// Shift amount.
+    static const chunk_sz_t dc_mask;		// Mask for destination count.
+    static const chunk_sz_t dc_one;		// 1, shifted appropriately.
+    static const chunk_sz_t dc_claimed;		// Chunk has been claimed.
+    static const chunk_sz_t dc_completed;	// Chunk has been completed.
+    static const chunk_sz_t los_mask;		// Mask for live obj size.
+
+    HeapWord*           _destination;
+    size_t              _source_chunk;
+    HeapWord*           _partial_obj_addr;
+    chunk_sz_t          _partial_obj_size;
+    chunk_sz_t volatile _dc_and_los;
+#ifdef ASSERT
+    // These enable optimizations that are only partially implemented.  Use
+    // debug builds to prevent the code fragments from breaking.
+    HeapWord*           _data_location;
+    HeapWord*           _highest_ref;
+#endif	// #ifdef ASSERT
 
 #ifdef ASSERT
    public:
@@ -357,10 +346,6 @@ public:
   inline BlockData* addr_to_block_ptr(const HeapWord* addr) const;
   inline HeapWord*  block_to_addr(size_t block) const;
 
-  // The given object (new location) was not updated.
-  // Set the _obj_not_updated field in the appropriate chunk.
-  void set_obj_not_updated(HeapWord* moved_obj);
-
   // Return the address one past the end of the partial object.
   HeapWord* partial_obj_end(size_t chunk_idx) const;
 
@@ -385,16 +370,6 @@ public:
   // corresponding chunk ends in the block.  Returns false, otherwise
   // If there is no partial object, returns false.
   bool partial_obj_ends_in_block(size_t block_index);
-
-  // Returns the address of the first live object starting in the chunk.
-  HeapWord* first_live_or_end_in_chunk(size_t chunk_index);
-
-  // Returns the address of the first live object starting in the chunk.
-  HeapWord* first_live_or_end_in_chunk_range(size_t chunk_index_start,
-					     size_t chunk_index_end);
-
-  // Returns the address of the first live object starting in the block.
-  HeapWord* first_live_object_in_block(size_t block_index);
 
   // Returns the block index for the block
   static size_t block_idx(BlockData* block);
@@ -424,21 +399,95 @@ private:
   size_t          _block_count;
 };
 
+inline uint
+ParallelCompactData::ChunkData::destination_count_raw() const
+{
+  return _dc_and_los & dc_mask;
+}
+
+inline uint
+ParallelCompactData::ChunkData::destination_count() const
+{
+  return destination_count_raw() >> dc_shift;
+}
+
+inline void
+ParallelCompactData::ChunkData::set_destination_count(uint count)
+{
+  assert(count <= (dc_completed >> dc_shift), "count too large");
+  const chunk_sz_t live_sz = (chunk_sz_t) live_obj_size();
+  _dc_and_los = (count << dc_shift) | live_sz;
+}
+
+inline void ParallelCompactData::ChunkData::set_live_obj_size(size_t words)
+{
+  assert(words <= los_mask, "would overflow");
+  _dc_and_los = destination_count_raw() | (chunk_sz_t)words;
+}
+
+inline void ParallelCompactData::ChunkData::decrement_destination_count()
+{
+  assert(_dc_and_los < dc_claimed, "already claimed");
+  assert(_dc_and_los >= dc_one, "count would go negative");
+  Atomic::add((int)dc_mask, (volatile int*)&_dc_and_los);
+}
+
+inline HeapWord* ParallelCompactData::ChunkData::data_location() const
+{
+  DEBUG_ONLY(return _data_location;)
+  NOT_DEBUG(return NULL;)
+}
+
+inline HeapWord* ParallelCompactData::ChunkData::highest_ref() const
+{
+  DEBUG_ONLY(return _highest_ref;)
+  NOT_DEBUG(return NULL;)
+}
+
+inline void ParallelCompactData::ChunkData::set_data_location(HeapWord* addr)
+{
+  DEBUG_ONLY(_data_location = addr;)
+}
+
 inline void ParallelCompactData::ChunkData::set_completed()
 {
   assert(claimed(), "must be claimed first");
-  set_destination_count(Completed);
+  _dc_and_los = dc_completed | (chunk_sz_t) live_obj_size();
 }
 
 // MT-unsafe claiming of a chunk.  Should only be used during single threaded
 // execution.
 inline bool ParallelCompactData::ChunkData::claim_unsafe()
 {
-  if (destination_count() == Available) {
-    set_destination_count(Claimed);
+  if (available()) {
+    _dc_and_los |= dc_claimed;
     return true;
   }
   return false;
+}
+
+inline void ParallelCompactData::ChunkData::add_live_obj(size_t words)
+{
+  assert(words <= (size_t)los_mask - live_obj_size(), "overflow");
+  Atomic::add((int) words, (volatile int*) &_dc_and_los);
+}
+
+inline void ParallelCompactData::ChunkData::set_highest_ref(HeapWord* addr)
+{
+#ifdef ASSERT
+  HeapWord* tmp = _highest_ref;
+  while (addr > tmp) {
+    tmp = (HeapWord*)Atomic::cmpxchg_ptr(addr, &_highest_ref, tmp);
+  }
+#endif	// #ifdef ASSERT
+}
+
+inline bool ParallelCompactData::ChunkData::claim()
+{
+  const int los = (int) live_obj_size();
+  const int old = Atomic::cmpxchg(dc_claimed | los,
+				  (volatile int*) &_dc_and_los, los);
+  return old == los;
 }
 
 inline ParallelCompactData::ChunkData*

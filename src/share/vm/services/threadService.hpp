@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)threadService.hpp	1.41 07/05/05 17:07:06 JVM"
+#pragma ident "@(#)threadService.hpp	1.43 07/10/03 11:09:53 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -385,19 +385,24 @@ class JavaThreadStatusChanger : public StackObj {
 
   void save_old_state(JavaThread* java_thread) {
     _java_thread  = java_thread;
-    _is_alive = (_java_thread != NULL) && (_java_thread->threadObj() != NULL);
+    _is_alive = is_alive(java_thread);
     if (is_alive()) {
       _old_state = java_lang_Thread::get_thread_status(_java_thread->threadObj());
     }
   }
 
  public:
-  void set_thread_status(java_lang_Thread::ThreadStatus state) {
-    if (is_alive()) {
-      java_lang_Thread::set_thread_status(_java_thread->threadObj(), state);
-    }
+  static void set_thread_status(JavaThread* java_thread,
+                                java_lang_Thread::ThreadStatus state) {
+    java_lang_Thread::set_thread_status(java_thread->threadObj(), state);
   }
     
+  void set_thread_status(java_lang_Thread::ThreadStatus state) {
+    if (is_alive()) {
+      set_thread_status(_java_thread, state);
+    }
+  }
+
   JavaThreadStatusChanger(JavaThread* java_thread,
                           java_lang_Thread::ThreadStatus state) {
     save_old_state(java_thread);
@@ -411,6 +416,11 @@ class JavaThreadStatusChanger : public StackObj {
   ~JavaThreadStatusChanger() {
     set_thread_status(_old_state);
   }
+
+  static bool is_alive(JavaThread* java_thread) {
+    return java_thread != NULL && java_thread->threadObj() != NULL;
+  }
+
   bool is_alive() {
     return _is_alive;
   }
@@ -479,7 +489,37 @@ class JavaThreadBlockedOnMonitorEnterState : public JavaThreadStatusChanger {
  private:
   ThreadStatistics* _stat; 
   bool _active;
+
+  static bool contended_enter_begin(JavaThread *java_thread) {
+    set_thread_status(java_thread, java_lang_Thread::BLOCKED_ON_MONITOR_ENTER);
+    ThreadStatistics* stat = java_thread->get_thread_stat();
+    stat->contended_enter();
+    bool active = ThreadService::is_thread_monitoring_contention();
+    if (active) {
+      stat->contended_enter_begin();
+    }
+    return active;
+  }
+
  public:
+  // java_thread is waiting thread being blocked on monitor reenter.
+  // Current thread is the notifying thread which holds the monitor.
+  static bool wait_reenter_begin(JavaThread *java_thread, ObjectMonitor *obj_m) {
+    assert((java_thread != NULL), "Java thread should not be null here");
+    bool active  = false;
+    if (is_alive(java_thread) && ServiceUtil::visible_oop((oop)obj_m->object())) {
+      active = contended_enter_begin(java_thread);
+    }
+    return active;
+  }
+
+  static void wait_reenter_end(JavaThread *java_thread, bool active) {
+    if (active) {
+      java_thread->get_thread_stat()->contended_enter_end();
+    }
+    set_thread_status(java_thread, java_lang_Thread::RUNNABLE);
+  }
+
   JavaThreadBlockedOnMonitorEnterState(JavaThread *java_thread, ObjectMonitor *obj_m) :
     JavaThreadStatusChanger(java_thread) {
     assert((java_thread != NULL), "Java thread should not be null here");
@@ -487,17 +527,11 @@ class JavaThreadBlockedOnMonitorEnterState : public JavaThreadStatusChanger {
     // enter done for external java world objects and it is contended. All other cases
     // like for vm internal objects and for external objects which are not contended
     // thread status is not changed and contended enter stat is not collected.
+    _active = false;
     if (is_alive() && ServiceUtil::visible_oop((oop)obj_m->object()) && obj_m->contentions() > 0) {
-      set_thread_status(java_lang_Thread::BLOCKED_ON_MONITOR_ENTER);
       _stat = java_thread->get_thread_stat();
-      _stat->contended_enter();
-      _active = ThreadService::is_thread_monitoring_contention();
-      if (_active) {
-        _stat->contended_enter_begin();
-      }
-    } else {
-      _active = false;
-    } 
+      _active = contended_enter_begin(java_thread);
+    }
   }
 
   ~JavaThreadBlockedOnMonitorEnterState() {

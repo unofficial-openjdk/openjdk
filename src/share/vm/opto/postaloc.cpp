@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)postaloc.cpp	1.83 07/05/05 17:06:28 JVM"
+#pragma ident "@(#)postaloc.cpp	1.84 08/03/26 10:13:00 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -256,7 +256,8 @@ int PhaseChaitin::elide_copy( Node *n, int k, Block *current_block, Node_List &v
 // nodes can represent the same constant so the type and rule of the
 // MachNode must be checked to ensure equivalence.
 //
-bool PhaseChaitin::eliminate_copy_of_constant(Node* val, Block *current_block,
+bool PhaseChaitin::eliminate_copy_of_constant(Node* val, Node* n,
+                                              Block *current_block,
                                               Node_List& value, Node_List& regnd,
                                               OptoReg::Name nreg, OptoReg::Name nreg2) {
   if (value[nreg] != val && val->is_Con() &&
@@ -272,12 +273,12 @@ bool PhaseChaitin::eliminate_copy_of_constant(Node* val, Block *current_block,
     // Since they are equivalent the second one if redundant and can
     // be removed.
     //
-    // val will be replaced with the old value but val might have
+    // n will be replaced with the old value but n might have
     // kills projections associated with it so remove them now so that
     // yank_if_dead will be able to elminate the copy once the uses
     // have been transferred to the old[value].
-    for (DUIterator_Fast imax, i = val->fast_outs(imax); i < imax; i++) {
-      Node* use = val->fast_out(i);
+    for (DUIterator_Fast imax, i = n->fast_outs(imax); i < imax; i++) {
+      Node* use = n->fast_out(i);
       if (use->is_Proj() && use->outcnt() == 0) {
         // Kill projections have no users and one input
         use->set_req(0, C->top());
@@ -524,7 +525,7 @@ void PhaseChaitin::post_allocate_copy_removal() {
         // then 'n' is a useless copy.  Do not update the register->node
         // mapping so 'n' will go dead.
         if( value[nreg] != val ) {
-          if (eliminate_copy_of_constant(val, b, value, regnd, nreg, OptoReg::Bad)) {
+          if (eliminate_copy_of_constant(val, n, b, value, regnd, nreg, OptoReg::Bad)) {
             n->replace_by(regnd[nreg]);
             j -= yank_if_dead(n,b,&value,&regnd);
           } else {
@@ -552,7 +553,7 @@ void PhaseChaitin::post_allocate_copy_removal() {
           nreg_lo = tmp.find_first_elem();
         }
         if( value[nreg] != val || value[nreg_lo] != val ) {
-          if (eliminate_copy_of_constant(n, b, value, regnd, nreg, nreg_lo)) {
+          if (eliminate_copy_of_constant(val, n, b, value, regnd, nreg, nreg_lo)) {
             n->replace_by(regnd[nreg]);
             j -= yank_if_dead(n,b,&value,&regnd);
           } else {

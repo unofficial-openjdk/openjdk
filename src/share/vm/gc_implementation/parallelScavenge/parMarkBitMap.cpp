@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)parMarkBitMap.cpp	1.30 07/05/05 17:05:27 JVM"
+#pragma ident "@(#)parMarkBitMap.cpp	1.31 07/10/04 10:49:33 JVM"
 #endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -31,17 +31,23 @@
 bool
 ParMarkBitMap::initialize(MemRegion covered_region)
 {
-  const size_t alloc_granularity = os::vm_allocation_granularity();
   const idx_t bits = bits_required(covered_region);
-  const idx_t words = bits / BitsPerWord;
-  const idx_t bytes = align_size_up(words * sizeof(idx_t), alloc_granularity);
-
   // The bits will be divided evenly between two bitmaps; each of them should be
   // an integral number of words.
   assert(bits % (BitsPerWord * 2) == 0, "region size unaligned");
 
-  ReservedSpace rs(bytes);
-  _virtual_space = new PSVirtualSpace(rs, os::vm_page_size());
+  const size_t words = bits / BitsPerWord;
+  const size_t raw_bytes = words * sizeof(idx_t);
+  const size_t page_sz = os::page_size_for_region(raw_bytes, raw_bytes, 10);
+  const size_t granularity = os::vm_allocation_granularity();
+  const size_t bytes = align_size_up(raw_bytes, MAX2(page_sz, granularity));
+
+  const size_t rs_align = page_sz == (size_t) os::vm_page_size() ? 0 :
+    MAX2(page_sz, granularity);
+  ReservedSpace rs(bytes, rs_align, false);
+  os::trace_page_sizes("par bitmap", raw_bytes, raw_bytes, page_sz,
+		       rs.base(), rs.size());
+  _virtual_space = new PSVirtualSpace(rs, page_sz);
   if (_virtual_space != NULL && _virtual_space->expand_by(bytes)) {
     _region_start = covered_region.start();
     _region_size = covered_region.word_size();

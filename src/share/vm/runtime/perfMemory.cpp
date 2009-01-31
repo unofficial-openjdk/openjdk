@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)perfMemory.cpp	1.27 07/05/05 17:06:53 JVM"
+#pragma ident "@(#)perfMemory.cpp	1.28 07/09/13 11:29:49 JVM"
 #endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -227,7 +227,7 @@ void PerfMemory::mark_updated() {
 char* PerfMemory::get_perfdata_file_path() {
   char* dest_file = NULL; 
  
-  if (PerfDataSaveFile[0] != '\0') {
+  if (PerfDataSaveFile != NULL) {
     // dest_file_name stores the validated file name if file_name
     // contains %p which will be replaced by pid.
     dest_file = NEW_C_HEAP_ARRAY(char, JVM_MAXPATHLEN);

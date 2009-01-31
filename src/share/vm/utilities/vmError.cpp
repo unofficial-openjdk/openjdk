@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)vmError.cpp	1.31 07/05/23 10:54:29 JVM"
+#pragma ident "@(#)vmError.cpp	1.34 07/09/13 20:51:49 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -728,7 +728,7 @@ void VMError::report_and_die() {
       // open log file
       int fd = -1;
 
-      if (strlen(ErrorFile) > 0) {
+      if (ErrorFile != NULL) {
         bool copy_ok = 
           Arguments::copy_expand_pid(ErrorFile, strlen(ErrorFile), buffer, sizeof(buffer));
         if (copy_ok) {
@@ -802,7 +802,7 @@ void VMError::report_and_die() {
       out.print_raw   (cmd);
       out.print_raw_cr("\" ..."); 
 
-      fork_and_exec(cmd);
+      os::fork_and_exec(cmd);
     }
 
     // done with OnError
@@ -865,7 +865,7 @@ void VM_ReportJavaOutOfMemory::doit() {
 #endif
     tty->print_cr("\"%s\"...", cmd);
 
-    _err->fork_and_exec(cmd);
+    os::fork_and_exec(cmd);
   }
 }
 

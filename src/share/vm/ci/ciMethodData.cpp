@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)ciMethodData.cpp	1.28 07/05/05 17:05:15 JVM"
+#pragma ident "@(#)ciMethodData.cpp	1.29 07/09/28 10:23:22 JVM"
 #endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -291,8 +291,8 @@ ByteSize ciMethodData::offset_of_slot(ciProfileData* data, ByteSize slot_offset_
 }
 
 // Implementation of the print method.
-void ciMethodData::print_impl() {
-  ciObject::print_impl();
+void ciMethodData::print_impl(outputStream* st) {
+  ciObject::print_impl(st);
 }
 
 #ifndef PRODUCT

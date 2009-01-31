@@ -671,11 +671,11 @@ GetJVMPath(const char *jrepath, const char *jvmtype,
 
     char *p;
 
-    snprintf(jvmpath, jvmpathsize, GetExecname());
+    snprintf(jvmpath, jvmpathsize, "%s", GetExecname());
     p = strrchr(jvmpath, '/');
     if (p) {
        /* replace executable name with libjvm.so */
-       snprintf(p + 1, jvmpathsize - (p + 1 - jvmpath), JVM_DLL);
+       snprintf(p + 1, jvmpathsize - (p + 1 - jvmpath), "%s", JVM_DLL);
     } else {
        /* this case shouldn't happen */
        snprintf(jvmpath, jvmpathsize, "%s", JVM_DLL);

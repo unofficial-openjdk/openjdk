@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)ciFlags.cpp	1.11 07/05/05 17:05:13 JVM"
+#pragma ident "@(#)ciFlags.cpp	1.12 07/09/28 10:23:24 JVM"
 #endif
 /*
  * Copyright 1999 Sun Microsystems, Inc.  All Rights Reserved.
@@ -34,69 +34,69 @@
 
 // ------------------------------------------------------------------
 // ciFlags::print_klass_flags
-void ciFlags::print_klass_flags() {
+void ciFlags::print_klass_flags(outputStream* st) {
   if (is_public()) {
-    tty->print("public");
+    st->print("public");
   } else {
-    tty->print("DEFAULT_ACCESS");
+    st->print("DEFAULT_ACCESS");
   }
 
   if (is_final()) {
-    tty->print(",final");
+    st->print(",final");
   }
   if (is_super()) {
-    tty->print(",super");
+    st->print(",super");
   }
   if (is_interface()) {
-    tty->print(",interface");
+    st->print(",interface");
   }
   if (is_abstract()) {
-    tty->print(",abstract");
+    st->print(",abstract");
   }
 }
 
 // ------------------------------------------------------------------
 // ciFlags::print_member_flags
-void ciFlags::print_member_flags() {
+void ciFlags::print_member_flags(outputStream* st) {
   if (is_public()) {
-    tty->print("public");
+    st->print("public");
   } else if (is_private()) {
-    tty->print("private");
+    st->print("private");
   } else if (is_protected()) {
-    tty->print("protected");
+    st->print("protected");
   } else {
-    tty->print("DEFAULT_ACCESS");
+    st->print("DEFAULT_ACCESS");
   }
 
   if (is_static()) {
-    tty->print(",static");
+    st->print(",static");
   }
   if (is_final()) {
-    tty->print(",final");
+    st->print(",final");
   }
   if (is_synchronized()) {
-    tty->print(",synchronized");
+    st->print(",synchronized");
   }
   if (is_volatile()) {
-    tty->print(",volatile");
+    st->print(",volatile");
   }
   if (is_transient()) {
-    tty->print(",transient");
+    st->print(",transient");
   }
   if (is_native()) {
-    tty->print(",native");
+    st->print(",native");
   }
   if (is_abstract()) {
-    tty->print(",abstract");
+    st->print(",abstract");
   }
   if (is_strict()) {
-    tty->print(",strict");
+    st->print(",strict");
   }
     
 }
 
 // ------------------------------------------------------------------
 // ciFlags::print
-void ciFlags::print() {
-  tty->print(" flags=%x", _flags);
+void ciFlags::print(outputStream* st) {
+  st->print(" flags=%x", _flags);
 }

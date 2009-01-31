@@ -1,8 +1,12 @@
 os_family = solaris
 
-arch = amd64
+arch = x86
 
-os_arch = solaris_amd64
+arch_model = x86_64
+
+os_arch = solaris_x86
+
+os_arch_model = solaris_x86_64
 
 lib_arch = amd64
 

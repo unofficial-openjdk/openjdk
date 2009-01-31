@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)cardTableModRefBS.hpp	1.51 07/05/29 09:44:14 JVM"
+#pragma ident "@(#)cardTableModRefBS.hpp	1.53 07/10/04 10:49:32 JVM"
 #endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -43,9 +43,7 @@ class DirtyCardToOopClosure;
 
 class CardTableModRefBS: public ModRefBarrierSet {
   // Some classes get to look at some private stuff.
-#ifdef CC_INTERP
-  friend class cInterpreter;
-#endif
+  friend class BytecodeInterpreter;
   friend class VMStructs;
   friend class CardTableRS;
   friend class CheckForUnmarkedOops; // Needs access to raw card bytes.
@@ -81,16 +79,16 @@ class CardTableModRefBS: public ModRefBarrierSet {
     return card_is_dirty_wrt_gen_iter(cv);
   }
 
-  // The region that the card table can cover.
-  MemRegion    _whole_heap;
-
-  jbyte*       _byte_map;      // the card marking array
-  size_t       _byte_map_size;  // In bytes.
-
-  size_t       _last_valid_index;  // index of last valid element in card table
-  size_t       _guard_index;       // index of very last element in card table;
-                                   //  it is set to a guard value "last_card" and 
-                                   // should never be modified
+  // The declaration order of these const fields is important; see the
+  // constructor before changing.
+  const MemRegion _whole_heap;       // the region covered by the card table
+  const size_t    _guard_index;      // index of very last element in the card
+                                     // table; it is set to a guard value
+                                     // (last_card) and should never be modified
+  const size_t    _last_valid_index; // index of the last valid element
+  const size_t    _page_size;        // page size used when mapping _byte_map
+  const size_t    _byte_map_size;    // in bytes
+  jbyte*          _byte_map;         // the card marking array
 
   int _cur_covered_regions;
   // The covered regions should be in address order.
@@ -107,6 +105,12 @@ class CardTableModRefBS: public ModRefBarrierSet {
   // we can use the card for verification purposes. We make sure we never
   // uncommit the MemRegion for that page.
   MemRegion _guard_region;
+
+ protected:
+  // Initialization utilities; covered_words is the size of the covered region
+  // in, um, words.
+  inline size_t cards_required(size_t covered_words);
+  inline size_t compute_byte_map_size();
 
   // Finds and return the index of the region, if any, to which the given
   // region would be contiguous.  If none exists, assign a new region and

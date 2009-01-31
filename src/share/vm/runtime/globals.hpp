@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)globals.hpp	1.967 07/07/13 14:51:27 JVM"
+#pragma ident "@(#)globals.hpp	1.975 08/08/28 22:07:15 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -61,6 +61,7 @@ define_pd_global(intx, CodeCacheMinBlockLength,      1);
 define_pd_global(uintx,PermSize,    ScaleForWordSize(4*M));
 define_pd_global(uintx,MaxPermSize, ScaleForWordSize(64*M));
 define_pd_global(bool, NeverActAsServerClassMachine, true);
+define_pd_global(uintx, DefaultMaxRAM, 		     1*G);
 #define CI_COMPILER_COUNT 0
 #else
 
@@ -73,7 +74,9 @@ define_pd_global(bool, NeverActAsServerClassMachine, true);
 #endif // no compilers
 
 
-typedef const char* ccstr;  // string type alias used only in this file
+// string type aliases used only in this file
+typedef const char* ccstr;
+typedef const char* ccstrlist;   // represents string arguments which accumulate
 
 enum FlagValueOrigin {
   DEFAULT          = 0,
@@ -117,7 +120,8 @@ struct Flag {
   double get_double() const     { return *((double*) addr); }
   void set_double(double value) { *((double*) addr) = value; }
 
-  bool is_ccstr() const       { return strcmp(type, "ccstr") == 0; }
+  bool is_ccstr() const          { return strcmp(type, "ccstr") == 0 || strcmp(type, "ccstrlist") == 0; }
+  bool ccstr_accumulates() const { return strcmp(type, "ccstrlist") == 0; }
   ccstr get_ccstr() const     { return *((ccstr*) addr); }
   void set_ccstr(ccstr value) { *((ccstr*) addr) = value; }
 
@@ -305,6 +309,9 @@ class CommandLineFlags {
   product_pd(bool, UseLargePages,                                           \
           "Use large page memory")                                          \
                                                                             \
+  develop(bool, TracePageSizes, false,                                      \
+          "Trace page size selection and usage.")                           \
+                                                                            \
   product(bool, UseNUMA, false,                                             \
           "Use NUMA if available")                                          \
                                                                             \
@@ -389,6 +396,9 @@ class CommandLineFlags {
   develop(bool, VerifyStack, false,                                         \
           "Verify stack of each thread when it is entering a runtime call") \
                                                                             \
+  develop(bool, ForceUnreachable, false,                                    \
+          "(amd64) Make all non code cache addresses to be unreachable with rip-rel forcing use of 64bit literal fixups") \
+                                                                            \
   notproduct(bool, StressDerivedPointers, false,                            \
           "Force scavenge when a derived pointers is detected on stack "    \
           "after rtm call")                                                 \
@@ -459,7 +469,7 @@ class CommandLineFlags {
   develop(bool, DeoptimizeALot, false,                                      \
           "deoptimize at every exit from the runtime system")               \
                                                                             \
-  develop(ccstr, DeoptimizeOnlyAt, "",                                      \
+  develop(ccstrlist, DeoptimizeOnlyAt, "",                                  \
           "a comma separated list of bcis to deoptimize at")                \
                                                                             \
   product(bool, DeoptimizeRandom, false,                                    \
@@ -497,7 +507,7 @@ class CommandLineFlags {
   develop(bool, ShowSafepointMsgs, false,                                   \
           "Show msg. about safepoint synch.")                               \
                                                                             \
-  develop(bool, SafepointTimeout, false,                                    \
+  product(bool, SafepointTimeout, false,                                    \
           "Time out and warn or fail after SafepointTimeoutDelay "          \
           "milliseconds if failed to reach safepoint")                      \
                                                                             \
@@ -609,17 +619,17 @@ class CommandLineFlags {
   product(bool, SuppressFatalErrorMessage, false,                           \
           "Do NO Fatal Error report [Avoid deadlock]")                      \
                                                                             \
-  product(ccstr, OnError, "",                                               \
+  product(ccstrlist, OnError, "",                                           \
           "Run user-defined commands on fatal error; see VMError.cpp "      \
           "for examples")                                                   \
 									    \
-  product(ccstr, OnOutOfMemoryError, "",                                    \
+  product(ccstrlist, OnOutOfMemoryError, "",                                \
           "Run user-defined commands on first java.lang.OutOfMemoryError")  \
                                                                             \
   manageable(bool, HeapDumpOnOutOfMemoryError, false,                       \
           "Dump heap to file when java.lang.OutOfMemoryError is thrown")    \
                                                                             \
-  manageable(ccstr, HeapDumpPath, "",                                       \
+  manageable(ccstr, HeapDumpPath, NULL,                                     \
           "When HeapDumpOnOutOfMemoryError is on, the path (filename or"    \
           "directory) of the dump file (defaults to java_pid<pid>.hprof"    \
           "in the working directory)")                                      \
@@ -823,8 +833,6 @@ class CommandLineFlags {
   product(intx, FenceInstruction, 0,                                        \
           "(Unsafe,Unstable) Experimental")                                 \
                                                                             \
-  product(intx, AppendRatio, 11, "(Unstable) Monitor queue fairness" )      \
-                                                                            \
   product(intx, SyncFlags, 0, "(Unsafe,Unstable) Experimental Sync flags" ) \
                                                                             \
   product(intx, SyncVerbose, 0, "(Unstable)" )                              \
@@ -839,8 +847,12 @@ class CommandLineFlags {
          " avoid NPTL-FUTEX hang pthread_cond_timedwait" )                  \
                                                                             \
   product(bool, FilterSpuriousWakeups , true,                               \
-	  "Prevent spurious or premature wakeups from object.wait"          \
-	  "(Solaris only)")                                                 \
+	  "Prevent spurious or premature wakeups from object.wait"              \
+	  "(Solaris only)")                                                     \
+                                                                            \
+  product(intx, NativeMonitorTimeout, -1, "(Unstable)" )                    \
+  product(intx, NativeMonitorFlags, 0, "(Unstable)" )                       \
+  product(intx, NativeMonitorSpinLimit, 20, "(Unstable)" )                  \
                                                                             \
   develop(bool, UsePthreads, false,                                         \
           "Use pthread-based instead of libthread-based synchronization "   \
@@ -1063,7 +1075,7 @@ class CommandLineFlags {
   develop(bool, TraceHPI, false,                                            \
           "Trace Host Porting Interface (HPI)")                             \
                                                                             \
-  product(ccstr, HPILibPath, "",                                            \
+  product(ccstr, HPILibPath, NULL,                                          \
           "Specify alternate path to HPI library")                          \
                                                                             \
   develop(bool, TraceProtectionDomainVerification, false,                   \
@@ -1406,7 +1418,7 @@ class CommandLineFlags {
           "CMSPrecleanNumerator:CMSPrecleanDenominator yields convergence"  \
           " ratio")                                                         \
                                                                             \
-  product(bool, CMSPrecleanRefLists1, true,                                 \
+  product(bool, CMSPrecleanRefLists1, false,                                \
           "Preclean ref lists during (initial) preclean phase")             \
                                                                             \
   product(bool, CMSPrecleanRefLists2, false,                                \
@@ -1570,7 +1582,7 @@ class CommandLineFlags {
   product(bool, AlwaysActAsServerClassMachine, false,                       \
           "Always act like a server-class machine")                         \
                                                                             \
-  product(uintx, DefaultMaxRAM, G,					    \
+  product_pd(uintx, DefaultMaxRAM,					    \
 	  "Maximum real memory size for setting server class heap size")    \
 									    \
   product(uintx, DefaultMaxRAMFraction, 4,				    \
@@ -2029,7 +2041,7 @@ class CommandLineFlags {
   diagnostic(bool, PrintIntrinsics, false,                                  \
           "prints attempted and successful inlining of intrinsics")         \
                                                                             \
-  diagnostic(ccstr, DisableIntrinsic, "",                                   \
+  diagnostic(ccstrlist, DisableIntrinsic, "",                               \
           "do not expand intrinsics whose (internal) names appear here")    \
                                                                             \
   develop(bool, StressReflectiveCode, false,                                \
@@ -2075,10 +2087,10 @@ class CommandLineFlags {
   diagnostic(bool, LogVMOutput, trueInDebug,                                \
          "Save VM output to hotspot.log, or to LogFile")                    \
                                                                             \
-  diagnostic(ccstr, LogFile, "",                                            \
+  diagnostic(ccstr, LogFile, NULL,                                          \
          "If LogVMOutput is on, save VM output to this file [hotspot.log]") \
                                                                             \
-  product(ccstr, ErrorFile, "",                                             \
+  product(ccstr, ErrorFile, NULL,                                           \
          "If an error occurs, save the error data to this file "            \
          "[default: ./hs_err_pid%p.log] (%p replaced with pid)")            \
                                                                             \
@@ -2098,7 +2110,7 @@ class CommandLineFlags {
           "standard exit from VM if bytecode verify error "                 \
           "(only in debug mode)")                                           \
                                                                             \
-  notproduct(ccstr, AbortVMOnException, "",                                 \
+  notproduct(ccstr, AbortVMOnException, NULL,                               \
           "Call fatal if this exception is thrown.  Example: "              \
           "java -XX:AbortVMOnException=java.lang.NullPointerException Foo") \
                                                                             \
@@ -2204,9 +2216,6 @@ class CommandLineFlags {
                                                                             \
   develop(bool, CountCompiledCalls, false,                                  \
           "counts method invocations")                                      \
-                                                                            \
-  notproduct(bool, CountVMLocks, false,                                     \
-          "counts VM internal lock attempts and contention")                \
                                                                             \
   notproduct(bool, CountRuntimeCalls, false,                                \
           "counts VM runtime calls")                                        \
@@ -2425,7 +2434,7 @@ class CommandLineFlags {
           "Guarantee a safepoint (at least) every so many milliseconds "    \
           "(0 means none)")                                                 \
                                                                             \
-  develop(intx, SafepointTimeoutDelay, 10000,                               \
+  product(intx, SafepointTimeoutDelay, 10000,                               \
           "Delay in milliseconds for option SafepointTimeout")              \
                                                                             \
   product(intx, NmethodSweepFraction, 4,                                    \
@@ -2441,7 +2450,7 @@ class CommandLineFlags {
           "number of times to evaluate expression in assert "               \
           "(to estimate overhead); only works with -DUSE_REPEATED_ASSERTS") \
                                                                             \
-  notproduct(ccstr, SuppressErrorAt, "",                                    \
+  notproduct(ccstrlist, SuppressErrorAt, "",                                \
           "List of assertions (file:line) to muzzle")                       \
                                                                             \
   notproduct(uintx, HandleAllocationLimit, 1024,                            \
@@ -2744,6 +2753,9 @@ class CommandLineFlags {
           "true: the scavenge order will be depth-first, "                  \
           "false: the scavenge order will be breadth-first")                \
                                                                             \
+  product(bool, PSChunkLargeArrays, true,                                   \
+	  "true: process large arrays in chunks")                           \
+                                                                            \
   product(uintx, GCDrainStackTargetSize, 64,                                \
           "how many entries we'll try to leave on the stack during "        \
           "parallel GC")                                                    \
@@ -2834,13 +2846,13 @@ class CommandLineFlags {
   develop(intx, CIBreakAt,    -1,                                           \
           "id of compilation to break at")                                  \
                                                                             \
-  product(ccstr, CompileOnly, "",                                           \
+  product(ccstrlist, CompileOnly, "",                                       \
           "List of methods (pkg/class.name) to restrict compilation to")    \
                                                                             \
-  product(ccstr, CompileCommandFile, "",                                    \
+  product(ccstr, CompileCommandFile, NULL,                                  \
           "Read compiler commands from this file [.hotspot_compiler]")      \
                                                                             \
-  product(ccstr, CompileCommand, "",                                        \
+  product(ccstrlist, CompileCommand, "",                                    \
           "Prepend to .hotspot_compiler; e.g. log,java/lang/String.<init>") \
                                                                             \
   product(bool, CICompilerCountPerCPU, false,                               \
@@ -3033,7 +3045,7 @@ class CommandLineFlags {
   product(bool, PerfDataSaveToFile, false,                                  \
           "Save PerfData memory to hsperfdata_<pid> file on exit")          \
                                                                             \
-  product(ccstr, PerfDataSaveFile, "",                                      \
+  product(ccstr, PerfDataSaveFile, NULL,                                    \
           "Save PerfData memory to the specified absolute pathname,"        \
            "%p in the file name if present will be replaced by pid")        \
                                                                             \
@@ -3134,7 +3146,7 @@ class CommandLineFlags {
           "Causes the VM to pause at startup time and wait for the pause "  \
           "file to be removed (default: ./vm.paused.<pid>)")                \
                                                                             \
-  diagnostic(ccstr, PauseAtStartupFile, "",                                 \
+  diagnostic(ccstr, PauseAtStartupFile, NULL,                               \
           "The file to create and for whose removal to await when pausing " \
           "at startup. (default: ./vm.paused.<pid>)")                       \
                                                                             \

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)jvmtiEnvBase.cpp	1.89 07/05/17 16:04:59 JVM"
+#pragma ident "@(#)jvmtiEnvBase.cpp	1.90 07/07/16 14:37:39 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -56,8 +56,10 @@ JvmtiEnvBase::globally_initialize() {
 
   JvmtiManageCapabilities::initialize();
 
+#ifndef JVMTI_KERNEL
   // register extension functions and events
   JvmtiExtensions::register_extensions();
+#endif // !JVMTI_KERNEL
 
 #ifdef JVMTI_TRACE
   JvmtiTrace::initialize();
@@ -150,9 +152,6 @@ JvmtiEnvBase::env_dispose() {
   // checking for a valid environment when setting callbacks (while
   // holding the JvmtiThreadState_lock).
 
-  JvmtiTagMap* tag_map_to_deallocate = _tag_map;
-  set_tag_map(NULL);
-
   // Mark as invalid.
   _magic = DISPOSED_MAGIC;
 
@@ -163,10 +162,14 @@ JvmtiEnvBase::env_dispose() {
   // Same situation as with events (see above)
   set_native_method_prefixes(0, NULL);
 
+#ifndef JVMTI_KERNEL
+  JvmtiTagMap* tag_map_to_deallocate = _tag_map;
+  set_tag_map(NULL);
   // A tag map can be big, deallocate it now
   if (tag_map_to_deallocate != NULL) {
     delete tag_map_to_deallocate;
   }
+#endif // !JVMTI_KERNEL
 
   _needs_clean_up = true;
 }
@@ -178,11 +181,14 @@ JvmtiEnvBase::~JvmtiEnvBase() {
   // There is a small window of time during which the tag map of a 
   // disposed environment could have been reallocated.
   // Make sure it is gone.
+#ifndef JVMTI_KERNEL
   JvmtiTagMap* tag_map_to_deallocate = _tag_map;
   set_tag_map(NULL);
+  // A tag map can be big, deallocate it now
   if (tag_map_to_deallocate != NULL) {
     delete tag_map_to_deallocate;
   }
+#endif // !JVMTI_KERNEL
 
   _magic = BAD_MAGIC;
 }
@@ -399,7 +405,6 @@ JvmtiEnvBase::set_event_callbacks(const jvmtiEventCallbacks* callbacks,
   }
 }
 
-
 // Called from JVMTI entry points which perform stack walking. If the
 // associated JavaThread is the current thread, then wait_for_suspend
 // is not used. Otherwise, it determines if we should wait for the
@@ -522,6 +527,8 @@ JvmtiEnvBase::get_jni_class_non_null(klassOop k) {
   assert(k != NULL, "k != NULL");
   return (jclass)jni_reference(Klass::cast(k)->java_mirror());
 }
+
+#ifndef JVMTI_KERNEL
 
 // 
 // Field Information 
@@ -1408,3 +1415,4 @@ JvmtiMonitorClosure::do_monitor(ObjectMonitor* mon) {
   }
 }
 
+#endif // !JVMTI_KERNEL

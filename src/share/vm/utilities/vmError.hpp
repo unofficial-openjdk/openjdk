@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)vmError.hpp	1.17 07/05/05 17:07:11 JVM"
+#pragma ident "@(#)vmError.hpp	1.18 07/07/19 19:18:33 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -62,9 +62,6 @@ class VMError : public StackObj {
     
   // used by reporting about OOM
   size_t       _size;
-
-  // run cmd in a separate process and return its exit code; or -1 on failures
-  int fork_and_exec(char* cmd);
 
   // set signal handlers on Solaris/Linux or the default exception filter
   // on Windows, to handle recursive crashes.

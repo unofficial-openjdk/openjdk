@@ -261,6 +261,8 @@ public class WinGammaPlatformVC7 extends WinGammaPlatform {
 	rv.add(new DirectoryFilter("os", sbase));
 
 	rv.add(new SpecificNameFilter("JVMTI Generated", new String[] {"^jvmti.+"}));
+
+	rv.add(new SpecificNameFilter("C++ Interpreter Generated", new String[] {"^bytecodeInterpreterWithChecks.+"}));
 	
 	rv.add(new SpecificNameFilter("Include DBs", new String[] {"^includeDB_.+"}));
 
@@ -574,8 +576,7 @@ class CompilerInterfaceVC7 extends CompilerInterface {
 		"/export:JNI_GetCreatedJavaVMs "+
 		"/export:jio_snprintf /export:jio_printf "+
 		"/export:jio_fprintf /export:jio_vfprintf "+
-		"/export:jio_vsnprintf "+
-		"/export:JVM_EnqueueOperation ");	
+		"/export:jio_vsnprintf ");
 	addAttr(rv, "AdditionalDependencies", "Wsock32.lib winmm.lib");
 	addAttr(rv, "OutputFile", outDll);
         addAttr(rv, "LinkIncremental", "1");

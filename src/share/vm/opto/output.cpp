@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)output.cpp	1.289 07/05/17 15:59:26 JVM"
+#pragma ident "@(#)output.cpp	1.290 07/09/20 11:01:49 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -216,7 +216,6 @@ void Compile::Insert_zap_nodes() {
           MachCallNode* call = n->as_MachCall();
           if (call->entry_point() == OptoRuntime::new_instance_Java() ||
               call->entry_point() == OptoRuntime::new_array_Java() ||
-              call->entry_point() == OptoRuntime::multianewarray1_Java() ||
               call->entry_point() == OptoRuntime::multianewarray2_Java() ||
               call->entry_point() == OptoRuntime::multianewarray3_Java() ||
               call->entry_point() == OptoRuntime::multianewarray4_Java() ||

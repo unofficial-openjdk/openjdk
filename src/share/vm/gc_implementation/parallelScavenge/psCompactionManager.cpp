@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)psCompactionManager.cpp	1.21 07/05/05 17:05:28 JVM"
+#pragma ident "@(#)psCompactionManager.cpp	1.17 06/07/10 23:27:02 JVM"
 #endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -97,7 +97,11 @@ void ParCompactionManager::initialize(ParMarkBitMap* mbm) {
     _manager_array[i] = new ParCompactionManager();
     guarantee(_manager_array[i] != NULL, "Could not create ParCompactionManager");
     stack_array()->register_queue(i, _manager_array[i]->marking_stack());
+#ifdef USE_ChunkTaskQueueWithOverflow
+    chunk_array()->register_queue(i, _manager_array[i]->chunk_stack()->task_queue());
+#else
     chunk_array()->register_queue(i, _manager_array[i]->chunk_stack());
+#endif
   }
 
   // The VMThread gets its own ParCompactionManager, which is not available
@@ -175,13 +179,12 @@ void ParCompactionManager::chunk_stack_push(size_t chunk_index) {
 }
 
 bool ParCompactionManager::retrieve_for_processing(size_t& chunk_index) {
-
 #ifdef USE_ChunkTaskQueueWithOverflow
   return chunk_stack()->retrieve(chunk_index);
 #else
   // Should not be used in the parallel case
   ShouldNotReachHere();
-  return NULL;
+  return false;
 #endif
 }
 

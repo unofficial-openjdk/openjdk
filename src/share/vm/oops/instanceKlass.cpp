@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)instanceKlass.cpp	1.323 08/06/19 10:32:38 JVM"
+#pragma ident "@(#)instanceKlass.cpp	1.324 08/11/24 12:22:48 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -768,13 +768,12 @@ void instanceKlass::methods_do(void f(methodOop method)) {
   }
 }
 
-
-void instanceKlass::do_local_static_fields(void f(fieldDescriptor*, oop), oop obj) {  
+void instanceKlass::do_local_static_fields(FieldClosure* cl) {
   fieldDescriptor fd;
   int length = fields()->length();
   for (int i = 0; i < length; i += next_offset) {
     fd.initialize(as_klassOop(), i);
-    if (fd.is_static()) f(&fd, obj);
+    if (fd.is_static()) cl->do_field(&fd);
   }
 }
 
@@ -795,16 +794,16 @@ void instanceKlass::do_local_static_fields_impl(instanceKlassHandle this_oop, vo
 }
 
 
-void instanceKlass::do_nonstatic_fields(void f(fieldDescriptor*, oop), oop obj) {
+void instanceKlass::do_nonstatic_fields(FieldClosure* cl) {
   fieldDescriptor fd;
   instanceKlass* super = superklass();
   if (super != NULL) {
-    super->do_nonstatic_fields(f, obj);
+    super->do_nonstatic_fields(cl);
   }
   int length = fields()->length();
   for (int i = 0; i < length; i += next_offset) {
     fd.initialize(as_klassOop(), i);
-    if (!(fd.is_static())) f(&fd, obj);
+    if (!(fd.is_static())) cl->do_field(&fd);
   }  
 }
 
@@ -1101,6 +1100,7 @@ class nmethodBucket {
     _next = next;
     _count = 1;
   }
+  int count()                             { return _count; }
   int increment()                         { _count += 1; return _count; }
   int decrement()                         { _count -= 1; assert(_count >= 0, "don't underflow"); return _count; }
   nmethodBucket* next()                   { return _next; }
@@ -1114,7 +1114,7 @@ class nmethodBucket {
 // are dependent on the klassOop that was passed in and mark them for
 // deoptimization.  Returns the number of nmethods found.
 //
-int instanceKlass::mark_dependent_nmethods(klassOop dependee) {
+int instanceKlass::mark_dependent_nmethods(DepChange& changes) {
   assert_locked_or_safepoint(CodeCache_lock);
   int found = 0;
   nmethodBucket* b = _dependencies;
@@ -1122,11 +1122,12 @@ int instanceKlass::mark_dependent_nmethods(klassOop dependee) {
     nmethod* nm = b->get_nmethod();
     // since dependencies aren't removed until an nmethod becomes a zombie,
     // the dependency list may contain nmethods which aren't alive.
-    if (nm->is_alive() && !nm->is_marked_for_deoptimization() && nm->is_dependent_on(dependee)) {
+    if (nm->is_alive() && !nm->is_marked_for_deoptimization() && nm->check_dependency_on(changes)) {
       if (TraceDependencies) {
         ResourceMark rm;
         tty->print_cr("Marked for deoptimization");
-        tty->print_cr("  dependee = %s", this->external_name());
+        tty->print_cr("  context = %s", this->external_name());
+        changes.print();
         nm->print();
         nm->print_dependencies();
       }
@@ -1191,6 +1192,39 @@ void instanceKlass::remove_dependent_nmethod(nmethod* nm) {
 #endif // ASSERT
   ShouldNotReachHere();
 }
+
+
+#ifndef PRODUCT
+void instanceKlass::print_dependent_nmethods(bool verbose) {
+  nmethodBucket* b = _dependencies;
+  int idx = 0; 
+  while (b != NULL) {
+    nmethod* nm = b->get_nmethod();
+    tty->print("[%d] count=%d { ", idx++, b->count());
+    if (!verbose) {
+      nm->print_on(tty, "nmethod");
+      tty->print_cr(" } ");
+    } else {
+      nm->print();
+      nm->print_dependencies();
+      tty->print_cr("--- } ");
+    }
+    b = b->next();
+  }
+}
+
+
+bool instanceKlass::is_dependent_nmethod(nmethod* nm) {
+  nmethodBucket* b = _dependencies;
+  while (b != NULL) {
+    if (nm == b->get_nmethod()) {
+      return true;
+    }
+    b = b->next();
+  }
+  return false;
+}
+#endif //PRODUCT
 
 
 void instanceKlass::follow_static_fields() {
@@ -1924,26 +1958,19 @@ nmethod* instanceKlass::lookup_osr_nmethod(const methodOop m, int bci) const {
 }
 
 // -----------------------------------------------------------------------------------------------------
-
 #ifndef PRODUCT
 
 // Printing
 
-static void print_nonstatic_fields(outputStream* st, instanceKlass* ik, oop obj) {
-  fieldDescriptor fd;
-  instanceKlass* super = ik->superklass();
-  if (super != NULL) {
-    print_nonstatic_fields(st, super, obj);
-  }
-  int length = ik->fields()->length();
-  for (int i = 0; i < length; i += instanceKlass::next_offset) {
-    fd.initialize(ik->as_klassOop(), i);
-    if (!(fd.is_static())) {
-      st->print("   - ");
-      fd.print_on_for(st, obj);
-      st->cr();
-    }
-  }  
+void FieldPrinter::do_field(fieldDescriptor* fd) {
+   if (fd->is_static() == (_obj == NULL)) {
+     _st->print("   - ");
+     fd->print_on(_st);
+     _st->cr();
+   } else {
+     fd->print_on_for(_st, _obj);
+     _st->cr();
+   }
 }
 
 
@@ -1967,7 +1994,8 @@ void instanceKlass::oop_print_on(oop obj, outputStream* st) {
   }
 
   st->print_cr("fields:");
-  print_nonstatic_fields(st, this, obj);
+  FieldPrinter print_nonstatic_field(st, obj);
+  do_nonstatic_fields(&print_nonstatic_field);
 
   if (as_klassOop() == SystemDictionary::class_klass()) {
     klassOop mirrored_klass = java_lang_Class::as_klassOop(obj);

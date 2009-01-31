@@ -1,8 +1,12 @@
 os_family = linux
 
-arch = amd64
+arch = x86
 
-os_arch = linux_amd64
+arch_model = x86_64
+
+os_arch = linux_x86
+
+os_arch_model = linux_x86_64
 
 lib_arch = amd64
 

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)freeList.hpp	1.31 07/05/05 17:05:48 JVM"
+#pragma ident "@(#)freeList.hpp	1.32 08/04/09 19:18:54 JVM"
 #endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -41,6 +41,7 @@ class Mutex;
 
 class FreeList VALUE_OBJ_CLASS_SPEC {
   friend class CompactibleFreeListSpace;
+  friend class VMStructs;
   FreeChunk*	_head;		// List of free chunks
   FreeChunk*	_tail;		// Tail of list of free chunks
   size_t	_size;		// Size in Heap words of each chunks

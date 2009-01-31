@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)debugInfoRec.hpp	1.37 07/05/05 17:05:20 JVM"
+#pragma ident "@(#)debugInfoRec.hpp	1.38 07/05/24 14:38:33 JVM"
 #endif
 /*
  * Copyright 1998-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -94,6 +94,9 @@ class DebugInformationRecorder: public ResourceObj {
                       DebugToken* expressions = NULL,
                       DebugToken* monitors    = NULL);
 
+
+  void dump_object_pool(GrowableArray<ScopeValue*>* objects);
+  
   // This call must follow every add_safepoint,
   // after any intervening describe_scope calls.
   void end_safepoint(int pc_offset)      { end_scopes(pc_offset, true); }

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)coalesce.cpp	1.195 07/05/17 17:43:24 JVM"
+#pragma ident "@(#)coalesce.cpp	1.196 07/09/28 10:23:11 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -218,7 +218,7 @@ void PhaseCoalesce::dump() const {
         }
       
       // Dump node-specific info
-      n->dump_spec();
+      n->dump_spec(tty);
       tty->print("\n");
       
     }
@@ -607,8 +607,8 @@ void PhaseConservativeCoalesce::union_helper( Node *lr1_node, Node *lr2_node, ui
   // If both are single def, then src_def powers one live range
   // and def_copy powers the other.  After merging, src_def powers
   // the combined live range.
-  lrgs(lr1)._def = (lrgs(lr1)._def == NodeSentinel ||
-                        lrgs(lr2)._def == NodeSentinel ) 
+  lrgs(lr1)._def = (lrgs(lr1).is_multidef() ||
+                        lrgs(lr2).is_multidef() ) 
     ? NodeSentinel : src_def;
   lrgs(lr2)._def = NULL;    // No def for lrg 2
   lrgs(lr2).Clear();        // Force empty mask for LRG 2

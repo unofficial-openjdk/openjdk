@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)gcm.cpp	1.251 07/05/17 15:58:45 JVM"
+#pragma ident "@(#)gcm.cpp	1.259 08/07/10 14:40:09 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -310,7 +310,6 @@ static Block* raise_LCA_above_marks(Block* LCA, node_idx_t mark,
 
     // Test and set the visited bit.
     if (mid->raise_LCA_visited() == mark)  continue;  // already visited
-    mid->set_raise_LCA_visited(mark);
 
     // Don't process the current LCA, otherwise the search may terminate early
     if (mid != LCA && mid->raise_LCA_mark() == mark) {
@@ -320,6 +319,8 @@ static Block* raise_LCA_above_marks(Block* LCA, node_idx_t mark,
       assert(early->dominates(LCA), "early is high enough");
       // Resume searching at that point, skipping intermediate levels.
       worklist.push(LCA);
+      if (LCA == mid)
+        continue; // Don't mark as visited to avoid early termination.
     } else {
       // Keep searching through this block's predecessors.
       for (uint j = 1, jmax = mid->num_preds(); j < jmax; j++) {
@@ -327,6 +328,7 @@ static Block* raise_LCA_above_marks(Block* LCA, node_idx_t mark,
         worklist.push(mid_parent);
       }
     }
+    mid->set_raise_LCA_visited(mark);
   }
   return LCA;
 }
@@ -742,8 +744,8 @@ Node *Node_Backward_Iterator::next() {
     _visited.set(self->_idx);
       
     // Now schedule all uses as late as possible.
-    uint src           = self->is_Proj() ? self->in(0)->_idx : self->_idx;
-    uint src_pre_order = _bbs[src]->_pre_order;
+    uint src     = self->is_Proj() ? self->in(0)->_idx : self->_idx;
+    uint src_rpo = _bbs[src]->_rpo;
       
     // Schedule all nodes in a post-order visit
     Node *unvisited = NULL;  // Unvisited anti-dependent Node, if any
@@ -759,13 +761,13 @@ Node *Node_Backward_Iterator::next() {
 
       // do not traverse backward control edges
       Node *use = n->is_Proj() ? n->in(0) : n;
-      uint use_pre_order = _bbs[use->_idx]->_pre_order;
+      uint use_rpo = _bbs[use->_idx]->_rpo;
 
-      if ( use_pre_order < src_pre_order )
+      if ( use_rpo < src_rpo )
         continue;
 
       // Phi nodes always precede uses in a basic block
-      if ( use_pre_order == src_pre_order && use->is_Phi() )
+      if ( use_rpo == src_rpo && use->is_Phi() )
         continue;
 
       unvisited = n;      // Found unvisited
@@ -1314,323 +1316,457 @@ void PhaseCFG::GlobalCodeMotion( Matcher &matcher, uint unique, Node_List &proj_
 #endif
 }
 
-#define MAXFREQ BLOCK_FREQUENCY(1e35f)
-#define MINFREQ BLOCK_FREQUENCY(1e-35f)
 
 //------------------------------Estimate_Block_Frequency-----------------------
 // Estimate block frequencies based on IfNode probabilities.
-// Two pass algorithm does a forward propagation in the first pass with some
-// correction factors where static predictions are needed.  Then, the second
-// pass pushes through changes caused by back edges.  This will give "exact"
-// results for all dynamic frequencies, and for all staticly predicted code
-// with loop nesting depth of one or less.  Static predictions with greater
-// than nesting depth of one are already subject to so many static fudge
-// factors that it is not worth iterating to a fixed point.
 void PhaseCFG::Estimate_Block_Frequency() {
-  assert( _blocks[0] == _broot, "" );
   int cnts = C->method() ? C->method()->interpreter_invocation_count() : 1;
   // Most of our algorithms will die horribly if frequency can become
   // negative so make sure cnts is a sane value.
   if( cnts <= 0 ) cnts = 1;
   float f = (float)cnts/(float)FreqCountInvocations;
-  _broot->_freq = f;
-  _broot->_cnt  = f;
-  // Do a two pass propagation of frequency information
-  // PASS 1: Walk the blocks in RPO, propagating frequency info
-  uint i;
-  for( i = 0; i < _num_blocks; i++ ) {
-    Block *b = _blocks[i];
 
-    // Make any necessary modifications to b's frequency
-    int hop = b->head()->Opcode();
-    // On first trip, scale loop heads by 10 if no counts are available
-    if( (hop == Op_Loop || hop == Op_CountedLoop) &&
-        (b->_cnt == COUNT_UNKNOWN) && (b->_freq < MAXFREQ) ) {
-      // Try to figure out how much to scale the loop by; look for a
-      // gating loop-exit test with "reasonable" back-branch
-      // frequency.
-
-      // Try and find a real loop-back controlling edge and use that
-      // frequency. If we can't find it, use the old default of 10
-      // otherwise use the new value. This helps loops with low
-      // frequency (like allocation contention loops with -UseTLE).
-      // Note special treatment below of LoopNode::EntryControl edges.      
-      Block *loopprior = b;          
-      Block *loopback = _bbs[b->pred(LoopNode::LoopBackControl)->_idx];
-      // See if this block ends in a test (probably not) or just a
-      // goto the loop head.
-      if( loopback->_num_succs == 1 &&
-          loopback->num_preds() == 2 ) {
-        loopprior = loopback;
-        // NOTE: constant 1 here isn't magic, it's just that there's exactly 1
-        // predecessor (checked just above) and predecessors are 1-based, so
-        // the "1" refers to the first (and only) predecessor.
-        loopback = _bbs[loopprior->pred(1)->_idx];
-      }
-      // Call the edge frequency leading from loopback to loopprior f.
-      // Then scale the loop by 1/(1-f).  Thus a loop-back edge
-      // frequency of 0.9 leads to a scale factor of 10.
-      float f = 0.9f;           // Default scale factor
-
-      if( loopback->_num_succs == 2 ) {
-        int eidx = loopback->end_idx();
-        Node *mn = loopback->_nodes[eidx]; // Get ending Node
-        if( mn->is_MachIf() ) {
-          // MachIfNode has branch probability info
-          f = mn->as_MachIf()->_prob;
-          int taken = (loopback->_succs[1] == loopprior);
-          assert( loopback->_succs[taken] == loopprior, "" );
-          if( loopback->_nodes[eidx+1+taken]->Opcode() == Op_IfFalse ) 
-            f = 1-f;              // Inverted branch sense
-          if( f > 0.99f )         // Limit scale to 100
-            f = 0.99f;
-        }
-      }
-      
-      // Scale loop head by this much
-      b->_freq *= 1/(1-f);
-      assert(b->_freq > 0.0f,"Bad frequency assignment");
+  // Create the loop tree and calculate loop depth.
+  _root_loop = create_loop_tree();
+  _root_loop->compute_loop_depth(0);
+  
+  // Compute block frequency of each block, relative to a single loop entry.
+  _root_loop->compute_freq();
+  
+  // Adjust all frequencies to be relative to a single method entry 
+  _root_loop->_freq = f * 1.0;
+  _root_loop->scale_freq();
+  
+  // force paths ending at uncommon traps to be infrequent
+  Block_List worklist;
+  Block* root_blk = _blocks[0];
+  for (uint i = 0; i < root_blk->num_preds(); i++) {
+    Block *pb = _bbs[root_blk->pred(i)->_idx];
+    if (pb->has_uncommon_code()) {
+      worklist.push(pb);
     }
-
-    // Push b's frequency to successors
-    int eidx = b->end_idx();    
-    Node *n = b->_nodes[eidx];  // Get ending Node
-    int op = n->is_Mach() ? n->as_Mach()->ideal_Opcode() : n->Opcode();
-    // Switch on branch type
-    switch( op ) {
-    // Conditionals pass on only part of their frequency and count
-    case Op_CountedLoopEnd:
-    case Op_If: {
-      int taken  = 0;  // this is the index of the TAKEN path
-      int ntaken = 1;  // this is the index of the NOT TAKEN path
-      // If succ[0] is the FALSE branch, invert path info
-      if( b->_nodes[eidx+1]->Opcode() == Op_IfFalse ) {
-        taken  = 1;
-        ntaken = 0;
-      }
-      float prob  = n->as_MachIf()->_prob;
-      float nprob = 1.0f - prob;
-      float cnt   = n->as_MachIf()->_fcnt;
-      // If branch frequency info is available, use it
-      if(cnt != COUNT_UNKNOWN) {
-        float tcnt = b->_succs[taken]->_cnt;
-        float ncnt = b->_succs[ntaken]->_cnt;
-        // Taken Branch
-        b->_succs[taken]->_freq += prob * cnt;
-        b->_succs[taken]->_cnt = (tcnt == COUNT_UNKNOWN) ? (prob * cnt) : tcnt + (prob * cnt);
-        // Not Taken Branch
-        b->_succs[ntaken]->_freq += nprob * cnt;
-        b->_succs[ntaken]->_cnt = (ncnt == COUNT_UNKNOWN) ? (nprob * cnt) : ncnt + (nprob * cnt);
-      }
-      // Otherwise, split frequency amongst children
-      else {
-        b->_succs[taken]->_freq  +=  prob * b->_freq;
-        b->_succs[ntaken]->_freq += nprob * b->_freq;
-      }
-      // Special case for underflow caused by infrequent branches
-      if(b->_succs[taken]->_freq < MINFREQ) b->_succs[taken]->_freq = MINFREQ;
-      if(b->_succs[ntaken]->_freq < MINFREQ) b->_succs[ntaken]->_freq = MINFREQ;
-      assert(b->_succs[0]->has_valid_counts(),"Bad frequency/count");
-      assert(b->_succs[1]->has_valid_counts(),"Bad frequency/count");
-      break;
-    }
-    case Op_NeverBranch:  {
-      b->_succs[0]->_freq += b->_freq;
-      // Special case for underflow caused by infrequent branches
-      if(b->_succs[0]->_freq < MINFREQ) b->_succs[0]->_freq = MINFREQ;
-      if(b->_succs[1]->_freq < MINFREQ) b->_succs[1]->_freq = MINFREQ;
-      break;
-    }
-      // Split frequency amongst children
-    case Op_Jump: {
-      // Divide the frequency between all successors evenly
-      float predfreq = b->_freq/b->_num_succs;
-      float predcnt = COUNT_UNKNOWN;
-      for (uint j = 0; j < b->_num_succs; j++) {
-        b->_succs[j]->_freq += predfreq;
-        if (b->_succs[j]->_freq < MINFREQ) {
-          b->_succs[j]->_freq = MINFREQ;
-        }
-        assert(b->_succs[j]->has_valid_counts(), "Bad frequency/count");
-      }
-      break;
-    }      
-      // Split frequency amongst children
-    case Op_Catch: {
-      // Fall-thru path gets the lion's share.
-      float fall = (1.0f - PROB_UNLIKELY_MAG(5)*b->_num_succs)*b->_freq;
-      // Exception exits are uncommon.
-      float expt = PROB_UNLIKELY_MAG(5) * b->_freq;
-      // Iterate over children pushing out frequency
-      for( uint j = 0; j < b->_num_succs; j++ ) {
-        const CatchProjNode *x = b->_nodes[eidx+1+j]->as_CatchProj();
-        b->_succs[j]->_freq += 
-          ((x->_con == CatchProjNode::fall_through_index) ? fall : expt);
-        // Special case for underflow caused by nested catches
-        if(b->_succs[j]->_freq < MINFREQ) b->_succs[j]->_freq = MINFREQ;
-        assert(b->_succs[j]->has_valid_counts(), "Bad Catch frequency/count assignment");
-      }
-      break;
-    }
-    // Pass frequency straight thru to target
-    case Op_Root:
-    case Op_Goto: {
-      Block *bs = b->_succs[0];
-      int hop = bs->head()->Opcode();
-      bool notloop = (hop != Op_Loop && hop != Op_CountedLoop);
-      // Pass count straight thru to target (except for loops)
-      if( notloop && b->_cnt != COUNT_UNKNOWN ) {
-        if( bs->_cnt == COUNT_UNKNOWN )
-          bs->_cnt = 0;
-        bs->_cnt += b->_cnt;
-      }
-      // Loops and counted loops have already had their heads scaled
-      // by an amount which accounts for the backedge (but not their
-      // entry).  Add frequency for normal blocks and loop entries.
-      // Note special treatment above of LoopNode::LoopBackControl edges.
-      if( notloop || bs->_freq <= 0 /*this is needed for irreducible loops*/||
-          _bbs[bs->pred(LoopNode::EntryControl)->_idx] == b )
-        bs->_freq += b->_freq;
-
-      assert(bs->has_valid_counts(), "Bad goto frequency/count assignment");
-      break;
-    }
-    // Do not push out freq to root block
-    case Op_TailCall:
-    case Op_TailJump:
-    case Op_Return:
-    case Op_Halt:
-    case Op_Rethrow:
-      break;
-    default: 
-      ShouldNotReachHere();
-    } // End switch(op)
-    assert(b->has_valid_counts(), "Bad first pass frequency/count");
-  } // End for all blocks
-
-
-  // PASS 2: Fix up loop bodies
-  for( i = 1; i < _num_blocks; i++ ) {
-    Block *b = _blocks[i];
-    float freq = 0.0f;
-    float cnt  = COUNT_UNKNOWN;
-    // If it ends in a Halt or call marked uncommon, assume the block is uncommon.
-    Node* be = b->end();
-    if (be->is_Goto())
-      be = be->in(0);
-    if (be->is_Catch())
-      be = be->in(0);
-    if (be->is_Proj() && be->in(0)->is_MachCall()) {
-      MachCallNode* call = be->in(0)->as_MachCall();
-      if (call->cnt() != COUNT_UNKNOWN && call->cnt() <= PROB_UNLIKELY_MAG(4)) {
-        // This is true for slow-path stubs like new_{instance,array},
-        // slow_arraycopy, complete_monitor_locking, uncommon_trap.
-        // The magic number corresponds to the probability of an uncommon_trap,
-        // even though it is a count not a probability.
-        if (b->_freq > BLOCK_FREQUENCY(1e-6))
-          b->_freq = BLOCK_FREQUENCY(1e-6f);
-        continue;
+  }
+  while (worklist.size() > 0) {
+    Block* uct = worklist.pop();
+    uct->_freq = PROB_MIN;
+    for (uint i = 0; i < uct->num_preds(); i++) {
+      Block *pb = _bbs[uct->pred(i)->_idx];
+      if (pb->_num_succs == 1 && pb->_freq > PROB_MIN) {
+        worklist.push(pb);
       }
     }
-    if (be->is_Mach() && be->as_Mach()->ideal_Opcode() == Op_Halt) {
-      if( b->_freq > BLOCK_FREQUENCY(1e-6) )
-        b->_freq = BLOCK_FREQUENCY(1e-6f);
-      continue;
-    }
+  }
 
-    // Recompute frequency based upon predecessors' frequencies
-    for(uint j = 1; j < b->num_preds(); j++) {
-      // Compute the frequency passed along this path
-      Node *pred = b->head()->in(j);
-      // Peek through projections
-      if(pred->is_Proj()) pred = pred->in(0);
-      // Grab the predecessor block's frequency
-      Block *pblock = _bbs[pred->_idx];
-      float predfreq = pblock->_freq;
-      float predcnt = pblock->_cnt;
-      // Properly modify the frequency for this exit path
-      int op = pred->is_Mach() ? pred->as_Mach()->ideal_Opcode() : pred->Opcode();
-      // Switch on branch type
-      switch(op) {
-      // Conditionals pass on only part of their frequency and count
-      case Op_CountedLoopEnd:
-      case Op_If: {
-        float prob = pred->as_MachIf()->_prob;
-        float cnt  = pred->as_MachIf()->_fcnt;
-        bool path  = true;
-        // Is this the TRUE branch or the FALSE branch?
-        if( b->head()->in(j)->Opcode() == Op_IfFalse )
-          path = false;
-        // If branch frequency info is available, use it
-        if(cnt != COUNT_UNKNOWN) {
-          predfreq = (path) ? (prob * cnt) : ((1.0f-prob) * cnt);
-          predcnt  = (path) ? (prob * cnt) : ((1.0f-prob) * cnt);
-        }
-        // Otherwise, split frequency amongst children
-        else {
-          predfreq = (path) ? (prob * predfreq) : ((1.0f-prob) * predfreq);
-          predcnt  = COUNT_UNKNOWN;
-        }
-        if( predfreq < MINFREQ ) predfreq = MINFREQ;
-
-        // Raise frequency of the loop backedge block, in an effort
-        // to keep it empty.  Must raise it by 10%+ because counted
-        // loops normally keep a 90/10 exit ratio.
-        if( op == Op_CountedLoopEnd && b->num_preds() == 2 && path == true )
-          predfreq *= 1.15f;
-        break;
-      }
-        // Catch splits frequency amongst multiple children
-      case Op_Jump: {
-        // Divide the frequency between all successors evenly
-        predfreq = predfreq / pblock->_num_succs;
-        predcnt = COUNT_UNKNOWN;
-        if (predfreq < MINFREQ) predfreq = MINFREQ;
-        break;
-      }
-      // Catch splits frequency amongst multiple children, favoring
-      // fall through
-      case Op_Catch: {
-        // Fall-thru path gets the lion's share.
-        float fall  = (1.0f - PROB_UNLIKELY_MAG(5)*pblock->_num_succs)*predfreq;
-        // Exception exits are uncommon.
-        float expt  = PROB_UNLIKELY_MAG(5) * predfreq;
-        // Determine if this is fall-thru path
-        const CatchProjNode *x = b->head()->in(j)->as_CatchProj();
-        predfreq = (x->_con == CatchProjNode::fall_through_index) ? fall :expt;
-        predcnt  = COUNT_UNKNOWN;
-        if(predfreq < MINFREQ) predfreq = MINFREQ;
-        break;
-      }
-      // Pass frequency straight thru to target
-      case Op_Root:
-      case Op_Goto:
-      case Op_Start:
-      case Op_NeverBranch:
-        break;
-      // These do not push out a frequency or count
-      case Op_TailCall:
-      case Op_TailJump:
-      case Op_Return:
-      case Op_Halt:
-      case Op_Rethrow:
-        predfreq = 0.0f;
-        predcnt = COUNT_UNKNOWN;
-        break;
-      default: 
-        ShouldNotReachHere();
-      } // End switch(op)
-      assert(predfreq > 0.0f,"Bad intermediate frequency");
-      assert((predcnt > 0.0f) || (predcnt == COUNT_UNKNOWN),"Bad intermediate count");
-      // Accumulate frequency from predecessor block
-      freq += predfreq;
-      if (predcnt != COUNT_UNKNOWN) {
-        cnt = (cnt == COUNT_UNKNOWN) ? predcnt : cnt + predcnt;
-      }
+#ifndef PRODUCT
+  if (PrintCFGBlockFreq) {
+    tty->print_cr("CFG Block Frequencies");
+    _root_loop->dump_tree();
+    if (Verbose) {
+      tty->print_cr("PhaseCFG dump");
+      dump();
+      tty->print_cr("Node dump");
+      _root->dump(99999);
     }
-    // Assign new frequency
-    b->_freq = freq;
-    b->_cnt = cnt;
-    assert(b->has_valid_counts(), "Bad final frequency/count assignment");
-  } // End for all blocks
+  }
+#endif
 }
+
+//----------------------------create_loop_tree--------------------------------
+// Create a loop tree from the CFG
+CFGLoop* PhaseCFG::create_loop_tree() {
+
+#ifdef ASSERT
+  assert( _blocks[0] == _broot, "" );
+  for (uint i = 0; i < _num_blocks; i++ ) {
+    Block *b = _blocks[i];
+    // Check that _loop field are clear...we could clear them if not.
+    assert(b->_loop == NULL, "clear _loop expected");
+    // Sanity check that the RPO numbering is reflected in the _blocks array.
+    // It doesn't have to be for the loop tree to be built, but if it is not,
+    // then the blocks have been reordered since dom graph building...which
+    // may question the RPO numbering
+    assert(b->_rpo == i, "unexpected reverse post order number");
+  }
+#endif
+
+  int idct = 0;
+  CFGLoop* root_loop = new CFGLoop(idct++);
+
+  Block_List worklist;
+
+  // Assign blocks to loops
+  for(uint i = _num_blocks - 1; i > 0; i-- ) { // skip Root block
+    Block *b = _blocks[i];
+
+    if (b->head()->is_Loop()) {
+      Block* loop_head = b;
+      assert(loop_head->num_preds() - 1 == 2, "loop must have 2 predecessors");
+      Node* tail_n = loop_head->pred(LoopNode::LoopBackControl);
+      Block* tail = _bbs[tail_n->_idx];
+
+      // Defensively filter out Loop nodes for non-single-entry loops.
+      // For all reasonable loops, the head occurs before the tail in RPO.
+      if (i <= tail->_rpo) {
+
+        // The tail and (recursive) predecessors of the tail
+        // are made members of a new loop.
+
+        assert(worklist.size() == 0, "nonempty worklist");
+        CFGLoop* nloop = new CFGLoop(idct++);
+        assert(loop_head->_loop == NULL, "just checking");
+        loop_head->_loop = nloop;
+        // Add to nloop so push_pred() will skip over inner loops
+        nloop->add_member(loop_head); 
+        nloop->push_pred(loop_head, LoopNode::LoopBackControl, worklist, _bbs);
+
+        while (worklist.size() > 0) {
+          Block* member = worklist.pop();
+          if (member != loop_head) {
+            for (uint j = 1; j < member->num_preds(); j++) {
+              nloop->push_pred(member, j, worklist, _bbs);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Create a member list for each loop consisting
+  // of both blocks and (immediate child) loops.
+  for (uint i = 0; i < _num_blocks; i++) {
+    Block *b = _blocks[i];
+    CFGLoop* lp = b->_loop;
+    if (lp == NULL) {
+      // Not assigned to a loop. Add it to the method's pseudo loop.
+      b->_loop = root_loop;
+      lp = root_loop;
+    }
+    if (lp == root_loop || b != lp->head()) { // loop heads are already members
+      lp->add_member(b);
+    }
+    if (lp != root_loop) {
+      if (lp->parent() == NULL) {
+        // Not a nested loop. Make it a child of the method's pseudo loop.
+        root_loop->add_nested_loop(lp);
+      }
+      if (b == lp->head()) {
+        // Add nested loop to member list of parent loop.
+        lp->parent()->add_member(lp);
+      }
+    }
+  }
+
+  return root_loop;
+}
+
+//------------------------------push_pred--------------------------------------
+void CFGLoop::push_pred(Block* blk, int i, Block_List& worklist, Block_Array& node_to_blk) {
+  Node* pred_n = blk->pred(i);
+  Block* pred = node_to_blk[pred_n->_idx];
+  CFGLoop *pred_loop = pred->_loop;
+  if (pred_loop == NULL) {
+    // Filter out blocks for non-single-entry loops.
+    // For all reasonable loops, the head occurs before the tail in RPO.
+    if (pred->_rpo > head()->_rpo) {
+      pred->_loop = this;
+      worklist.push(pred);
+    }
+  } else if (pred_loop != this) {
+    // Nested loop.
+    while (pred_loop->_parent != NULL && pred_loop->_parent != this) {
+      pred_loop = pred_loop->_parent;
+    }
+    // Make pred's loop be a child
+    if (pred_loop->_parent == NULL) {
+      add_nested_loop(pred_loop);
+      // Continue with loop entry predecessor.
+      Block* pred_head = pred_loop->head();
+      assert(pred_head->num_preds() - 1 == 2, "loop must have 2 predecessors");
+      assert(pred_head != head(), "loop head in only one loop");
+      push_pred(pred_head, LoopNode::EntryControl, worklist, node_to_blk);
+    } else {
+      assert(pred_loop->_parent == this && _parent == NULL, "just checking");
+    }
+  }
+}
+
+//------------------------------add_nested_loop--------------------------------
+// Make cl a child of the current loop in the loop tree.
+void CFGLoop::add_nested_loop(CFGLoop* cl) {
+  assert(_parent == NULL, "no parent yet");
+  assert(cl != this, "not my own parent");
+  cl->_parent = this;
+  CFGLoop* ch = _child;
+  if (ch == NULL) {
+    _child = cl;
+  } else {
+    while (ch->_sibling != NULL) { ch = ch->_sibling; }
+    ch->_sibling = cl;
+  }
+}
+
+//------------------------------compute_loop_depth-----------------------------
+// Store the loop depth in each CFGLoop object.
+// Recursively walk the children to do the same for them.
+void CFGLoop::compute_loop_depth(int depth) {
+  _depth = depth;
+  CFGLoop* ch = _child;
+  while (ch != NULL) {
+    ch->compute_loop_depth(depth + 1);
+    ch = ch->_sibling;
+  }
+}
+
+//------------------------------compute_freq-----------------------------------
+// Compute the frequency of each block and loop, relative to a single entry
+// into the dominating loop head.
+void CFGLoop::compute_freq() {
+  // Bottom up traversal of loop tree (visit inner loops first.)
+  // Set loop head frequency to 1.0, then transitively
+  // compute frequency for all successors in the loop,
+  // as well as for each exit edge.  Inner loops are
+  // treated as single blocks with loop exit targets
+  // as the successor blocks.
+
+  // Nested loops first
+  CFGLoop* ch = _child;
+  while (ch != NULL) {
+    ch->compute_freq();
+    ch = ch->_sibling;
+  }
+  assert (_members.length() > 0, "no empty loops");
+  Block* hd = head();
+  hd->_freq = 1.0f;
+  for (int i = 0; i < _members.length(); i++) {
+    CFGElement* s = _members.at(i);
+    float freq = s->_freq;
+    if (s->is_block()) {
+      Block* b = s->as_Block();
+      for (uint j = 0; j < b->_num_succs; j++) {
+        Block* sb = b->_succs[j];
+        update_succ_freq(sb, freq * b->succ_prob(j));
+      }
+    } else {
+      CFGLoop* lp = s->as_CFGLoop();
+      assert(lp->_parent == this, "immediate child");
+      for (int k = 0; k < lp->_exits.length(); k++) {
+        Block* eb = lp->_exits.at(k).get_target();
+        float prob = lp->_exits.at(k).get_prob();
+        update_succ_freq(eb, freq * prob);
+      }
+    }
+  }
+
+#if 0
+  // Raise frequency of the loop backedge block, in an effort
+  // to keep it empty.  Skip the method level "loop".
+  if (_parent != NULL) {
+    CFGElement* s = _members.at(_members.length() - 1);
+    if (s->is_block()) {
+      Block* bk = s->as_Block();
+      if (bk->_num_succs == 1 && bk->_succs[0] == hd) {
+        // almost any value >= 1.0f works
+        // FIXME: raw constant
+        bk->_freq = 1.05f;  
+      }
+    }
+  }
+#endif
+
+  // For all loops other than the outer, "method" loop, 
+  // sum and normalize the exit probability. The "method" loop
+  // should keep the initial exit probability of 1, so that
+  // inner blocks do not get erroneously scaled.
+  if (_depth != 0) {
+    // Total the exit probabilities for this loop.
+    float exits_sum = 0.0f;
+    for (int i = 0; i < _exits.length(); i++) {
+      exits_sum += _exits.at(i).get_prob();
+    }
+    
+    // Normalize the exit probabilities. Until now, the
+    // probabilities estimate the possibility of exit per
+    // a single loop iteration; afterward, they estimate
+    // the probability of exit per loop entry.
+    for (int i = 0; i < _exits.length(); i++) {
+      Block* et = _exits.at(i).get_target();
+      float new_prob = _exits.at(i).get_prob() / exits_sum;
+      BlockProbPair bpp(et, new_prob);
+      _exits.at_put(i, bpp);
+    }
+    
+    // Save the total, but guard against unreasoable probability,
+    // as the value is used to estimate the loop trip count.
+    // An infinite trip count would blur relative block 
+    // frequencies.
+    if (exits_sum > 1.0f) exits_sum = 1.0;
+    if (exits_sum < PROB_MIN) exits_sum = PROB_MIN;
+    _exit_prob = exits_sum;
+  }
+}
+
+//------------------------------succ_prob-------------------------------------
+// Determine the probability of reaching successor 'i' from the receiver block.
+float Block::succ_prob(uint i) {
+  int eidx = end_idx();    
+  Node *n = _nodes[eidx];  // Get ending Node
+  int op = n->is_Mach() ? n->as_Mach()->ideal_Opcode() : n->Opcode();
+
+  // Switch on branch type
+  switch( op ) {
+  case Op_CountedLoopEnd:
+  case Op_If: {
+    assert (i < 2, "just checking");
+    // Conditionals pass on only part of their frequency
+    float prob  = n->as_MachIf()->_prob;
+    assert(prob >= 0.0 && prob <= 1.0, "out of range probability");
+    // If succ[i] is the FALSE branch, invert path info
+    if( _nodes[i + eidx + 1]->Opcode() == Op_IfFalse ) {
+      return 1.0f - prob; // not taken
+    } else {
+      return prob; // taken
+    }
+  }
+
+  case Op_Jump:
+    // Divide the frequency between all successors evenly
+    return 1.0f/_num_succs;
+
+  case Op_Catch: {
+    const CatchProjNode *ci = _nodes[i + eidx + 1]->as_CatchProj();
+    if (ci->_con == CatchProjNode::fall_through_index) {
+      // Fall-thru path gets the lion's share.
+      return 1.0f - PROB_UNLIKELY_MAG(5)*_num_succs;
+    } else {
+      // Presume exceptional paths are equally unlikely
+      return PROB_UNLIKELY_MAG(5);
+    }
+  }
+
+  case Op_Root:
+  case Op_Goto:
+    // Pass frequency straight thru to target
+    return 1.0f;
+
+  case Op_NeverBranch:
+    return 0.0f;
+
+  case Op_TailCall:
+  case Op_TailJump:
+  case Op_Return:
+  case Op_Halt:
+  case Op_Rethrow:
+    // Do not push out freq to root block
+    return 0.0f;
+
+  default: 
+    ShouldNotReachHere();
+  }
+
+  return 0.0f;
+}
+
+//------------------------------update_succ_freq-------------------------------
+// Update the appropriate frequency associated with block 'b', a succesor of
+// a block in this loop. 
+void CFGLoop::update_succ_freq(Block* b, float freq) {
+  if (b->_loop == this) {
+    if (b == head()) {
+      // back branch within the loop
+      // Do nothing now, the loop carried frequency will be
+      // adjust later in scale_freq().
+    } else {
+      // simple branch within the loop
+      b->_freq += freq;
+    }
+  } else if (!in_loop_nest(b)) {
+    // branch is exit from this loop
+    BlockProbPair bpp(b, freq);
+    _exits.append(bpp);
+  } else {
+    // branch into nested loop
+    CFGLoop* ch = b->_loop;
+    ch->_freq += freq;
+  }
+}
+
+//------------------------------in_loop_nest-----------------------------------
+// Determine if block b is in the receiver's loop nest.
+bool CFGLoop::in_loop_nest(Block* b) {
+  int depth = _depth;
+  CFGLoop* b_loop = b->_loop;
+  int b_depth = b_loop->_depth;
+  if (depth == b_depth) {
+    return true;
+  }
+  while (b_depth > depth) {
+    b_loop = b_loop->_parent;
+    b_depth = b_loop->_depth;
+  }
+  return b_loop == this;
+}
+
+//------------------------------scale_freq-------------------------------------
+// Scale frequency of loops and blocks by trip counts from outer loops
+// Do a top down traversal of loop tree (visit outer loops first.)
+void CFGLoop::scale_freq() {
+  float loop_freq = _freq * trip_count();
+  for (int i = 0; i < _members.length(); i++) {
+    CFGElement* s = _members.at(i);
+    s->_freq *= loop_freq;
+  }
+  CFGLoop* ch = _child;
+  while (ch != NULL) {
+    ch->scale_freq();
+    ch = ch->_sibling;
+  }
+}
+
+#ifndef PRODUCT
+//------------------------------dump_tree--------------------------------------
+void CFGLoop::dump_tree() const {
+  dump();
+  if (_child != NULL)   _child->dump_tree();
+  if (_sibling != NULL) _sibling->dump_tree();
+}
+
+//------------------------------dump-------------------------------------------
+void CFGLoop::dump() const {
+  for (int i = 0; i < _depth; i++) tty->print("   ");
+  tty->print("%s: %d  trip_count: %6.0f freq: %6.0f\n",
+             _depth == 0 ? "Method" : "Loop", _id, trip_count(), _freq);
+  for (int i = 0; i < _depth; i++) tty->print("   ");
+  tty->print("         members:", _id);
+  int k = 0;
+  for (int i = 0; i < _members.length(); i++) {
+    if (k++ >= 6) {
+      tty->print("\n              ");
+      for (int j = 0; j < _depth+1; j++) tty->print("   ");
+      k = 0;
+    }
+    CFGElement *s = _members.at(i);
+    if (s->is_block()) {
+      Block *b = s->as_Block();
+      tty->print(" B%d(%6.3f)", b->_pre_order, b->_freq);
+    } else {
+      CFGLoop* lp = s->as_CFGLoop();
+      tty->print(" L%d(%6.3f)", lp->_id, lp->_freq);
+    }
+  }
+  tty->print("\n");
+  for (int i = 0; i < _depth; i++) tty->print("   ");
+  tty->print("         exits:  ");
+  k = 0;
+  for (int i = 0; i < _exits.length(); i++) {
+    if (k++ >= 7) {
+      tty->print("\n              ");
+      for (int j = 0; j < _depth+1; j++) tty->print("   ");
+      k = 0;
+    }
+    Block *blk = _exits.at(i).get_target();
+    float prob = _exits.at(i).get_prob();
+    tty->print(" ->%d@%d%%", blk->_pre_order, (int)(prob*100));
+  }
+  tty->print("\n");
+}
+#endif

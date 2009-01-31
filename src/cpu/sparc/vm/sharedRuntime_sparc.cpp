@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)sharedRuntime_sparc.cpp	1.51 07/05/17 15:48:17 JVM"
+#pragma ident "@(#)sharedRuntime_sparc.cpp	1.52 07/08/29 13:42:18 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -2880,7 +2880,7 @@ void SharedRuntime::generate_deopt_blob() {
 //------------------------------generate_uncommon_trap_blob--------------------
 // Ought to generate an ideal graph & compile, but here's some SPARC ASM
 // instead.
-static UncommonTrapBlob* generate_uncommon_trap_blob() {
+void SharedRuntime::generate_uncommon_trap_blob() {
   // allocate space for the code
   ResourceMark rm;
   // setup code generation tools
@@ -2956,7 +2956,7 @@ static UncommonTrapBlob* generate_uncommon_trap_blob() {
   __ delayed()->restore();
 
   masm->flush();
-  return UncommonTrapBlob::create(&buffer, NULL, __ total_frame_size_in_bytes(0)/wordSize);
+  _uncommon_trap_blob = UncommonTrapBlob::create(&buffer, NULL, __ total_frame_size_in_bytes(0)/wordSize);
 }
 
 #endif // COMPILER2
@@ -3197,6 +3197,6 @@ void SharedRuntime::generate_stubs() {
   generate_deopt_blob();
 
 #ifdef COMPILER2
-  _uncommon_trap_blob = generate_uncommon_trap_blob();
+  generate_uncommon_trap_blob();
 #endif // COMPILER2
 }

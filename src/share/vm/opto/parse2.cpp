@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)parse2.cpp	1.359 07/05/05 17:06:23 JVM"
+#pragma ident "@(#)parse2.cpp	1.364 08/07/16 09:47:25 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -868,6 +868,8 @@ bool Parse::seems_never_taken(float prob) {
   return prob < PROB_MIN;
 }
 
+//-------------------------------repush_if_args--------------------------------
+// Push arguments of an "if" bytecode back onto the stack by adjusting _sp.
 inline void Parse::repush_if_args() {
 #ifndef PRODUCT
   if (PrintOpto && WizardMode) {
@@ -888,6 +890,9 @@ inline void Parse::repush_if_args() {
 void Parse::do_ifnull(BoolTest::mask btest) {
   int target_bci = iter().get_dest();
 
+  Block* branch_block = successor_for_bci(target_bci);
+  Block* next_block   = successor_for_bci(iter().next_bci());
+
   float cnt;
   float prob = branch_prediction(cnt, btest, target_bci);
   if (prob == PROB_UNKNOWN) {
@@ -896,17 +901,24 @@ void Parse::do_ifnull(BoolTest::mask btest) {
     if (PrintOpto && Verbose)
       tty->print_cr("Never-taken backedge stops compilation at bci %d",bci());
 #endif
-    repush_if_args(); // to gather stats on loop
+    // We need to mark this branch as taken so that if we recompile we will
+    // see that it is possible. In the tiered system the interpreter doesn't
+    // do profiling and by the time we get to the lower tier from the interpreter
+    // the path may be cold again. Make sure it doesn't look untaken
+    profile_taken_branch(target_bci, !ProfileInterpreter);
     uncommon_trap(Deoptimization::Reason_unreached,
                   Deoptimization::Action_reinterpret,
                   NULL, "cold");
+    if (EliminateAutoBox) {
+      // Mark the successor blocks as parsed
+      branch_block->next_path_num();
+      next_block->next_path_num();
+    }
     return;
   }
 
   // If this is a backwards branch in the bytecodes, add Safepoint
   maybe_add_safepoint(target_bci);
-  Block* branch_block = successor_for_bci(target_bci);
-  Block* next_block   = successor_for_bci(iter().next_bci());
 
   explicit_null_checks_inserted++;
   Node* a = null();
@@ -933,6 +945,10 @@ void Parse::do_ifnull(BoolTest::mask btest) {
 
     if (stopped()) {            // Path is dead?
       explicit_null_checks_elided++;
+      if (EliminateAutoBox) {
+        // Mark the successor block as parsed
+        branch_block->next_path_num();
+      }
     } else {                    // Path is live.
       // Update method data
       profile_taken_branch(target_bci);
@@ -948,6 +964,10 @@ void Parse::do_ifnull(BoolTest::mask btest) {
   
   if (stopped()) {              // Path is dead?
     explicit_null_checks_elided++;
+    if (EliminateAutoBox) {
+      // Mark the successor block as parsed
+      next_block->next_path_num();
+    }
   } else  {                     // Path is live.
     // Update method data
     profile_not_taken_branch();
@@ -960,6 +980,9 @@ void Parse::do_ifnull(BoolTest::mask btest) {
 void Parse::do_if(BoolTest::mask btest, Node* c) {
   int target_bci = iter().get_dest();
 
+  Block* branch_block = successor_for_bci(target_bci);
+  Block* next_block   = successor_for_bci(iter().next_bci());
+
   float cnt;
   float prob = branch_prediction(cnt, btest, target_bci);
   float untaken_prob = 1.0 - prob;
@@ -970,9 +993,19 @@ void Parse::do_if(BoolTest::mask btest, Node* c) {
       tty->print_cr("Never-taken backedge stops compilation at bci %d",bci());
 #endif
     repush_if_args(); // to gather stats on loop
+    // We need to mark this branch as taken so that if we recompile we will
+    // see that it is possible. In the tiered system the interpreter doesn't
+    // do profiling and by the time we get to the lower tier from the interpreter
+    // the path may be cold again. Make sure it doesn't look untaken
+    profile_taken_branch(target_bci, !ProfileInterpreter);
     uncommon_trap(Deoptimization::Reason_unreached,
                   Deoptimization::Action_reinterpret,
                   NULL, "cold");
+    if (EliminateAutoBox) {
+      // Mark the successor blocks as parsed
+      branch_block->next_path_num();
+      next_block->next_path_num();
+    }
     return;
   }
 
@@ -1011,15 +1044,17 @@ void Parse::do_if(BoolTest::mask btest, Node* c) {
     untaken_branch = tmp;
   }
 
-  Block* branch_block = successor_for_bci(target_bci);
-  Block* next_block   = successor_for_bci(iter().next_bci());
-
   // Branch is taken:
   { PreserveJVMState pjvms(this);
     taken_branch = _gvn.transform(taken_branch);
     set_control(taken_branch);
 
-    if (!stopped()) {
+    if (stopped()) {
+      if (EliminateAutoBox) {
+        // Mark the successor block as parsed
+        branch_block->next_path_num();
+      }
+    } else {
       // Update method data
       profile_taken_branch(target_bci);
       adjust_map_after_if(taken_btest, c, prob, branch_block, next_block);
@@ -1032,7 +1067,12 @@ void Parse::do_if(BoolTest::mask btest, Node* c) {
   set_control(untaken_branch);
 
   // Branch not taken.
-  if (!stopped()) {
+  if (stopped()) {
+    if (EliminateAutoBox) {
+      // Mark the successor block as parsed
+      next_block->next_path_num();
+    }
+  } else {
     // Update method data
     profile_not_taken_branch();
     adjust_map_after_if(untaken_btest, c, untaken_prob,
@@ -1067,6 +1107,15 @@ void Parse::adjust_map_after_if(BoolTest::mask btest, Node* c, float prob,
     // We do not simply inspect for a null constant, since a node may
     // optimize to 'null' later on.
     repush_if_args();
+    // We need to mark this branch as taken so that if we recompile we will
+    // see that it is possible. In the tiered system the interpreter doesn't
+    // do profiling and by the time we get to the lower tier from the interpreter
+    // the path may be cold again. Make sure it doesn't look untaken
+    if (is_fallthrough) {
+      profile_not_taken_branch(!ProfileInterpreter);
+    } else {
+      profile_taken_branch(iter().get_dest(), !ProfileInterpreter);
+    }
     uncommon_trap(Deoptimization::Reason_unreached,
                   Deoptimization::Action_reinterpret,
                   NULL,
@@ -1498,9 +1547,9 @@ void Parse::do_one_bytecode() {
     c = pop();                  // Oop to store
     b = pop();                  // index (already used)
     a = pop();                  // the array itself
+    const Type* elemtype  = _gvn.type(a)->is_aryptr()->elem();
     const TypeAryPtr* adr_type = TypeAryPtr::OOPS;
-    Node* store = store_to_memory(control(), d, c, T_OBJECT, adr_type);
-    store_barrier(store, T_ARRAY, a, d, c);
+    Node* store = store_oop_to_array(control(), a, d, adr_type, c, elemtype, T_OBJECT);
     break;
   }
   case Bytecodes::_lastore: {
@@ -2140,4 +2189,16 @@ void Parse::do_one_bytecode() {
     tty->print("\nUnhandled bytecode %s\n", Bytecodes::name(bc()) );
     ShouldNotReachHere();
   }
+
+#ifndef PRODUCT
+  IdealGraphPrinter *printer = IdealGraphPrinter::printer();
+  if(printer) {
+    char buffer[256];
+    sprintf(buffer, "Bytecode %d: %s", bci(), Bytecodes::name(bc()));
+    bool old = printer->traverse_outs();
+    printer->set_traverse_outs(true);
+    printer->print_method(C, buffer, 3);
+    printer->set_traverse_outs(old);
+  }
+#endif
 }

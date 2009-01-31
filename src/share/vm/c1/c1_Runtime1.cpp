@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)c1_Runtime1.cpp	1.244 07/06/01 13:28:38 JVM"
+#pragma ident "@(#)c1_Runtime1.cpp	1.245 08/11/07 15:47:09 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -858,6 +858,13 @@ JRT_ENTRY(void, Runtime1::patch_code(JavaThread* thread, Runtime1::StubID stub_i
     if (TracePatching) {
       tty->print_cr("Deoptimizing for patching volatile field reference");
     }
+    // It's possible the nmethod was invalidated in the last
+    // safepoint, but if it's still alive then make it not_entrant.
+    nmethod* nm = CodeCache::find_nmethod(caller_frame.pc());
+    if (nm != NULL) {
+      nm->make_not_entrant();
+    }
+
     VM_DeoptimizeFrame deopt(thread, caller_frame.id());
     VMThread::execute(&deopt);
 

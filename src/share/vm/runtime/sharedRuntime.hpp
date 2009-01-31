@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)sharedRuntime.hpp	1.157 07/07/19 12:19:08 JVM"
+#pragma ident "@(#)sharedRuntime.hpp	1.158 07/10/05 19:47:48 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -130,6 +130,7 @@ class SharedRuntime: AllStatic {
   }
 
 #ifdef COMPILER2
+  static void generate_uncommon_trap_blob(void);
   static UncommonTrapBlob* uncommon_trap_blob()                  { return _uncommon_trap_blob; }
 #endif // COMPILER2
 

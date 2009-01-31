@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)ciMethod.hpp	1.63 07/06/08 15:21:44 JVM"
+#pragma ident "@(#)ciMethod.hpp	1.64 07/09/28 10:23:22 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -89,7 +89,7 @@ class ciMethod : public ciObject {
 
   const char* type_string()                      { return "ciMethod"; }
 
-  void print_impl();
+  void print_impl(outputStream* st);
 
   void load_code();
 
@@ -237,8 +237,11 @@ class ciMethod : public ciObject {
   bool can_be_statically_bound() const           { return _can_be_statically_bound; }
 
   // Print the bytecodes of this method.
-  void print_codes();
-  void print_codes(int from, int to);
+  void print_codes_on(outputStream* st);
+  void print_codes() {
+    print_codes_on(tty);
+  }
+  void print_codes_on(int from, int to, outputStream* st);
 
   // Print the name of this method in various incarnations.
   void print_name(outputStream* st = tty);

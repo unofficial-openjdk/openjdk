@@ -22,7 +22,7 @@
 # 
 
 #
-# @(#)hotspot_version	1.9 07/10/09 17:33:09
+# @(#)hotspot_version	1.17 08/10/30 20:49:14
 # 
 
 #
@@ -32,14 +32,11 @@
 #
 
 # Don't put quotes (fail windows build).
-HOTSPOT_VM_DISTRO=Java HotSpot(TM)
 HOTSPOT_VM_COPYRIGHT=Copyright 2007
-COMPANY_NAME=Sun Microsystems, Inc.
-PRODUCT_NAME=Java(TM) Platform SE
 
-HS_MAJOR_VER=10
+HS_MAJOR_VER=11
 HS_MINOR_VER=0
-HS_BUILD_NUMBER=19
+HS_BUILD_NUMBER=17
 
 JDK_MAJOR_VER=1
 JDK_MINOR_VER=6

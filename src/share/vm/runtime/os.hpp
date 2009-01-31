@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)os.hpp	1.220 07/06/19 03:53:08 JVM"
+#pragma ident "@(#)os.hpp	1.223 07/10/04 10:49:22 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -63,6 +63,8 @@ typedef void (*java_call_t)(JavaValue* value, methodHandle* method, JavaCallArgu
 
 class os: AllStatic {
  private:
+  enum { page_sizes_max = 9 }; // Size of _page_sizes array (8 plus a sentinel)
+
   static OSThread*          _starting_thread;
   static address            _polling_page;
   static volatile int32_t * _mem_serialize_page;
@@ -70,6 +72,13 @@ class os: AllStatic {
   static volatile jlong     _global_time;
   static volatile int       _global_time_lock;
   static bool               _use_global_time;
+  static size_t             _page_sizes[page_sizes_max];
+
+  static void init_page_sizes(size_t default_page_size) {
+    _page_sizes[0] = default_page_size;
+    _page_sizes[1] = 0; // sentinel
+  }
+
  public:
 
   static void init(void);			// Called before command line parsing
@@ -155,9 +164,38 @@ class os: AllStatic {
   static bool stack_shadow_pages_available(Thread *thread, methodHandle method);
 
   // OS interface to Virtual Memory
+
+  // Return the default page size.
   static int    vm_page_size();
+
+  // Return the page size to use for a region of memory.  The min_pages argument
+  // is a hint intended to limit fragmentation; it says the returned page size
+  // should be <= region_max_size / min_pages.  Because min_pages is a hint,
+  // this routine may return a size larger than region_max_size / min_pages.
+  // 
+  // The current implementation ignores min_pages if a larger page size is an
+  // exact multiple of both region_min_size and region_max_size.  This allows
+  // larger pages to be used when doing so would not cause fragmentation; in
+  // particular, a single page can be used when region_min_size ==
+  // region_max_size == a supported page size.
+  static size_t page_size_for_region(size_t region_min_size,
+				     size_t region_max_size,
+				     uint min_pages);
+
+  // Method for tracing page sizes returned by the above method; enabled by
+  // TracePageSizes.  The region_{min,max}_size parameters should be the values
+  // passed to page_size_for_region() and page_size should be the result of that
+  // call.  The (optional) base and size parameters should come from the
+  // ReservedSpace base() and size() methods.
+  static void trace_page_sizes(const char* str, const size_t region_min_size,
+			       const size_t region_max_size,
+			       const size_t page_size,
+			       const char* base = NULL,
+			       const size_t size = 0) PRODUCT_RETURN;
+
   static int    vm_allocation_granularity();
-  static char*  reserve_memory(size_t bytes, char* addr = 0);
+  static char*  reserve_memory(size_t bytes, char* addr = 0,
+			       size_t alignment_hint = 0);
   static char*  attempt_reserve_memory_at(size_t bytes, char* addr);
   static void   split_reserved_memory(char *base, size_t size,
                                       size_t split, bool realloc);
@@ -257,7 +295,7 @@ class os: AllStatic {
                 get_serialize_page_mask()) + (uintptr_t)_mem_serialize_page; 
     return  (thr_addr == addr);
   }
-
+  
   static void block_on_serialize_page_trap();
 
   // threads
@@ -292,7 +330,15 @@ class os: AllStatic {
   static int naked_sleep();
   static void infinite_sleep(); // never returns, use with CAUTION
   static void yield();        // Yields to all threads with same priority
-  static void NakedYield () ; 
+  enum YieldResult {
+    YIELD_SWITCHED = 1,         // caller descheduled, other ready threads exist & ran
+    YIELD_NONEREADY = 0,        // No other runnable/ready threads. 
+                                // platform-specific yield return immediately
+    YIELD_UNKNOWN = -1          // Unknown: platform doesn't support _SWITCHED or _NONEREADY
+    // YIELD_SWITCHED and YIELD_NONREADY imply the platform supports a "strong" 
+    // yield that can be used in lieu of blocking.  
+  } ; 
+  static YieldResult NakedYield () ; 
   static void yield_all(int attempts = 0); // Yields to all other threads including lower priority
   static void loop_breaker(int attempts);  // called from within tight loops to possibly influence time-sharing
   static OSReturn set_priority(Thread* thread, ThreadPriority priority);
@@ -315,6 +361,9 @@ class os: AllStatic {
 
   static int message_box(const char* title, const char* message);
   static char* do_you_want_to_debug(const char* message);
+
+  // run cmd in a separate process and return its exit code; or -1 on failures
+  static int fork_and_exec(char *cmd);
 
   // Set file to send error reports.
   static void set_error_file(const char *logfile);

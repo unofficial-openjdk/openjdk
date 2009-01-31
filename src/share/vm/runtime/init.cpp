@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)init.cpp	1.122 07/05/23 10:54:05 JVM"
+#pragma ident "@(#)init.cpp	1.124 07/08/31 14:03:12 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -84,7 +84,8 @@ void vm_init_globals() {
 }
 
 
-jint init_globals() {  
+jint init_globals() { 
+  HandleMark hm;
   management_init();
   vtune_init();
   bytecodes_init();
@@ -107,7 +108,9 @@ jint init_globals() {
   universe2_init();  // dependent on codeCache_init and stubRoutines_init
   referenceProcessor_init();
   jni_handles_init();
+#ifndef VM_STRUCTS_KERNEL
   vmStructs_init();
+#endif // VM_STRUCTS_KERNEL
 
   vtableStubs_init();
   InlineCacheBuffer_init();

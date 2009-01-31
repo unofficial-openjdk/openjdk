@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)globals.cpp	1.49 07/05/17 16:05:26 JVM"
+#pragma ident "@(#)globals.cpp	1.50 07/09/13 20:51:49 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -337,7 +337,7 @@ bool CommandLineFlags::ccstrAtPut(char* name, size_t len, ccstr* value, FlagValu
   char* new_value = NEW_C_HEAP_ARRAY(char, strlen(*value)+1);
   strcpy(new_value, *value);
   result->set_ccstr(new_value);
-  if (result->origin == DEFAULT) {
+  if (result->origin == DEFAULT && old_value != NULL) {
     // Prior value is NOT heap allocated, but was a literal constant.
     char* old_value_to_free = NEW_C_HEAP_ARRAY(char, strlen(old_value)+1);
     strcpy(old_value_to_free, old_value);
@@ -356,7 +356,7 @@ void CommandLineFlagsEx::ccstrAtPut(CommandLineFlagWithType flag, ccstr value, F
   char* new_value = NEW_C_HEAP_ARRAY(char, strlen(value)+1);
   strcpy(new_value, value);
   faddr->set_ccstr(new_value);
-  if (faddr->origin != DEFAULT) {
+  if (faddr->origin != DEFAULT && old_value != NULL) {
     // Prior value is heap allocated so free it.
     FREE_C_HEAP_ARRAY(char, old_value);
   }

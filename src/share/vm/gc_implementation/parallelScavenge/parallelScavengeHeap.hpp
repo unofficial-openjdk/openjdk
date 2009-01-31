@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)parallelScavengeHeap.hpp	1.61 07/05/17 15:52:51 JVM"
+#pragma ident "@(#)parallelScavengeHeap.hpp	1.62 07/10/04 10:49:30 JVM"
 #endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -42,23 +42,17 @@ class ParallelScavengeHeap : public CollectedHeap {
 
   static ParallelScavengeHeap* _psh;
 
-  // Byte size of the reserved space for the heap
-  size_t _reserved_byte_size;
+  size_t _perm_gen_alignment;
+  size_t _young_gen_alignment;
+  size_t _old_gen_alignment;
 
-  size_t _generation_alignment;
-  inline void set_generation_alignment(size_t val);
-
-  // Adjust alignment for page size (may be large page size)
-  void adjust_generation_alignment_for_page_size(size_t page_size);
+  inline size_t set_alignment(size_t& var, size_t val);
 
   // Collection of generations that are adjacent in the
   // space reserved for the heap.
   AdjoiningGenerations* _gens;
 
   static GCTaskManager*          _gc_task_manager;      // The task manager.
-
-  // Private accessors
-  size_t reserved_byte_size() const { return _reserved_byte_size; }
 
  protected:
   static inline size_t total_invocations();
@@ -67,7 +61,9 @@ class ParallelScavengeHeap : public CollectedHeap {
 
  public:
   ParallelScavengeHeap() : CollectedHeap() {
-    set_generation_alignment(intra_generation_alignment());
+    set_alignment(_perm_gen_alignment, intra_generation_alignment());
+    set_alignment(_young_gen_alignment, intra_generation_alignment());
+    set_alignment(_old_gen_alignment, intra_generation_alignment());
   }
 
   // For use by VM operations
@@ -100,8 +96,10 @@ class ParallelScavengeHeap : public CollectedHeap {
   void post_initialize();
   void update_counters();
 
-  // The alignment used for generations.
-  size_t generation_alignment() const { return _generation_alignment; }
+  // The alignment used for the various generations.
+  size_t perm_gen_alignment()  const { return _perm_gen_alignment; }
+  size_t young_gen_alignment() const { return _young_gen_alignment; }
+  size_t old_gen_alignment()  const { return _old_gen_alignment; }
 
   // The alignment used for eden and survivors within the young gen.
   size_t intra_generation_alignment() const { return 64 * K; }
@@ -219,8 +217,9 @@ class ParallelScavengeHeap : public CollectedHeap {
   void resize_old_gen(size_t desired_free_space);
 };
 
-inline void ParallelScavengeHeap::set_generation_alignment(size_t val) {
-  assert(align_size_up_(val, os::vm_page_size()) == val, "not aligned");
-  assert(val >= intra_generation_alignment(), "alignment size is too small");
-  _generation_alignment = val;
+inline size_t ParallelScavengeHeap::set_alignment(size_t& var, size_t val)
+{
+  assert(is_power_of_2((intptr_t)val), "must be a power of 2");
+  var = round_to(val, intra_generation_alignment());
+  return var;
 }

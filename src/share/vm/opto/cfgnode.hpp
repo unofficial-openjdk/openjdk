@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)cfgnode.hpp	1.115 07/05/05 17:06:11 JVM"
+#pragma ident "@(#)cfgnode.hpp	1.117 07/10/23 13:12:52 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -170,7 +170,7 @@ public:
   virtual const RegMask &out_RegMask() const;
   virtual const RegMask &in_RegMask(uint) const;
 #ifndef PRODUCT
-  virtual void dump_spec() const;
+  virtual void dump_spec(outputStream *st) const;
 #endif
 #ifdef ASSERT
   void verify_adr_type(VectorSet& visited, const TypePtr* at) const;
@@ -313,10 +313,16 @@ public:
   virtual const RegMask &out_RegMask() const;
   void dominated_by(Node* prev_dom, PhaseIterGVN* igvn);
   int is_range_check(Node* &range, Node* &index, jint &offset);
+  Node* fold_compares(PhaseGVN* phase);
   static Node* up_one_dom(Node* curr, bool linear_only = false);
 
+  // Takes the type of val and filters it through the test represented
+  // by if_proj and returns a more refined type if one is produced.
+  // Returns NULL is it couldn't improve the type.
+  static const TypeInt* filtered_int_type(PhaseGVN* phase, Node* val, Node* if_proj);
+
 #ifndef PRODUCT
-  virtual void dump_spec() const;
+  virtual void dump_spec(outputStream *st) const;
 #endif
 };
 
@@ -398,7 +404,7 @@ class JumpProjNode : public JProjNode {
   int  switch_val()  const { return _switch_val; }
   uint proj_no()     const { return _proj_no; }
 #ifndef PRODUCT
-  virtual void dump_spec() const;
+  virtual void dump_spec(outputStream *st) const;
 #endif
 };
 
@@ -445,7 +451,7 @@ public:
   int  handler_bci() const        { return _handler_bci; }
   bool is_handler_proj() const    { return _handler_bci >= 0; }
 #ifndef PRODUCT
-  virtual void dump_spec() const;
+  virtual void dump_spec(outputStream *st) const;
 #endif
 };
 
@@ -479,7 +485,7 @@ public:
   virtual void emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const { }
   virtual uint size(PhaseRegAlloc *ra_) const { return 0; }
 #ifndef PRODUCT
-  virtual void format( PhaseRegAlloc * ) const;
+  virtual void format( PhaseRegAlloc *, outputStream *st ) const;
 #endif
 };
 

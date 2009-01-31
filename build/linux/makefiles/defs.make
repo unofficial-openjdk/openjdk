@@ -68,12 +68,12 @@ ifeq ($(ARCH), x86_64)
     MAKE_ARGS       += LP64=1
     PLATFORM        = linux-amd64
     VM_PLATFORM     = linux_amd64
-    HS_ARCH         = amd64
+    HS_ARCH         = x86
   else
     ARCH_DATA_MODEL = 32
     PLATFORM        = linux-i586
     VM_PLATFORM     = linux_i486
-    HS_ARCH         = i486
+    HS_ARCH         = x86
     # We have to reset ARCH to i686 since SRCARCH relies on it
     ARCH            = i686   
   endif
@@ -84,7 +84,7 @@ ifeq ($(ARCH), i686)
   ARCH_DATA_MODEL  = 32
   PLATFORM         = linux-i586
   VM_PLATFORM      = linux_i486
-  HS_ARCH          = i486
+  HS_ARCH          = x86
 endif
 
 JDK_INCLUDE_SUBDIR=linux

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)ciArray.cpp	1.12 07/05/05 17:05:11 JVM"
+#pragma ident "@(#)ciArray.cpp	1.13 07/09/28 10:23:25 JVM"
 #endif
 /*
  * Copyright 1999-2000 Sun Microsystems, Inc.  All Rights Reserved.
@@ -37,7 +37,7 @@
 // ciArray::print_impl
 //
 // Implementation of the print method.
-void ciArray::print_impl() {
-  tty->print(" length=%d type=", length());
-  klass()->print();
+void ciArray::print_impl(outputStream* st) {
+  st->print(" length=%d type=", length());
+  klass()->print(st);
 }

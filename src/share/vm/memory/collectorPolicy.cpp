@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)collectorPolicy.cpp	1.89 07/06/12 09:41:19 JVM"
+#pragma ident "@(#)collectorPolicy.cpp	1.90 07/10/04 10:49:37 JVM"
 #endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -149,7 +149,12 @@ size_t GenCollectorPolicy::compute_max_alignment() {
   // byte entry and the os page size is 4096, the maximum heap size should
   // be 512*4096 = 2MB aligned.
   size_t alignment = GenRemSet::max_alignment_constraint(rem_set_name());
-  if (UseLargePages) {
+
+  // Parallel GC does its own alignment of the generations to avoid requiring a
+  // large page (256M on some platforms) for the permanent generation.  The
+  // other collectors should also be updated to do their own alignment and then
+  // this use of lcm() should be removed.
+  if (UseLargePages && !UseParallelGC) {
       // in presence of large pages we have to make sure that our 
       // alignment is large page aware 
       alignment = lcm(os::large_page_size(), alignment);

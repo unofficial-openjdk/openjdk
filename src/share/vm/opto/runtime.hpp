@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)runtime.hpp	1.199 07/05/17 16:01:38 JVM"
+#pragma ident "@(#)runtime.hpp	1.201 07/09/20 10:43:58 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -107,7 +107,6 @@ class OptoRuntime : public AllStatic {
   // References to generated stubs
   static address _new_instance_Java;
   static address _new_array_Java;
-  static address _multianewarray1_Java;
   static address _multianewarray2_Java;
   static address _multianewarray3_Java;
   static address _multianewarray4_Java;
@@ -135,9 +134,11 @@ class OptoRuntime : public AllStatic {
   // Allocate storage for a objArray or typeArray
   static void new_array_C(klassOopDesc* array_klass, int len, JavaThread *thread);
 
+  // Post-allocation step for implementing ReduceInitialCardMarks:
+  static void do_eager_card_mark(JavaThread* thread);
+
   // Allocate storage for a multi-dimensional arrays
   // Note: needs to be fixed for arbitrary number of dimensions  
-  static void multianewarray1_C(klassOopDesc* klass, int len1, JavaThread *thread);  
   static void multianewarray2_C(klassOopDesc* klass, int len1, int len2, JavaThread *thread);  
   static void multianewarray3_C(klassOopDesc* klass, int len1, int len2, int len3, JavaThread *thread);  
   static void multianewarray4_C(klassOopDesc* klass, int len1, int len2, int len3, int len4, JavaThread *thread);  
@@ -193,7 +194,6 @@ private:
   // access to runtime stubs entry points for java code
   static address new_instance_Java()                     { return _new_instance_Java; }
   static address new_array_Java()                        { return _new_array_Java; }
-  static address multianewarray1_Java()                  { return _multianewarray1_Java; }
   static address multianewarray2_Java()                  { return _multianewarray2_Java; }
   static address multianewarray3_Java()                  { return _multianewarray3_Java; }
   static address multianewarray4_Java()                  { return _multianewarray4_Java; }
@@ -231,7 +231,6 @@ private:
   static const TypeFunc* new_instance_Type(); // object allocation (slow case)
   static const TypeFunc* new_array_Type ();   // [a]newarray (slow case)
   static const TypeFunc* multianewarray_Type(int ndim); // multianewarray
-  static const TypeFunc* multianewarray1_Type(); // multianewarray
   static const TypeFunc* multianewarray2_Type(); // multianewarray
   static const TypeFunc* multianewarray3_Type(); // multianewarray
   static const TypeFunc* multianewarray4_Type(); // multianewarray

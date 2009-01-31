@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)callnode.cpp	1.235 07/05/05 17:06:13 JVM"
+#pragma ident "@(#)callnode.cpp	1.238 07/10/04 14:36:00 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -39,7 +39,7 @@ uint StartNode::cmp( const Node &n ) const
 const Type *StartNode::bottom_type() const { return _domain; }
 const Type *StartNode::Value(PhaseTransform *phase) const { return _domain; }
 #ifndef PRODUCT
-void StartNode::dump_spec() const { tty->print(" #"); _domain->dump();}
+void StartNode::dump_spec(outputStream *st) const { st->print(" #"); _domain->dump_on(st);}
 #endif
 
 //------------------------------Ideal------------------------------------------
@@ -100,13 +100,13 @@ const char * const ParmNode::names[TypeFunc::Parms+1] = {
 };
 
 #ifndef PRODUCT
-void ParmNode::dump_spec() const {
+void ParmNode::dump_spec(outputStream *st) const {
   if( _con < TypeFunc::Parms ) {
-    tty->print(names[_con]);
+    st->print(names[_con]);
   } else {
-    tty->print("Parm%d: ",_con-TypeFunc::Parms);
+    st->print("Parm%d: ",_con-TypeFunc::Parms);
     // Verbose and WizardMode dump bottom_type for all nodes
-    if( !Verbose && !WizardMode )   bottom_type()->dump();
+    if( !Verbose && !WizardMode )   bottom_type()->dump_on(st);
   }
 }
 #endif
@@ -304,42 +304,42 @@ uint JVMState::debug_depth() const {
 // Given an allocation (a Chaitin object) and a Node decide if the Node carries
 // any defined value or not.  If it does, print out the register or constant.
 #ifndef PRODUCT
-static void format_helper( PhaseRegAlloc *regalloc, Node *n, const char *msg, uint i ) {
-  if (n == NULL) { tty->print(" NULL"); return; }
+static void format_helper( PhaseRegAlloc *regalloc, outputStream* st, Node *n, const char *msg, uint i ) {
+  if (n == NULL) { st->print(" NULL"); return; }
   if( OptoReg::is_valid(regalloc->get_reg_first(n))) { // Check for undefined
     char buf[50];
     regalloc->dump_register(n,buf);
-    tty->print(" %s%d]=%s",msg,i,buf);
+    st->print(" %s%d]=%s",msg,i,buf);
   } else {                      // No register, but might be constant  
     const Type *t = n->bottom_type();
     switch (t->base()) {
     case Type::Int:  
-      tty->print(" %s%d]=#"INT32_FORMAT,msg,i,t->is_int()->get_con()); 
+      st->print(" %s%d]=#"INT32_FORMAT,msg,i,t->is_int()->get_con()); 
       break;
     case Type::AnyPtr: 
       assert( t == TypePtr::NULL_PTR, "" );
-      tty->print(" %s%d]=#NULL",msg,i);
+      st->print(" %s%d]=#NULL",msg,i);
       break;
     case Type::AryPtr: 
     case Type::KlassPtr:
     case Type::InstPtr: 
-      tty->print(" %s%d]=#Ptr" INTPTR_FORMAT,msg,i,t->isa_oopptr()->const_oop());
+      st->print(" %s%d]=#Ptr" INTPTR_FORMAT,msg,i,t->isa_oopptr()->const_oop());
       break;
     case Type::RawPtr: 
-      tty->print(" %s%d]=#Raw" INTPTR_FORMAT,msg,i,t->is_rawptr());
+      st->print(" %s%d]=#Raw" INTPTR_FORMAT,msg,i,t->is_rawptr());
       break;
     case Type::DoubleCon:
-      tty->print(" %s%d]=#%fD",msg,i,t->is_double_constant()->_d);
+      st->print(" %s%d]=#%fD",msg,i,t->is_double_constant()->_d);
       break;
     case Type::FloatCon:
-      tty->print(" %s%d]=#%fF",msg,i,t->is_float_constant()->_f);
+      st->print(" %s%d]=#%fF",msg,i,t->is_float_constant()->_f);
       break;
     case Type::Long:
-      tty->print(" %s%d]=#"INT64_FORMAT,msg,i,t->is_long()->get_con());
+      st->print(" %s%d]=#"INT64_FORMAT,msg,i,t->is_long()->get_con());
       break;
     case Type::Half:
     case Type::Top:  
-      tty->print(" %s%d]=_",msg,i);
+      st->print(" %s%d]=_",msg,i);
       break;
     default: ShouldNotReachHere();
     }
@@ -349,13 +349,13 @@ static void format_helper( PhaseRegAlloc *regalloc, Node *n, const char *msg, ui
 
 //------------------------------format-----------------------------------------
 #ifndef PRODUCT
-void JVMState::format(PhaseRegAlloc *regalloc, const Node *n) const {
-  tty->print("        #");
+void JVMState::format(PhaseRegAlloc *regalloc, const Node *n, outputStream* st) const {
+  st->print("        #");
   if( _method ) {
-    _method->print_short_name();
-    tty->print(" @ bci:%d ",_bci);
+    _method->print_short_name(st);
+    st->print(" @ bci:%d ",_bci);
   } else {
-    tty->print_cr(" runtime stub ");
+    st->print_cr(" runtime stub ");
     return;
   }
   if (n->is_MachSafePoint()) {
@@ -363,37 +363,37 @@ void JVMState::format(PhaseRegAlloc *regalloc, const Node *n) const {
     uint i;
     // Print locals
     for( i = 0; i < (uint)loc_size(); i++ ) 
-      format_helper( regalloc, mcall->local(this, i), "L[", i );
+      format_helper( regalloc, st, mcall->local(this, i), "L[", i );
     // Print stack
     for (i = 0; i < (uint)stk_size(); i++) {
       if ((uint)(_stkoff + i) >= mcall->len()) 
-        tty->print(" oob ");
+        st->print(" oob ");
       else
-       format_helper( regalloc, mcall->stack(this, i), "STK[", i );
+       format_helper( regalloc, st, mcall->stack(this, i), "STK[", i );
     }
     for (i = 0; (int)i < nof_monitors(); i++) {
       Node *box = mcall->monitor_box(this, i);
       Node *obj = mcall->monitor_obj(this, i);
       if ( OptoReg::is_valid(regalloc->get_reg_first(box)) ) {
         while( !box->is_BoxLock() )  box = box->in(1);
-        format_helper( regalloc, box, "MON-BOX[", i );
+        format_helper( regalloc, st, box, "MON-BOX[", i );
       } else {
         OptoReg::Name box_reg = BoxLockNode::stack_slot(box);
-        tty->print(" MON-BOX%d=%s+%d",
+        st->print(" MON-BOX%d=%s+%d",
                    i,
                    OptoReg::regname(OptoReg::c_frame_pointer),
                    regalloc->reg2offset(box_reg));
       }
-      format_helper( regalloc, obj, "MON-OBJ[", i );      
+      format_helper( regalloc, st, obj, "MON-OBJ[", i );      
     }
   }
-  tty->print_cr("");
-  if (caller() != NULL)  caller()->format(regalloc, n);
+  st->print_cr("");
+  if (caller() != NULL)  caller()->format(regalloc, n, st);
 }
 #endif
 
 #ifndef PRODUCT
-void JVMState::dump_spec() const { 
+void JVMState::dump_spec(outputStream *st) const { 
   if (_method != NULL) {
     bool printed = false;
     if (!Verbose) {
@@ -410,22 +410,22 @@ void JVMState::dump_spec() const {
         if (endcn == NULL)  endcn = name + strlen(name);
         while (endcn > name && endcn[-1] != '.' && endcn[-1] != '/')
           --endcn;
-        tty->print(" %s", endcn);
+        st->print(" %s", endcn);
         printed = true;
       }
     }
     if (!printed)
-      _method->print_short_name(tty);
-    tty->print(" @ bci:%d",_bci);
+      _method->print_short_name(st);
+    st->print(" @ bci:%d",_bci);
   } else {
-    tty->print(" runtime stub");
+    st->print(" runtime stub");
   }
-  if (caller() != NULL)  caller()->dump_spec();
+  if (caller() != NULL)  caller()->dump_spec(st);
 }
 #endif
 
 #ifndef PRODUCT
-void JVMState::dump() const {
+void JVMState::dump_on(outputStream* st) const {
   if (_map && !((uintptr_t)_map & 1)) {
     if (_map->len() > _map->req()) {  // _map->has_exceptions()
       Node* ex = _map->in(_map->req());  // _map->next_exception()
@@ -437,20 +437,20 @@ void JVMState::dump() const {
     }
     _map->dump(2);
   }
-  tty->print("JVMS depth=%d loc=%d stk=%d mon=%d end=%d mondepth=%d sp=%d bci=%d method=",
+  st->print("JVMS depth=%d loc=%d stk=%d mon=%d end=%d mondepth=%d sp=%d bci=%d method=",
              depth(), locoff(), stkoff(), monoff(), endoff(), monitor_depth(), sp(), bci());
   if (_method == NULL) {
-    tty->print_cr("(none)");
+    st->print_cr("(none)");
   } else {
-    _method->print_name();
-    tty->cr();
+    _method->print_name(st);
+    st->cr();
     if (bci() >= 0 && bci() < _method->code_size()) {
-      tty->print("    bc: ");
-      _method->print_codes(bci(), bci()+1);
+      st->print("    bc: ");
+      _method->print_codes_on(bci(), bci()+1, st);
     }
   }
   if (caller() != NULL) {
-    caller()->dump();
+    caller()->dump_on(st);
   }
 }
 
@@ -500,11 +500,11 @@ void CallNode::dump_req() const {
   tty->print(")");
 }
 
-void CallNode::dump_spec() const { 
-  tty->print(" "); 
-  tf()->dump();
-  if (_cnt != COUNT_UNKNOWN)  tty->print(" C=%f",_cnt);
-  if (jvms() != NULL)  jvms()->dump_spec();
+void CallNode::dump_spec(outputStream *st) const { 
+  st->print(" "); 
+  tf()->dump_on(st);
+  if (_cnt != COUNT_UNKNOWN)  st->print(" C=%f",_cnt);
+  if (jvms() != NULL)  jvms()->dump_spec(st);
 }
 #endif
 
@@ -567,9 +567,9 @@ uint CallJavaNode::cmp( const Node &n ) const {
   return CallNode::cmp(call) && _method == call._method; 
 }
 #ifndef PRODUCT
-void CallJavaNode::dump_spec() const { 
-  if( _method ) _method->print_short_name();
-  CallNode::dump_spec();
+void CallJavaNode::dump_spec(outputStream *st) const { 
+  if( _method ) _method->print_short_name(st);
+  CallNode::dump_spec(st);
 }
 #endif
 
@@ -602,20 +602,20 @@ int CallStaticJavaNode::extract_uncommon_trap_request(const Node* call) {
 }
 
 #ifndef PRODUCT
-void CallStaticJavaNode::dump_spec() const { 
-  tty->print("# Static ");
+void CallStaticJavaNode::dump_spec(outputStream *st) const { 
+  st->print("# Static ");
   if (_name != NULL) {
-    tty->print("%s", _name);
+    st->print("%s", _name);
     int trap_req = uncommon_trap_request();
     if (trap_req != 0) {
       char buf[100];
-      tty->print("(%s)",
+      st->print("(%s)",
                  Deoptimization::format_trap_request(buf, sizeof(buf),
                                                      trap_req));
     }
-    tty->print(" ");
+    st->print(" ");
   }
-  CallJavaNode::dump_spec();
+  CallJavaNode::dump_spec(st);
 }
 #endif
 
@@ -626,9 +626,9 @@ uint CallDynamicJavaNode::cmp( const Node &n ) const {
   return CallJavaNode::cmp(call); 
 }
 #ifndef PRODUCT
-void CallDynamicJavaNode::dump_spec() const { 
-  tty->print("# Dynamic ");
-  CallJavaNode::dump_spec();
+void CallDynamicJavaNode::dump_spec(outputStream *st) const { 
+  st->print("# Dynamic ");
+  CallJavaNode::dump_spec(st);
 }
 #endif
 
@@ -639,10 +639,10 @@ uint CallRuntimeNode::cmp( const Node &n ) const {
   return CallNode::cmp(call) && !strcmp(_name,call._name);
 }
 #ifndef PRODUCT
-void CallRuntimeNode::dump_spec() const { 
-  tty->print("# "); 
-  tty->print(_name);
-  CallNode::dump_spec();
+void CallRuntimeNode::dump_spec(outputStream *st) const { 
+  st->print("# "); 
+  st->print(_name);
+  CallNode::dump_spec(st);
 }
 #endif
 
@@ -657,10 +657,10 @@ void CallRuntimeNode::calling_convention( BasicType* sig_bt, VMRegPair *parm_reg
 
 //=============================================================================
 #ifndef PRODUCT
-void CallLeafNode::dump_spec() const { 
-  tty->print("# "); 
-  tty->print(_name);
-  CallNode::dump_spec();
+void CallLeafNode::dump_spec(outputStream *st) const { 
+  st->print("# "); 
+  st->print(_name);
+  CallNode::dump_spec(st);
 }
 #endif
 
@@ -750,8 +750,8 @@ const Type *SafePointNode::Value( PhaseTransform *phase ) const {
 }
 
 #ifndef PRODUCT
-void SafePointNode::dump_spec() const { 
-  tty->print(" SafePoint "); 
+void SafePointNode::dump_spec(outputStream *st) const { 
+  st->print(" SafePoint "); 
 }
 #endif
 
@@ -830,8 +830,7 @@ uint AllocateNode::size_of() const { return sizeof(*this); }
 
 AllocateNode::AllocateNode(Compile* C, const TypeFunc *atype,
                            Node *ctrl, Node *mem, Node *abio,
-                           Node *size, Node *klass_node, Node *initial_test,
-                           Node *eden_top, Node *eden_end)
+                           Node *size, Node *klass_node, Node *initial_test)
   : CallNode(atype, NULL, TypeRawPtr::BOTTOM)
 {
   init_class_id(Class_Allocate);
@@ -846,8 +845,6 @@ AllocateNode::AllocateNode(Compile* C, const TypeFunc *atype,
   init_req( AllocSize          , size);
   init_req( KlassNode          , klass_node);
   init_req( InitialTest        , initial_test);
-  init_req( EdenTop            , eden_top);
-  init_req( EdenEnd            , eden_end);
   init_req( ALength            , topnode);
   C->add_macro_node(this);
 }

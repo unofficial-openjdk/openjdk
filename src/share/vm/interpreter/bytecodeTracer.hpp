@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)bytecodeTracer.hpp	1.24 07/05/05 17:05:37 JVM"
+#pragma ident "@(#)bytecodeTracer.hpp	1.25 07/09/28 10:23:17 JVM"
 #endif
 /*
  * Copyright 1997-2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -45,8 +45,8 @@ class BytecodeTracer: AllStatic {
   static BytecodeClosure* closure()				                      { return _closure; }
   static void             set_closure(BytecodeClosure* closure)	{ _closure = closure; }
 
-  static void             trace(methodHandle method, address bcp, uintptr_t tos, uintptr_t tos2);
-  static void             trace(methodHandle method, address bcp);
+  static void             trace(methodHandle method, address bcp, uintptr_t tos, uintptr_t tos2, outputStream* st = tty);
+  static void             trace(methodHandle method, address bcp, outputStream* st = tty);
 };
 
 
@@ -54,8 +54,8 @@ class BytecodeTracer: AllStatic {
 
 class BytecodeClosure {
  public:
-  virtual void trace(methodHandle method, address bcp, uintptr_t tos, uintptr_t tos2) = 0;
-  virtual void trace(methodHandle method, address bcp) = 0;
+  virtual void trace(methodHandle method, address bcp, uintptr_t tos, uintptr_t tos2, outputStream* st) = 0;
+  virtual void trace(methodHandle method, address bcp, outputStream* st) = 0;
 };
 
 #endif // !PRODUCT

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)c1_Instruction.hpp	1.195 07/05/05 17:05:07 JVM"
+#pragma ident "@(#)c1_Instruction.hpp	1.196 07/06/18 14:25:24 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -1528,16 +1528,16 @@ LEAF(BlockBegin, StateSplit)
   , _exception_handler_pco(-1)
   , _lir(NULL)
   , _loop_index(-1)
-  , _live_in(NULL, 0)
-  , _live_out(NULL, 0)
-  , _live_gen(NULL, 0)
-  , _live_kill(NULL, 0)
-  , _fpu_register_usage(NULL, 0)
+  , _live_in()
+  , _live_out()
+  , _live_gen()
+  , _live_kill()
+  , _fpu_register_usage()
   , _fpu_stack_state(NULL)
   , _first_lir_instruction_id(-1)
   , _last_lir_instruction_id(-1)
   , _total_preds(0)
-  , _stores_to_locals(NULL, 0)
+  , _stores_to_locals()
   {
     set_bci(bci);
   }
@@ -1962,7 +1962,11 @@ LEAF(Base, BlockEnd)
 LEAF(OsrEntry, Instruction)
  public:
   // creation
-  OsrEntry() : Instruction(intType, false) { pin(); }
+#ifdef _LP64
+  OsrEntry() : Instruction(longType, false) { pin(); }
+#else
+  OsrEntry() : Instruction(intType,  false) { pin(); }
+#endif
 
   // generic
   virtual void input_values_do(void f(Value*))   { }

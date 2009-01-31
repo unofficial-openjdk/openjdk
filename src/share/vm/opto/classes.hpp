@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)classes.hpp	1.177 07/05/05 17:06:12 JVM"
+#pragma ident "@(#)classes.hpp	1.178 07/07/19 19:08:27 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -118,6 +118,7 @@ macro(Halt)
 macro(If)
 macro(IfFalse)
 macro(IfTrue)
+macro(Initialize)
 macro(JProj)
 macro(Jump)
 macro(JumpProj)

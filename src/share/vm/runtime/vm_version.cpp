@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)vm_version.cpp	1.57 07/08/20 18:10:11 JVM"
+#pragma ident "@(#)vm_version.cpp	1.59 07/08/17 11:47:16 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -89,12 +89,16 @@ void Abstract_VM_Version::initialize() {
   #define VMLP ""
 #endif
 
+#ifdef KERNEL
+  #define VMTYPE "Kernel"
+#else // KERNEL
 #ifdef TIERED
   #define VMTYPE "Server"
 #else
   #define VMTYPE COMPILER1_PRESENT("Client")   \
                  COMPILER2_PRESENT("Server")   
 #endif // TIERED
+#endif // KERNEL
 
 #ifndef HOTSPOT_VM_DISTRO
   #error HOTSPOT_VM_DISTRO must be defined

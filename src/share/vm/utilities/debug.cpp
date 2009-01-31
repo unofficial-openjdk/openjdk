@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)debug.cpp	1.180 07/05/05 17:07:08 JVM"
+#pragma ident "@(#)debug.cpp	1.183 07/07/02 11:45:25 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -252,7 +252,6 @@ void report_untested(const char* file_name, int line_no, const char* msg) {
 
 void report_java_out_of_memory(const char* message) {
   static jint out_of_memory_reported = 0;
-  static char path[JVM_MAXPATHLEN];
 
   // A number of threads may attempt to report OutOfMemoryError at around the 
   // same time. To avoid dumping the heap or executing the data collection
@@ -262,47 +261,7 @@ void report_java_out_of_memory(const char* message) {
     // create heap dump before OnOutOfMemoryError commands are executed
     if (HeapDumpOnOutOfMemoryError) {
       tty->print_cr("java.lang.OutOfMemoryError: %s", message);
-
-      // The dump file defaults to java_pid<pid>.hprof in the current working
-      // directory. HeapDumpPath=<file> can be used to specify an alternative
-      // dump file name or a directory where dump file is created.    
-      bool use_default_filename = true;
-      if (HeapDumpPath == NULL || HeapDumpPath[0] == '\0') {
-        path[0] = '\0'; // HeapDumpPath=<file> not specified
-      } else {
-        assert(strlen(HeapDumpPath) < sizeof(path), "HeapDumpPath too long");
-        strcpy(path, HeapDumpPath);
-	// check if the path is a directory (must exist)
-        DIR* dir = os::opendir(path);        
-	if (dir == NULL) {	  
-	  use_default_filename = false; 
-	} else {
-	  // HeapDumpPath specified a directory. We append a file separator
-	  // (if needed).
-	  os::closedir(dir);
-	  size_t fs_len = strlen(os::file_separator());
-	  if (strlen(path) >= fs_len) {
-	    char* end = path;
-	    end += (strlen(path) - fs_len);
-	    if (strcmp(end, os::file_separator()) != 0) {
-              assert(strlen(path) + strlen(os::file_separator()) < sizeof(path), 
-	        "HeapDumpPath too long");
-	      strcat(path, os::file_separator());
-	    }
-	  }
-	}     
-      }
-      // If HeapDumpPath wasn't a file name then we append the default name
-      if (use_default_filename) {
-        char fn[32];
-	sprintf(fn, "java_pid%d.hprof", os::current_process_id());
-	assert(strlen(path) + strlen(fn) < sizeof(path), "HeapDumpPath too long");
-	strcat(path, fn);
-      }
-
-      HeapDumper dumper(false /* no GC before heap dump */,
-                        true  /* send to tty */);
-      dumper.dump(path);
+      HeapDumper::dump_heap();
     }
 
     if (OnOutOfMemoryError && OnOutOfMemoryError[0]) {

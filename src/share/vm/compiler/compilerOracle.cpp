@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)compilerOracle.cpp	1.34 07/05/17 15:50:53 JVM"
+#pragma ident "@(#)compilerOracle.cpp	1.35 07/09/13 11:29:49 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -539,7 +539,7 @@ void CompilerOracle::parse_from_line(char* line) {
 }
 
 static const char* cc_file() {
-  if (CompileCommandFile[0] == '\0')
+  if (CompileCommandFile == NULL)
     return ".hotspot_compiler";
   return CompileCommandFile;
 }

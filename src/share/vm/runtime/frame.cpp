@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)frame.cpp	1.233 07/05/05 17:06:44 JVM"
+#pragma ident "@(#)frame.cpp	1.235 07/09/25 17:07:43 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -524,7 +524,7 @@ void frame::print_value_on(outputStream* st, JavaThread *thread) const {
   NOT_PRODUCT(address begin = pc()-40;)
   NOT_PRODUCT(address end   = NULL;)
 
-  st->print("%s frame (sp=" INTPTR_FORMAT, print_name(), sp());
+  st->print("%s frame (sp=" INTPTR_FORMAT " unextended sp=" INTPTR_FORMAT, print_name(), sp(), unextended_sp());
   if (sp() != NULL)
     st->print(", fp=" INTPTR_FORMAT ", pc=" INTPTR_FORMAT, fp(), pc());
 
@@ -676,7 +676,23 @@ static void print_C_frame(outputStream* st, char* buf, int buflen, address pc) {
 
 void frame::print_on_error(outputStream* st, char* buf, int buflen, bool verbose) const {
   if (_cb != NULL) {
-    if (_cb->is_buffer_blob()) {
+    if (Interpreter::contains(pc())) {
+      methodOop m = this->interpreter_frame_method();
+      if (m != NULL) {
+        m->name_and_sig_as_C_string(buf, buflen);
+        st->print("j  %s", buf);
+        st->print("+%d", this->interpreter_frame_bci());
+      } else {
+        st->print("j  " PTR_FORMAT, pc());
+      }
+    } else if (StubRoutines::contains(pc())) {
+      StubCodeDesc* desc = StubCodeDesc::desc_for(pc());
+      if (desc != NULL) {
+        st->print("v  ~StubRoutines::%s", desc->name());
+      } else {
+        st->print("v  ~StubRoutines::" PTR_FORMAT, pc());
+      }
+    } else if (_cb->is_buffer_blob()) {
       st->print("v  ~BufferBlob::%s", ((BufferBlob *)_cb)->name());
     } else if (_cb->is_nmethod()) {
       methodOop m = ((nmethod *)_cb)->method();
@@ -696,24 +712,6 @@ void frame::print_on_error(outputStream* st, char* buf, int buflen, bool verbose
       st->print("v  ~SafepointBlob");
     } else {
       st->print("v  blob " PTR_FORMAT, pc());
-    }
-  } else if (!is_init_completed()) {
-    print_C_frame(st, buf, buflen, pc());
-  } else if (Interpreter::contains(pc())) {
-    methodOop m = this->interpreter_frame_method();
-    if (m != NULL) {
-      m->name_and_sig_as_C_string(buf, buflen);
-      st->print("j  %s", buf);
-      st->print("+%d", this->interpreter_frame_bci());
-    } else {
-      st->print("j  " PTR_FORMAT, pc());
-    }
-  } else if (StubRoutines::contains(pc())) {
-    StubCodeDesc* desc = StubCodeDesc::desc_for(pc());
-    if (desc != NULL) {
-      st->print("v  ~StubRoutines::%s", desc->name());
-    } else {
-      st->print("v  ~StubRoutines::" PTR_FORMAT, pc());
     }
   } else {
     print_C_frame(st, buf, buflen, pc());
@@ -900,7 +898,7 @@ void frame::oops_interpreted_do(OopClosure* f, const RegisterMap* map, bool quer
   // Interpreter frame in the midst of a call have a methodOop within the
   // object. 
   interpreterState istate = get_interpreterState();
-  if (istate->msg() == cInterpreter::call_method) {
+  if (istate->msg() == BytecodeInterpreter::call_method) {
     f->do_oop((oop*)&istate->_result._to_call._callee);
   }
 

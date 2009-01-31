@@ -228,10 +228,7 @@ public class JavaThread extends Thread {
       }
       return null;
     }
-    if (vf.isJavaFrame()) {
-      return (JavaVFrame) vf;
-    }
-    return (JavaVFrame) vf.javaSender();
+    return vf.isJavaFrame() ? (JavaVFrame)vf : vf.javaSender();
   }
 
   /** In this system, a JavaThread is the top-level factory for a

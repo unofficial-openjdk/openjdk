@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)compile.hpp	1.230 07/05/17 15:57:38 JVM"
+#pragma ident "@(#)compile.hpp	1.232 07/09/28 10:23:10 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -174,6 +174,9 @@ class Compile : public Phase {
   GrowableArray<CallGenerator*>* _intrinsics;   // List of intrinsics.
   GrowableArray<Node*>* _macro_nodes;           // List of nodes which need to be expanded before matching.
   ConnectionGraph*      _congraph;
+#ifndef PRODUCT
+  IdealGraphPrinter*    _printer;
+#endif
 
   // Node management
   uint                  _unique;                // Counter for unique Node indices
@@ -184,6 +187,9 @@ class Compile : public Phase {
   Node*                 _top;                   // Unique top node.  (Reset by various phases.)
 
   Node*                 _immutable_memory;      // Initial memory state
+
+  Node*                 _recent_alloc_obj;
+  Node*                 _recent_alloc_ctl;
 
   // Blocked array of debugging and profiling information,
   // tracked per node.
@@ -316,6 +322,23 @@ class Compile : public Phase {
 #ifndef PRODUCT
   bool          trace_opto_output() const       { return _trace_opto_output; }
 #endif
+
+  void begin_method() {
+#ifndef PRODUCT
+    if (_printer) _printer->begin_method(this);
+#endif
+  }
+  void print_method(const char * name, int level = 1) {
+#ifndef PRODUCT
+    if (_printer) _printer->print_method(this, name, level);
+#endif
+  }
+  void end_method() {
+#ifndef PRODUCT
+    if (_printer) _printer->end_method();
+#endif
+  }
+
   int           macro_count()                   { return _macro_nodes->length(); }
   Node*         macro_node(int idx)             { return _macro_nodes->at(idx); }
   ConnectionGraph* congraph()                   { return _congraph;}
@@ -372,6 +395,13 @@ class Compile : public Phase {
   StartNode*        start() const;              // (Derived from root.)
   void         init_start(StartNode* s);
   Node*             immutable_memory();
+
+  Node*             recent_alloc_ctl() const    { return _recent_alloc_ctl; }
+  Node*             recent_alloc_obj() const    { return _recent_alloc_obj; }
+  void          set_recent_alloc(Node* ctl, Node* obj) {
+                                                  _recent_alloc_ctl = ctl;
+                                                  _recent_alloc_obj = obj;
+                                                }
 
   // Handy undefined Node
   Node*             top() const                 { return _top; }

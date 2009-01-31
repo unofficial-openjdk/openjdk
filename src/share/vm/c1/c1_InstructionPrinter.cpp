@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)c1_InstructionPrinter.cpp	1.125 07/05/17 15:49:39 JVM"
+#pragma ident "@(#)c1_InstructionPrinter.cpp	1.126 07/06/18 14:25:24 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -269,6 +269,8 @@ void InstructionPrinter::print_unsafe_raw_op(UnsafeRawOp* op, const char* name) 
 void InstructionPrinter::print_unsafe_object_op(UnsafeObjectOp* op, const char* name) {
   print_unsafe_op(op, name);
   print_value(op->object());
+  output()->print(", ");
+  print_value(op->offset());
 }
 
 

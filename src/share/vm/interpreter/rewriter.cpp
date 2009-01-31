@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)rewriter.cpp	1.45 07/05/05 17:05:40 JVM"
+#pragma ident "@(#)rewriter.cpp	1.46 07/08/29 13:42:26 JVM"
 #endif
 /*
  * Copyright 1998-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -189,7 +189,7 @@ methodHandle Rewriter::rewrite_method(methodHandle method, intArray& index_map, 
       // will manifest itself in an easy recognizable form.
       address bcp = original_method->bcp_from(0);
       *bcp = (u1)Bytecodes::_shouldnotreachhere;
-      int kind = AbstractInterpreter::method_kind(original_method);
+      int kind = Interpreter::method_kind(original_method);
       original_method->set_interpreter_kind(kind);
     }
        

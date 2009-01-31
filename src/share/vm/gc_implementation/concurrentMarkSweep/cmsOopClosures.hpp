@@ -1,8 +1,8 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)cmsOopClosures.hpp	1.2 07/05/16 16:53:01 JVM"
+#pragma ident "@(#)cmsOopClosures.hpp	1.4 08/09/25 13:46:14 JVM"
 #endif
 /*
- * Copyright (c) 2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright (c) 2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *   
  * This code is free software; you can redistribute it and/or modify it
@@ -32,8 +32,10 @@ class ConcurrentMarkSweepGeneration;
 class CMSBitMap;
 class CMSMarkStack;
 class CMSCollector;
-class OopTaskQueue;
-class OopTaskQueueSet;
+template<class E> class GenericTaskQueue;
+typedef GenericTaskQueue<oop> OopTaskQueue;
+template<class E> class GenericTaskQueueSet;
+typedef GenericTaskQueueSet<oop> OopTaskQueueSet;
 class MarkFromRootsClosure;
 class Par_MarkFromRootsClosure;
 
@@ -284,7 +286,7 @@ class Par_PushOrMarkClosure: public OopClosure {
 // processing phase of the CMS final checkpoint step.
 class CMSKeepAliveClosure: public OopClosure {
   CMSCollector* _collector;
-  MemRegion     _span;
+  const MemRegion _span;
   CMSMarkStack* _mark_stack;
   CMSBitMap*    _bit_map;
  public:
@@ -293,7 +295,9 @@ class CMSKeepAliveClosure: public OopClosure {
     _collector(collector),
     _span(span),
     _bit_map(bit_map),
-    _mark_stack(mark_stack) { }
+    _mark_stack(mark_stack) { 
+      assert(!_span.is_empty(), "Empty span could spell trouble");
+    }
 
   void do_oop(oop* p);
   void do_oop_nv(oop* p) { CMSKeepAliveClosure::do_oop(p); }

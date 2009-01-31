@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)psPromotionManager.inline.hpp	1.18 07/05/05 17:05:30 JVM"
+#pragma ident "@(#)psPromotionManager.inline.hpp	1.19 07/09/25 16:47:42 JVM"
 #endif
 /*
  * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -43,9 +43,7 @@ inline void PSPromotionManager::claim_or_forward_internal_depth(oop* p) {
       }
       *p = o;
     } else {
-      if (!claimed_stack_depth()->push(p)) {
-	overflow_stack_depth()->push(p);
-      }
+      push_depth(p);
     }
   }
 }
@@ -108,5 +106,15 @@ inline void PSPromotionManager::claim_or_forward_breadth(oop* p) {
     // length of the delay is random depending on the objects
     // in the queue and the delay can be zero.
     claim_or_forward_internal_breadth(p);
+  }
+}
+
+inline void PSPromotionManager::process_popped_location_depth(oop* p) {
+  if (is_oop_masked(p)) {
+    assert(PSChunkLargeArrays, "invariant");
+    oop const old = unmask_chunked_array_oop(p);
+    process_array_chunk(old);
+  } else {
+    PSScavenge::copy_and_push_safe_barrier(this, p);
   }
 }

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)vmError_linux.cpp	1.14 08/06/17 09:14:15 JVM"
+#pragma ident "@(#)vmError_linux.cpp	1.15 08/11/24 12:20:39 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -34,84 +34,6 @@
 #include <unistd.h>
 #include <signal.h>
 
-extern char** environ;
-
-#ifndef __NR_fork
-#define __NR_fork IA32_ONLY(2) IA64_ONLY(not defined) AMD64_ONLY(57)
-#endif
-
-#ifndef __NR_execve
-#define __NR_execve IA32_ONLY(11) IA64_ONLY(1033) AMD64_ONLY(59)
-#endif
-
-// Run the specified command in a separate process. Return its exit value,
-// or -1 on failure (e.g. can't fork a new process).
-// Unlike system(), this function can be called from signal handler. It
-// doesn't block SIGINT et al.
-int VMError::fork_and_exec(char* cmd) {
-  const char * argv[4] = {"sh", "-c", cmd, NULL};
-
-  // fork() in LinuxThreads/NPTL is not async-safe. It needs to run 
-  // pthread_atfork handlers and reset pthread library. All we need is a 
-  // separate process to execve. Make a direct syscall to fork process.
-  // On IA64 there's no fork syscall, we have to use fork() and hope for
-  // the best...
-  pid_t pid = NOT_IA64(syscall(__NR_fork);) 
-              IA64_ONLY(fork();)
-
-  if (pid < 0) {
-    // fork failed
-    return -1;
-
-  } else if (pid == 0) {
-    // child process
-
-    // execve() in LinuxThreads will call pthread_kill_other_threads_np() 
-    // first to kill every thread on the thread list. Because this list is 
-    // not reset by fork() (see notes above), execve() will instead kill 
-    // every thread in the parent process. We know this is the only thread 
-    // in the new process, so make a system call directly.
-    // IA64 should use normal execve() from glibc to match the glibc fork() 
-    // above.
-    NOT_IA64(syscall(__NR_execve, "/bin/sh", argv, environ);)
-    IA64_ONLY(execve("/bin/sh", (char* const*)argv, environ);)
-
-    // execve failed
-    _exit(-1);
-
-  } else  {
-    // copied from J2SE ..._waitForProcessExit() in UNIXProcess_md.c; we don't
-    // care about the actual exit code, for now.
-   
-    int status;
-
-    // Wait for the child process to exit.  This returns immediately if
-    // the child has already exited. */
-    while (waitpid(pid, &status, 0) < 0) {
-        switch (errno) {
-        case ECHILD: return 0;
-        case EINTR: break;
-        default: return -1;
-        }
-    }
-
-    if (WIFEXITED(status)) {
-       // The child exited normally; get its exit code.
-       return WEXITSTATUS(status);
-    } else if (WIFSIGNALED(status)) {
-       // The child exited because of a signal
-       // The best value to return is 0x80 + signal number,
-       // because that is what all Unix shells do, and because
-       // it allows callers to distinguish between process exit and
-       // process death by signal.
-       return 0x80 + WTERMSIG(status);
-    } else {
-       // Unknown exit code; pass it through
-       return status;
-    }
-  }
-}
-
 void VMError::show_message_box(char *buf, int buflen) {
   bool yes;
   do {
@@ -135,7 +57,8 @@ void VMError::show_message_box(char *buf, int buflen) {
       jio_snprintf(buf, buflen, "gdb /proc/%d/exe %d", 
                    os::current_process_id(), os::current_process_id());
 
-      fork_and_exec(buf);
+      os::fork_and_exec(buf);
+      yes = false;
     }
   } while (yes);
 }

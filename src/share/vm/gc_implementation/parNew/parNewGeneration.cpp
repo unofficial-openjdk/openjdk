@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)parNewGeneration.cpp	1.101 07/05/22 17:23:45 JVM"
+#pragma ident "@(#)parNewGeneration.cpp	1.102 07/09/07 09:50:43 JVM"
 #endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -1193,7 +1193,7 @@ void ParNewGeneration::ref_processor_init()
         _reserved,                  // span
         refs_discovery_is_atomic(), // atomic_discovery
         refs_discovery_is_mt(),     // mt_discovery
-        &_is_alive_closure,
+        NULL,                       // is_alive_non_header
         ParallelGCThreads,
         ParallelRefProcEnabled);
   }

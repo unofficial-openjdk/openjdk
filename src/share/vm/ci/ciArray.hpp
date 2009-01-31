@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)ciArray.hpp	1.12 07/05/05 17:05:11 JVM"
+#pragma ident "@(#)ciArray.hpp	1.13 07/09/28 10:23:25 JVM"
 #endif
 /*
  * Copyright 1999-2001 Sun Microsystems, Inc.  All Rights Reserved.
@@ -44,7 +44,7 @@ protected:
 
   const char* type_string() { return "ciArray"; }
 
-  void print_impl();
+  void print_impl(outputStream* st);
 
 public:
   int length() { return _length; }

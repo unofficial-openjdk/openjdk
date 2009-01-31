@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)java.cpp	1.221 07/05/29 09:44:26 JVM"
+#pragma ident "@(#)java.cpp	1.223 07/07/16 14:37:42 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -142,13 +142,6 @@ void print_statistics() {
   if (CountRuntimeCalls) {
     extern Histogram *RuntimeHistogram;
     RuntimeHistogram->print();
-  }
-
-  if (CountVMLocks) {
-    extern Histogram *MutexHistogram;
-    extern Histogram *MutexContentionHistogram;
-    MutexHistogram->print();
-    MutexContentionHistogram->print();
   }
 
   if (CountJNICalls) {
@@ -438,6 +431,7 @@ void before_exit(JavaThread * thread) {
   // Always call even when there are not JVMTI environments yet, since environments
   // may be attached late and JVMTI must track phases of VM execution
   JvmtiExport::post_vm_death();
+  Threads::shutdown_vm_agents();
 
   // Terminate the signal thread
   // Note: we don't wait until it actually dies.

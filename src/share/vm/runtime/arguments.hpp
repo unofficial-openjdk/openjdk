@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)arguments.hpp	1.103 07/06/27 11:12:35 JVM"
+#pragma ident "@(#)arguments.hpp	1.104 07/09/04 17:30:49 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -506,4 +506,9 @@ class Arguments : AllStatic {
 
   // Utility: copies src into buf, replacing "%%" with "%" and "%p" with pid.
   static bool copy_expand_pid(const char* src, size_t srclen, char* buf, size_t buflen);
+
+#ifdef KERNEL
+  // For java kernel vm, return property string for kernel properties.
+  static char *get_kernel_properties();
+#endif // KERNEL
 };

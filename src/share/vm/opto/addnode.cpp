@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)addnode.cpp	1.141 07/05/05 17:06:10 JVM"
+#pragma ident "@(#)addnode.cpp	1.142 07/10/23 13:12:52 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -609,6 +609,28 @@ Node* AddPNode::Ideal_base_and_offset(Node* ptr, PhaseTransform* phase,
   }
   offset = Type::OffsetBot;
   return NULL;
+}
+
+//------------------------------unpack_offsets----------------------------------
+// Collect the AddP offset values into the elements array, giving up
+// if there are more than length.
+int AddPNode::unpack_offsets(Node* elements[], int length) {
+  int count = 0;
+  Node* addr = this;
+  Node* base = addr->in(AddPNode::Base);
+  while (addr->is_AddP()) {
+    if (addr->in(AddPNode::Base) != base) {
+      // give up
+      return -1;
+    }
+    elements[count++] = addr->in(AddPNode::Offset);
+    if (count == length) {
+      // give up
+      return -1;
+    }
+    addr = addr->in(AddPNode::Address);
+  }
+  return count;
 }
 
 //------------------------------match_edge-------------------------------------

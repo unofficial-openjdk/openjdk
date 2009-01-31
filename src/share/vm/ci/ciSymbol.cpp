@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)ciSymbol.cpp	1.22 07/05/05 17:05:16 JVM"
+#pragma ident "@(#)ciSymbol.cpp	1.23 07/09/28 10:23:21 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -72,9 +72,9 @@ int ciSymbol::utf8_length() {
 // ciSymbol::print_impl
 //
 // Implementation of the print method
-void ciSymbol::print_impl() {
-  tty->print(" value=");
-  print_symbol();
+void ciSymbol::print_impl(outputStream* st) {
+  st->print(" value=");
+  print_symbol_on(st);
 }
 
 // ------------------------------------------------------------------

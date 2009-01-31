@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)sa.cpp	1.11 07/05/05 17:03:50 JVM"
+#pragma ident "@(#)sa.cpp	1.12 07/06/21 15:54:22 JVM"
 #endif
 /*
  * Copyright 2002 Sun Microsystems, Inc.  All Rights Reserved.
@@ -233,7 +233,7 @@ public:
 
 static void
 stop(char* msg) {
-  fprintf(stderr, msg);
+  fprintf(stderr, "%s", msg);
   fprintf(stderr, "\n");
   exit(1);
 }

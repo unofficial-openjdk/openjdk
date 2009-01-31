@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)pcTasks.cpp	1.21 07/05/05 17:05:27 JVM"
+#pragma ident "@(#)pcTasks.cpp	1.22 07/06/22 16:49:49 JVM"
 #endif
 /*
  * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -149,7 +149,7 @@ void RefProcTaskExecutor::execute(ProcessTask& task)
 {
   ParallelScavengeHeap* heap = PSParallelCompact::gc_heap();
   uint parallel_gc_threads = heap->gc_task_manager()->workers();
-  GenTaskQueueSet* qset = ParCompactionManager::chunk_array()->task_queue_set();
+  TaskQueueSetSuper* qset = ParCompactionManager::chunk_array();
   ParallelTaskTerminator terminator(parallel_gc_threads, qset);
   GCTaskQueue* q = GCTaskQueue::create();
   for(uint i=0; i<parallel_gc_threads; i++) {

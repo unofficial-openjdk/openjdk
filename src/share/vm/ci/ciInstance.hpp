@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)ciInstance.hpp	1.14 07/05/05 17:05:13 JVM"
+#pragma ident "@(#)ciInstance.hpp	1.15 07/09/28 10:23:24 JVM"
 #endif
 /*
  * Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -44,7 +44,7 @@ protected:
 
   const char* type_string() { return "ciInstance"; }
 
-  void print_impl();
+  void print_impl(outputStream* st);
 
 public:
   // If this object is a java mirror, return the corresponding type.

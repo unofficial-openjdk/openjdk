@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)addnode.hpp	1.58 07/05/05 17:06:10 JVM"
+#pragma ident "@(#)addnode.hpp	1.59 07/10/23 13:12:52 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -147,6 +147,11 @@ public:
   static Node* Ideal_base_and_offset(Node* ptr, PhaseTransform* phase,
                                      // second return value:
                                      intptr_t& offset);
+
+  // Collect the AddP offset values into the elements array, giving up
+  // if there are more than length.
+  int unpack_offsets(Node* elements[], int length);
+
   // Do not match base-ptr edge
   virtual uint match_edge(uint idx) const;
   static const Type *mach_bottom_type(const MachNode* n);  // used by ad_<arch>.hpp

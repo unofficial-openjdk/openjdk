@@ -68,39 +68,12 @@ else
   BUILD_VERSION = -DHOTSPOT_RELEASE_VERSION="\"$(HOTSPOT_RELEASE_VERSION)-$(HOTSPOT_BUILD_VERSION)\""
 endif
 
-# FULL_VERSION is defined in $(GAMMADIR)/make/defs.make
-JRE_RELEASE_VERSION$(JRE_RELEASE_VERSION) = $(FULL_VERSION)
-JRE_VERSION = -DJRE_RELEASE_VERSION="\"$(JRE_RELEASE_VERSION)\""
-
-HOTSPOT_BUILD_TARGET$(HOTSPOT_BUILD_TARGET) = $(TARGET)
-BUILD_TARGET = -DHOTSPOT_BUILD_TARGET="\"$(HOTSPOT_BUILD_TARGET)\""
-
-# set BUILD_USER from system-dependent hints:  $LOGNAME, $(whoami)
-ifndef HOTSPOT_BUILD_USER
-  HOTSPOT_BUILD_USER := $(shell echo $$LOGNAME)
-endif
-ifndef HOTSPOT_BUILD_USER
-  HOTSPOT_BUILD_USER := $(shell whoami)
-endif
-BUILD_USER = -DHOTSPOT_BUILD_USER="\"$(HOTSPOT_BUILD_USER)\""
-
-# Define HOTSPOT_VM_DISTRO if HOTSPOT_VM_DISTRO is set,
-# and if it is not see if we have the src/closed directory
-ifneq ($(HOTSPOT_VM_DISTRO),) 
-  VM_DISTRO = -DHOTSPOT_VM_DISTRO="\"$(HOTSPOT_VM_DISTRO)\""
-else
-  CLOSED_DIR_EXISTS := $(shell              \
-    if [ -d $(GAMMADIR)/src/closed ] ; then \
-      echo true;                            \
-    else                                    \
-      echo false;                           \
-    fi)
-  ifeq ($(CLOSED_DIR_EXISTS), true)
-    VM_DISTRO = -DHOTSPOT_VM_DISTRO="\"Java HotSpot(TM)\""
-  else
-    VM_DISTRO = -DHOTSPOT_VM_DISTRO="\"OpenJDK\""
-  endif
-endif
+# The following variables are defined in the generated flags.make file.
+BUILD_VERSION = -DHOTSPOT_RELEASE_VERSION="\"$(HS_BUILD_VER)\""
+JRE_VERSION   = -DJRE_RELEASE_VERSION="\"$(JRE_RELEASE_VER)\""
+BUILD_TARGET  = -DHOTSPOT_BUILD_TARGET="\"$(TARGET)\""
+BUILD_USER    = -DHOTSPOT_BUILD_USER="\"$(HOTSPOT_BUILD_USER)\""
+VM_DISTRO     = -DHOTSPOT_VM_DISTRO="\"$(HOTSPOT_VM_DISTRO)\""
 
 CPPFLAGS =           \
   ${SYSDEFS}         \
@@ -149,6 +122,8 @@ mapfile_reorder : mapfile $(REORDERFILE)
 	rm -f $@
 	cat $^ > $@
 
+STATIC_CXX = true
+
 ifeq ($(LINK_INTO),AOUT)
   LIBJVM.o                 =
   LIBJVM_MAPFILE           =
@@ -162,8 +137,14 @@ else
   # JVM is statically linked with libgcc[_s] and libstdc++; this is needed to
   # get around library dependency and compatibility issues. Must use gcc not
   # g++ to link.
-  LFLAGS_VM                += $(STATIC_LIBGCC)
-  LIBS_VM                  += $(STATIC_STDCXX) $(LIBS)
+  ifeq ($(STATIC_CXX), true)
+    LFLAGS_VM              += $(STATIC_LIBGCC)
+    LIBS_VM                += $(STATIC_STDCXX)
+  else
+    LIBS_VM                += -lstdc++
+  endif
+
+  LIBS_VM                  += $(LIBS)
 endif
 
 LINK_VM = $(LINK_LIB.c)

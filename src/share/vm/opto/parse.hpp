@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)parse.hpp	1.269 07/05/05 17:06:25 JVM"
+#pragma ident "@(#)parse.hpp	1.274 07/09/28 10:23:03 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -107,6 +107,7 @@ public:
   // Debug information collected during parse
   uint        count_inlines()     const { return _count_inlines; };
 #endif
+  GrowableArray<InlineTree*> subtrees() { return _subtrees; }
 };
 
 
@@ -132,6 +133,7 @@ class Parse : public GraphKit {
     Block**            _successors;
 
     // Use init_node/init_graph to initialize Blocks.
+    // Block() : _live_locals((uintptr_t*)NULL,0) { ShouldNotReachHere(); }
     Block() : _live_locals(NULL,0) { ShouldNotReachHere(); }
 
    public:
@@ -431,7 +433,7 @@ class Parse : public GraphKit {
 
   // Helper function to identify inlining potential at call-site
   ciMethod* optimize_inlining(ciMethod* caller, int bci, ciInstanceKlass* klass, 
-                              ciMethod *dest_method, const TypeInstPtr* receiver_type);
+                              ciMethod *dest_method, const TypeOopPtr* receiver_type);
     
   // Helper function to setup for type-profile based inlining
   bool prepare_type_profile_inline(ciInstanceKlass* prof_klass, ciMethod* prof_method);
@@ -470,6 +472,7 @@ class Parse : public GraphKit {
   void do_newarray(BasicType elemtype);
   void do_anewarray();
   void do_multianewarray();
+  Node* expand_multianewarray(ciArrayKlass* array_klass, Node* *lengths, int ndimensions);
 
   // implementation of jsr/ret
   void do_jsr();
@@ -505,8 +508,8 @@ class Parse : public GraphKit {
   void set_md_flag_at(ciMethodData* md, ciProfileData* data, int flag_constant); 
 
   void profile_method_entry();
-  void profile_taken_branch(int target_bci);
-  void profile_not_taken_branch();
+  void profile_taken_branch(int target_bci, bool force_update = false);
+  void profile_not_taken_branch(bool force_update = false);
   void profile_call(Node* receiver);
   void profile_generic_call();
   void profile_receiver_type(Node* receiver);

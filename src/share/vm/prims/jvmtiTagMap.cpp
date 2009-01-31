@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)jvmtiTagMap.cpp	1.84 07/06/06 13:18:31 JVM"
+#pragma ident "@(#)jvmtiTagMap.cpp	1.85 07/06/27 00:30:05 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -2251,6 +2251,15 @@ inline bool CallbackInvoker::invoke_advanced_stack_ref_callback(jvmtiHeapReferen
   return true;
 }
 
+// This mask is used to pass reference_info to a jvmtiHeapReferenceCallback
+// only for ref_kinds defined by the JVM TI spec. Otherwise, NULL is passed.
+#define REF_INFO_MASK  ((1 << JVMTI_HEAP_REFERENCE_FIELD)         \
+                      | (1 << JVMTI_HEAP_REFERENCE_STATIC_FIELD)  \
+                      | (1 << JVMTI_HEAP_REFERENCE_ARRAY_ELEMENT) \
+                      | (1 << JVMTI_HEAP_REFERENCE_CONSTANT_POOL) \
+                      | (1 << JVMTI_HEAP_REFERENCE_STACK_LOCAL)   \
+                      | (1 << JVMTI_HEAP_REFERENCE_JNI_LOCAL))
+
 // invoke the object reference callback to report a reference
 inline bool CallbackInvoker::invoke_advanced_object_reference_callback(jvmtiHeapReferenceKind ref_kind,
 					                               oop referrer, 
@@ -2294,7 +2303,7 @@ inline bool CallbackInvoker::invoke_advanced_object_reference_callback(jvmtiHeap
 
   // invoke the callback
   int res = (*cb)(ref_kind, 
-                  &reference_info,
+                  (REF_INFO_MASK & (1 << ref_kind)) ? &reference_info : NULL,
                   wrapper.klass_tag(),
                   wrapper.referrer_klass_tag(),
                   wrapper.obj_size(),

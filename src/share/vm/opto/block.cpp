@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)block.cpp	1.169 07/05/17 15:57:15 JVM"
+#pragma ident "@(#)block.cpp	1.172 07/09/28 10:23:15 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -134,7 +134,7 @@ void Block::find_remove( const Node *n ) {
 int Block::is_Empty() const {
   
   // Root or start block is not considered empty
-  if (_nodes[0]->is_Root() || _nodes[0]->is_Start()) {
+  if (head()->is_Root() || head()->is_Start()) {
     return not_empty; 
   }
 
@@ -167,15 +167,44 @@ int Block::is_Empty() const {
   return not_empty;
 }
 
+//------------------------------has_uncommon_code------------------------------
+// Return true if the block's code implies that it is not likely to be 
+// executed infrequently.  Check to see if the block ends in a Halt or 
+// a low probability call.
+bool Block::has_uncommon_code() const {
+  Node* en = end();
+
+  if (en->is_Goto())
+    en = en->in(0);
+  if (en->is_Catch())
+    en = en->in(0);
+  if (en->is_Proj() && en->in(0)->is_MachCall()) {
+    MachCallNode* call = en->in(0)->as_MachCall();
+    if (call->cnt() != COUNT_UNKNOWN && call->cnt() <= PROB_UNLIKELY_MAG(4)) {
+      // This is true for slow-path stubs like new_{instance,array},
+      // slow_arraycopy, complete_monitor_locking, uncommon_trap.
+      // The magic number corresponds to the probability of an uncommon_trap,
+      // even though it is a count not a probability.
+      return true;
+    }
+  }
+
+  int op = en->is_Mach() ? en->as_Mach()->ideal_Opcode() : en->Opcode();
+  return op == Op_Halt;
+}
+
 //------------------------------is_uncommon------------------------------------
 // True if block is low enough frequency or guarded by a test which 
 // mostly does not go here.
 bool Block::is_uncommon( Block_Array &bbs ) const {
   // Initial blocks must never be moved, so are never uncommon.
-  if (_nodes[0]->is_Root() || _nodes[0]->is_Start())  return false;
+  if (head()->is_Root() || head()->is_Start())  return false;
 
   // Check for way-low freq
   if( _freq < BLOCK_FREQUENCY(0.00001f) ) return true;
+
+  // Look for code shape indicating uncommon_trap or slow path
+  if (has_uncommon_code()) return true;
 
   const float epsilon = 0.05f;
   const float guard_factor = PROB_UNLIKELY_MAG(4) / (1.f - epsilon);
@@ -280,11 +309,10 @@ void Block::dump_head( const Block_Array *bbs ) const {
     }
     tty->print("\tLoop: B%d-B%d ", bhead->_pre_order, bx->_pre_order);
     // Dump any loop-specific bits, especially for CountedLoops.
-    loop->dump_spec();
+    loop->dump_spec(tty);
   }
   tty->print(" Freq: %g",_freq);
   if( Verbose || WizardMode ) {
-    tty->print(" Count: %g",_cnt);
     tty->print(" IDom: %d/#%d", _idom ? _idom->_pre_order : 0, _dom_depth);
     tty->print(" RegPressure: %d",_reg_pressure);
     tty->print(" IHRP Index: %d",_ihrp_index);
@@ -521,7 +549,7 @@ void PhaseCFG::convert_NeverBranch_to_Goto(Block *b) {
       break;
   // Scan through block, yanking dead path from
   // all regions and phis.
-  dead->_nodes[0]->del_req(j);
+  dead->head()->del_req(j);
   for( int k = 1; dead->_nodes[k]->is_Phi(); k++ )
     dead->_nodes[k]->del_req(j);
 }
@@ -560,7 +588,7 @@ bool PhaseCFG::MoveToNext(Block* bx, uint b_index) {
   return true;
 }
 
-//------------------------------MoveEmptyToEnd---------------------------------
+//------------------------------MoveToEnd--------------------------------------
 // Move empty and uncommon blocks to the end.
 void PhaseCFG::MoveToEnd(Block *b, uint i) {
   int e = b->is_Empty();
@@ -689,8 +717,8 @@ void PhaseCFG::RemoveEmpty() {
       ProjNode *proj1 = b->_nodes[b->_nodes.size()-1]->as_Proj();
 
       // Assert that proj0 and succs[0] match up. Similarly for proj1 and succs[1].
-      assert(proj0->raw_out(0) == b->_succs[0]->_nodes[0], "Mismatch successor 0");
-      assert(proj1->raw_out(0) == b->_succs[1]->_nodes[0], "Mismatch successor 1");
+      assert(proj0->raw_out(0) == b->_succs[0]->head(), "Mismatch successor 0");
+      assert(proj1->raw_out(0) == b->_succs[1]->head(), "Mismatch successor 1");
 
       Block *bs1 = b->non_connector_successor(1);
 

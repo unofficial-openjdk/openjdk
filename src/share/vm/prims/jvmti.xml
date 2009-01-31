@@ -56,6 +56,7 @@
 		      callbacksafe (safe|unsafe) #IMPLIED
                       impl CDATA #IMPLIED
                       hide CDATA #IMPLIED
+                      jkernel (yes|no) #IMPLIED
                       since CDATA "1.0">
 
    <!ELEMENT callback ((jmethodID|jfieldID|jframeID|jrawMonitorID|jclass|jthread|jthreadGroup|jobject|
@@ -359,7 +360,7 @@
 <specification label="JVM(TM) Tool Interface"
         majorversion="1"
         minorversion="1"
-        microversion="102">
+        microversion="109">
   <title subtitle="Version">
     <tm>JVM</tm> Tool Interface
   </title>
@@ -969,7 +970,7 @@ jvmtiEnv *jvmti;
       allocation libraries and mechanisms.
     </intro>
 
-    <function id="Allocate" phase="any" callbacksafe="safe" impl="notrace" num="46">
+    <function id="Allocate" jkernel="yes" phase="any" callbacksafe="safe" impl="notrace" num="46">
       <synopsis>Allocate</synopsis>
       <description>
 	Allocate an area of memory through the <jvmti/> allocator. 
@@ -1007,7 +1008,7 @@ jvmtiEnv *jvmti;
       </errors>
     </function>
 
-    <function id="Deallocate" phase="any" callbacksafe="safe" impl="notrace" num="47">
+    <function id="Deallocate" jkernel="yes" phase="any" callbacksafe="safe" impl="notrace" num="47">
       <synopsis>Deallocate</synopsis>
       <description>
 	Deallocate <code>mem</code>  using the <jvmti/> allocator. 
@@ -2074,7 +2075,7 @@ jvmtiEnv *jvmti;
       </errors>
     </function>
 
-    <function id="SetThreadLocalStorage" impl="notrace" phase="start" num="103">
+    <function id="SetThreadLocalStorage" jkernel="yes" impl="notrace" phase="start" num="103">
       <synopsis>Set Thread Local Storage</synopsis>
       <description>
 	The VM stores a pointer value associated with each environment-thread
@@ -2114,7 +2115,7 @@ jvmtiEnv *jvmti;
       </errors>
     </function>
 
-    <function id="GetThreadLocalStorage" impl="innative notrace" phase="start" num="102">
+    <function id="GetThreadLocalStorage" jkernel="yes" impl="innative notrace" phase="start" num="102">
       <synopsis>Get Thread Local Storage</synopsis>
       <description>
         Called by the agent to get the value of the <jvmti/> thread-local
@@ -6360,7 +6361,7 @@ class C2 extends C1 implements I2 {
     <intro>
     </intro>
 
-    <function id="GetLoadedClasses" num="78">
+    <function id="GetLoadedClasses" jkernel="yes" num="78">
       <synopsis>Get Loaded Classes</synopsis>
       <description>
 	Return an array of all classes loaded in the virtual machine.
@@ -6394,7 +6395,7 @@ class C2 extends C1 implements I2 {
       </errors>
     </function>
 
-    <function id="GetClassLoaderClasses" num="79">
+    <function id="GetClassLoaderClasses" jkernel="yes" num="79">
       <synopsis>Get Classloader Classes</synopsis>
       <description>
 	Returns an array of those classes for which this class loader has
@@ -6935,7 +6936,7 @@ class C2 extends C1 implements I2 {
       </errors>
     </function>
 
-    <function id="IsModifiableClass" phase="start" num="45" since="1.1">
+    <function id="IsModifiableClass" jkernel="yes" phase="start" num="45" since="1.1">
       <synopsis>Is Modifiable Class</synopsis>
       <description>
 	Determines whether a class is modifiable.
@@ -7060,7 +7061,7 @@ class C2 extends C1 implements I2 {
       </errors>
     </function>
 
-    <function id="RetransformClasses" num="152" since="1.1">
+    <function id="RetransformClasses" jkernel="yes" num="152" since="1.1">
       <synopsis>Retransform Classes</synopsis>
       <description>
         This function facilitates the 
@@ -7228,7 +7229,7 @@ class C2 extends C1 implements I2 {
       </errors>
     </function>
 
-    <function id="RedefineClasses" num="87">
+    <function id="RedefineClasses" jkernel="yes" num="87">
       <synopsis>Redefine Classes</synopsis>
       <typedef id="jvmtiClassDefinition" label="Class redefinition description">
 	<field id="klass">
@@ -7385,7 +7386,7 @@ class C2 extends C1 implements I2 {
 
   <category id="object" label="Object">
 
-    <function id="GetObjectSize" phase="start" num="154">
+    <function id="GetObjectSize" jkernel="yes" phase="start" num="154">
       <synopsis>Get Object Size</synopsis>
       <description>
 	For the object indicated by <code>object</code>,
@@ -8310,7 +8311,7 @@ class C2 extends C1 implements I2 {
       </errors>
     </function>
 
-    <function id="SetNativeMethodPrefix" phase="any" num="73" since="1.1">
+    <function id="SetNativeMethodPrefix" jkernel="yes" phase="any" num="73" since="1.1">
       <synopsis>Set Native Method Prefix</synopsis>
       <description>
 	This function modifies the failure handling of
@@ -8433,7 +8434,7 @@ method(wrapped_foo) -> nativeImplementation(foo)</example>
       </errors>
     </function>
 
-    <function id="SetNativeMethodPrefixes" phase="any" num="74" since="1.1">
+    <function id="SetNativeMethodPrefixes" jkernel="yes" phase="any" num="74" since="1.1">
       <synopsis>Set Native Method Prefixes</synopsis>
       <description>
 	 For a normal agent, <functionlink id="SetNativeMethodPrefix"/>
@@ -8868,7 +8869,7 @@ myInit() {
 
   <category id="eventManagement" label="Event Management">
 
-    <function id="SetEventCallbacks" phase="onload" num="122">
+    <function id="SetEventCallbacks" jkernel="yes" phase="onload" num="122">
       <synopsis>Set Event Callbacks</synopsis>
       <description>
         Set the functions to be called for each event.
@@ -8911,7 +8912,7 @@ myInit() {
       </errors>
     </function>
 
-    <function id="SetEventNotificationMode" phase="onload" num="2">
+    <function id="SetEventNotificationMode" jkernel="yes" phase="onload" num="2">
       <synopsis>Set Event Notification Mode</synopsis>
       <description>
 	Control the generation of events. 
@@ -9857,7 +9858,7 @@ myInit() {
       </capabilityfield>
     </capabilitiestypedef>
 
-    <function id="GetPotentialCapabilities" phase="onload" num="140">
+    <function id="GetPotentialCapabilities" jkernel="yes" phase="onload" num="140">
       <synopsis>Get Potential Capabilities</synopsis>
       <description>
         Returns via <paramlink id="capabilities_ptr"></paramlink> the <jvmti/> 
@@ -9972,7 +9973,7 @@ myInit() {
     </function>
     </elide>
 
-    <function id="AddCapabilities" phase="onload" num="142">
+    <function id="AddCapabilities" jkernel="yes" phase="onload" num="142">
       <synopsis>Add Capabilities</synopsis>
       <description>
         Set new capabilities by adding the capabilities 
@@ -10049,7 +10050,7 @@ myInit() {
 
 
 
-    <function id="GetCapabilities" phase="any" num="89">
+    <function id="GetCapabilities" jkernel="yes" phase="any" num="89">
       <synopsis>Get Capabilities</synopsis>
         <description>
           Returns via <paramlink id="capabilities_ptr"></paramlink> the optional <jvmti/> 
@@ -10416,7 +10417,7 @@ myInit() {
       This is useful for installing instrumentation under the correct class loader.
     </intro>
 
-    <function id="AddToBootstrapClassLoaderSearch" phase="onload" num="149">
+    <function id="AddToBootstrapClassLoaderSearch" jkernel="yes" phase="onload" num="149">
       <synopsis>Add To Bootstrap Class Loader Search</synopsis>
       <description>
           This function can be used to cause instrumentation classes to be defined by the 
@@ -10468,7 +10469,7 @@ myInit() {
       </errors>
     </function>
 
-    <function id="AddToSystemClassLoaderSearch" phase="onload" num="151" since="1.1">
+    <function id="AddToSystemClassLoaderSearch" jkernel="yes" phase="onload" num="151" since="1.1">
       <synopsis>Add To System Class Loader Search</synopsis>
       <description>
 	  This function can be used to cause instrumentation classes to be
@@ -10685,7 +10686,7 @@ myInit() {
     <intro>
     </intro>
 
-    <function id="GetPhase" phase="any" num="133">
+    <function id="GetPhase" jkernel="yes" phase="any" num="133">
       <synopsis>Get Phase</synopsis>
       <description>
           Return the current phase of VM execution.  
@@ -10747,7 +10748,7 @@ myInit() {
       </errors>
     </function>
 
-    <function id="DisposeEnvironment" phase="any" num="127">
+    <function id="DisposeEnvironment" jkernel="yes" phase="any" num="127">
       <synopsis>Dispose Environment</synopsis>
       <description>
         Shutdown a <jvmti/> connection created with JNI <code>GetEnv</code>
@@ -10793,7 +10794,7 @@ myInit() {
       </errors>
     </function>
 
-    <function id="SetEnvironmentLocalStorage" phase="any" callbacksafe="safe" impl="innative notrace" num="148">
+    <function id="SetEnvironmentLocalStorage" jkernel="yes" phase="any" callbacksafe="safe" impl="innative notrace" num="148">
       <synopsis>Set Environment Local Storage</synopsis>
       <description>
 	The VM stores a pointer value associated with each environment.
@@ -10827,7 +10828,7 @@ myInit() {
       </errors>
     </function>
 
-    <function id="GetEnvironmentLocalStorage" phase="any" callbacksafe="safe" impl="innative notrace" num="147">
+    <function id="GetEnvironmentLocalStorage" jkernel="yes" phase="any" callbacksafe="safe" impl="innative notrace" num="147">
       <synopsis>Get Environment Local Storage</synopsis>
       <description>
         Called by the agent to get the value of the <jvmti/> environment-local
@@ -10852,7 +10853,7 @@ myInit() {
       </errors>
     </function>
 
-    <function id="GetVersionNumber" phase="any" num="88">
+    <function id="GetVersionNumber" jkernel="yes" phase="any" num="88">
       <synopsis>Get Version Number</synopsis>
       <description>
         Return the <jvmti/> version via <code>version_ptr</code>.
@@ -13382,7 +13383,7 @@ typedef void (JNICALL *jvmtiEventVMInit)
   </intro>
 </issuessection>
 
-<changehistory id="ChangeHistory" update="06/08/06">
+<changehistory id="ChangeHistory" update="09/05/07">
   <intro>
     The <jvmti/> specification is an evolving document with major, minor, 
     and micro version numbers.

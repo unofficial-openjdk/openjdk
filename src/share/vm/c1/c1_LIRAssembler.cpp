@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)c1_LIRAssembler.cpp	1.133 07/05/05 17:05:08 JVM"
+#pragma ident "@(#)c1_LIRAssembler.cpp	1.135 07/07/02 16:50:41 JVM"
 #endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -218,7 +218,7 @@ void LIR_Assembler::emit_block(BlockBegin* block) {
 #endif /* PRODUCT */
 
   assert(block->lir() != NULL, "must have LIR");
-  IA32_ONLY(assert(_masm->esp_offset() == 0, "frame size should be fixed"));
+  IA32_ONLY(assert(_masm->rsp_offset() == 0, "frame size should be fixed"));
 
 #ifndef PRODUCT
   if (CommentedAssembly) {
@@ -230,7 +230,7 @@ void LIR_Assembler::emit_block(BlockBegin* block) {
 
   emit_lir_list(block->lir());
 
-  IA32_ONLY(assert(_masm->esp_offset() == 0, "frame size should be fixed"));
+  IA32_ONLY(assert(_masm->rsp_offset() == 0, "frame size should be fixed"));
 }
 
 
@@ -649,7 +649,6 @@ void LIR_Assembler::emit_op2(LIR_Op2* op) {
       break;
 
     case lir_shl:
-    case lir_shlx:
     case lir_shr:
     case lir_ushr:
       if (op->in_opr2()->is_constant()) {
@@ -787,7 +786,7 @@ void LIR_Assembler::verify_oop_map(CodeEmitInfo* info) {
           _masm->verify_oop(r->as_Register());
 #endif
         } else {
-          _masm->verify_stack_oop(r->reg2stack() * wordSize);
+          _masm->verify_stack_oop(r->reg2stack() * VMRegImpl::stack_slot_size);
         }
       }
       s.next();

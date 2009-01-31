@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)cardTableModRefBS.cpp	1.58 07/05/29 09:44:14 JVM"
+#pragma ident "@(#)cardTableModRefBS.cpp	1.60 07/12/05 23:34:34 JVM"
 #endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -32,9 +32,30 @@
 # include "incls/_precompiled.incl"
 # include "incls/_cardTableModRefBS.cpp.incl"
 
+size_t CardTableModRefBS::cards_required(size_t covered_words)
+{
+  // Add one for a guard card, used to detect errors.
+  const size_t words = align_size_up(covered_words, card_size_in_words);
+  return words / card_size_in_words + 1;
+}
+
+size_t CardTableModRefBS::compute_byte_map_size()
+{
+  assert(_guard_index == cards_required(_whole_heap.word_size()) - 1,
+					"unitialized, check declaration order");
+  assert(_page_size != 0, "unitialized, check declaration order");
+  const size_t granularity = os::vm_allocation_granularity();
+  return align_size_up(_guard_index + 1, MAX2(_page_size, granularity));
+}
+
 CardTableModRefBS::CardTableModRefBS(MemRegion whole_heap,
-				     int max_covered_regions) :
-  ModRefBarrierSet(max_covered_regions), _whole_heap(whole_heap)
+				     int max_covered_regions):
+  ModRefBarrierSet(max_covered_regions),
+  _whole_heap(whole_heap),
+  _guard_index(cards_required(whole_heap.word_size()) - 1),
+  _last_valid_index(_guard_index - 1),
+  _page_size(os::vm_page_size()),
+  _byte_map_size(compute_byte_map_size())
 {
   _kind = BarrierSet::CardTableModRef;
 
@@ -43,14 +64,7 @@ CardTableModRefBS::CardTableModRefBS(MemRegion whole_heap,
   assert((uintptr_t(low_bound)  & (card_size - 1))  == 0, "heap must start at card boundary");
   assert((uintptr_t(high_bound) & (card_size - 1))  == 0, "heap must end at card boundary");
 
-  assert(card_size <= 512, "card_size must be less than 512");
-  size_t heap_size_in_words = _whole_heap.word_size();
-  // Add one for the last_card, treated as a guard card
-  _byte_map_size = ReservedSpace::allocation_align_size_up((heap_size_in_words / 
-                                                      card_size_in_words) + 1);
-  // A couple of useful indicies
-  _guard_index      = _byte_map_size - 1;
-  _last_valid_index = _byte_map_size - 2;
+  assert(card_size <= 512, "card_size must be less than 512"); // why?
 
   _covered   = new MemRegion[max_covered_regions];
   _committed = new MemRegion[max_covered_regions];
@@ -63,10 +77,16 @@ CardTableModRefBS::CardTableModRefBS(MemRegion whole_heap,
   }
   _cur_covered_regions = 0;
 
-  ReservedSpace heap_rs(_byte_map_size);
+  const size_t rs_align = _page_size == (size_t) os::vm_page_size() ? 0 :
+    MAX2(_page_size, (size_t) os::vm_allocation_granularity());
+  ReservedSpace heap_rs(_byte_map_size, rs_align, false);
+  os::trace_page_sizes("card table", _guard_index + 1, _guard_index + 1,
+		       _page_size, heap_rs.base(), heap_rs.size());
   if (!heap_rs.is_reserved()) {
-    vm_exit_during_initialization("Could not reserve enough space for card marking array");
+    vm_exit_during_initialization("Could not reserve enough space for the "
+				  "card marking array");
   }
+
   // The assember store_check code will do an unsigned shift of the oop, 
   // then add it to byte_map_base, i.e.
   // 
@@ -77,11 +97,11 @@ CardTableModRefBS::CardTableModRefBS(MemRegion whole_heap,
   assert(byte_for(high_bound-1) <= &_byte_map[_last_valid_index], "Checking end of map");
 
   jbyte* guard_card = &_byte_map[_guard_index];
-  uintptr_t guard_page = align_size_down((uintptr_t)guard_card, os::vm_page_size());
-  _guard_region = MemRegion((HeapWord*)guard_page, os::vm_page_size());
-  if (!os::commit_memory((char*)guard_page, os::vm_page_size())) {
+  uintptr_t guard_page = align_size_down((uintptr_t)guard_card, _page_size);
+  _guard_region = MemRegion((HeapWord*)guard_page, _page_size);
+  if (!os::commit_memory((char*)guard_page, _page_size, _page_size)) {
     // Do better than this for Merlin
-    vm_exit_out_of_memory(os::vm_page_size(), "card table last card");
+    vm_exit_out_of_memory(_page_size, "card table last card");
   }
   *guard_card = last_card;
 
@@ -136,8 +156,7 @@ int CardTableModRefBS::find_covering_region_by_base(HeapWord* base) {
   _covered[res].set_start(base);
   _covered[res].set_word_size(0);
   jbyte* ct_start = byte_for(base);
-  uintptr_t ct_start_aligned =
-    align_size_down((uintptr_t)ct_start, os::vm_page_size());
+  uintptr_t ct_start_aligned = align_size_down((uintptr_t)ct_start, _page_size);
   _committed[res].set_start((HeapWord*)ct_start_aligned);
   _committed[res].set_word_size(0);
   return res;
@@ -196,7 +215,7 @@ void CardTableModRefBS::resize_covered_region(MemRegion new_region) {
     // Align the end up to a page size (starts are already aligned).
     jbyte* new_end = byte_after(new_region.last());
     HeapWord* new_end_aligned =
-      (HeapWord*)align_size_up((uintptr_t)new_end, os::vm_page_size());
+      (HeapWord*)align_size_up((uintptr_t)new_end, _page_size);
     assert(new_end_aligned >= (HeapWord*) new_end,
            "align up, but less");
     // The guard page is always committed and should not be committed over.
@@ -208,7 +227,7 @@ void CardTableModRefBS::resize_covered_region(MemRegion new_region) {
 
       assert(!new_committed.is_empty(), "Region should not be empty here");
       if (!os::commit_memory((char*)new_committed.start(),
-	                     new_committed.byte_size())) {
+	                     new_committed.byte_size(), _page_size)) {
         // Do better than this for Merlin
         vm_exit_out_of_memory(new_committed.byte_size(),
 	        "card table expansion");

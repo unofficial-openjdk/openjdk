@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)phaseX.cpp	1.261 07/05/05 17:06:24 JVM"
+#pragma ident "@(#)phaseX.cpp	1.262 07/07/19 19:08:26 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -1334,6 +1334,18 @@ void PhaseIterGVN::add_users_to_worklist( Node *n ) {
         if (u->is_Mem())
           _worklist.push(u);
       }
+    }
+    // If changed initialization activity, check dependent Stores
+    if (use_op == Op_Allocate || use_op == Op_AllocateArray) {
+      InitializeNode* init = use->as_Allocate()->initialization();
+      if (init != NULL) {
+        Node* imem = init->proj_out(TypeFunc::Memory);
+        if (imem != NULL)  add_users_to_worklist0(imem);
+      }
+    }
+    if (use_op == Op_Initialize) {
+      Node* imem = use->as_Initialize()->proj_out(TypeFunc::Memory);
+      if (imem != NULL)  add_users_to_worklist0(imem);
     }
   }
 }

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)ciInstance.cpp	1.16 07/05/05 17:05:13 JVM"
+#pragma ident "@(#)ciInstance.cpp	1.17 07/09/28 10:23:24 JVM"
 #endif
 /*
  * Copyright 1999-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -131,7 +131,7 @@ ciConstant ciInstance::field_value_by_offset(int field_offset) {
 // ciInstance::print_impl
 //
 // Implementation of the print method.
-void ciInstance::print_impl() {
-  tty->print(" type=");
-  klass()->print();
+void ciInstance::print_impl(outputStream* st) {
+  st->print(" type=");
+  klass()->print(st);
 }

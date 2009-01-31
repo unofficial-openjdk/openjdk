@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)c2_globals.hpp	1.90 07/09/25 22:01:58 JVM"
+#pragma ident "@(#)c2_globals.hpp	1.96 07/10/23 13:12:52 JVM"
 #endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -131,6 +131,9 @@
   notproduct(bool, PrintOptoPeephole, false,                                \
           "Print New compiler peephole replacements")                       \
                                                                             \
+  develop(bool, PrintCFGBlockFreq, false,                                   \
+          "Print CFG block freqencies")                                     \
+                                                                            \
   develop(bool, TraceOptoParse, false,                                      \
           "Trace bytecode parse and control-flow merge")                    \
                                                                             \
@@ -147,6 +150,10 @@
           "UnrollLimitForProfileCheck. A higher value allows more "         \
           "unrolling. Zero acts as a very large value." )                   \
                                                                             \
+  product(intx, MultiArrayExpandLimit, 6,                                   \
+          "Maximum number of individual allocations in an inline-expanded " \
+          "multianewarray instruction")                                     \
+                                                                            \
   notproduct(bool, TraceProfileTripCount, false,                            \
           "Trace profile loop trip count information")                      \
                                                                             \
@@ -159,6 +166,18 @@
   develop(bool, UseExactTypes, true,                                        \
           "Use exact types to eliminate array store checks and v-calls")    \
                                                                             \
+  product(intx, TrackedInitializationLimit, 50,                             \
+          "When initializing fields, track up to this many words")          \
+                                                                            \
+  product(bool, ReduceFieldZeroing, true,                                   \
+          "When initializing fields, try to avoid needless zeroing")        \
+                                                                            \
+  product(bool, ReduceInitialCardMarks, true,                               \
+          "When initializing fields, try to avoid needless card marks")     \
+                                                                            \
+  product(bool, ReduceBulkZeroing, true,                                    \
+          "When bulk-initializing, try to avoid needless zeroing")          \
+                                                                            \
   develop_pd(intx, RegisterCostAreaRatio,                                   \
           "Spill selection in reg allocator: scale area by (X/64K) before " \
           "adding cost")                                                    \
@@ -169,7 +188,7 @@
   notproduct(bool, VerifyGraphEdges , false,                                \
           "Verify Bi-directional Edges")                                    \
                                                                             \
-  notproduct(bool, VerifyDUIterators, false,                                \
+  notproduct(bool, VerifyDUIterators, true,                                 \
           "Verify the safety of all iterations of Bi-directional Edges")    \
                                                                             \
   notproduct(bool, VerifyHashTableKeys, true,                               \
@@ -211,7 +230,7 @@
   notproduct(bool, TraceLoopUnswitching, false,                             \
           "Trace loop unswitching")                                         \
                                                                             \
-  product(bool, UseSuperWord, false,                                        \
+  product(bool, UseSuperWord, true,                                         \
           "Transform scalar operations into superword operations")          \
                                                                             \
   develop(bool, SuperWordRTDepCheck, false,                                 \
@@ -232,6 +251,20 @@
                                                                             \
   develop(bool, SparcV9RegsHiBitsZero, true,                                \
           "Assume Sparc V9 I&L registers on V8+ systems are zero-extended") \
+                                                                            \
+  develop(intx, PrintIdealGraphLevel, 0,                                    \
+          "Print ideal graph to XML file / network interface. "             \
+          "By default attempts to connect to the visualizer on a socket.")  \
+                                                                            \
+  develop(intx, PrintIdealGraphPort, 4444,                                  \
+          "Ideal graph printer to network port")                            \
+                                                                            \
+  develop(ccstr, PrintIdealGraphAddress, "127.0.0.1",                       \
+          "IP address to connect to visualizer")                            \
+                                                                            \
+  develop(ccstr, PrintIdealGraphFile, NULL,                                 \
+          "File to dump ideal graph to.  If set overrides the "             \
+          "use of the network")                                             \
                                                                             \
   product(bool, UseOldInlining, true,                                       \
           "Enable the 1.3 inlining strategy")                               \
@@ -337,11 +370,20 @@
   notproduct(bool, PrintEliminateLocks, false,                              \
           "Print out when locks are eliminated")                            \
                                                                             \
+  diagnostic(bool, EliminateAutoBox, false,                                 \
+          "Private flag to control optimizations for autobox elimination")  \
+                                                                            \
+  product(intx, AutoBoxCacheMax, 128,                                       \
+          "Sets max value cached by the java.lang.Integer autobox cache")   \
+                                                                            \
   product(bool, DoEscapeAnalysis, false,                                    \
           "Perform escape analysis")                                        \
                                                                             \
   notproduct(bool, PrintEscapeAnalysis, false,                              \
           "Print the results of escape analysis")                           \
+                                                                            \
+  product(bool, EliminateAllocations, true,                                 \
+          "Use escape analysis to eliminate allocations")                   \
                                                                             \
   product(intx, MaxLabelRootDepth, 1100, 				    \
           "Maximum times call Label_Root to prevent stack overflow")        \

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)machnode.hpp	1.202 07/05/17 15:59:11 JVM"
+#pragma ident "@(#)machnode.hpp	1.204 07/09/28 10:23:08 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -88,7 +88,7 @@ public:
     return ::as_FloatRegister(reg(ra_, node, idx));
   }
 
-#if defined(IA32)
+#if defined(IA32) || defined(AMD64)
   XMMRegister  as_XMMRegister(PhaseRegAlloc *ra_, const Node *node)   const {
     return ::as_XMMRegister(reg(ra_, node));
   }
@@ -145,10 +145,10 @@ public:
   virtual const char    *Name() const { return "???";}
 
   // Methods to output the text version of the operand
-  virtual void int_format(PhaseRegAlloc *,const MachNode *node) const = 0;
-  virtual void ext_format(PhaseRegAlloc *,const MachNode *node,int idx) const=0;
+  virtual void int_format(PhaseRegAlloc *,const MachNode *node, outputStream *st) const = 0;
+  virtual void ext_format(PhaseRegAlloc *,const MachNode *node,int idx, outputStream *st) const=0;
 
-  virtual void dump_spec() const; // Print per-operand info
+  virtual void dump_spec(outputStream *st) const; // Print per-operand info
 #endif
 };
 
@@ -296,8 +296,8 @@ public:
 
 #ifndef PRODUCT
   virtual const char *Name() const = 0; // Machine-specific name
-  virtual void dump_spec() const; // Print per-node info
-  void         dump_format(PhaseRegAlloc *ra) const; // access to virtual
+  virtual void dump_spec(outputStream *st) const; // Print per-node info
+  void         dump_format(PhaseRegAlloc *ra, outputStream *st) const; // access to virtual
 #endif
 };
 
@@ -324,7 +324,7 @@ public:
 
   virtual const class Type *bottom_type() const { return _bottom_type; }
 #ifndef PRODUCT
-  virtual void dump_spec() const;
+  virtual void dump_spec(outputStream *st) const;
 #endif
 };
 
@@ -338,7 +338,7 @@ public:
 
 #ifndef PRODUCT
   virtual const char *Name() const { return "Breakpoint"; }
-  virtual void format( PhaseRegAlloc * ) const;
+  virtual void format( PhaseRegAlloc *, outputStream *st ) const;
 #endif
 };
 
@@ -352,7 +352,7 @@ public:
 
 #ifndef PRODUCT
   virtual const char *Name() const { return "Unvalidated-Entry-Point"; }
-  virtual void format( PhaseRegAlloc * ) const;
+  virtual void format( PhaseRegAlloc *, outputStream *st ) const;
 #endif
 };
 
@@ -364,11 +364,10 @@ public:
   virtual void emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const;
   virtual uint size(PhaseRegAlloc *ra_) const;
   virtual int reloc() const;
-  uint implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bool do_size ) const;
 
 #ifndef PRODUCT
   virtual const char *Name() const { return "Prolog"; }
-  virtual void format( PhaseRegAlloc * ) const;
+  virtual void format( PhaseRegAlloc *, outputStream *st ) const;
 #endif
 };
 
@@ -393,7 +392,7 @@ public:
 
 #ifndef PRODUCT
   virtual const char *Name() const { return "Epilog"; }
-  virtual void format( PhaseRegAlloc * ) const;
+  virtual void format( PhaseRegAlloc *, outputStream *st ) const;
 #endif
 };
 
@@ -414,8 +413,8 @@ public:
   virtual const Pipeline *pipeline() const;
 #ifndef PRODUCT
   virtual const char *Name() const { return "Nop"; }
-  virtual void format( PhaseRegAlloc * ) const;
-  virtual void dump_spec() const { } // No per-operand info
+  virtual void format( PhaseRegAlloc *, outputStream *st ) const;
+  virtual void dump_spec(outputStream *st) const { } // No per-operand info
 #endif
 };
 
@@ -442,14 +441,14 @@ public:
   virtual const class Type *bottom_type() const { return _type; }
   virtual uint ideal_reg() const { return Matcher::base2reg[_type->base()]; }
   virtual uint oper_input_base() const { return 1; }
-  uint implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bool do_size ) const;
+  uint implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bool do_size, outputStream* st ) const;
 
   virtual void emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const;
   virtual uint size(PhaseRegAlloc *ra_) const;
 
 #ifndef PRODUCT
   virtual const char *Name() const { return "MachSpillCopy"; }
-  virtual void format( PhaseRegAlloc * ) const;
+  virtual void format( PhaseRegAlloc *, outputStream *st ) const;
 #endif
 };
 
@@ -478,7 +477,7 @@ public:
   virtual const RegMask &out_RegMask() const { return RegMask::Empty; }
 #ifndef PRODUCT
   virtual const char *Name() const { return "NullCheck"; }
-  virtual void format( PhaseRegAlloc * ) const;
+  virtual void format( PhaseRegAlloc *, outputStream *st ) const;
 #endif
 };
 
@@ -508,7 +507,7 @@ public:
   // Need size_of() for virtual ProjNode::clone() 
   virtual uint  size_of() const { return sizeof(MachProjNode); }
 #ifndef PRODUCT
-  virtual void dump_spec() const;
+  virtual void dump_spec(outputStream *st) const;
 #endif
 };
 
@@ -523,7 +522,7 @@ public:
     init_class_id(Class_MachIf);
   }
 #ifndef PRODUCT
-  virtual void dump_spec() const;
+  virtual void dump_spec(outputStream *st) const;
 #endif
 };
 
@@ -652,7 +651,7 @@ public:
   bool returns_long() const { return tf()->return_type() == T_LONG; }
   bool return_value_is_used() const;
 #ifndef PRODUCT
-  virtual void dump_spec() const;
+  virtual void dump_spec(outputStream *st) const;
 #endif
 };
 
@@ -670,7 +669,7 @@ public:
     init_class_id(Class_MachCallJava);
   }
 #ifndef PRODUCT
-  virtual void dump_spec() const;
+  virtual void dump_spec(outputStream *st) const;
 #endif
 };
 
@@ -690,8 +689,8 @@ public:
 
   virtual int ret_addr_offset();
 #ifndef PRODUCT
-  virtual void dump_spec() const;
-  void dump_trap_args() const;
+  virtual void dump_spec(outputStream *st) const;
+  void dump_trap_args(outputStream *st) const;
 #endif
 };
 
@@ -706,7 +705,7 @@ public:
   }
   virtual int ret_addr_offset();
 #ifndef PRODUCT
-  virtual void dump_spec() const;
+  virtual void dump_spec(outputStream *st) const;
 #endif
 };
 
@@ -722,7 +721,7 @@ public:
   }
   virtual int ret_addr_offset();
 #ifndef PRODUCT
-  virtual void dump_spec() const;
+  virtual void dump_spec(outputStream *st) const;
 #endif
 };
 
@@ -762,7 +761,7 @@ public:
   virtual uint size_of() const { return sizeof(MachTempNode); }
 
 #ifndef PRODUCT
-  virtual void format(PhaseRegAlloc *ra) const {}
+  virtual void format(PhaseRegAlloc *, outputStream *st ) const {}
   virtual const char *Name() const { return "MachTemp";}
 #endif
 };
@@ -797,8 +796,8 @@ public:
 #ifndef PRODUCT
   virtual const char    *Name()   const { return "Label";}
 
-  virtual void int_format(PhaseRegAlloc *ra, const MachNode *node) const;
-  virtual void ext_format(PhaseRegAlloc *ra, const MachNode *node, int idx) const { int_format( ra, node ); }
+  virtual void int_format(PhaseRegAlloc *ra, const MachNode *node, outputStream *st) const;
+  virtual void ext_format(PhaseRegAlloc *ra, const MachNode *node, int idx, outputStream *st) const { int_format( ra, node, st ); }
 #endif
 };
 
@@ -824,7 +823,7 @@ public:
 #ifndef PRODUCT
   virtual const char    *Name()   const { return "Method";}
 
-  virtual void int_format(PhaseRegAlloc *ra, const MachNode *node) const;
-  virtual void ext_format(PhaseRegAlloc *ra, const MachNode *node, int idx) const { int_format( ra, node ); }
+  virtual void int_format(PhaseRegAlloc *ra, const MachNode *node, outputStream *st) const;
+  virtual void ext_format(PhaseRegAlloc *ra, const MachNode *node, int idx, outputStream *st) const { int_format( ra, node, st ); }
 #endif
 };

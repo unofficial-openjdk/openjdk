@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)output_h.cpp	1.178 07/05/05 17:05:03 JVM"
+#pragma ident "@(#)output_h.cpp	1.180 07/09/28 10:23:25 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -345,34 +345,34 @@ static void defineConstructor(FILE *fp, const char *name, uint num_consts,
 
 // Generate the format rule for condition codes
 static void defineCCodeDump(FILE *fp, int i) {
-  fprintf(fp, "         if( _c%d == BoolTest::eq ) tty->print(\"eq\");\n",i);
-  fprintf(fp, "    else if( _c%d == BoolTest::ne ) tty->print(\"ne\");\n",i);
-  fprintf(fp, "    else if( _c%d == BoolTest::le ) tty->print(\"le\");\n",i);
-  fprintf(fp, "    else if( _c%d == BoolTest::ge ) tty->print(\"ge\");\n",i);
-  fprintf(fp, "    else if( _c%d == BoolTest::lt ) tty->print(\"lt\");\n",i);
-  fprintf(fp, "    else if( _c%d == BoolTest::gt ) tty->print(\"gt\");\n",i);
+  fprintf(fp, "         if( _c%d == BoolTest::eq ) st->print(\"eq\");\n",i);
+  fprintf(fp, "    else if( _c%d == BoolTest::ne ) st->print(\"ne\");\n",i);
+  fprintf(fp, "    else if( _c%d == BoolTest::le ) st->print(\"le\");\n",i);
+  fprintf(fp, "    else if( _c%d == BoolTest::ge ) st->print(\"ge\");\n",i);
+  fprintf(fp, "    else if( _c%d == BoolTest::lt ) st->print(\"lt\");\n",i);
+  fprintf(fp, "    else if( _c%d == BoolTest::gt ) st->print(\"gt\");\n",i);
 }
 
 // Output code that dumps constant values, increment "i" if type is constant
 static uint dump_spec_constant(FILE *fp, const char *ideal_type, uint i) {
   if (!strcmp(ideal_type, "ConI")) {
-    fprintf(fp,"   tty->print(\"#%%d\", _c%d);\n", i);
+    fprintf(fp,"   st->print(\"#%%d\", _c%d);\n", i);
     ++i;
   }
   else if (!strcmp(ideal_type, "ConP")) {
-    fprintf(fp,"    _c%d->dump();\n", i);
+    fprintf(fp,"    _c%d->dump_on(st);\n", i);
     ++i;
   }
   else if (!strcmp(ideal_type, "ConL")) {
-    fprintf(fp,"    tty->print(\"#\" INT64_FORMAT, _c%d);\n", i);
+    fprintf(fp,"    st->print(\"#\" INT64_FORMAT, _c%d);\n", i);
     ++i;
   }
   else if (!strcmp(ideal_type, "ConF")) {
-    fprintf(fp,"    tty->print(\"#%%f\", _c%d);\n", i);
+    fprintf(fp,"    st->print(\"#%%f\", _c%d);\n", i);
     ++i;
   }
   else if (!strcmp(ideal_type, "ConD")) {
-    fprintf(fp,"    tty->print(\"#%%f\", _c%d);\n", i);
+    fprintf(fp,"    st->print(\"#%%f\", _c%d);\n", i);
     ++i;
   }
   else if (!strcmp(ideal_type, "Bool")) {
@@ -388,8 +388,8 @@ void gen_oper_format(FILE *fp, FormDict &globals, OperandForm &oper, bool for_c_
   if (!for_c_file) {
     // invoked after output #ifndef PRODUCT to ad_<arch>.hpp 
     // compile the bodies separately, to cut down on recompilations
-    fprintf(fp,"  virtual void           int_format(PhaseRegAlloc *ra, const MachNode *node) const;\n");
-    fprintf(fp,"  virtual void           ext_format(PhaseRegAlloc *ra, const MachNode *node, int idx) const;\n");
+    fprintf(fp,"  virtual void           int_format(PhaseRegAlloc *ra, const MachNode *node, outputStream *st) const;\n");
+    fprintf(fp,"  virtual void           ext_format(PhaseRegAlloc *ra, const MachNode *node, int idx, outputStream *st) const;\n");
     return;
   }
 
@@ -398,7 +398,7 @@ void gen_oper_format(FILE *fp, FormDict &globals, OperandForm &oper, bool for_c_
 
   // Generate internal format function, used when stored locally
   fprintf(fp, "\n#ifndef PRODUCT\n");
-  fprintf(fp,"void %sOper::int_format(PhaseRegAlloc *ra, const MachNode *node) const {\n", oper._ident);
+  fprintf(fp,"void %sOper::int_format(PhaseRegAlloc *ra, const MachNode *node, outputStream *st) const {\n", oper._ident);
   // Generate the user-defined portion of the format
   if (oper._format) {
     if ( oper._format->_strings.count() != 0 ) {
@@ -414,8 +414,8 @@ void gen_oper_format(FILE *fp, FormDict &globals, OperandForm &oper, bool for_c_
         // Check if this is a standard string or a replacement variable
         if ( string != NameList::_signal ) {
           // Normal string
-          // Pass through to tty->print
-          fprintf(fp,"tty->print(\"%s\");\n", string);
+          // Pass through to st->print
+          fprintf(fp,"st->print(\"%s\");\n", string);
         } else {
           // Replacement variable
           const char *rep_var = oper._format->_rep_vars.iter();
@@ -450,7 +450,7 @@ void gen_oper_format(FILE *fp, FormDict &globals, OperandForm &oper, bool for_c_
   } else { // oper._format == NULL
     // Provide a few special case formats where the AD writer cannot.
     if ( strcmp(oper._ident,"Universe")==0 ) {
-      fprintf(fp, "  tty->print(\"$$univ\");\n");
+      fprintf(fp, "  st->print(\"$$univ\");\n");
     }
     // labelOper::int_format is defined in ad_<...>.cpp
   }
@@ -461,7 +461,7 @@ void gen_oper_format(FILE *fp, FormDict &globals, OperandForm &oper, bool for_c_
   fprintf(fp,"}\n");
 
   // Generate external format function, when data is stored externally
-  fprintf(fp,"void %sOper::ext_format(PhaseRegAlloc *ra, const MachNode *node, int idx) const {\n", oper._ident);
+  fprintf(fp,"void %sOper::ext_format(PhaseRegAlloc *ra, const MachNode *node, int idx, outputStream *st) const {\n", oper._ident);
   // Generate the user-defined portion of the format
   if (oper._format) {
     if ( oper._format->_strings.count() != 0 ) {
@@ -481,8 +481,8 @@ void gen_oper_format(FILE *fp, FormDict &globals, OperandForm &oper, bool for_c_
         // Check if this is a standard string or a replacement variable
         if ( string != NameList::_signal ) {
           // Normal string
-          // Pass through to tty->print
-          fprintf(fp,"tty->print(\"%s\");\n", string);
+          // Pass through to st->print
+          fprintf(fp,"st->print(\"%s\");\n", string);
         } else {
           // Replacement variable
           const char *rep_var = oper._format->_rep_vars.iter();
@@ -518,7 +518,7 @@ void gen_oper_format(FILE *fp, FormDict &globals, OperandForm &oper, bool for_c_
   } else { // oper._format == NULL
     // Provide a few special case formats where the AD writer cannot.
     if ( strcmp(oper._ident,"Universe")==0 ) {
-      fprintf(fp, "  tty->print(\"$$univ\");\n");
+      fprintf(fp, "  st->print(\"$$univ\");\n");
     }
     // labelOper::ext_format is defined in ad_<...>.cpp
   }
@@ -536,13 +536,13 @@ void gen_inst_format(FILE *fp, FormDict &globals, InstructForm &inst, bool for_c
   if (!for_c_file) {
     // compile the bodies separately, to cut down on recompilations
     // #ifndef PRODUCT region generated by caller 
-    fprintf(fp,"  virtual void           format(PhaseRegAlloc *ra) const;\n");
+    fprintf(fp,"  virtual void           format(PhaseRegAlloc *ra, outputStream *st) const;\n");
     return;
   }
 
   // Define the format function
   fprintf(fp, "#ifndef PRODUCT\n");
-  fprintf(fp, "void %sNode::format(PhaseRegAlloc *ra) const {\n", inst._ident);
+  fprintf(fp, "void %sNode::format(PhaseRegAlloc *ra, outputStream *st) const {\n", inst._ident);
 
   // Generate the user-defined portion of the format
   if( inst._format ) {
@@ -559,7 +559,7 @@ void gen_inst_format(FILE *fp, FormDict &globals, InstructForm &inst, bool for_c
       fprintf(fp,"    ");
       // Check if this is a standard string or a replacement variable
       if( string != NameList::_signal )  // Normal string.  Pass through.
-        fprintf(fp,"tty->print(\"%s\");\n", string);
+        fprintf(fp,"st->print(\"%s\");\n", string);
       else			// Replacement variable
 	inst.rep_var_format( fp, inst._format->_rep_vars.iter() );
     } // Done with all format strings
@@ -573,8 +573,8 @@ void gen_inst_format(FILE *fp, FormDict &globals, InstructForm &inst, bool for_c
       fprintf(fp,"    _method->print_short_name();\n");
       break;
     case Form::JAVA_STATIC:
-      fprintf(fp,"    if( _method ) _method->print_short_name(); else tty->print(\" wrapper for: %%s\", _name);\n");
-      fprintf(fp,"    if( !_method ) dump_trap_args();\n");
+      fprintf(fp,"    if( _method ) _method->print_short_name(st); else st->print(\" wrapper for: %%s\", _name);\n");
+      fprintf(fp,"    if( !_method ) dump_trap_args(st);\n");
       break;
     case Form::JAVA_COMPILED:
     case Form::JAVA_INTERP:
@@ -582,38 +582,38 @@ void gen_inst_format(FILE *fp, FormDict &globals, InstructForm &inst, bool for_c
     case Form::JAVA_RUNTIME:
     case Form::JAVA_LEAF:
     case Form::JAVA_NATIVE:
-      fprintf(fp,"    tty->print(\" %%s\", _name);");
+      fprintf(fp,"    st->print(\" %%s\", _name);");
       break;
     default: 
       assert(0,"ShouldNotReacHere");
     }
-    fprintf(fp,  "    tty->print_cr(\"\");\n" );
-    fprintf(fp,  "    if (_jvms) _jvms->format(ra, this); else tty->print_cr(\"        No JVM State Info\");\n" );
-    fprintf(fp,  "    tty->print(\"        # \");\n" );
-    fprintf(fp,  "    if( _jvms ) _oop_map->print();\n");
+    fprintf(fp,  "    st->print_cr(\"\");\n" );
+    fprintf(fp,  "    if (_jvms) _jvms->format(ra, this, st); else st->print_cr(\"        No JVM State Info\");\n" );
+    fprintf(fp,  "    st->print(\"        # \");\n" );
+    fprintf(fp,  "    if( _jvms ) _oop_map->print_on(st);\n");
   }
   else if(inst.is_ideal_safepoint()) {
-    fprintf(fp,  "    tty->print(\"\");\n" );
-    fprintf(fp,  "    if (_jvms) _jvms->format(ra, this); else tty->print_cr(\"        No JVM State Info\");\n" );
-    fprintf(fp,  "    tty->print(\"        # \");\n" );
-    fprintf(fp,  "    if( _jvms ) _oop_map->print();\n");
+    fprintf(fp,  "    st->print(\"\");\n" );
+    fprintf(fp,  "    if (_jvms) _jvms->format(ra, this, st); else st->print_cr(\"        No JVM State Info\");\n" );
+    fprintf(fp,  "    st->print(\"        # \");\n" );
+    fprintf(fp,  "    if( _jvms ) _oop_map->print_on(st);\n");
   }
   else if( inst.is_ideal_if() ) {
-    fprintf(fp,  "    tty->print(\"  P=%%f C=%%f\",_prob,_fcnt);\n" );
+    fprintf(fp,  "    st->print(\"  P=%%f C=%%f\",_prob,_fcnt);\n" );
   }
   else if( inst.is_ideal_mem() ) {
     // Print out the field name if available to improve readability
     fprintf(fp,  "    if (ra->C->alias_type(adr_type())->field() != NULL) {\n");
-    fprintf(fp,  "      tty->print(\" ! Field \");\n");
+    fprintf(fp,  "      st->print(\" ! Field \");\n");
     fprintf(fp,  "      if( ra->C->alias_type(adr_type())->is_volatile() )\n");
-    fprintf(fp,  "        tty->print(\" Volatile\");\n");
-    fprintf(fp,  "      ra->C->alias_type(adr_type())->field()->holder()->name()->print_symbol_on(tty);\n");
-    fprintf(fp,  "      tty->print(\".\");\n");
-    fprintf(fp,  "      ra->C->alias_type(adr_type())->field()->name()->print_symbol_on(tty);\n");
+    fprintf(fp,  "        st->print(\" Volatile\");\n");
+    fprintf(fp,  "      ra->C->alias_type(adr_type())->field()->holder()->name()->print_symbol_on(st);\n");
+    fprintf(fp,  "      st->print(\".\");\n");
+    fprintf(fp,  "      ra->C->alias_type(adr_type())->field()->name()->print_symbol_on(st);\n");
     fprintf(fp,  "    } else\n");
     // Make sure 'Volatile' gets printed out
     fprintf(fp,  "    if( ra->C->alias_type(adr_type())->is_volatile() )\n");
-    fprintf(fp,  "      tty->print(\" Volatile!\");\n");
+    fprintf(fp,  "      st->print(\" Volatile!\");\n");
   }
 
   // Complete the definition of the format function
@@ -1353,15 +1353,15 @@ void ArchDesc::declareClasses(FILE *fp) {
     // IF we have constants, create a dump_spec function for the derived class
     //
     // (1)  virtual void           dump_spec() const { 
-    // (2)    tty->print("#%d", _c#);        // Constant != ConP
-    //  OR    _c#->dump();                   // Type ConP
+    // (2)    st->print("#%d", _c#);        // Constant != ConP
+    //  OR    _c#->dump_on(st);             // Type ConP
     //  ...
     // (3)  }
     uint num_consts = oper->num_consts(_globalNames);
     if( num_consts > 0 ) {
       // line (1)
-      fprintf(fp, "  virtual void           dump_spec() const {\n");
-      // generate format string for tty->print
+      fprintf(fp, "  virtual void           dump_spec(outputStream *st) const {\n");
+      // generate format string for st->print
       // Iterate over the component list & spit out the right thing
       uint i = 0;
       const char *type = oper->ideal_type(_globalNames);
@@ -1817,9 +1817,7 @@ void ArchDesc::declareClasses(FILE *fp) {
       // legal base-pointer input.  Otherwise it is NOT an oop.
       fprintf(fp,"  const Type *bottom_type() const { return AddPNode::mach_bottom_type(this); } // AddP\n");
     }
-    else if ( instr->_ident && ( ! strcmp(instr->_ident,"tlsLoadP")
-				 || ! strncmp(instr->_ident,"tlsLoadP_",9)) ) {
-      // !!!!! 
+    else if (instr->is_tls_instruction()) {
       // Special hack for tlsLoadP 
       fprintf(fp,"  const Type            *bottom_type() const { return TypeRawPtr::BOTTOM; } // tlsLoadP\n");
     }

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)methodOop.cpp	1.313 08/06/19 12:45:47 JVM"
+#pragma ident "@(#)methodOop.cpp	1.314 08/11/24 12:22:56 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -218,8 +218,8 @@ symbolOop methodOopDesc::klass_name() const {
 
 
 void methodOopDesc::set_interpreter_kind() {
-  int kind = AbstractInterpreter::method_kind(methodOop(this));
-  assert(kind != AbstractInterpreter::invalid,
+  int kind = Interpreter::method_kind(methodOop(this));
+  assert(kind != Interpreter::invalid,
          "interpreter entry must be valid");
   set_interpreter_kind(kind);
 }
@@ -315,7 +315,7 @@ void methodOopDesc::compute_size_of_parameters(Thread *thread) {
 
 #ifdef CC_INTERP
 void methodOopDesc::set_result_index(BasicType type)          { 
-  _result_index = AbstractInterpreter::BasicType_as_index(type); 
+  _result_index = Interpreter::BasicType_as_index(type); 
 }
 #endif
 
@@ -650,7 +650,7 @@ void methodOopDesc::link_method(methodHandle h_method, TRAPS) {
 
   // Setup interpreter entrypoint
   assert(this == h_method(), "wrong h_method()" );
-  address entry = AbstractInterpreter::entry_for_method(h_method);
+  address entry = Interpreter::entry_for_method(h_method);
   assert(entry != NULL, "interpreter entry must be non-null");
   // Sets both _i2i_entry and _from_interpreted_entry
   set_interpreter_entry(entry);
@@ -1080,18 +1080,18 @@ void methodOopDesc::print_name(outputStream* st) {
 }
 
 
-void methodOopDesc::print_codes() const {
-  print_codes(0, code_size());
+void methodOopDesc::print_codes_on(outputStream* st) const {
+  print_codes_on(0, code_size(), st);
 }
 
-void methodOopDesc::print_codes(int from, int to) const {
+void methodOopDesc::print_codes_on(int from, int to, outputStream* st) const {
   Thread *thread = Thread::current();
   ResourceMark rm(thread);
   methodHandle mh (thread, (methodOop)this);
   BytecodeStream s(mh);
   s.set_interval(from, to);
   BytecodeTracer::set_closure(BytecodeTracer::std_closure());
-  while (s.next() >= 0) BytecodeTracer::trace(mh, s.bcp());
+  while (s.next() >= 0) BytecodeTracer::trace(mh, s.bcp(), st);
 }
 #endif // not PRODUCT
 

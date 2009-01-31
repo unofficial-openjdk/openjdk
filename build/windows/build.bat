@@ -32,13 +32,23 @@ cl 2>&1 | grep "IA-64" >NUL
 if %errorlevel% == 0 goto isia64
 cl 2>&1 | grep "AMD64" >NUL
 if %errorlevel% == 0 goto amd64
-set ARCH=i486
+set ARCH=x86
+set BUILDARCH=i486
+set Platform_arch=x86
+set Platform_arch_model=x86_32
 goto end
 :amd64
-set ARCH=amd64
+set LP64=1
+set ARCH=x86
+set BUILDARCH=amd64
+set Platform_arch=x86
+set Platform_arch_model=x86_64
 goto end
 :isia64
+set LP64=1
 set ARCH=ia64
+set Platform_arch=ia64
+set Platform_arch_model=ia64
 :end
 
 if "%4" == ""          goto usage

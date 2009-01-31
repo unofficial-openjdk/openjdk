@@ -67,7 +67,9 @@ Include_DBs/GC          = $(VM)/includeDB_gc \
                           $(VM)/gc_implementation/includeDB_gc_serial \
                           $(VM)/gc_implementation/includeDB_gc_shared
 
-Include_DBs/CORE        = $(VM)/includeDB_core   $(Include_DBs/GC)
+Include_DBs/CORE        = $(VM)/includeDB_core   $(Include_DBs/GC) \
+                          $(VM)/includeDB_jvmti \
+                          $(VM)/includeDB_features
 Include_DBs/COMPILER1   = $(Include_DBs/CORE) $(VM)/includeDB_compiler1
 Include_DBs/COMPILER2   = $(Include_DBs/CORE) $(VM)/includeDB_compiler2
 Include_DBs/TIERED      = $(Include_DBs/CORE) $(VM)/includeDB_compiler1 $(VM)/includeDB_compiler2

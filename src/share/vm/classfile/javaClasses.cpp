@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)javaClasses.cpp	1.247 07/05/17 15:50:20 JVM"
+#pragma ident "@(#)javaClasses.cpp	1.250 08/01/17 09:41:13 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -146,11 +146,41 @@ Handle java_lang_String::create_from_platform_dependent_str(const char* str, TRA
   jstring js = NULL;
   { JavaThread* thread = (JavaThread*)THREAD;
     assert(thread->is_Java_thread(), "must be java thread");
-    ThreadToNativeFromVM ttn(thread);
     HandleMark hm(thread);    
+    ThreadToNativeFromVM ttn(thread);
     js = (_to_java_string_fn)(thread->jni_environment(), str);
   }
   return Handle(THREAD, JNIHandles::resolve(js));
+}
+
+// Converts a Java String to a native C string that can be used for
+// native OS calls.
+char* java_lang_String::as_platform_dependent_str(Handle java_string, TRAPS) {
+
+  typedef char* (*to_platform_string_fn_t)(JNIEnv*, jstring, bool*);
+  static to_platform_string_fn_t _to_platform_string_fn = NULL;
+
+  if (_to_platform_string_fn == NULL) {
+    void *lib_handle = os::native_java_library();
+    _to_platform_string_fn = CAST_TO_FN_PTR(to_platform_string_fn_t, hpi::dll_lookup(lib_handle, "GetStringPlatformChars"));
+    if (_to_platform_string_fn == NULL) {
+      fatal("GetStringPlatformChars missing");
+    }
+  }
+
+  char *native_platform_string;
+  { JavaThread* thread = (JavaThread*)THREAD;
+    assert(thread->is_Java_thread(), "must be java thread");
+    JNIEnv *env = thread->jni_environment();
+    jstring js = (jstring) JNIHandles::make_local(env, java_string());
+    bool is_copy;
+    HandleMark hm(thread);    
+    ThreadToNativeFromVM ttn(thread);
+    native_platform_string = (_to_platform_string_fn)(env, js, &is_copy);
+    assert(is_copy == JNI_TRUE, "is_copy value changed");
+    JNIHandles::destroy_local(js);
+  }
+  return native_platform_string;
 }
 
 Handle java_lang_String::char_converter(Handle java_string, jchar from_char, jchar to_char, TRAPS) {
@@ -308,7 +338,7 @@ oop java_lang_Class::create_mirror(KlassHandle k, TRAPS) {
       Handle comp_mirror;
       if (k->oop_is_typeArray()) {
         BasicType type = typeArrayKlass::cast(k->as_klassOop())->element_type();
-        comp_mirror = SystemDictionary::java_mirror(type);
+        comp_mirror = Universe::java_mirror(type);
         assert(comp_mirror.not_null(), "must have primitive mirror");
       } else if (k->oop_is_objArray()) {
         klassOop element_klass = objArrayKlass::cast(k->as_klassOop())->element_klass();
@@ -394,15 +424,15 @@ BasicType java_lang_Class::primitive_type(oop java_class) {
     // Note: create_basic_type_mirror above initializes ak to a non-null value.
     type = arrayKlass::cast(ak)->element_type();
   } else {
-    assert(java_class == SystemDictionary::void_mirror(), "only valid non-array primitive");
+    assert(java_class == Universe::void_mirror(), "only valid non-array primitive");
   }
-  assert(SystemDictionary::java_mirror(type) == java_class, "must be consistent");
+  assert(Universe::java_mirror(type) == java_class, "must be consistent");
   return type;
 }
 
 
 oop java_lang_Class::primitive_mirror(BasicType t) {
-  oop mirror = SystemDictionary::java_mirror(t);
+  oop mirror = Universe::java_mirror(t);
   assert(mirror != NULL && mirror->is_a(SystemDictionary::class_klass()), "must be a Class");
   assert(java_lang_Class::is_primitive(mirror), "must be primitive");
   return mirror;
@@ -1125,7 +1155,7 @@ void java_lang_Throwable::fill_in_stack_trace(Handle throwable, TRAPS) {
     } else {
       if (fr.is_first_frame()) break;      
       address pc = fr.pc();
-      if (AbstractInterpreter::contains(pc)) {
+      if (fr.is_interpreted_frame()) {
         intptr_t bcx = fr.interpreter_frame_bcx();
         method = fr.interpreter_frame_method();
         bci =  fr.is_bci(bcx) ? bcx : method->bci_from((address)bcx);

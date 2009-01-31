@@ -61,37 +61,37 @@ CPP_INCLUDE_DIRS=\
   /I "$(WorkSpace)\src\share\vm\utilities"   \
   /I "$(WorkSpace)\src\share\vm\libadt"      \
   /I "$(WorkSpace)\src\share\vm\opto"        \
-  /I "$(WorkSpace)\src\os\win32\vm"          \
-  /I "$(WorkSpace)\src\cpu\$(ARCH)\vm"
+  /I "$(WorkSpace)\src\os\windows\vm"          \
+  /I "$(WorkSpace)\src\cpu\$(Platform_arch)\vm"
 
 # NOTE! If you add any files here, you must also update GENERATED_NAMES_IN_INCL
 # and MakeDepsIDEOptions in makedeps.make. 
 GENERATED_NAMES=\
-  ad_$(ARCH).cpp \
-  ad_$(ARCH).hpp \
-  ad_$(ARCH)_clone.cpp \
-  ad_$(ARCH)_expand.cpp \
-  ad_$(ARCH)_format.cpp \
-  ad_$(ARCH)_gen.cpp \
-  ad_$(ARCH)_misc.cpp \
-  ad_$(ARCH)_peephole.cpp \
-  ad_$(ARCH)_pipeline.cpp \
-  adGlobals_$(ARCH).hpp \
-  dfa_$(ARCH).cpp
+  ad_$(Platform_arch_model).cpp \
+  ad_$(Platform_arch_model).hpp \
+  ad_$(Platform_arch_model)_clone.cpp \
+  ad_$(Platform_arch_model)_expand.cpp \
+  ad_$(Platform_arch_model)_format.cpp \
+  ad_$(Platform_arch_model)_gen.cpp \
+  ad_$(Platform_arch_model)_misc.cpp \
+  ad_$(Platform_arch_model)_peephole.cpp \
+  ad_$(Platform_arch_model)_pipeline.cpp \
+  adGlobals_$(Platform_arch_model).hpp \
+  dfa_$(Platform_arch_model).cpp
 
 # NOTE! This must be kept in sync with GENERATED_NAMES
 GENERATED_NAMES_IN_INCL=\
-  incls/ad_$(ARCH).cpp \
-  incls/ad_$(ARCH).hpp \
-  incls/ad_$(ARCH)_clone.cpp \
-  incls/ad_$(ARCH)_expand.cpp \
-  incls/ad_$(ARCH)_format.cpp \
-  incls/ad_$(ARCH)_gen.cpp \
-  incls/ad_$(ARCH)_misc.cpp \
-  incls/ad_$(ARCH)_peephole.cpp \
-  incls/ad_$(ARCH)_pipeline.cpp \
-  incls/adGlobals_$(ARCH).hpp \
-  incls/dfa_$(ARCH).cpp
+  incls/ad_$(Platform_arch_model).cpp \
+  incls/ad_$(Platform_arch_model).hpp \
+  incls/ad_$(Platform_arch_model)_clone.cpp \
+  incls/ad_$(Platform_arch_model)_expand.cpp \
+  incls/ad_$(Platform_arch_model)_format.cpp \
+  incls/ad_$(Platform_arch_model)_gen.cpp \
+  incls/ad_$(Platform_arch_model)_misc.cpp \
+  incls/ad_$(Platform_arch_model)_peephole.cpp \
+  incls/ad_$(Platform_arch_model)_pipeline.cpp \
+  incls/adGlobals_$(Platform_arch_model).hpp \
+  incls/dfa_$(Platform_arch_model).cpp
 
 {$(WorkSpace)\src\share\vm\adlc}.cpp.obj::
         $(CPP) $(CPP_FLAGS) $(EXH_FLAGS) $(CPP_INCLUDE_DIRS) /c $<
@@ -103,12 +103,12 @@ adlc.exe: main.obj adlparse.obj archDesc.obj arena.obj dfa.obj dict2.obj filebuf
           forms.obj formsopt.obj formssel.obj opcodes.obj output_c.obj output_h.obj
 	$(LINK) $(LINK_FLAGS) /subsystem:console /out:$@ $**
 
-$(GENERATED_NAMES_IN_INCL): $(ARCH).ad adlc.exe includeDB.current 
+$(GENERATED_NAMES_IN_INCL): $(Platform_arch_model).ad adlc.exe includeDB.current 
 	rm -f $(GENERATED_NAMES)
-	$(ADLC) $(ADLCFLAGS) $(ARCH).ad
+	$(ADLC) $(ADLCFLAGS) $(Platform_arch_model).ad
 	mv $(GENERATED_NAMES) incls/
 
-$(ARCH).ad: $(WorkSpace)/src/cpu/$(ARCH)/vm/$(ARCH).ad $(WorkSpace)/src/os_cpu/win32_$(ARCH)/vm/win32_$(ARCH).ad
-	rm -f $(ARCH).ad
-	cat $(WorkSpace)/src/cpu/$(ARCH)/vm/$(ARCH).ad  \
-	    $(WorkSpace)/src/os_cpu/win32_$(ARCH)/vm/win32_$(ARCH).ad >$(ARCH).ad
+$(Platform_arch_model).ad: $(WorkSpace)/src/cpu/$(Platform_arch)/vm/$(Platform_arch_model).ad $(WorkSpace)/src/os_cpu/windows_$(Platform_arch)/vm/windows_$(Platform_arch_model).ad
+	rm -f $(Platform_arch_model).ad
+	cat $(WorkSpace)/src/cpu/$(Platform_arch)/vm/$(Platform_arch_model).ad  \
+	    $(WorkSpace)/src/os_cpu/windows_$(Platform_arch)/vm/windows_$(Platform_arch_model).ad >$(Platform_arch_model).ad

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)ciInstanceKlass.cpp	1.44 07/05/17 15:49:55 JVM"
+#pragma ident "@(#)ciInstanceKlass.cpp	1.45 07/09/28 10:23:23 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -238,27 +238,27 @@ bool ciInstanceKlass::uses_default_loader() {
 // ciInstanceKlass::print_impl
 //
 // Implementation of the print method.
-void ciInstanceKlass::print_impl() {
-  ciKlass::print_impl();
-  GUARDED_VM_ENTRY(tty->print(" loader=0x%x", (address)loader());)
+void ciInstanceKlass::print_impl(outputStream* st) {
+  ciKlass::print_impl(st);
+  GUARDED_VM_ENTRY(st->print(" loader=0x%x", (address)loader());)
   if (is_loaded()) {
-    tty->print(" loaded=true initialized=%s finalized=%s subklass=%s size=%d flags=",
-               bool_to_str(is_initialized()),
-               bool_to_str(has_finalizer()),
-               bool_to_str(has_subklass()),
-               layout_helper());
+    st->print(" loaded=true initialized=%s finalized=%s subklass=%s size=%d flags=",
+              bool_to_str(is_initialized()),
+              bool_to_str(has_finalizer()),
+              bool_to_str(has_subklass()),
+              layout_helper());
 
     _flags.print_klass_flags();
 
     if (_super) {
-      tty->print(" super=");
+      st->print(" super=");
       _super->print_name();
     }
     if (_java_mirror) {
-      tty->print(" mirror=PRESENT");
+      st->print(" mirror=PRESENT");
     }
   } else {
-    tty->print(" loaded=false");
+    st->print(" loaded=false");
   }
 }
 

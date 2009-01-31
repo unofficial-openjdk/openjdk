@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)cardTableExtension.cpp	1.34 07/05/17 15:52:46 JVM"
+#pragma ident "@(#)cardTableExtension.cpp	1.35 07/09/25 16:47:41 JVM"
 #endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -191,15 +191,21 @@ void CardTableExtension::scavenge_contents(ObjectStartArray* start_array,
           *first_nonclean_card++ = clean_card;
         }
         // scan oops in objects
-        do {
-	  if (depth_first) {
+        // hoisted the if (depth_first) check out of the loop
+	if (depth_first){ 
+	  do {
 	    oop(bottom_obj)->push_contents(pm);
-	  } else {
+	    bottom_obj += oop(bottom_obj)->size();
+	    assert(bottom_obj <= sp_top, "just checking");
+	  } while (bottom_obj < top);
+	  pm->drain_stacks_cond_depth();
+	} else {
+	  do {
 	    oop(bottom_obj)->copy_contents(pm);
-	  }
-          bottom_obj += oop(bottom_obj)->size();
-          assert(bottom_obj <= sp_top, "just checking");
-        } while (bottom_obj < top);
+	    bottom_obj += oop(bottom_obj)->size();
+	    assert(bottom_obj <= sp_top, "just checking");
+	  } while (bottom_obj < top);
+	}
         // remember top oop* scanned
         prev_top = top;
       }
@@ -347,28 +353,43 @@ void CardTableExtension::scavenge_contents_parallel(ObjectStartArray* start_arra
 	const int interval = PrefetchScanIntervalInBytes;
 	// scan all objects in the range
 	if (interval != 0) {
-	  while (p < to) {
-	    Prefetch::write(p, interval);
-	    oop m = oop(p);
-	    assert(m->is_oop_or_null(), "check for header");
-	    if (depth_first) {
+          // hoisted the if (depth_first) check out of the loop
+	  if (depth_first) {
+	    while (p < to) {
+	      Prefetch::write(p, interval);
+	      oop m = oop(p);
+	      assert(m->is_oop_or_null(), "check for header");
 	      m->push_contents(pm); 
-	    } else {
+	      p += m->size();
+	    }
+	    pm->drain_stacks_cond_depth();
+	  } else {
+	    while (p < to) {
+	      Prefetch::write(p, interval);
+	      oop m = oop(p);
+	      assert(m->is_oop_or_null(), "check for header");
 	      m->copy_contents(pm); 
+	      p += m->size();
 	    }
-            p += m->size();
-          }
+	  }
 	} else {
-	  while (p < to) {
-	    oop m = oop(p);
-	    assert(m->is_oop_or_null(), "check for header");
-	    if (depth_first) {
+          // hoisted the if (depth_first) check out of the loop
+	  if (depth_first) {
+	    while (p < to) {
+	      oop m = oop(p);
+	      assert(m->is_oop_or_null(), "check for header");
 	      m->push_contents(pm);
-	    } else {
-	      m->copy_contents(pm);
+	      p += m->size();
 	    }
-            p += m->size();
-          }
+	    pm->drain_stacks_cond_depth();
+	  } else {
+	    while (p < to) {
+	      oop m = oop(p);
+	      assert(m->is_oop_or_null(), "check for header");
+	      m->copy_contents(pm);
+	      p += m->size();
+	    }
+	  }
 	}
 	last_scanned = p;
       }

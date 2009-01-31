@@ -42,12 +42,13 @@ BootStrapDir=$(JAVA_HOME)
 JvmtiOutDir=$(HOTSPOTBUILDSPACE)\jvmtifiles
 !include $(HOTSPOTWORKSPACE)/build/windows/makefiles/jvmti.make
 
-Platform=$(HOTSPOTWORKSPACE)/build/windows/platform_$(ARCH)
+Platform=$(HOTSPOTWORKSPACE)/build/windows/platform_$(BUILDARCH)
 
 default:: $(AdditionalTargets) $(JvmtiGeneratedFiles)
 
-IncludeDBs_base=$(HOTSPOTWORKSPACE)/src/share/vm/includeDB_core \
-                $(HOTSPOTWORKSPACE)/src/share/vm/includeDB_gc   \
+IncludeDBs_base=$(HOTSPOTWORKSPACE)/src/share/vm/includeDB_core  \
+                $(HOTSPOTWORKSPACE)/src/share/vm/includeDB_jvmti \
+                $(HOTSPOTWORKSPACE)/src/share/vm/includeDB_gc    \
                 $(HOTSPOTWORKSPACE)/src/share/vm/gc_implementation/includeDB_gc_serial
 
 # Parallel gc files
@@ -61,15 +62,16 @@ IncludeDBs_gc=$(HOTSPOTWORKSPACE)/src/share/vm/includeDB_gc_parallel       \
 IncludeDBs_kernel =$(IncludeDBs_base) \
                     $(HOTSPOTWORKSPACE)/src/share/vm/includeDB_compiler1
 
-IncludeDBs_core =$(IncludeDBs_base) $(IncludeDBs_gc) 
+IncludeDBs_core =$(IncludeDBs_base) $(IncludeDBs_gc) \
+                 $(HOTSPOTWORKSPACE)/src/share/vm/includeDB_features
 
-IncludeDBs_compiler1=$(IncludeDBs_base) $(IncludeDBs_gc) \
+IncludeDBs_compiler1=$(IncludeDBs_core) \
                      $(HOTSPOTWORKSPACE)/src/share/vm/includeDB_compiler1
 
-IncludeDBs_compiler2=$(IncludeDBs_base) $(IncludeDBs_gc) \
+IncludeDBs_compiler2=$(IncludeDBs_core) \
                     $(HOTSPOTWORKSPACE)/src/share/vm/includeDB_compiler2
 
-IncludeDBs_tiered=$(IncludeDBs_base) $(IncludeDBs_gc) \
+IncludeDBs_tiered=$(IncludeDBs_core) \
                     $(HOTSPOTWORKSPACE)/src/share/vm/includeDB_compiler1 \
                     $(HOTSPOTWORKSPACE)/src/share/vm/includeDB_compiler2
 

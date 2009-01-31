@@ -28,6 +28,7 @@
 # but not for CORE configuration
 
 ifneq ("${TYPE}", "CORE")
+ifneq ("${TYPE}", "KERNEL")
 
 ifdef USE_GCC
 
@@ -178,13 +179,17 @@ $(DTRACE.o): $(DTRACE).d $(JVMOFFS).h $(JVMOFFS)Index.h $(DTraced_Files)
   # command, and libgenerateJvmOffsets.so depends on LIBJVM.o, 'make' will
   # think it needs to rebuild libgenerateJvmOffsets.so and thus JvmOffsets*
   # files, but it doesn't, so we touch the necessary files to prevent later
-  # recompilation.  But, we can't touch the *.h files:  This rule depends
+  # recompilation. Note: we only touch the necessary files if they already
+  # exist in order to close a race where an empty file can be created
+  # before the real build rule is executed.
+  # But, we can't touch the *.h files:  This rule depends
   # on them, and that would cause an infinite cycle of rebuilding.
   # Neither the *.h or *.ccp files need to be touched, since they have
   # rules which do not update them when the generator file has not
   # changed their contents.
-	$(QUIETLY) touch lib$(GENOFFS).so $(GENOFFS)
-	$(QUIETLY) touch $(JVMOFFS.o)
+	$(QUIETLY) if [ -f lib$(GENOFFS).so ]; then touch lib$(GENOFFS).so; fi
+	$(QUIETLY) if [ -f $(GENOFFS) ]; then touch $(GENOFFS); fi
+	$(QUIETLY) if [ -f $(JVMOFFS.o) ]; then touch $(JVMOFFS.o); fi
 
 .PHONY: dtraceCheck
 
@@ -228,6 +233,13 @@ dtraceCheck:
 endif # ifneq ("${dtraceFound}", "")
 
 endif # ifdef USE_GCC
+
+else # KERNEL build
+
+dtraceCheck:
+	$(QUIETLY) echo "**NOTICE** Dtrace support disabled for KERNEL builds"
+
+endif # ifneq ("${TYPE}", "KERNEL")
 
 else # CORE build
 

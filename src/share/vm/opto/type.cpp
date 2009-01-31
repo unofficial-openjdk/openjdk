@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)type.cpp	1.253 07/05/17 16:02:23 JVM"
+#pragma ident "@(#)type.cpp	1.257 07/10/04 14:36:00 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -662,15 +662,15 @@ bool Type::has_memory() const {
 
 #ifndef PRODUCT
 //------------------------------dump2------------------------------------------
-void Type::dump2( Dict &d, uint depth ) const {
-  tty->print(msg[_base]);
+void Type::dump2( Dict &d, uint depth, outputStream *st ) const {
+  st->print(msg[_base]);
 }
 
 //------------------------------dump-------------------------------------------
-void Type::dump() const {
+void Type::dump_on(outputStream *st) const {
   ResourceMark rm;
   Dict d(cmpkey,hashkey);       // Stop recursive type dumping
-  dump2(d,1);
+  dump2(d,1, st);
 }
 
 //------------------------------data-------------------------------------------
@@ -859,9 +859,9 @@ bool TypeF::is_nan()    const {
 //------------------------------dump2------------------------------------------
 // Dump float constant Type
 #ifndef PRODUCT
-void TypeF::dump2( Dict &d, uint depth ) const {
-  Type::dump2(d,depth);
-  tty->print("%f", _f);
+void TypeF::dump2( Dict &d, uint depth, outputStream *st ) const {
+  Type::dump2(d,depth, st);
+  st->print("%f", _f);
 }
 #endif
 
@@ -971,9 +971,9 @@ bool TypeD::is_nan()    const {
 //------------------------------dump2------------------------------------------
 // Dump double constant Type
 #ifndef PRODUCT
-void TypeD::dump2( Dict &d, uint depth ) const {
-  Type::dump2(d,depth);
-  tty->print("%f", _d);
+void TypeD::dump2( Dict &d, uint depth, outputStream *st ) const {
+  Type::dump2(d,depth,st);
+  st->print("%f", _d);
 }
 #endif
 
@@ -1205,29 +1205,29 @@ static const char* intname(char* buf, jint n) {
   return buf;
 }
 
-void TypeInt::dump2( Dict &d, uint depth ) const {
+void TypeInt::dump2( Dict &d, uint depth, outputStream *st ) const {
   char buf[40], buf2[40];
   if (_lo == min_jint && _hi == max_jint)
-    tty->print("int");
+    st->print("int");
   else if (is_con()) 
-    tty->print("int:%s", intname(buf, get_con()));
+    st->print("int:%s", intname(buf, get_con()));
   else if (_lo == BOOL->_lo && _hi == BOOL->_hi) 
-    tty->print("bool");
+    st->print("bool");
   else if (_lo == BYTE->_lo && _hi == BYTE->_hi)
-    tty->print("byte");
+    st->print("byte");
   else if (_lo == CHAR->_lo && _hi == CHAR->_hi) 
-    tty->print("char");
+    st->print("char");
   else if (_lo == SHORT->_lo && _hi == SHORT->_hi) 
-    tty->print("short");
+    st->print("short");
   else if (_hi == max_jint)
-    tty->print("int:>=%s", intname(buf, _lo));
+    st->print("int:>=%s", intname(buf, _lo));
   else if (_lo == min_jint)
-    tty->print("int:<=%s", intname(buf, _hi));
+    st->print("int:<=%s", intname(buf, _hi));
   else
-    tty->print("int:%s..%s", intname(buf, _lo), intname(buf2, _hi));
+    st->print("int:%s..%s", intname(buf, _lo), intname(buf2, _hi));
 
   if (_widen != 0 && this != TypeInt::INT)
-    tty->print(":%.*s", _widen, "wwww");
+    st->print(":%.*s", _widen, "wwww");
 }
 #endif
 
@@ -1469,21 +1469,21 @@ static const char* longname(char* buf, jlong n) {
   return buf;
 }
 
-void TypeLong::dump2( Dict &d, uint depth ) const {
+void TypeLong::dump2( Dict &d, uint depth, outputStream *st ) const {
   char buf[80], buf2[80];
   if (_lo == min_jlong && _hi == max_jlong)
-    tty->print("long");
+    st->print("long");
   else if (is_con()) 
-    tty->print("long:%s", longname(buf, get_con()));
+    st->print("long:%s", longname(buf, get_con()));
   else if (_hi == max_jlong)
-    tty->print("long:>=%s", longname(buf, _lo));
+    st->print("long:>=%s", longname(buf, _lo));
   else if (_lo == min_jlong)
-    tty->print("long:<=%s", longname(buf, _hi));
+    st->print("long:<=%s", longname(buf, _hi));
   else
-    tty->print("long:%s..%s", longname(buf, _lo), longname(buf2, _hi));
+    st->print("long:%s..%s", longname(buf, _lo), longname(buf2, _hi));
 
   if (_widen != 0 && this != TypeLong::LONG)
-    tty->print(":%.*s", _widen, "wwww");
+    st->print(":%.*s", _widen, "wwww");
 }
 #endif
 
@@ -1669,24 +1669,24 @@ int TypeTuple::hash(void) const {
 //------------------------------dump2------------------------------------------
 // Dump signature Type
 #ifndef PRODUCT
-void TypeTuple::dump2( Dict &d, uint depth ) const {
-  tty->print("{");
+void TypeTuple::dump2( Dict &d, uint depth, outputStream *st ) const {
+  st->print("{");
   if( !depth || d[this] ) {     // Check for recursive print
-    tty->print("...}");
+    st->print("...}");
     return;
   }
   d.Insert((void*)this, (void*)this);   // Stop recursion
   if( _cnt ) {
     uint i;
     for( i=0; i<_cnt-1; i++ ) {
-      tty->print("%d:", i);
-      _fields[i]->dump2(d, depth-1);
-      tty->print(", ");
+      st->print("%d:", i);
+      _fields[i]->dump2(d, depth-1, st);
+      st->print(", ");
     }
-    tty->print("%d:", i);
-    _fields[i]->dump2(d, depth-1);
+    st->print("%d:", i);
+    _fields[i]->dump2(d, depth-1, st);
   }
-  tty->print("}");
+  st->print("}");
 }
 #endif
 
@@ -1708,8 +1708,20 @@ bool TypeTuple::empty(void) const {
 //=============================================================================
 // Convenience common pre-built types.
 
+inline const TypeInt* normalize_array_size(const TypeInt* size) {
+  // Certain normalizations keep us sane when comparing types.
+  // We do not want arrayOop variables to differ only by the wideness
+  // of their index types.  Pick minimum wideness, since that is the
+  // forced wideness of small ranges anyway.
+  if (size->_widen != Type::WidenMin)
+    return TypeInt::make(size->_lo, size->_hi, Type::WidenMin);
+  else
+    return size;
+}
+
 //------------------------------make-------------------------------------------
 const TypeAry *TypeAry::make( const Type *elem, const TypeInt *size) {
+  size = normalize_array_size(size);
   return (TypeAry*)(new TypeAry(elem,size))->hashcons();
 }
 
@@ -1742,7 +1754,9 @@ const Type *TypeAry::xmeet( const Type *t ) const {
 //------------------------------xdual------------------------------------------
 // Dual: compute field-by-field dual
 const Type *TypeAry::xdual() const {
-  return new TypeAry( _elem->dual(), _size->dual()->is_int() );
+  const TypeInt* size_dual = _size->dual()->is_int();
+  size_dual = normalize_array_size(size_dual);
+  return new TypeAry( _elem->dual(), size_dual);
 }
 
 //------------------------------eq---------------------------------------------
@@ -1761,11 +1775,11 @@ int TypeAry::hash(void) const {
 
 //------------------------------dump2------------------------------------------
 #ifndef PRODUCT
-void TypeAry::dump2( Dict &d, uint depth ) const {
-  _elem->dump2(d, depth);
-  tty->print("[");
-  _size->dump2(d, depth);
-  tty->print("]");
+void TypeAry::dump2( Dict &d, uint depth, outputStream *st ) const {
+  _elem->dump2(d, depth, st);
+  st->print("[");
+  _size->dump2(d, depth, st);
+  st->print("]");
 }
 #endif
 
@@ -1930,12 +1944,12 @@ const char *const TypePtr::ptr_msg[TypePtr::lastPTR] = {
 };
 
 #ifndef PRODUCT
-void TypePtr::dump2( Dict &d, uint depth ) const {
-  if( _ptr == Null ) tty->print("NULL");
-  else tty->print("%s *", ptr_msg[_ptr]);
-  if( _offset == OffsetTop ) tty->print("+top");
-  else if( _offset == OffsetBot ) tty->print("+bot");
-  else if( _offset ) tty->print("+%d", _offset);
+void TypePtr::dump2( Dict &d, uint depth, outputStream *st ) const {
+  if( _ptr == Null ) st->print("NULL");
+  else st->print("%s *", ptr_msg[_ptr]);
+  if( _offset == OffsetTop ) st->print("+top");
+  else if( _offset == OffsetBot ) st->print("+bot");
+  else if( _offset ) st->print("+%d", _offset);
 }
 #endif
 
@@ -2073,11 +2087,11 @@ int TypeRawPtr::hash(void) const {
 
 //------------------------------dump2------------------------------------------
 #ifndef PRODUCT
-void TypeRawPtr::dump2( Dict &d, uint depth ) const {
+void TypeRawPtr::dump2( Dict &d, uint depth, outputStream *st ) const {
   if( _ptr == Constant ) 
-    tty->print(INTPTR_FORMAT, _bits);
+    st->print(INTPTR_FORMAT, _bits);
   else
-    tty->print("rawptr:%s", ptr_msg[_ptr]);
+    st->print("rawptr:%s", ptr_msg[_ptr]);
 }
 #endif
 
@@ -2402,18 +2416,18 @@ int TypeOopPtr::hash(void) const {
 
 //------------------------------dump2------------------------------------------
 #ifndef PRODUCT
-void TypeOopPtr::dump2( Dict &d, uint depth ) const {
-  tty->print("oopptr:%s", ptr_msg[_ptr]);
-  if( _klass_is_exact ) tty->print(":exact");
-  if( const_oop() ) tty->print(INTPTR_FORMAT, const_oop());
+void TypeOopPtr::dump2( Dict &d, uint depth, outputStream *st ) const {
+  st->print("oopptr:%s", ptr_msg[_ptr]);
+  if( _klass_is_exact ) st->print(":exact");
+  if( const_oop() ) st->print(INTPTR_FORMAT, const_oop());
   switch( _offset ) {
-  case OffsetTop: tty->print("+top"); break;
-  case OffsetBot: tty->print("+any"); break;
+  case OffsetTop: st->print("+top"); break;
+  case OffsetBot: st->print("+any"); break;
   case         0: break;
-  default:        tty->print("+%d",_offset); break;
+  default:        st->print("+%d",_offset); break;
   }
   if (_instance_id != UNKNOWN_INSTANCE)
-    tty->print(",iid=%d",_instance_id);
+    st->print(",iid=%d",_instance_id);
 }
 #endif
 
@@ -2904,38 +2918,38 @@ int TypeInstPtr::hash(void) const {
 //------------------------------dump2------------------------------------------
 // Dump oop Type
 #ifndef PRODUCT
-void TypeInstPtr::dump2( Dict &d, uint depth ) const {
+void TypeInstPtr::dump2( Dict &d, uint depth, outputStream *st ) const {
   // Print the name of the klass.
-  klass()->print_name();
+  klass()->print_name_on(st);
 
   switch( _ptr ) {
   case Constant:
     // TO DO: Make CI print the hex address of the underlying oop.
     if (WizardMode || Verbose) {
-      const_oop()->print_oop();
+      const_oop()->print_oop(st);
     }
   case BotPTR:
     if (!WizardMode && !Verbose) {
-      if( _klass_is_exact ) tty->print(":exact");
+      if( _klass_is_exact ) st->print(":exact");
       break;
     }
   case TopPTR:
   case AnyNull:
   case NotNull:
-    tty->print(":%s", ptr_msg[_ptr]);
-    if( _klass_is_exact ) tty->print(":exact");
+    st->print(":%s", ptr_msg[_ptr]);
+    if( _klass_is_exact ) st->print(":exact");
     break;
   }
 
   if( _offset ) {               // Dump offset, if any
-    if( _offset == OffsetBot )      tty->print("+any");
-    else if( _offset == OffsetTop ) tty->print("+unknown");
-    else tty->print("+%d", _offset);
+    if( _offset == OffsetBot )      st->print("+any");
+    else if( _offset == OffsetTop ) st->print("+unknown");
+    else st->print("+%d", _offset);
   }
 
-  tty->print(" *");
+  st->print(" *");
   if (_instance_id != UNKNOWN_INSTANCE)
-    tty->print(",iid=%d",_instance_id);
+    st->print(",iid=%d",_instance_id);
 }
 #endif
 
@@ -3001,15 +3015,50 @@ const TypeOopPtr *TypeAryPtr::cast_to_instance(int instance_id) const {
   return make(ptr(), const_oop(), _ary, klass(), exact, _offset, instance_id);
 }
 
+//-----------------------------narrow_size_type-------------------------------
+// Local cache for arrayOopDesc::max_array_length(etype),
+// which is kind of slow (and cached elsewhere by other users).
+static jint max_array_length_cache[T_CONFLICT+1];
+static jint max_array_length(BasicType etype) {
+  jint& cache = max_array_length_cache[etype];
+  jint res = cache;
+  if (res == 0) {
+    switch (etype) {
+    case T_CONFLICT:
+    case T_ILLEGAL:
+    case T_VOID:
+      etype = T_BYTE;           // will produce conservatively high value
+    }
+    cache = res = arrayOopDesc::max_array_length(etype);
+  }
+  return res;
+}
+
+// Narrow the given size type to the index range for the given array base type.
+// Return NULL if the resulting int type becomes empty.
+const TypeInt* TypeAryPtr::narrow_size_type(const TypeInt* size, BasicType elem) {
+  jint hi = size->_hi;
+  jint lo = size->_lo;
+  jint min_lo = 0;
+  jint max_hi = max_array_length(elem);
+  //if (index_not_size)  --max_hi;     // type of a valid array index, FTR
+  bool chg = false;
+  if (lo < min_lo) { lo = min_lo; chg = true; }
+  if (hi > max_hi) { hi = max_hi; chg = true; }
+  if (lo > hi)
+    return NULL;
+  if (!chg)
+    return size;
+  return TypeInt::make(lo, hi, Type::WidenMin);
+}
+
 //-------------------------------cast_to_size----------------------------------
 const TypeAryPtr* TypeAryPtr::cast_to_size(const TypeInt* new_size) const {
-  if (new_size == size() || new_size == NULL)  return this;
-  if (new_size->_lo < 0) {
-    new_size = new_size->join(TypeInt::POS)->is_int();
-    if (new_size == size())  return this;
-  }
-  if (new_size->empty())      // Negative length arrays will produce weird
+  assert(new_size != NULL, "");
+  new_size = narrow_size_type(new_size, elem()->basic_type());
+  if (new_size == NULL)       // Negative length arrays will produce weird
     new_size = TypeInt::ZERO; // intermediate dead fast-path goo
+  if (new_size == size())  return this;
   const TypeAry* new_ary = TypeAry::make(elem(), new_size);
   return make(ptr(), const_oop(), new_ary, klass(), klass_is_exact(), _offset);
 }
@@ -3198,33 +3247,33 @@ const Type *TypeAryPtr::xdual() const {
 
 //------------------------------dump2------------------------------------------
 #ifndef PRODUCT
-void TypeAryPtr::dump2( Dict &d, uint depth ) const {
-  _ary->dump2(d,depth);
+void TypeAryPtr::dump2( Dict &d, uint depth, outputStream *st ) const {
+  _ary->dump2(d,depth,st);
   switch( _ptr ) {
   case Constant:
-    const_oop()->print();
+    const_oop()->print(st);
     break;
   case BotPTR:
     if (!WizardMode && !Verbose) {
-      if( _klass_is_exact ) tty->print(":exact");
+      if( _klass_is_exact ) st->print(":exact");
       break;
     }
   case TopPTR:
   case AnyNull:
   case NotNull:
-    tty->print(":%s", ptr_msg[_ptr]);
-    if( _klass_is_exact ) tty->print(":exact");
+    st->print(":%s", ptr_msg[_ptr]);
+    if( _klass_is_exact ) st->print(":exact");
     break;
   }
 
-  tty->print("*");
+  st->print("*");
   if (_instance_id != UNKNOWN_INSTANCE)
-    tty->print(",iid=%d",_instance_id);
+    st->print(",iid=%d",_instance_id);
   if( !_offset ) return;
-  if( _offset == OffsetTop )      tty->print("+undefined");
-  else if( _offset == OffsetBot ) tty->print("+any");
-  else if( _offset < 12 )         tty->print("+%d",_offset);
-  else                            tty->print("[%d]", (_offset-12)/4 );
+  if( _offset == OffsetTop )      st->print("+undefined");
+  else if( _offset == OffsetBot ) st->print("+any");
+  else if( _offset < 12 )         st->print("+%d",_offset);
+  else                            st->print("[%d]", (_offset-12)/4 );
 }
 #endif
 
@@ -3524,15 +3573,15 @@ const Type    *TypeKlassPtr::xdual() const {
 //------------------------------dump2------------------------------------------
 // Dump Klass Type
 #ifndef PRODUCT
-void TypeKlassPtr::dump2( Dict & d, uint depth ) const {
+void TypeKlassPtr::dump2( Dict & d, uint depth, outputStream *st ) const {
   switch( _ptr ) {
   case Constant:
-    tty->print("precise ");
+    st->print("precise ");
   case NotNull:
     {
       const char *name = klass()->name()->as_utf8();
       if( name ) {
-        tty->print("klass %s: " INTPTR_FORMAT, name, klass());
+        st->print("klass %s: " INTPTR_FORMAT, name, klass());
       } else {
         ShouldNotReachHere();
       }
@@ -3541,18 +3590,18 @@ void TypeKlassPtr::dump2( Dict & d, uint depth ) const {
     if( !WizardMode && !Verbose && !_klass_is_exact ) break;
   case TopPTR:
   case AnyNull:
-    tty->print(":%s", ptr_msg[_ptr]);
-    if( _klass_is_exact ) tty->print(":exact");
+    st->print(":%s", ptr_msg[_ptr]);
+    if( _klass_is_exact ) st->print(":exact");
     break;
   }
 
   if( _offset ) {               // Dump offset, if any
-    if( _offset == OffsetBot )      { tty->print("+any"); }
-    else if( _offset == OffsetTop ) { tty->print("+unknown"); }
-    else                            { tty->print("+%d", _offset); }
+    if( _offset == OffsetBot )      { st->print("+any"); }
+    else if( _offset == OffsetTop ) { st->print("+unknown"); }
+    else                            { st->print("+%d", _offset); }
   }
 
-  tty->print(" *");
+  st->print(" *");
 }
 #endif
 
@@ -3627,31 +3676,31 @@ int TypeFunc::hash(void) const {
 //------------------------------dump2------------------------------------------
 // Dump Function Type
 #ifndef PRODUCT
-void TypeFunc::dump2( Dict &d, uint depth ) const {
+void TypeFunc::dump2( Dict &d, uint depth, outputStream *st ) const {
   if( _range->_cnt <= Parms )
-    tty->print("void");
+    st->print("void");
   else {
     uint i;
     for (i = Parms; i < _range->_cnt-1; i++) {
-      _range->field_at(i)->dump2(d,depth);
-      tty->print("/");
+      _range->field_at(i)->dump2(d,depth,st);
+      st->print("/");
     }
-    _range->field_at(i)->dump2(d,depth);
+    _range->field_at(i)->dump2(d,depth,st);
   }
-  tty->print(" ");
-  tty->print("( ");
+  st->print(" ");
+  st->print("( ");
   if( !depth || d[this] ) {     // Check for recursive dump
-    tty->print("...)");
+    st->print("...)");
     return;
   }
   d.Insert((void*)this,(void*)this);    // Stop recursion
   if (Parms < _domain->_cnt)
-    _domain->field_at(Parms)->dump2(d,depth-1);
+    _domain->field_at(Parms)->dump2(d,depth-1,st);
   for (uint i = Parms+1; i < _domain->_cnt; i++) {
-    tty->print(", ");
-    _domain->field_at(i)->dump2(d,depth-1);
+    st->print(", ");
+    _domain->field_at(i)->dump2(d,depth-1,st);
   }
-  tty->print(" )");
+  st->print(" )");
 }
 
 //------------------------------print_flattened--------------------------------

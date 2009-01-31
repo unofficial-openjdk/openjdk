@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)jvmtiEventController.cpp	1.56 07/05/23 10:53:48 JVM"
+#pragma ident "@(#)jvmtiEventController.cpp	1.57 07/08/29 13:42:27 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -322,7 +322,7 @@ void JvmtiEventControllerPrivate::set_should_post_single_step(bool on) {
 void VM_ChangeSingleStep::doit() {
   JvmtiEventControllerPrivate::set_should_post_single_step(_on);
   if (_on) {
-    AbstractInterpreter::notice_safepoints();
+    Interpreter::notice_safepoints();
   }
 }
 

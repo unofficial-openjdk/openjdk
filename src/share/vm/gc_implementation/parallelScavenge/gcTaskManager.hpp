@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)gcTaskManager.hpp	1.28 07/05/05 17:05:26 JVM"
+#pragma ident "@(#)gcTaskManager.hpp	1.29 07/06/29 04:08:20 JVM"
 #endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -209,10 +209,10 @@ class SynchronizedGCTaskQueue : public CHeapObj {
 private:
   // Instance state.
   GCTaskQueue* _unsynchronized_queue;   // Has-a unsynchronized queue.
-  Mutex*       _lock;                   // Lock to control access.
+  Monitor *    _lock;                   // Lock to control access.
 public:
   // Factory create and destroy methods.
-  static SynchronizedGCTaskQueue* create(GCTaskQueue* queue, Mutex* lock) {
+  static SynchronizedGCTaskQueue* create(GCTaskQueue* queue, Monitor * lock) {
     return new SynchronizedGCTaskQueue(queue, lock);
   }
   static void destroy(SynchronizedGCTaskQueue* that) {
@@ -224,7 +224,7 @@ public:
   GCTaskQueue* unsynchronized_queue() const {
     return _unsynchronized_queue;
   }
-  Mutex* lock() const {
+  Monitor * lock() const {
     return _lock;
   }
   // GCTaskQueue wrapper methods.
@@ -260,7 +260,7 @@ public:
   }
 protected:
   // Constructor.  Clients use factory, but there might be subclasses.
-  SynchronizedGCTaskQueue(GCTaskQueue* queue, Mutex* lock);
+  SynchronizedGCTaskQueue(GCTaskQueue* queue, Monitor * lock);
   // Destructor.  Not virtual because no virtuals.
   ~SynchronizedGCTaskQueue();
 };
@@ -325,7 +325,7 @@ public:
   Monitor* monitor() const {
     return _monitor;
   }
-  Mutex* lock() const {
+  Monitor * lock() const {
     return _monitor;
   }
   // Methods.

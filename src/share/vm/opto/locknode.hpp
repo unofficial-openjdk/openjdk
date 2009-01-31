@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)locknode.hpp	1.39 07/05/17 15:59:09 JVM"
+#pragma ident "@(#)locknode.hpp	1.40 07/09/28 10:23:10 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -46,8 +46,8 @@ public:
   static OptoReg::Name stack_slot(Node* box_node);
 
 #ifndef PRODUCT
-  virtual void format( PhaseRegAlloc * ) const;
-  virtual void dump_spec() const { tty->print("  Lock %d",_slot); }
+  virtual void format( PhaseRegAlloc *, outputStream *st ) const;
+  virtual void dump_spec(outputStream *st) const { st->print("  Lock %d",_slot); }
 #endif
 };
 

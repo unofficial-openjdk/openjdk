@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)graphKit.hpp	1.56 07/05/17 15:58:52 JVM"
+#pragma ident "@(#)graphKit.hpp	1.59 07/08/07 15:24:25 JVM"
 #endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -426,6 +426,51 @@ class GraphKit : public Phase {
                         int adr_idx,
                         bool require_atomic_access = false);
 
+
+  // All in one pre-barrier, store, post_barrier
+  // Insert a write-barrier'd store.  This is to let generational GC
+  // work; we have to flag all oop-stores before the next GC point.
+  //
+  // It comes in 3 flavors of store to an object, array, or unknown.
+  // We use precise card marks for arrays to avoid scanning the entire
+  // array. We use imprecise for object. We use precise for unknown
+  // since we don't know if we have an array or and object or even
+  // where the object starts.
+  //
+  // If val==NULL, it is taken to be a completely unknown value. QQQ
+
+  Node* store_oop_to_object(Node* ctl, 
+                            Node* obj,   // containing obj
+                            Node* adr,  // actual adress to store val at
+                            const TypePtr* adr_type,
+                            Node* val,
+                            const Type* val_type,
+                            BasicType bt);
+
+  Node* store_oop_to_array(Node* ctl, 
+                           Node* obj,   // containing obj
+                           Node* adr,  // actual adress to store val at
+                           const TypePtr* adr_type,
+                           Node* val,
+                           const Type* val_type,
+                           BasicType bt);
+
+  // Could be an array or object we don't know at compile time (unsafe ref.)
+  Node* store_oop_to_unknown(Node* ctl, 
+                             Node* obj,   // containing obj
+                             Node* adr,  // actual adress to store val at
+                             const TypePtr* adr_type,
+                             Node* val,
+                             const Type* val_type,
+                             BasicType bt);
+
+  // For the few case where the barriers need special help
+  void pre_barrier(Node* ctl, Node* obj, Node* adr, uint adr_idx,
+                   Node* val, const Type* val_type, BasicType bt);
+
+  void post_barrier(Node* ctl, Node* store, Node* obj, Node* adr, uint adr_idx,
+                    Node* val, BasicType bt, bool use_precise);
+
   // Return addressing for an array element.
   Node* array_element_address(Node* ary, Node* idx, BasicType elembt,
                               // Optional constraint on the array size:
@@ -505,15 +550,15 @@ class GraphKit : public Phase {
   // Optional must_throw is the same as with add_safepoint_edges.
   void uncommon_trap(int trap_request,
                      ciKlass* klass = NULL, const char* reason_string = NULL,
-                     bool must_throw = false);
+                     bool must_throw = false, bool keep_exact_action = false);
 
   // Shorthand, to avoid saying "Deoptimization::" so many times.
   void uncommon_trap(Deoptimization::DeoptReason reason,
                      Deoptimization::DeoptAction action,
                      ciKlass* klass = NULL, const char* reason_string = NULL,
-                     bool must_throw = false) {
+                     bool must_throw = false, bool keep_exact_action = false) {
     uncommon_trap(Deoptimization::make_trap_request(reason, action),
-                  klass, reason_string, must_throw);
+                  klass, reason_string, must_throw, keep_exact_action);
   }
 
   // Report if there were too many traps at the current method and bci.
@@ -528,14 +573,16 @@ class GraphKit : public Phase {
     return C->too_many_recompiles(method(), bci(), reason);
   }
 
-  // Insert a write-barrier'd store.  This is to let generational GC
-  // work; we have to flag all oop-stores before the next GC point.
-  // The obj_type value is one of T_OBJECT, T_ARRAY, or T_CONFLICT,
-  // meaning obj is an instance, an array, or either (statically unknown).
-  // If val==NULL, it is taken to be a completely unknown value.
-  void store_barrier(Node *store, BasicType obj_type,
-                     // dest object, addr within obj, and stored value:
-                     Node* obj, Node* adr, Node* val);
+  // vanilla/CMS post barrier
+  void write_barrier_post(Node *store, Node* obj, Node* adr, Node* val, bool use_precise);
+
+  // Returns the object (if any) which was created the moment before.
+  Node* just_allocated_object(Node* current_control);
+
+  static bool use_ReduceInitialCardMarks() {
+    return (ReduceInitialCardMarks
+            && Universe::heap()->can_elide_tlab_store_barriers());
+  }
 
   // Helper function to round double arguments before a call
   void round_double_arguments(ciMethod* dest_method);
@@ -613,7 +660,6 @@ class GraphKit : public Phase {
                             Node* *casted_receiver);
 
   // implementation of object creation
-  void set_eden_pointers(Node * &eden_top_adr, Node * &eden_end_adr);
   Node* set_output_for_allocation(AllocateNode* alloc,
                                   const TypeOopPtr* oop_type,
                                   bool raw_mem_only);

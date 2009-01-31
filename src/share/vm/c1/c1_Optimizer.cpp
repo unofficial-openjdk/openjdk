@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)c1_Optimizer.cpp	1.71 07/05/05 17:05:09 JVM"
+#pragma ident "@(#)c1_Optimizer.cpp	1.72 08/11/07 15:47:10 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -330,8 +330,6 @@ class BlockMerger: public BlockClosure {
                 BlockBegin* fsux = if_->fsux();
                 if (swapped) {
                   cond = Instruction::mirror(cond);
-                  tsux = if_->fsux();
-                  fsux = if_->tsux();
                 }
 
                 BlockBegin* tblock = tval->compare(cond, con, tsux, fsux);

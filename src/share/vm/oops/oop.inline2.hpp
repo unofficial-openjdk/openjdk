@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)oop.inline2.hpp	1.12 07/05/05 17:06:07 JVM"
+#pragma ident "@(#)oop.inline2.hpp	1.14 07/08/31 18:42:30 JVM"
 #endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -33,13 +33,7 @@ inline bool oopDesc::is_perm() const {
   return Universe::heap()->is_in_permanent(this);
 }
 
-// is_perm only verifies that oop is in the reserved space for
-// the perm gen. Things like forte stackwalking need something that
-// assures us that the pointer is in the commited area so we don't
-// segv checking suspicious frame contents.
-
-inline bool oopDesc::is_perm_and_alloced() const {
-  return Universe::heap()->is_permanent(this);
+// Check for NULL also.
+inline bool oopDesc::is_perm_or_null() const {
+  return this == NULL || is_perm();
 }
-
-

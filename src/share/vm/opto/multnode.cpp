@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)multnode.cpp	1.60 07/05/05 17:06:23 JVM"
+#pragma ident "@(#)multnode.cpp	1.61 07/09/28 10:23:05 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -96,7 +96,7 @@ const TypePtr *ProjNode::adr_type() const {
 
 bool ProjNode::pinned() const { return in(0)->pinned(); }
 #ifndef PRODUCT
-void ProjNode::dump_spec() const { tty->print("#%d",_con); if(_is_io_use) tty->print(" (i_o_use)");}
+void ProjNode::dump_spec(outputStream *st) const { st->print("#%d",_con); if(_is_io_use) st->print(" (i_o_use)");}
 #endif
 
 //----------------------------check_con----------------------------------------

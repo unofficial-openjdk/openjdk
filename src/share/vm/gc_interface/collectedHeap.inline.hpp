@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)collectedHeap.inline.hpp	1.46 07/05/17 15:52:59 JVM"
+#pragma ident "@(#)collectedHeap.inline.hpp	1.50 07/09/07 10:56:50 JVM"
 #endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -292,7 +292,45 @@ oop CollectedHeap::permanent_array_allocate(KlassHandle klass,
   return (oop)obj;  
 }
 
+// Returns "TRUE" if "p" is a method oop in the
+// current heap with high probability. NOTE: The main
+// current consumers of this interface are Forte::
+// and ThreadProfiler::. In these cases, the
+// interpreter frame from which "p" came, may be
+// under construction when sampled asynchronously, so
+// the clients want to check that it represents a
+// valid method before using it. Nonetheless since
+// the clients do not typically lock out GC, the
+// predicate is_valid_method() is not stable, so
+// it is possible that by the time "p" is used, it
+// is no longer valid.
+inline bool CollectedHeap::is_valid_method(oop p) const {
+  return
+    p != NULL &&
+
+    // Check whether it is aligned at a HeapWord boundary.
+    Space::is_aligned(p) &&
+
+    // Check whether "method" is in the allocated part of the
+    // permanent generation -- this needs to be checked before
+    // p->klass() below to avoid a SEGV (but see below
+    // for a potential window of vulnerability).
+    is_permanent((void*)p) &&
+
+    // See if GC is active; however, there is still an
+    // apparently unavoidable window after this call
+    // and before the client of this interface uses "p".
+    // If the client chooses not to lock out GC, then
+    // it's a risk the client must accept.
+    !is_gc_active() &&
+
+    // Check that p is a methodOop.
+    p->klass() == Universe::methodKlassObj();
+}
+
+
 #ifndef	PRODUCT
+
 inline bool
 CollectedHeap::promotion_should_fail(volatile size_t* count) {
   // Access to count is not atomic; the value does not have to be exact.

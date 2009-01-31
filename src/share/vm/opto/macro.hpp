@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)macro.hpp	1.10 07/07/02 18:45:21 JVM"
+#pragma ident "@(#)macro.hpp	1.11 07/07/19 19:08:26 JVM"
 #endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -43,11 +43,22 @@ private:
   Node* basic_plus_adr(Node* base, int offset) {
     return (offset == 0)? base: basic_plus_adr(base, MakeConX(offset));
   }
-  Node* basic_plus_adr(Node* base, Node* offset) {
-    Node* adr = new (C, 4) AddPNode(base, base, offset);
-    _igvn.register_new_node_with_optimizer(adr);
-    return adr;
+  Node* basic_plus_adr(Node* base, Node* ptr, int offset) {
+    return (offset == 0)? ptr: basic_plus_adr(base, ptr, MakeConX(offset));
   }
+  Node* basic_plus_adr(Node* base, Node* offset) {
+    return basic_plus_adr(base, base, offset);
+  }
+  Node* basic_plus_adr(Node* base, Node* ptr, Node* offset) {
+    Node* adr = new (C, 4) AddPNode(base, ptr, offset);
+    return transform_later(adr);
+  }
+  Node* transform_later(Node* n) {
+    // equivalent to _gvn.transform in GraphKit, Ideal, etc.
+    _igvn.register_new_node_with_optimizer(n);
+    return n;
+  }
+  void set_eden_pointers(Node* &eden_top_adr, Node* &eden_end_adr);
   Node* make_load( Node* ctl, Node* mem, Node* base, int offset,
                    const Type* value_type, BasicType bt);
   Node* make_store(Node* ctl, Node* mem, Node* base, int offset,

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)vframeArray.cpp	1.144 07/06/08 15:21:45 JVM"
+#pragma ident "@(#)vframeArray.cpp	1.145 07/08/29 13:42:30 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -141,9 +141,6 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
 					 frame* caller,
 					 bool is_top_frame,
 					 int exec_mode) {
-#if  defined(CC_INTERP) && !defined(IA64)
-  ShouldNotReachHere();
-#else
   JavaThread* thread = (JavaThread*) Thread::current();
 
   // Look at bci and decide on bcp and continuation pc
@@ -169,7 +166,7 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
   // For Compiler2, there should be no pending exception when deoptimizing at monitorenter
   // because there is no safepoint at the null pointer check (it is either handled explicitly
   // or prior to the monitorenter) and asynchronous exceptions are not made "pending" by the
-  // runtime interface for the slow case (see JRT_ENTRY_NO_ASYNC).  If an asynchronous 
+  // runtime interface for the slow case (see JRT_ENTRY_FOR_MONITORENTER).  If an asynchronous 
   // exception was processed, the bytecode pointer would have to be extended one bytecode beyond
   // the monitorenter to place it in the proper exception range.
   //
@@ -373,6 +370,7 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
 
 #ifndef PRODUCT
   if (TraceDeoptimization && Verbose) {
+    ttyLocker ttyl;
     tty->print_cr("[%d Interpreted Frame]", ++unpack_counter);
     iframe()->print_on(tty);
     RegisterMap map(thread);
@@ -403,7 +401,6 @@ void vframeArrayElement::unpack_on_stack(int callee_parameters,
 
   _locals = _expressions = NULL;
 
-#endif /* !CC_INTERP */
 }
 
 int vframeArrayElement::on_stack_size(int callee_parameters,
@@ -527,11 +524,6 @@ void vframeArray::unpack_to_stack(frame &unpack_frame, int exec_mode) {
     caller_frame = *element(index)->iframe();
   }
 
-#ifdef CC_INTERP
-#ifndef IA64
-  ShouldNotReachHere();
-#endif
-#endif
 
   deallocate_monitor_chunks();
 }

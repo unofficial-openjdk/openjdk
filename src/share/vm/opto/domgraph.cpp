@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)domgraph.cpp	1.75 07/05/05 17:06:16 JVM"
+#pragma ident "@(#)domgraph.cpp	1.76 07/07/11 15:38:57 JVM"
 #endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -281,7 +281,9 @@ uint PhaseCFG::DFS( Tarjan *tarjan ) {
     }
     else {
       // Build a reverse post-order in the CFG _blocks array
-      _blocks.map(--_rpo_ctr, bstack.pop());
+      Block *stack_top = bstack.pop();
+      stack_top->_rpo = --_rpo_ctr;
+      _blocks.map(stack_top->_rpo, stack_top);
     }
   }
   return pre_order;

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)codeCache.cpp	1.132 07/05/05 17:05:19 JVM"
+#pragma ident "@(#)codeCache.cpp	1.133 07/09/01 18:01:02 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -358,37 +358,38 @@ static int dependentCheckCount = 0;
 #endif // PRODUCT
 
 
-int CodeCache::mark_for_deoptimization(klassOop dependee) {
+int CodeCache::mark_for_deoptimization(DepChange& changes) {
   MutexLockerEx mu(CodeCache_lock, Mutex::_no_safepoint_check_flag);
   
 #ifndef PRODUCT
   dependentCheckTime.start();
   dependentCheckCount++;
 #endif // PRODUCT
-  
+
   int number_of_marked_CodeBlobs = 0;
 
   // search the hierarchy looking for nmethods which are affected by the loading of this class
-  for (klassOop d = dependee; d != NULL; d = instanceKlass::cast(d)->super()) {
-    number_of_marked_CodeBlobs += instanceKlass::cast(d)->mark_dependent_nmethods(dependee);
-  }
+
   // then search the interfaces this class implements looking for nmethods
   // which might be dependent of the fact that an interface only had one
   // implementor.
-  objArrayOop interfaces = instanceKlass::cast(dependee)->transitive_interfaces();
-  int number_of_interfaces = interfaces->length();
-  for (int interface_index = 0; interface_index < number_of_interfaces; interface_index += 1) {
-    klassOop d = klassOop(interfaces->obj_at(interface_index));
-    number_of_marked_CodeBlobs += instanceKlass::cast(d)->mark_dependent_nmethods(dependee);
+
+  { No_Safepoint_Verifier nsv;
+    for (DepChange::ContextStream str(changes, nsv); str.next(); ) {
+      klassOop d = str.klass();
+      number_of_marked_CodeBlobs += instanceKlass::cast(d)->mark_dependent_nmethods(changes);
+    }
   }
 
   if (VerifyDependencies) {
+    // Turn off dependency tracing while actually testing deps.
+    NOT_PRODUCT( FlagSetting fs(TraceDependencies, false) );
     FOR_ALL_ALIVE_NMETHODS(nm) {
       if (!nm->is_marked_for_deoptimization() &&
-          nm->is_dependent_on(NULL)) {
+          nm->check_all_dependencies()) {
         ResourceMark rm;
         tty->print_cr("Should have been marked for deoptimization:");
-        tty->print_cr("  dependee = %s", instanceKlass::cast(dependee)->external_name());
+        changes.print();
         nm->print();
         nm->print_dependencies();
       }

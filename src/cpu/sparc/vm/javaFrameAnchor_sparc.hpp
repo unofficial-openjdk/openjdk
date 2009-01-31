@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)javaFrameAnchor_sparc.hpp	1.16 07/05/05 17:04:30 JVM"
+#pragma ident "@(#)javaFrameAnchor_sparc.hpp	1.17 07/08/29 13:42:18 JVM"
 #endif
 /*
  * Copyright 2002-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -76,6 +76,8 @@ public:
   }
 
   void make_walkable(JavaThread* thread);
+
+  void set_last_Java_sp(intptr_t* sp)            { _last_Java_sp = sp; }
 
   // These are only used by friends
 private:

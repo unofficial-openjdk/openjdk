@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)vm_version_sparc.hpp	1.32 07/05/05 17:04:33 JVM"
+#pragma ident "@(#)vm_version_sparc.hpp	1.33 07/10/04 10:49:21 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -129,4 +129,7 @@ public:
   // Assembler testing
   static void allow_all();
   static void revert();
+
+  // Override the Abstract_VM_Version implementation.
+  static uint page_size_count() { return is_sun4v() ? 4 : 2; }
 };

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)markOop.hpp	1.65 08/06/19 12:45:45 JVM"
+#pragma ident "@(#)markOop.hpp	1.66 08/11/24 12:22:54 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.

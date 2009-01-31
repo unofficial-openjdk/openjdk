@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)synchronizer.cpp	1.110 07/05/26 16:19:45 JVM"
+#pragma ident "@(#)synchronizer.cpp	1.117 07/09/29 02:14:43 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -119,6 +119,7 @@ class ObjectWaiter : public StackObj {
   volatile int  _notified ;    
   volatile TStates TState ; 
   Sorted        _Sorted ;           // List placement disposition
+  bool          _active ;           // Contention monitoring is enabled
  public:
   ObjectWaiter(Thread* thread) {
     _next     = NULL;
@@ -127,7 +128,18 @@ class ObjectWaiter : public StackObj {
     TState    = TS_RUN ; 
     _thread   = thread;
     _event    = thread->_ParkEvent ; 
+    _active   = false;
     assert (_event != NULL, "invariant") ; 
+  }
+
+  void wait_reenter_begin(ObjectMonitor *mon) {
+    JavaThread *jt = (JavaThread *)this->_thread;
+    _active = JavaThreadBlockedOnMonitorEnterState::wait_reenter_begin(jt, mon);
+  }
+
+  void wait_reenter_end(ObjectMonitor *mon) {
+    JavaThread *jt = (JavaThread *)this->_thread;
+    JavaThreadBlockedOnMonitorEnterState::wait_reenter_end(jt, _active);
   }
 };
 
@@ -180,7 +192,7 @@ static SharedGlobals GVars ;
 
 // Tunables ...
 // The knob* variables are effectively final.  Once set they should
-// never be modified hence.
+// never be modified hence.  Consider using __read_mostly with GCC.
 
 static int Knob_LogSpins           = 0 ;       // enable jvmstat tally for spins
 static int Knob_HandOff            = 0 ;      
@@ -322,7 +334,7 @@ void BasicLock::move_to(oop obj, BasicLock* dest) {
     // Typically the displaced header will be 0 (recursive stack lock) or 
     // unused_mark.  Naively we'd like to assert that the displaced mark
     // value is either 0, neutral, or 3.  But with the advent of the
-    // the store-before-CAS avoidance in fast_lock/compiler_lock_object
+    // store-before-CAS avoidance in fast_lock/compiler_lock_object
     // we can find any flavor mark in the displaced mark.
   }
 // [RGV] The next line appears to do nothing!
@@ -450,7 +462,7 @@ static int Adjust (volatile int * adr, int dx) {
 
 typedef volatile int SpinLockT ; 
 
-static void SpinAcquire (volatile int * adr, const char * LockName) {
+void Thread::SpinAcquire (volatile int * adr, const char * LockName) {
   if (Atomic::cmpxchg (1, adr, 0) == 0) {
      return ;   // normal fast-path return
   }
@@ -464,6 +476,8 @@ static void SpinAcquire (volatile int * adr, const char * LockName) {
         ++ctr ; 
         if ((ctr & 0xFFF) == 0 || !os::is_MP()) { 
            if (Yields > 5) { 
+             // Consider using a simple NakedSleep() instead.
+             // Then SpinAcquire could be called by non-JVM threads
              Thread::current()->_ParkEvent->park(1) ; 
            } else { 
              os::NakedYield() ; 
@@ -477,7 +491,7 @@ static void SpinAcquire (volatile int * adr, const char * LockName) {
   }
 }
 
-static void SpinRelease (volatile int * adr) {
+void Thread::SpinRelease (volatile int * adr) {
   assert (*adr != 0, "invariant") ; 
   OrderAccess::fence() ;      // guarantee at least release consistency. 
   // Roach-motel semantics.
@@ -494,12 +508,15 @@ static void SpinRelease (volatile int * adr) {
 //    The remainder of the word points to the head of a singly-linked list
 //    of threads blocked on the lock.  
 //
-// *  users of muxAcquire and muxRelease must be careful with regards to
-//    consuming unpark() "permits".  This is particularly true when 
-//    muxAcquire-muxRelease are used as part of the implementation of 
-//    the sync subsystem.  A safe rule of thumb is that a thread should never
-//    call muxAcquire() if it's enqueued (cxq, EntryList, WaitList, etc) and 
-//    will subsequently park().  The park() operation in muxAcquire() could
+// *  The current implementation of muxAcquire-muxRelease uses its own
+//    dedicated Thread._MuxEvent instance.  If we're interested in 
+//    minimizing the peak number of extant ParkEvent instances then
+//    we could eliminate _MuxEvent and "borrow" _ParkEvent as long
+//    as certain invariants were satisfied.  Specifically, care would need
+//    to be taken with regards to consuming unpark() "permits".  
+//    A safe rule of thumb is that a thread would never call muxAcquire() 
+//    if it's enqueued (cxq, EntryList, WaitList, etc) and will subsequently 
+//    park().  Otherwise the _ParkEvent park() operation in muxAcquire() could 
 //    consume an unpark() permit intended for monitorenter, for instance. 
 //    One way around this would be to widen the restricted-range semaphore
 //    implemented in park().  Another alternative would be to provide
@@ -507,9 +524,9 @@ static void SpinRelease (volatile int * adr) {
 //    instance would be dedicated to muxAcquire-muxRelease, for instance.
 //
 // *  Usage:
-//    -- only as leaf locks
-//    -- for short-term locks only, as blocking MuxAcquire() does _not perform
-//       a state transition.  
+//    -- Only as leaf locks
+//    -- for short-term locking only as muxAcquire does not perform
+//       thread state transitions.
 // 
 // Alternatives:
 // *  We could implement muxAcquire and muxRelease with MCS or CLH locks 
@@ -531,12 +548,13 @@ static void SpinRelease (volatile int * adr) {
 //    to provide the usual futile-wakeup optimization.  
 //    See RTStt for details.  
 // *  Consider schedctl.sc_nopreempt to cover the critical section.
+//
 
 
 typedef volatile intptr_t MutexT ;      // Mux Lock-word
 enum MuxBits { LOCKBIT = 1 } ; 
  
-static void ATTR muxAcquire (volatile intptr_t * Lock, const char * LockName) {
+void Thread::muxAcquire (volatile intptr_t * Lock, const char * LockName) {
   intptr_t w = Atomic::cmpxchg_ptr (LOCKBIT, Lock, 0) ; 
   if (w == 0) return ; 
   if ((w & LOCKBIT) == 0 && Atomic::cmpxchg_ptr (w|LOCKBIT, Lock, w) == w) { 
@@ -544,10 +562,9 @@ static void ATTR muxAcquire (volatile intptr_t * Lock, const char * LockName) {
   }
 
   TEVENT (muxAcquire - Contention) ; 
-  ParkEvent * Self = Thread::current()->_ParkEvent ; 
+  ParkEvent * const Self = Thread::current()->_MuxEvent ; 
   assert ((intptr_t(Self) & LOCKBIT) == 0, "invariant") ; 
   for (;;) { 
-     intptr_t w ; 
      int its = (os::is_MP() ? 100 : 0) + 1 ; 
 
      // Optional spin phase: spin-then-park strategy
@@ -567,6 +584,7 @@ static void ATTR muxAcquire (volatile intptr_t * Lock, const char * LockName) {
         w = *Lock ; 
         if ((w & LOCKBIT) == 0) { 
             if (Atomic::cmpxchg_ptr (w|LOCKBIT, Lock, w) == w) { 
+                Self->OnList = 0 ;   // hygiene - allows stronger asserts 
                 return ; 
             }
             continue ;      // Interference -- *Lock changed -- Just retry
@@ -582,17 +600,79 @@ static void ATTR muxAcquire (volatile intptr_t * Lock, const char * LockName) {
   }
 }
 
+void Thread::muxAcquireW (volatile intptr_t * Lock, ParkEvent * ev) {
+  intptr_t w = Atomic::cmpxchg_ptr (LOCKBIT, Lock, 0) ; 
+  if (w == 0) return ; 
+  if ((w & LOCKBIT) == 0 && Atomic::cmpxchg_ptr (w|LOCKBIT, Lock, w) == w) { 
+    return ; 
+  }
+
+  TEVENT (muxAcquire - Contention) ; 
+  ParkEvent * ReleaseAfter = NULL ; 
+  if (ev == NULL) {
+    ev = ReleaseAfter = ParkEvent::Allocate (NULL) ; 
+  }
+  assert ((intptr_t(ev) & LOCKBIT) == 0, "invariant") ; 
+  for (;;) { 
+    guarantee (ev->OnList == 0, "invariant") ; 
+    int its = (os::is_MP() ? 100 : 0) + 1 ; 
+
+    // Optional spin phase: spin-then-park strategy
+    while (--its >= 0) { 
+      w = *Lock ; 
+      if ((w & LOCKBIT) == 0 && Atomic::cmpxchg_ptr (w|LOCKBIT, Lock, w) == w) { 
+        if (ReleaseAfter != NULL) {
+          ParkEvent::Release (ReleaseAfter) ; 
+        }
+        return ; 
+      }
+    }
+
+    ev->reset() ; 
+    ev->OnList = intptr_t(Lock) ; 
+    // The following fence() isn't _strictly necessary as the subsequent 
+    // CAS() both serializes execution and ratifies the fetched *Lock value.
+    OrderAccess::fence(); 
+    for (;;) { 
+      w = *Lock ; 
+      if ((w & LOCKBIT) == 0) { 
+        if (Atomic::cmpxchg_ptr (w|LOCKBIT, Lock, w) == w) { 
+          ev->OnList = 0 ; 
+          // We call ::Release while holding the outer lock, thus
+          // artificially lengthening the critical section.
+          // Consider deferring the ::Release() until the subsequent unlock(),
+          // after we've dropped the outer lock.
+          if (ReleaseAfter != NULL) {
+            ParkEvent::Release (ReleaseAfter) ; 
+          }
+          return ; 
+        }
+        continue ;      // Interference -- *Lock changed -- Just retry
+      }
+      assert (w & LOCKBIT, "invariant") ; 
+      ev->ListNext = (ParkEvent *) (w & ~LOCKBIT );
+      if (Atomic::cmpxchg_ptr (intptr_t(ev)|LOCKBIT, Lock, w) == w) break ; 
+    }
+
+    while (ev->OnList != 0) { 
+      ev->park() ; 
+    }
+  }
+}
+
 // Release() must extract a successor from the list and then wake that thread.
 // It can "pop" the front of the list or use a detach-modify-reattach (DMR) scheme 
 // similar to that used by ParkEvent::Allocate() and ::Release().  DMR-based
-// Release() would (A) CAS() or swap() null to *Lock, releasing the lock and 
-// detaching the list.  (B) Extract a successor from the private list "in-hand" 
-// (C) attempt to CAS() the residual back into *Lock over null.  If there were any 
-// newly arrived threads and the CAS() would fail.  In that case Release() would 
-// detach the RATs, re-merge the list in-hand with the RATs and repeat as needed.  
-// Alternately, Release() can detach and extract a successor, put then pass the
-// residual list to the wakee.  The wakee must reattach and remerge before it
-// competes for the lock.  
+// Release() would :
+// (A) CAS() or swap() null to *Lock, releasing the lock and detaching the list.  
+// (B) Extract a successor from the private list "in-hand" 
+// (C) attempt to CAS() the residual back into *Lock over null.  
+//     If there were any newly arrived threads and the CAS() would fail.  
+//     In that case Release() would detach the RATs, re-merge the list in-hand 
+//     with the RATs and repeat as needed.  Alternately, Release() might 
+//     detach and extract a successor, but then pass the residual list to the wakee.  
+//     The wakee would be responsible for reattaching and remerging before it
+//     competed for the lock.  
 //
 // Both "pop" and DMR are immune from ABA corruption -- there can be
 // multiple concurrent pushers, but only one popper or detacher.  
@@ -600,24 +680,24 @@ static void ATTR muxAcquire (volatile intptr_t * Lock, const char * LockName) {
 // but tends to provide excellent throughput as hot threads remain hot. 
 // (We wake recently run threads first).  
 
-static void ATTR muxRelease (volatile intptr_t * Lock)  {
-   for (;;) { 
-     intptr_t w = Atomic::cmpxchg_ptr (0, Lock, LOCKBIT) ; 
-     assert (w & LOCKBIT, "invariant") ; 
-     if (w == LOCKBIT) return ; 
-     ParkEvent * List = (ParkEvent *) (w & ~LOCKBIT) ; 
-     assert (List != NULL, "invariant") ; 
-     assert (List->OnList == intptr_t(Lock), "invariant") ; 
-     ParkEvent * nxt = List->ListNext ; 
+void Thread::muxRelease (volatile intptr_t * Lock)  {
+  for (;;) { 
+    const intptr_t w = Atomic::cmpxchg_ptr (0, Lock, LOCKBIT) ; 
+    assert (w & LOCKBIT, "invariant") ; 
+    if (w == LOCKBIT) return ; 
+    ParkEvent * List = (ParkEvent *) (w & ~LOCKBIT) ; 
+    assert (List != NULL, "invariant") ; 
+    assert (List->OnList == intptr_t(Lock), "invariant") ; 
+    ParkEvent * nxt = List->ListNext ; 
 
-     // The following CAS() releases the lock and pops the head element.  
-     if (Atomic::cmpxchg_ptr (intptr_t(nxt), Lock, w) != w) { 
-        continue ; 
-     }
-     List->OnList = 0 ; 
-     OrderAccess::fence() ; 
-     List->unpark () ;
-     return ; 
+    // The following CAS() releases the lock and pops the head element.  
+    if (Atomic::cmpxchg_ptr (intptr_t(nxt), Lock, w) != w) { 
+      continue ; 
+    }
+    List->OnList = 0 ; 
+    OrderAccess::fence() ; 
+    List->unpark () ;
+    return ; 
   }
 }
 
@@ -705,7 +785,7 @@ ObjectMonitor * ATTR ObjectSynchronizer::omAlloc (Thread * Self) {
             // Reprovision the thread's omFreeList.  
             // Use bulk transfers to reduce the allocation rate and heat
             // on various locks.
-            muxAcquire (&ListLock, "omAlloc") ;  
+            Thread::muxAcquire (&ListLock, "omAlloc") ;  
             for (int i = Self->omFreeProvision; --i >= 0 && gFreeList != NULL; ) {
                 ObjectMonitor * take = gFreeList ;
                 gFreeList = take->FreeNext ;
@@ -714,7 +794,7 @@ ObjectMonitor * ATTR ObjectSynchronizer::omAlloc (Thread * Self) {
                 take->Recycle() ;
                 omRelease (Self, take) ;
             }
-            muxRelease (&ListLock) ;  
+            Thread::muxRelease (&ListLock) ;  
             Self->omFreeProvision += 1 + (Self->omFreeProvision/2) ;
             if (Self->omFreeProvision > MAXPRIVATE ) Self->omFreeProvision = MAXPRIVATE ;
             TEVENT (omFirst - reprovision) ;
@@ -758,7 +838,7 @@ ObjectMonitor * ATTR ObjectSynchronizer::omAlloc (Thread * Self) {
 
         // Acquire the ListLock to manipulate BlockList and FreeList.
         // An Oyama-Taura-Yonezawa scheme might be more efficient. 
-        muxAcquire (&ListLock, "omAlloc [2]") ; 
+        Thread::muxAcquire (&ListLock, "omAlloc [2]") ; 
 
         // Add the new block to the list of extant blocks (gBlockList). 
         // The very first objectMonitor in a block is reserved and dedicated.
@@ -769,7 +849,7 @@ ObjectMonitor * ATTR ObjectSynchronizer::omAlloc (Thread * Self) {
         // Add the new string of objectMonitors to the global free list
         temp[_BLOCKSIZE - 1].FreeNext = gFreeList ; 
         gFreeList = temp + 1;
-        muxRelease (&ListLock) ; 
+        Thread::muxRelease (&ListLock) ; 
         TEVENT (Allocate block of monitors) ; 
     }
 }
@@ -826,10 +906,10 @@ void ObjectSynchronizer::omFlush (Thread * Self) {
     }
 
     guarantee (Tail != NULL && List != NULL, "invariant") ; 
-    muxAcquire (&ListLock, "omFlush") ; 
+    Thread::muxAcquire (&ListLock, "omFlush") ; 
     Tail->FreeNext = gFreeList ;
     gFreeList = List ;
-    muxRelease (&ListLock) ; 
+    Thread::muxRelease (&ListLock) ; 
     TEVENT (omFlush) ; 
 }
 
@@ -907,7 +987,7 @@ static markOop ReadStableMark (oop obj) {
          int YieldThenBlock = 0 ; 
          assert (ix >= 0 && ix < NINFLATIONLOCKS, "invariant") ; 
          assert ((NINFLATIONLOCKS & (NINFLATIONLOCKS-1)) == 0, "invariant") ; 
-         muxAcquire (InflationLocks + ix, "InflationLock") ; 
+         Thread::muxAcquire (InflationLocks + ix, "InflationLock") ; 
          while (obj->mark() == markOopDesc::INFLATING()) {
            // Beware: NakedYield() is advisory and has almost no effect on some platforms
            // so we periodically call Self->_ParkEvent->park(1).
@@ -918,7 +998,7 @@ static markOop ReadStableMark (oop obj) {
               os::NakedYield() ; 
            }
          }
-         muxRelease (InflationLocks + ix ) ; 
+         Thread::muxRelease (InflationLocks + ix ) ; 
          TEVENT (Inflate: INFLATING - yield/park) ; 
        }
     } else { 
@@ -958,7 +1038,7 @@ ObjectMonitor * ATTR ObjectSynchronizer::inflate (Thread * Self, oop object) {
       // Only that thread can complete inflation -- other threads must wait.  
       // The INFLATING value is transient. 
       // Currently, we spin/yield/park and poll the markword, waiting for inflation to finish.  
-      // We could always eliminate polling by parking the thread on some auxilliary list.
+      // We could always eliminate polling by parking the thread on some auxiliary list.
       if (mark == markOopDesc::INFLATING()) {
          TEVENT (Inflate: spin while INFLATING) ; 
          ReadStableMark(object) ; 
@@ -969,7 +1049,7 @@ ObjectMonitor * ATTR ObjectSynchronizer::inflate (Thread * Self, oop object) {
       // Could be stack-locked either by this thread or by some other thread.
       // 
       // Note that we allocate the objectmonitor speculatively, _before_ attempting 
-      // to install INFLATING into the mark word.  We orginally installed INFLATING, 
+      // to install INFLATING into the mark word.  We originally installed INFLATING, 
       // allocated the objectmonitor, and then finally STed the address of the 
       // objectmonitor into the mark.  This was correct, but artificially lengthened
       // the interval in which INFLATED appeared in the mark, thus increasing 
@@ -1022,7 +1102,7 @@ ObjectMonitor * ATTR ObjectSynchronizer::inflate (Thread * Self, oop object) {
           // will then spin, waiting for the 0 value to disappear.   Put another way, 
           // the 0 causes the owner to stall if the owner happens to try to
           // drop the lock (restoring the header from the basiclock to the object) 
-          // while inflation is in-progess.  This protocol avoids races that might 
+          // while inflation is in-progress.  This protocol avoids races that might 
           // would otherwise permit hashCode values to change or "flicker" for an object.  
           // Critically, while object->mark is 0 mark->displaced_mark_helper() is stable.
           // 0 serves as a "BUSY" inflate-in-progress indicator.  
@@ -1204,7 +1284,7 @@ void ObjectSynchronizer::slow_enter(Handle obj, BasicLock* lock, TRAPS) {
   }
 
 #if 0
-  // The following optimization isn't particulary useful.  
+  // The following optimization isn't particularly useful.  
   if (mark->has_monitor() && mark->monitor()->is_entered(THREAD)) { 
     lock->set_displaced_header (NULL) ; 
     return ; 
@@ -1625,9 +1705,9 @@ void ObjectSynchronizer::release_monitors_owned_by_thread(TRAPS) {
   assert(THREAD == JavaThread::current(), "must be current Java thread");
   No_Safepoint_Verifier nsv ;       
   ReleaseJavaMonitorsClosure rjmc(THREAD);
-  muxAcquire(&ListLock, "release_monitors_owned_by_thread");
+  Thread::muxAcquire(&ListLock, "release_monitors_owned_by_thread");
   ObjectSynchronizer::monitors_iterate(&rjmc);
-  muxRelease(&ListLock);
+  Thread::muxRelease(&ListLock);
   THREAD->clear_pending_exception();
 }
 
@@ -1769,10 +1849,10 @@ void ObjectSynchronizer::deflate_idle_monitors() {
      guarantee (FreeTail != NULL && nScavenged > 0, "invariant") ; 
      assert (FreeTail->FreeNext == NULL, "invariant") ; 
      // constant-time list splice - prepend scavenged segment to gFreeList
-     muxAcquire (&ListLock, "scavenge - return") ;  
+     Thread::muxAcquire (&ListLock, "scavenge - return") ;  
      FreeTail->FreeNext = gFreeList ; 
      gFreeList = FreeHead ; 
-     muxRelease (&ListLock) ; 
+     Thread::muxRelease (&ListLock) ; 
   } 
 
   if (_sync_Deflations != NULL) _sync_Deflations->inc(nScavenged) ; 
@@ -2161,7 +2241,7 @@ int ObjectMonitor::NotRunnable (Thread * Self, Thread * ox) {
 // "rings" or oscillates between spinning and not spinning.  This happens
 // when spinning is just on the cusp of profitability, however, so the 
 // situation is not dire.  The state is benign -- there's no need to add 
-// hysterisis control to damp the transition rate between spinning and 
+// hysteresis control to damp the transition rate between spinning and 
 // not spinning.
 //
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2209,7 +2289,7 @@ int ObjectMonitor::NotRunnable (Thread * Self, Thread * ox) {
 //    (that is, loadavg() << #cpus), we can instead suppress futile
 //    wakeup throttling, or even wake more than one successor at exit-time.
 //    The net effect is largely equivalent to spinning.  In both cases,
-//    contenting threads go ONPROC and opportunistically attempt to acquire
+//    contending threads go ONPROC and opportunistically attempt to acquire
 //    the lock, decreasing lock handover latency at the expense of wasted
 //    cycles and context switching. 
 //
@@ -2249,7 +2329,7 @@ int ObjectMonitor::NotRunnable (Thread * Self, Thread * ox) {
 //    for extended periods on the ready queue.  
 //
 // *  While spinning try to use the otherwise wasted time to help the VM make
-//    progess:
+//    progress:
 //  
 //    -- YieldTo() the owner, if the owner is OFFPROC but ready
 //       Done our remaining quantum directly to the ready thread.
@@ -2280,7 +2360,7 @@ int ObjectMonitor::NotRunnable (Thread * Self, Thread * ox) {
 //    as the default spin state after inflation is aggressive (optimistic)
 //    and tends toward spinning.  So in the worst case for a lock where
 //    spinning is not profitable we may spin unnecessarily for a brief
-//    period.  But then again, if a lock is contented it'll tend not to deflate\
+//    period.  But then again, if a lock is contended it'll tend not to deflate
 //    in the first place.
 
 
@@ -2397,7 +2477,7 @@ int ObjectMonitor::TrySpin_VaryDuration (Thread * Self) {
       // This is useful on classic SMP systems, but is of less utility on 
       // N1-style CMT platforms. 
       // 
-      // Trade-off: lock acquistion latency vs coherency bandwidth.
+      // Trade-off: lock acquisition latency vs coherency bandwidth.
       // Lock hold times are typically short.  A histogram
       // of successful spin attempts shows that we usually acquire
       // the lock early in the spin.  That suggests we want to 
@@ -2601,7 +2681,7 @@ static void DeferredInitialize () {
 // * Invariant: A thread appears on at most one monitor list --
 //   cxq, EntryList or WaitSet -- at any one time.
 //
-// * Contenting threads "push" themselves onto the cxq with CAS 
+// * Contending threads "push" themselves onto the cxq with CAS 
 //   and then spin/park.
 //
 // * After a contending thread eventually acquires the lock it must
@@ -2689,7 +2769,7 @@ static void DeferredInitialize () {
 //   by the notifier.  
 //
 // * An interesting alternative is to encode cxq as (List,LockByte) where
-//   the LockByte is 0 iff the monitor is owned.  _owner is simply an auxilliary
+//   the LockByte is 0 iff the monitor is owned.  _owner is simply an auxiliary
 //   variable, like _recursions, in the scheme.  The threads or Events that form
 //   the list would have to be aligned in 256-byte addresses.  A thread would
 //   try to acquire the lock or enqueue itself with CAS, but exiting threads
@@ -2962,7 +3042,7 @@ void ATTR ObjectMonitor::EnterI (TRAPS) {
 //     Given that, we'd call HSSEC after having returned from park(), 
 //     but before attempting to acquire the monitor.  This is only a 
 //     partial solution.  It avoids calling HSSEC while holding the 
-//     monitor (good), but it still increases successor reacquistion latency --
+//     monitor (good), but it still increases successor reacquisition latency --
 //     the interval between unparking a successor and the time the successor
 //     resumes and retries the lock.  See ReenterI(), which defers state transitions.  
 //     If we use this technique we can also avoid EnterI()-exit() loop
@@ -3117,7 +3197,7 @@ void ATTR ObjectMonitor::enter(TRAPS) {
 
   cur = Atomic::cmpxchg_ptr (Self, &_owner, NULL) ; 
   if (cur == NULL) { 
-     // Either ASSERT _recursions ==  0 or explicitly set _recursions = 0.
+     // Either ASSERT _recursions == 0 or explicitly set _recursions = 0.
      assert (_recursions == 0   , "invariant") ; 
      assert (_owner      == Self, "invariant") ; 
      // CONSIDER: set or assert OwnerIsThread == 1
@@ -3278,7 +3358,7 @@ void ObjectMonitor::ExitEpilog (Thread * Self, ObjectWaiter * Wakee) {
    // * Consider: set Wakee->UnparkTime = timeNow()
    //   When the thread wakes up it'll compute (timeNow() - Self->UnparkTime()).
    //   By measuring recent ONPROC latency we can approximate the
-   //   the system load.  In turn, we can feed that information back
+   //   system load.  In turn, we can feed that information back
    //   into the spinning & succession policies.  
    //   (ONPROC latency correlates strongly with load).  
    //
@@ -3286,7 +3366,7 @@ void ObjectMonitor::ExitEpilog (Thread * Self, ObjectWaiter * Wakee) {
    //   If the wakee is cold then transiently setting it's affinity
    //   to the current CPU is a good idea.  
    //   See http://j2se.east/~dice/PERSIST/050624-PullAffinity.txt
-   Trigger->unpark() ;     
+   Trigger->unpark() ;
 
    // Maintain stats and report events to JVMTI
    if (ObjectSynchronizer::_sync_Parks != NULL) { 
@@ -3300,7 +3380,7 @@ void ObjectMonitor::ExitEpilog (Thread * Self, ObjectWaiter * Wakee) {
 // ~~~~~~
 // Note that the collector can't reclaim the objectMonitor or deflate
 // the object out from underneath the thread calling ::exit() as the
-// the thread calling ::exit() never transitions to a stable state.
+// thread calling ::exit() never transitions to a stable state.
 // This inhibits GC, which in turn inhibits asynchronous (and 
 // inopportune) reclamation of "this".  
 //
@@ -3308,7 +3388,7 @@ void ObjectMonitor::ExitEpilog (Thread * Self, ObjectWaiter * Wakee) {
 // There's one exception to the claim above, however.  EnterI() can call
 // exit() to drop a lock if the acquirer has been externally suspended.
 // In that case exit() is called with _thread_state as _thread_blocked,
-// but the monitor's _count field is > 0, which inhibits reclaimation.  
+// but the monitor's _count field is > 0, which inhibits reclamation.  
 //
 // 1-0 exit
 // ~~~~~~~~
@@ -3455,7 +3535,7 @@ void ATTR ObjectMonitor::exit(TRAPS) {
          // I'd like to write one of the following:
          // A.  OrderAccess::release() ; _owner = NULL 
          // B.  OrderAccess::loadstore(); OrderAccess::storestore(); _owner = NULL;
-         // Unfortunatey OrderAccess::release() and OrderAccess::loadstore() both
+         // Unfortunately OrderAccess::release() and OrderAccess::loadstore() both
          // store into a _dummy variable.  That store is not needed, but can result
          // in massive wasteful coherency traffic on classic SMP systems.  
          // Instead, I use release_store(), which is implemented as just a simple
@@ -3495,14 +3575,14 @@ void ATTR ObjectMonitor::exit(TRAPS) {
          // (Note that we'd need to make the post-drop spin short, but no
          // shorter than the worst-case round-trip cache-line migration time.
          // The dropped lock needs to become visible to the spinner, and then
-         // the acquistion of the lock by the spinner must become visible to
+         // the acquisition of the lock by the spinner must become visible to
          // the exiting thread).  
          // 
 
          // It appears that an heir-presumptive (successor) must be made ready.
          // Only the current lock owner can manipulate the EntryList or
          // drain _cxq, so we need to reacquire the lock.  If we fail
-         // to reaquire the lock the responsibility for ensuring succession
+         // to reacquire the lock the responsibility for ensuring succession
          // falls to the new owner.  
          // 
          if (Atomic::cmpxchg_ptr (THREAD, &_owner, NULL) != NULL) {
@@ -3523,7 +3603,7 @@ void ATTR ObjectMonitor::exit(TRAPS) {
             // in the fast-exit path raced an entering thread in the slow-enter
             // path.  
             // We have two choices:
-            // A.  Try to reaquire the lock. 
+            // A.  Try to reacquire the lock. 
             //     If the CAS() fails return immediately, otherwise
             //     we either restart/rerun the exit operation, or simply
             //     fall-through into the code below which wakes a successor.
@@ -3657,7 +3737,7 @@ void ATTR ObjectMonitor::exit(TRAPS) {
           // notify() operation moves T1 from O's waitset to O's EntryList. T2 then
           // release the lock "O".  T2 resumes immediately after the ST of null into
           // _owner, above.  T2 notices that the EntryList is populated, so it
-          // reaquires the lock and then finds itself on the EntryList.  
+          // reacquires the lock and then finds itself on the EntryList.  
           // Given all that, we have to tolerate the circumstance where "w" is 
           // associated with Self.        
           assert (w->TState == ObjectWaiter::TS_ENTER, "invariant") ; 
@@ -3828,9 +3908,9 @@ void ObjectMonitor::wait(jlong millis, bool interruptible, TRAPS) {
    // returns because of a timeout of interrupt.  Contention is exceptionally rare
    // so we use a simple spin-lock instead of a heavier-weight blocking lock.  
 
-   SpinAcquire (&_WaitSetLock, "WaitSet - add") ; 
+   Thread::SpinAcquire (&_WaitSetLock, "WaitSet - add") ; 
    AddWaiter (&node) ; 
-   SpinRelease (&_WaitSetLock) ; 
+   Thread::SpinRelease (&_WaitSetLock) ; 
 
    if ((SyncFlags & 4) == 0) { 
       _Responsible = NULL ; 
@@ -3909,13 +3989,13 @@ void ObjectMonitor::wait(jlong millis, bool interruptible, TRAPS) {
      // That is, we fail toward safety.
 
      if (node.TState == ObjectWaiter::TS_WAIT) { 
-         SpinAcquire (&_WaitSetLock, "WaitSet - unlink") ; 
+         Thread::SpinAcquire (&_WaitSetLock, "WaitSet - unlink") ; 
          if (node.TState == ObjectWaiter::TS_WAIT) { 
             DequeueSpecificWaiter (&node) ;       // unlink from WaitSet
             assert(node._notified == 0, "invariant");
             node.TState = ObjectWaiter::TS_RUN ; 
          }
-         SpinRelease (&_WaitSetLock) ; 
+         Thread::SpinRelease (&_WaitSetLock) ; 
      }
 
      // The thread is now either on off-list (TS_RUN), 
@@ -3934,11 +4014,9 @@ void ObjectMonitor::wait(jlong millis, bool interruptible, TRAPS) {
      // although the raw address of the object may have changed.
      // (Don't cache naked oops over safepoints, of course).  
 
-     // post monitor waited event.  Note that this is past-tense, we are done waiting.
+     // post monitor waited event. Note that this is past-tense, we are done waiting.
      if (JvmtiExport::should_post_monitor_waited()) {
-        JvmtiExport::post_monitor_waited(jt, this, (ret == OS_TIMEOUT) ? true : false);
-        // Just to err on the conservative side ...
-        if (_succ == Self) _succ = NULL ; 
+       JvmtiExport::post_monitor_waited(jt, this, ret == OS_TIMEOUT);
      }
      OrderAccess::fence() ; 
 
@@ -3952,7 +4030,7 @@ void ObjectMonitor::wait(jlong millis, bool interruptible, TRAPS) {
      } else {
          guarantee (v == ObjectWaiter::TS_ENTER || v == ObjectWaiter::TS_CXQ, "invariant") ; 
          ReenterI (Self, &node) ; 
-         node.TState = ObjectWaiter::TS_RUN ; 
+         node.wait_reenter_end(this);
      }
 
      // Self has reacquired the lock.  
@@ -4009,7 +4087,7 @@ void ObjectMonitor::notify(TRAPS) {
 
   int Policy = Knob_MoveNotifyee ; 
 
-  SpinAcquire (&_WaitSetLock, "WaitSet - notify") ; 
+  Thread::SpinAcquire (&_WaitSetLock, "WaitSet - notify") ; 
   ObjectWaiter * iterator = DequeueWaiter() ; 
   if (iterator != NULL) { 
      TEVENT (Notify1 - Transfer) ; 
@@ -4099,6 +4177,10 @@ void ObjectMonitor::notify(TRAPS) {
         ev->unpark() ; 
      }
 
+     if (Policy < 4) {
+       iterator->wait_reenter_begin(this);
+     }
+
      // _WaitSetLock protects the wait queue, not the EntryList.  We could
      // move the add-to-EntryList operation, above, outside the critical section
      // protected by _WaitSetLock.  In practice that's not useful.  With the 
@@ -4108,12 +4190,13 @@ void ObjectMonitor::notify(TRAPS) {
      // critical section.
   }
 
-  SpinRelease (&_WaitSetLock) ; 
+  Thread::SpinRelease (&_WaitSetLock) ; 
 
   if (iterator != NULL && ObjectSynchronizer::_sync_Notifications != NULL) { 
      ObjectSynchronizer::_sync_Notifications->inc() ; 
   }
 }
+
 
 void ObjectMonitor::notifyAll(TRAPS) {
   CHECK_OWNER();
@@ -4126,7 +4209,7 @@ void ObjectMonitor::notifyAll(TRAPS) {
 
   int Policy = Knob_MoveNotifyee ; 
   int Tally = 0 ; 
-  SpinAcquire (&_WaitSetLock, "WaitSet - notifyall") ; 
+  Thread::SpinAcquire (&_WaitSetLock, "WaitSet - notifyall") ; 
   
   for (;;) {
      iterator = DequeueWaiter () ; 
@@ -4223,6 +4306,9 @@ void ObjectMonitor::notifyAll(TRAPS) {
         ev->unpark() ; 
      }
 
+     if (Policy < 4) {
+       iterator->wait_reenter_begin(this);
+     }
 
      // _WaitSetLock protects the wait queue, not the EntryList.  We could
      // move the add-to-EntryList operation, above, outside the critical section
@@ -4233,7 +4319,7 @@ void ObjectMonitor::notifyAll(TRAPS) {
      // critical section.
   }
 
-  SpinRelease (&_WaitSetLock) ; 
+  Thread::SpinRelease (&_WaitSetLock) ; 
 
   if (Tally != 0 && ObjectSynchronizer::_sync_Notifications != NULL) { 
      ObjectSynchronizer::_sync_Notifications->inc(Tally) ; 

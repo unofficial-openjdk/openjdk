@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)runtimeService.cpp	1.16 07/05/05 17:07:06 JVM"
+#pragma ident "@(#)runtimeService.cpp	1.18 07/07/13 14:31:26 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -97,6 +97,9 @@ void RuntimeService::init() {
     memset((void*) capabilities, '0', len);
     capabilities[len-1] = '\0';
     capabilities[0] = AttachListener::is_attach_supported() ? '1' : '0';
+#ifdef KERNEL
+    capabilities[1] = '1';
+#endif // KERNEL
     PerfDataManager::create_string_constant(SUN_RT, "jvmCapabilities",
                                             capabilities, CHECK);
   }

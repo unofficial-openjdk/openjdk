@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)osThread_solaris.hpp	1.59 07/05/05 17:04:41 JVM"
+#pragma ident "@(#)osThread_solaris.hpp	1.60 07/06/29 04:04:08 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -134,13 +134,10 @@
 
  private:
 
-  os::Solaris::Event*  _interrupt_event;
   JavaThreadState      _saved_interrupt_thread_state;       // the thread state before a system call -- restored afterward
   
  public:
 
-  os::Solaris::Event* interrupt_event() const                                   { return _interrupt_event; }
-  void set_interrupt_event(os::Solaris::Event* ptr)                             { _interrupt_event = ptr;  }
 
   JavaThreadState   saved_interrupt_thread_state()                              { return _saved_interrupt_thread_state; }
   void              set_saved_interrupt_thread_state(JavaThreadState state)     { _saved_interrupt_thread_state = state; }

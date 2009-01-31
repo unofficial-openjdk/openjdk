@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)ciKlass.cpp	1.30 07/05/05 17:05:11 JVM"
+#pragma ident "@(#)ciKlass.cpp	1.31 07/09/28 10:23:23 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -224,9 +224,9 @@ jint ciKlass::access_flags() {
 // ciKlass::print_impl
 //
 // Implementation of the print method
-void ciKlass::print_impl() {
-  tty->print(" name=");
-  print_name();
+void ciKlass::print_impl(outputStream* st) {
+  st->print(" name=");
+  print_name_on(st);
 }
 
 // ------------------------------------------------------------------

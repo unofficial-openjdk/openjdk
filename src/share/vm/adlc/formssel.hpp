@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)formssel.hpp	1.76 07/05/17 15:49:19 JVM"
+#pragma ident "@(#)formssel.hpp	1.77 07/07/19 19:08:28 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -139,6 +139,8 @@ public:
   // ideal opcode enumeration
   virtual const char *ideal_Opcode(FormDict &globals)  const; 
   virtual int         is_expensive() const;     // node matches ideal 'CosD'
+  virtual int         is_empty_encoding() const; // _size=0 and/or _insencode empty
+  virtual int         is_tls_instruction() const; // tlsLoadP rule or ideal ThreadLocal
   virtual int         is_ideal_copy() const;    // node matches ideal 'Copy*'
   virtual bool        is_ideal_unlock() const;  // node matches ideal 'Unlock'
   virtual bool        is_ideal_call_leaf() const; // node matches ideal 'CallLeaf'

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)ostream.cpp	1.78 07/06/08 23:17:46 JVM"
+#pragma ident "@(#)ostream.cpp	1.80 07/09/28 10:22:57 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -358,7 +358,7 @@ static const char* make_log_name(const char* log_name, const char* force_directo
 
 void defaultStream::init_log() {
   // %%% Need a MutexLocker?
-  const char* log_name = strlen(LogFile) > 0 ? LogFile : "hotspot.log";
+  const char* log_name = LogFile != NULL ? LogFile : "hotspot.log";
   char buf[O_BUFLEN*2];
   const char* try_name = make_log_name(log_name, NULL, buf);
   fileStream* file = new(ResourceObj::C_HEAP) fileStream(try_name);
@@ -762,6 +762,7 @@ void bufferedStream::write(const char* s, size_t len) {
   }
   memcpy(buffer + buffer_pos, s, len);
   buffer_pos += len;
+  update_position(s, len);
 }
                                                                                                 
 char* bufferedStream::as_string() {
@@ -777,3 +778,76 @@ bufferedStream::~bufferedStream() {
   }
 }
 
+#ifndef PRODUCT
+
+#if defined(SOLARIS) || defined(LINUX)
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#endif
+
+// Network access
+networkStream::networkStream() {
+
+  _socket = -1;
+
+  hpi::initialize_socket_library();
+  
+  int result = hpi::socket(AF_INET, SOCK_STREAM, 0);
+  if (result <= 0) {
+    assert(false, "Socket could not be created!");
+  } else {
+    _socket = result;
+  }
+}
+
+int networkStream::read(char *buf, size_t len) {
+  return hpi::recv(_socket, buf, (int)len, 0);
+}
+
+void networkStream::flush() {
+  if (size() != 0) {
+    hpi::send(_socket, (char *)base(), (int)size(), 0);
+  }
+  reset();
+}
+
+networkStream::~networkStream() {
+  close();
+}
+
+void networkStream::close() {
+  if (_socket != -1) {
+    flush();
+    hpi::socket_close(_socket);
+    _socket = -1;
+  }
+}
+
+bool networkStream::connect(const char *ip, short port) {
+  
+  struct sockaddr_in server;
+  server.sin_family = AF_INET;
+  server.sin_port = htons(port);
+
+  server.sin_addr.s_addr = inet_addr(ip);
+  if (server.sin_addr.s_addr == (unsigned long)-1) {
+#ifdef _WINDOWS
+    struct hostent* host = hpi::get_host_by_name((char*)ip);
+#else
+    struct hostent* host = gethostbyname(ip);
+#endif
+    if (host != NULL) {
+      memcpy(&server.sin_addr, host->h_addr_list[0], host->h_length);
+    } else {
+      return false;
+    }
+  }
+
+
+  int result = hpi::connect(_socket, (struct sockaddr*)&server, sizeof(struct sockaddr_in));
+  return (result >= 0);
+}
+
+#endif

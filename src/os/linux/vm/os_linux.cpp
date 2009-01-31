@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)os_linux.cpp	1.258 08/06/16 14:16:05 JVM"
+#pragma ident "@(#)os_linux.cpp	1.259 08/11/24 12:20:22 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -117,6 +117,20 @@ julong os::Linux::available_memory() {
 
 julong os::physical_memory() {
   return Linux::physical_memory();
+}
+
+julong os::allocatable_physical_memory(julong size) {
+#ifdef _LP64
+  return size;
+#else
+  julong result = MIN2(size, (julong)3800*M);
+   if (!is_allocatable(result)) {
+     // See comments under solaris for alignment considerations
+     julong reasonable_size = (julong)2*G - 2 * os::vm_page_size();
+     result =  MIN2(size, reasonable_size);
+   }
+   return result;
+#endif // _LP64
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -536,18 +550,18 @@ void os::Linux::libpthread_init() {
 
      // Vanilla RH-9 (glibc 2.3.2) has a bug that confstr() always tells
      // us "NPTL-0.29" even we are running with LinuxThreads. Check if this
-     // is the case. Also, LinuxThreads has a hard limit on max number of 
-     // threads. So sysconf(_SC_THREAD_THREADS_MAX) will return a positive 
-     // value.On the other hand, NPTL does not have such a limit, sysconf()
+     // is the case. LinuxThreads has a hard limit on max number of threads. 
+     // So sysconf(_SC_THREAD_THREADS_MAX) will return a positive value.
+     // On the other hand, NPTL does not have such a limit, sysconf()
      // will return -1 and errno is not changed. Check if it is really NPTL.
      if (strcmp(os::Linux::glibc_version(), "glibc 2.3.2") == 0 &&
-         strstr(str, "NPTL") &&
+         strstr(str, "NPTL") && 
          sysconf(_SC_THREAD_THREADS_MAX) > 0) {
        free(str);
        os::Linux::set_libpthread_version("linuxthreads");
      } else {
        os::Linux::set_libpthread_version(str);
-     }
+     } 
   } else {
     // glibc before 2.3.2 only has LinuxThreads.
     os::Linux::set_libpthread_version("linuxthreads");
@@ -2292,7 +2306,8 @@ static int anon_munmap(char * addr, size_t size) {
   return ::munmap(addr, size) == 0;
 }
 
-char* os::reserve_memory(size_t bytes, char* requested_addr) {
+char* os::reserve_memory(size_t bytes, char* requested_addr,
+			 size_t alignment_hint) {
   return anon_mmap(requested_addr, bytes, (requested_addr != NULL));
 }
 
@@ -2376,6 +2391,13 @@ bool os::large_page_init() {
       }
       fclose(fp);
     }
+  }
+
+  const size_t default_page_size = (size_t)Linux::page_size();
+  if (_large_page_size > default_page_size) {
+    _page_sizes[0] = _large_page_size;
+    _page_sizes[1] = default_page_size;
+    _page_sizes[2] = 0;
   }
 
   // Large page support is available on 2.6 or newer kernel, some vendors
@@ -2567,12 +2589,11 @@ const int NANOSECS_PER_MILLISECS = 1000000;
 int os::sleep(Thread* thread, jlong millis, bool interruptible) {
   assert(thread == Thread::current(),  "thread consistency check");
 
-  if (interruptible) {
-    OSThread* osthread = thread->osthread();
-    Linux::Event* event = (Linux::Event*) osthread->interrupt_event();
-    event->reset() ; 
-    OrderAccess::fence() ; 
+  ParkEvent * const slp = thread->_SleepEvent ;
+  slp->reset() ; 
+  OrderAccess::fence() ; 
 
+  if (interruptible) {
     jlong prevtime = javaTimeNanos();
 
     for (;;) {
@@ -2606,7 +2627,7 @@ int os::sleep(Thread* thread, jlong millis, bool interruptible) {
         // cleared by handle_special_suspend_equivalent_condition() or
         // java_suspend_self() via check_and_wait_while_suspended()
 
-        event->park(millis);
+        slp->park(millis);
 
         // were we externally suspended while we were waiting?
         jt->check_and_wait_while_suspended();
@@ -2614,11 +2635,27 @@ int os::sleep(Thread* thread, jlong millis, bool interruptible) {
     }
   } else {
     OSThreadWaitState osts(thread->osthread(), false /* not Object.wait() */);
-    Linux::Event event;
-    event.lock();
-    int rslt = event.timedwait(millis);
-    event.unlock();
-    return rslt;
+    jlong prevtime = javaTimeNanos();
+
+    for (;;) {
+      // It'd be nice to avoid the back-to-back javaTimeNanos() calls on 
+      // the 1st iteration ...
+      jlong newtime = javaTimeNanos();
+
+      if (newtime - prevtime < 0) {
+        // time moving backwards, should only happen if no monotonic clock
+        // not a guarantee() because JVM should not abort on kernel/glibc bugs
+        assert(!Linux::supports_monotonic_clock(), "time moving backwards");
+      } else {
+        millis -= (newtime - prevtime) / NANOSECS_PER_MILLISECS;
+      }
+
+      if(millis <= 0) break ; 
+
+      prevtime = newtime;
+      slp->park(millis);
+    }
+    return OS_OK ;
   }
 }
 
@@ -2643,7 +2680,7 @@ void os::yield() {
   sched_yield();
 }
 
-void os::NakedYield() { sched_yield(); } 
+os::YieldResult os::NakedYield() { sched_yield(); return os::YIELD_UNKNOWN ;} 
 
 void os::yield_all(int attempts) {
   // Yields to all threads, including threads with lower priorities
@@ -2914,13 +2951,13 @@ void os::interrupt(Thread* thread) {
   OSThread* osthread = thread->osthread();
 
   if (!osthread->interrupted()) {
-    Linux::Event* event = (Linux::Event*) osthread->interrupt_event();
     osthread->set_interrupted(true);
     // More than one thread can get here with the same value of osthread,
     // resulting in multiple notifications.  We do, however, want the store
     // to interrupted() to be visible to other threads before we execute unpark().
     OrderAccess::fence();
-    event->unpark();
+    ParkEvent * const slp = thread->_SleepEvent ; 
+    if (slp != NULL) slp->unpark() ; 
   }
 
   // For JSR166. Unpark even if interrupt status already was set
@@ -2941,9 +2978,8 @@ bool os::is_interrupted(Thread* thread, bool clear_interrupted) {
   bool interrupted = osthread->interrupted();
 
   if (interrupted && clear_interrupted) {
-    Linux::Event* event = (Linux::Event*) osthread->interrupt_event();
     osthread->set_interrupted(false);
-    event->reset();
+    // consider thread->_SleepEvent->reset() ... optional optimization
   }
 
   return interrupted;
@@ -3437,10 +3473,10 @@ void os::init(void) {
   ThreadCritical::initialize();
 
   Linux::set_page_size(sysconf(_SC_PAGESIZE));
-
   if (Linux::page_size() == -1) {
     fatal1("os_linux.cpp: os::init: sysconf failed (%s)", strerror(errno));
   }
+  init_page_sizes((size_t) Linux::page_size());
 
   Linux::initialize_system_info();
 
@@ -4029,26 +4065,6 @@ void os::pause() {
   }
 }
 
-#ifndef PRODUCT
-void os::Linux::Event::verify() {
-  guarantee(!Universe::is_fully_initialized() ||
-            !Universe::heap()->is_in_reserved((oop)this),
-            "Mutex must be in C heap only.");
-}
-
-void os::Linux::OSMutex::verify() {
-  guarantee(!Universe::is_fully_initialized() || 
-    	    !Universe::heap()->is_in_reserved((oop)this), 
-    	    "OSMutex must be in C heap only.");
-}
-
-void os::Linux::OSMutex::verify_locked() {
-  pthread_t my_id = pthread_self();
-  assert(_is_owned, "OSMutex should be locked");
-  assert(pthread_equal(_owner, my_id), "OSMutex should be locked by me");
-}
-#endif
-
 extern "C" {
 
 /**
@@ -4146,7 +4162,43 @@ jdk_pthread_sigmask(int how , const sigset_t* newmask, sigset_t* oldmask) {
 // It may be possible to refine (4) by checking the kernel and NTPL verisons
 // and only enabling the work-around for vulnerable environments. 
 
+// utility to compute the abstime argument to timedwait:
+// millis is the relative timeout time
+// abstime will be the absolute timeout time
+// TODO: replace compute_abstime() with unpackTime()
 
+static struct timespec* compute_abstime(timespec* abstime, jlong millis) {
+  if (millis < 0)  millis = 0;
+  struct timeval now;
+  int status = gettimeofday(&now, NULL);
+  assert(status == 0, "gettimeofday");
+  jlong seconds = millis / 1000;
+  millis %= 1000;
+  if (seconds > 50000000) { // see man cond_timedwait(3T)
+    seconds = 50000000;
+  }
+  abstime->tv_sec = now.tv_sec  + seconds;
+  long       usec = now.tv_usec + millis * 1000;
+  if (usec >= 1000000) {
+    abstime->tv_sec += 1;
+    usec -= 1000000;
+  }
+  abstime->tv_nsec = usec * 1000;
+  return abstime;
+}
+
+  
+// Test-and-clear _Event, always leaves _Event set to 0, returns immediately.
+// Conceptually TryPark() should be equivalent to park(0).  
+  
+int os::PlatformEvent::TryPark() { 
+  for (;;) { 
+    const int v = _Event ;
+    guarantee ((v == 0) || (v == 1), "invariant") ;  
+    if (Atomic::cmpxchg (0, &_Event, v) == v) return v  ; 
+  }
+}
+    
 void os::PlatformEvent::park() {       // AKA "down()"
   // Invariant: Only the thread associated with the Event/PlatformEvent
   // may call park().  
@@ -4195,7 +4247,7 @@ int os::PlatformEvent::park(jlong millis) {
   // We do this the hard way, by blocking the thread.
   // Consider enforcing a minimum timeout value.  
   struct timespec abst;
-  os::Linux::Event::compute_abstime(&abst, millis);
+  compute_abstime(&abst, millis);
 
   int ret = OS_TIMEOUT;
   int status = pthread_mutex_lock(_mutex);
@@ -4282,3 +4334,272 @@ void os::PlatformEvent::unpark() {
   // simply re-test the condition and re-park itself.  
 }
 
+
+// JSR166
+// -------------------------------------------------------
+
+/*
+ * The solaris and linux implementations of park/unpark are fairly
+ * conservative for now, but can be improved. They currently use a
+ * mutex/condvar pair, plus a a count. 
+ * Park decrements count if > 0, else does a condvar wait.  Unpark
+ * sets count to 1 and signals condvar.  Only one thread ever waits 
+ * on the condvar. Contention seen when trying to park implies that someone 
+ * is unparking you, so don't wait. And spurious returns are fine, so there 
+ * is no need to track notifications.
+ */
+
+
+#define NANOSECS_PER_SEC 1000000000
+#define NANOSECS_PER_MILLISEC 1000000
+#define MAX_SECS 100000000
+/*
+ * This code is common to linux and solaris and will be moved to a
+ * common place in dolphin.
+ *
+ * The passed in time value is either a relative time in nanoseconds
+ * or an absolute time in milliseconds. Either way it has to be unpacked
+ * into suitable seconds and nanoseconds components and stored in the
+ * given timespec structure. 
+ * Given time is a 64-bit value and the time_t used in the timespec is only 
+ * a signed-32-bit value (except on 64-bit Linux) we have to watch for
+ * overflow if times way in the future are given. Further on Solaris versions
+ * prior to 10 there is a restriction (see cond_timedwait) that the specified
+ * number of seconds, in abstime, is less than current_time  + 100,000,000.
+ * As it will be 28 years before "now + 100000000" will overflow we can
+ * ignore overflow and just impose a hard-limit on seconds using the value
+ * of "now + 100,000,000". This places a limit on the timeout of about 3.17
+ * years from "now".
+ */
+
+static void unpackTime(timespec* absTime, bool isAbsolute, jlong time) {
+  assert (time > 0, "convertTime");
+
+  struct timeval now;
+  int status = gettimeofday(&now, NULL);
+  assert(status == 0, "gettimeofday");
+
+  time_t max_secs = now.tv_sec + MAX_SECS;
+
+  if (isAbsolute) {
+    jlong secs = time / 1000;
+    if (secs > max_secs) {
+      absTime->tv_sec = max_secs;
+    }
+    else {
+      absTime->tv_sec = secs;
+    }
+    absTime->tv_nsec = (time % 1000) * NANOSECS_PER_MILLISEC;   
+  }
+  else {
+    jlong secs = time / NANOSECS_PER_SEC;
+    if (secs >= MAX_SECS) {
+      absTime->tv_sec = max_secs;
+      absTime->tv_nsec = 0;
+    }
+    else {
+      absTime->tv_sec = now.tv_sec + secs;
+      absTime->tv_nsec = (time % NANOSECS_PER_SEC) + now.tv_usec*1000;
+      if (absTime->tv_nsec >= NANOSECS_PER_SEC) {
+        absTime->tv_nsec -= NANOSECS_PER_SEC;
+        ++absTime->tv_sec; // note: this must be <= max_secs
+      }
+    }
+  }
+  assert(absTime->tv_sec >= 0, "tv_sec < 0");
+  assert(absTime->tv_sec <= max_secs, "tv_sec > max_secs");
+  assert(absTime->tv_nsec >= 0, "tv_nsec < 0");
+  assert(absTime->tv_nsec < NANOSECS_PER_SEC, "tv_nsec >= nanos_per_sec");
+}
+
+void Parker::park(bool isAbsolute, jlong time) {
+  // Optional fast-path check:
+  // Return immediately if a permit is available.
+  if (_counter > 0) { 
+      _counter = 0 ;  
+      return ;  
+  }
+
+  Thread* thread = Thread::current();
+  assert(thread->is_Java_thread(), "Must be JavaThread");
+  JavaThread *jt = (JavaThread *)thread;
+
+  // Optional optimization -- avoid state transitions if there's an interrupt pending.
+  // Check interrupt before trying to wait
+  if (Thread::is_interrupted(thread, false)) {
+    return;
+  }
+
+  // Next, demultiplex/decode time arguments
+  timespec absTime;
+  if (time < 0) { // don't wait at all
+    return; 
+  }
+  if (time > 0) {
+    unpackTime(&absTime, isAbsolute, time);
+  }
+
+
+  // Enter safepoint region
+  // Beware of deadlocks such as 6317397. 
+  // The per-thread Parker:: mutex is a classic leaf-lock.
+  // In particular a thread must never block on the Threads_lock while
+  // holding the Parker:: mutex.  If safepoints are pending both the
+  // the ThreadBlockInVM() CTOR and DTOR may grab Threads_lock.  
+  ThreadBlockInVM tbivm(jt);
+
+  // Don't wait if cannot get lock since interference arises from
+  // unblocking.  Also. check interrupt before trying wait
+  if (Thread::is_interrupted(thread, false) || pthread_mutex_trylock(_mutex) != 0) {
+    return;
+  }
+
+  int status ; 
+  if (_counter > 0)  { // no wait needed
+    _counter = 0;
+    status = pthread_mutex_unlock(_mutex);
+    assert (status == 0, "invariant") ; 
+    return;
+  }
+
+#ifdef ASSERT
+  // Don't catch signals while blocked; let the running threads have the signals.
+  // (This allows a debugger to break into the running thread.)
+  sigset_t oldsigs;
+  sigset_t* allowdebug_blocked = os::Linux::allowdebug_blocked_signals();
+  pthread_sigmask(SIG_BLOCK, allowdebug_blocked, &oldsigs);
+#endif
+  
+  OSThreadWaitState osts(thread->osthread(), false /* not Object.wait() */);
+  jt->set_suspend_equivalent();
+  // cleared by handle_special_suspend_equivalent_condition() or java_suspend_self()
+  
+  if (time == 0) {
+    status = pthread_cond_wait (_cond, _mutex) ; 
+  } else {
+    status = os::Linux::safe_cond_timedwait (_cond, _mutex, &absTime) ; 
+    if (status != 0 && WorkAroundNPTLTimedWaitHang) { 
+      pthread_cond_destroy (_cond) ; 
+      pthread_cond_init    (_cond, NULL); 
+    }
+  }
+  assert_status(status == 0 || status == EINTR || 
+                status == ETIME || status == ETIMEDOUT, 
+                status, "cond_timedwait");
+
+#ifdef ASSERT
+  pthread_sigmask(SIG_SETMASK, &oldsigs, NULL);
+#endif
+
+  _counter = 0 ; 
+  status = pthread_mutex_unlock(_mutex) ;
+  assert_status(status == 0, status, "invariant") ; 
+  // If externally suspended while waiting, re-suspend
+  if (jt->handle_special_suspend_equivalent_condition()) {
+    jt->java_suspend_self();
+  }
+
+}
+
+void Parker::unpark() {
+  int s, status ; 
+  status = pthread_mutex_lock(_mutex);
+  assert (status == 0, "invariant") ; 
+  s = _counter;
+  _counter = 1;
+  if (s < 1) { 
+     if (WorkAroundNPTLTimedWaitHang) { 
+        status = pthread_cond_signal (_cond) ; 
+        assert (status == 0, "invariant") ; 
+        status = pthread_mutex_unlock(_mutex);
+        assert (status == 0, "invariant") ; 
+     } else {
+        status = pthread_mutex_unlock(_mutex);
+        assert (status == 0, "invariant") ; 
+        status = pthread_cond_signal (_cond) ; 
+        assert (status == 0, "invariant") ; 
+     }
+  } else {
+    pthread_mutex_unlock(_mutex);
+    assert (status == 0, "invariant") ; 
+  }
+}
+
+
+extern char** environ;
+
+#ifndef __NR_fork
+#define __NR_fork IA32_ONLY(2) IA64_ONLY(not defined) AMD64_ONLY(57)
+#endif
+
+#ifndef __NR_execve
+#define __NR_execve IA32_ONLY(11) IA64_ONLY(1033) AMD64_ONLY(59)
+#endif
+
+// Run the specified command in a separate process. Return its exit value,
+// or -1 on failure (e.g. can't fork a new process).
+// Unlike system(), this function can be called from signal handler. It
+// doesn't block SIGINT et al.
+int os::fork_and_exec(char* cmd) {
+  const char * argv[4] = {"sh", "-c", cmd, NULL};
+  
+  // fork() in LinuxThreads/NPTL is not async-safe. It needs to run 
+  // pthread_atfork handlers and reset pthread library. All we need is a 
+  // separate process to execve. Make a direct syscall to fork process.
+  // On IA64 there's no fork syscall, we have to use fork() and hope for
+  // the best...
+  pid_t pid = NOT_IA64(syscall(__NR_fork);) 
+              IA64_ONLY(fork();)
+
+  if (pid < 0) {
+    // fork failed
+    return -1;
+
+  } else if (pid == 0) {
+    // child process
+
+    // execve() in LinuxThreads will call pthread_kill_other_threads_np() 
+    // first to kill every thread on the thread list. Because this list is 
+    // not reset by fork() (see notes above), execve() will instead kill 
+    // every thread in the parent process. We know this is the only thread 
+    // in the new process, so make a system call directly.
+    // IA64 should use normal execve() from glibc to match the glibc fork() 
+    // above.
+    NOT_IA64(syscall(__NR_execve, "/bin/sh", argv, environ);)
+    IA64_ONLY(execve("/bin/sh", (char* const*)argv, environ);)
+
+    // execve failed
+    _exit(-1);
+
+  } else  {
+    // copied from J2SE ..._waitForProcessExit() in UNIXProcess_md.c; we don't
+    // care about the actual exit code, for now.
+   
+    int status;
+
+    // Wait for the child process to exit.  This returns immediately if
+    // the child has already exited. */
+    while (waitpid(pid, &status, 0) < 0) {
+        switch (errno) {
+        case ECHILD: return 0;
+        case EINTR: break;
+        default: return -1;
+        }
+    }
+
+    if (WIFEXITED(status)) {
+       // The child exited normally; get its exit code.
+       return WEXITSTATUS(status);
+    } else if (WIFSIGNALED(status)) {
+       // The child exited because of a signal
+       // The best value to return is 0x80 + signal number,
+       // because that is what all Unix shells do, and because
+       // it allows callers to distinguish between process exit and
+       // process death by signal.
+       return 0x80 + WTERMSIG(status);
+    } else {
+       // Unknown exit code; pass it through
+       return status;
+    }
+  }
+}

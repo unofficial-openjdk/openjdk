@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)universe.hpp	1.182 07/05/17 15:55:24 JVM"
+#pragma ident "@(#)universe.hpp	1.183 07/08/09 09:12:00 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -137,6 +137,18 @@ class Universe: AllStatic {
   static klassOop _systemObjArrayKlassObj;
 
   // Known objects in the VM
+
+  // Primitive objects
+  static oop _int_mirror;
+  static oop _float_mirror;
+  static oop _double_mirror;
+  static oop _byte_mirror;
+  static oop _bool_mirror;
+  static oop _char_mirror;
+  static oop _long_mirror;
+  static oop _short_mirror;
+  static oop _void_mirror;
+
   static oop          _main_thread_group;             // Reference to the main thread group object
   static oop          _system_thread_group;           // Reference to the system thread group object
 
@@ -196,6 +208,7 @@ class Universe: AllStatic {
   static size_t _heap_used_at_last_gc;
 
   static jint initialize_heap();
+  static void initialize_basic_type_mirrors(TRAPS);
   static void fixup_mirrors(TRAPS);
 
   static void reinitialize_vtable_of(KlassHandle h_k, TRAPS);
@@ -203,6 +216,12 @@ class Universe: AllStatic {
   static void compute_base_vtable_size();             // compute vtable size of class Object
 
   static void genesis(TRAPS);                         // Create the initial world
+
+  // Mirrors for primitive classes (created eagerly)
+  static oop check_mirror(oop m) {
+    assert(m != NULL, "mirror not initialized");
+    return m;
+  }
 
   // Debugging
   static int _verify_count;                           // number of verifies done
@@ -247,6 +266,24 @@ class Universe: AllStatic {
   static klassOop systemObjArrayKlassObj()            { return _systemObjArrayKlassObj;    }
 
   // Known objects in tbe VM
+  static oop int_mirror()                   { return check_mirror(_int_mirror);
+}
+  static oop float_mirror()                 { return check_mirror(_float_mirror); }
+  static oop double_mirror()                { return check_mirror(_double_mirror); }
+  static oop byte_mirror()                  { return check_mirror(_byte_mirror); }
+  static oop bool_mirror()                  { return check_mirror(_bool_mirror); }
+  static oop char_mirror()                  { return check_mirror(_char_mirror); }
+  static oop long_mirror()                  { return check_mirror(_long_mirror); }
+  static oop short_mirror()                 { return check_mirror(_short_mirror); }
+  static oop void_mirror()                  { return check_mirror(_void_mirror); }
+
+  // table of same
+  static oop _mirrors[T_VOID+1];
+
+  static oop java_mirror(BasicType t) {
+    assert((uint)t < T_VOID+1, "range check");
+    return check_mirror(_mirrors[t]);
+  }
   static oop      main_thread_group()                 { return _main_thread_group; }
   static void set_main_thread_group(oop group)        { _main_thread_group = group;}
 

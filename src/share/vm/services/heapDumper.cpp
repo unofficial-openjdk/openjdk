@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)heapDumper.cpp	1.20 07/05/29 09:44:30 JVM"
+#pragma ident "@(#)heapDumper.cpp	1.24 07/07/22 22:35:59 JVM"
 #endif
 /*
  * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -1257,9 +1257,10 @@ void HeapObjectDumper::do_object(oop o) {
 }
 
 // The VM operation that performs the heap dump
-class VM_HeapDumper : public VM_Operation {
+class VM_HeapDumper : public VM_GC_Operation {
  private:
   DumpWriter* _writer;
+  bool _gc_before_heap_dump;
   bool _is_segmented_dump; 
   jlong _dump_start;
 
@@ -1269,6 +1270,8 @@ class VM_HeapDumper : public VM_Operation {
   void set_segmented_dump()                     { _is_segmented_dump = true; }
   jlong dump_start() const                      { return _dump_start; }
   void set_dump_start(jlong pos);
+
+  bool skip_operation() const;
 
   // writes a HPROF_LOAD_CLASS record
   static void do_load_class(klassOop k);
@@ -1296,8 +1299,12 @@ class VM_HeapDumper : public VM_Operation {
   void end_of_dump();
   
  public:
-  VM_HeapDumper(DumpWriter* writer){
+  VM_HeapDumper(DumpWriter* writer, bool gc_before_heap_dump) :
+    VM_GC_Operation(0 /* total collections,      dummy, ignored */,
+                    0 /* total full collections, dummy, ignored */,
+                    gc_before_heap_dump) {
     _writer = writer;
+    _gc_before_heap_dump = gc_before_heap_dump;
     _is_segmented_dump = false; 
     _dump_start = (jlong)-1;
   }
@@ -1307,6 +1314,10 @@ class VM_HeapDumper : public VM_Operation {
   void check_segment_length();
   void doit();
 };
+
+bool VM_HeapDumper::skip_operation() const {
+  return false;
+}
 
 // sets the dump starting position
 void VM_HeapDumper::set_dump_start(jlong pos) {
@@ -1550,9 +1561,16 @@ void VM_HeapDumper::do_threads() {
 // roots.
 
 void VM_HeapDumper::doit() {
-  // need to ensure that we can iterate over the heap
-  Universe::heap()->ensure_parsability(false);  // no need to retire TLABs
 
+  HandleMark hm;
+  CollectedHeap* ch = Universe::heap();
+  if (_gc_before_heap_dump) {
+    ch->collect_as_vm_thread(GCCause::_heap_dump);
+  } else {
+    // make the heap parsable (no need to retire TLABs)
+    ch->ensure_parsability(false);
+  }
+ 
   // Write the file header - use 1.0.2 for large heaps, otherwise 1.0.1
   size_t used;
   const char* header;
@@ -1653,13 +1671,8 @@ int HeapDumper::dump(const char* path) {
     return -1; 
   }
 
-  // Do a full GC before heap dump
-  if (_gc_before_heap_dump) {
-    Universe::heap()->collect(GCCause::_heap_dump);
-  }
   // generate the dump
-  MutexLocker ml(Heap_lock);
-  VM_HeapDumper dumper(&writer);
+  VM_HeapDumper dumper(&writer, _gc_before_heap_dump);
   VMThread::execute(&dumper);
 
   // close dump file and record any error that the writer may have encountered
@@ -1714,3 +1727,51 @@ void HeapDumper::set_error(char* error) {
     assert(_error != NULL, "allocation failure");
   }
 }
+
+
+// Called by error reporting
+void HeapDumper::dump_heap() {
+  static char path[JVM_MAXPATHLEN];
+
+  // The dump file defaults to java_pid<pid>.hprof in the current working
+  // directory. HeapDumpPath=<file> can be used to specify an alternative
+  // dump file name or a directory where dump file is created.    
+  bool use_default_filename = true;
+  if (HeapDumpPath == NULL || HeapDumpPath[0] == '\0') {
+    path[0] = '\0'; // HeapDumpPath=<file> not specified
+  } else {
+    assert(strlen(HeapDumpPath) < sizeof(path), "HeapDumpPath too long");
+    strcpy(path, HeapDumpPath);
+    // check if the path is a directory (must exist)
+    DIR* dir = os::opendir(path);        
+    if (dir == NULL) {          
+      use_default_filename = false; 
+    } else {
+      // HeapDumpPath specified a directory. We append a file separator
+      // (if needed).
+      os::closedir(dir);
+      size_t fs_len = strlen(os::file_separator());
+      if (strlen(path) >= fs_len) {
+        char* end = path;
+        end += (strlen(path) - fs_len);
+        if (strcmp(end, os::file_separator()) != 0) {
+          assert(strlen(path) + strlen(os::file_separator()) < sizeof(path), 
+            "HeapDumpPath too long");
+          strcat(path, os::file_separator());
+        }
+      }
+    } 
+  }
+  // If HeapDumpPath wasn't a file name then we append the default name
+  if (use_default_filename) {
+    char fn[32];
+    sprintf(fn, "java_pid%d.hprof", os::current_process_id());
+    assert(strlen(path) + strlen(fn) < sizeof(path), "HeapDumpPath too long");
+    strcat(path, fn);
+  }
+
+  HeapDumper dumper(false /* no GC before heap dump */,
+                    true  /* send to tty */);
+  dumper.dump(path);
+}
+

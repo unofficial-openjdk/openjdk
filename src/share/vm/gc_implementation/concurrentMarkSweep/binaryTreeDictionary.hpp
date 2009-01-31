@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)binaryTreeDictionary.hpp	1.26 07/05/05 17:05:41 JVM"
+#pragma ident "@(#)binaryTreeDictionary.hpp	1.27 08/04/09 19:19:11 JVM"
 #endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -133,6 +133,7 @@ class TreeChunk : public FreeChunk {
 const size_t MIN_TREE_CHUNK_SIZE  = sizeof(TreeChunk)/HeapWordSize;
 
 class BinaryTreeDictionary: public FreeBlockDictionary {
+  friend class VMStructs;
   bool       _splay;
   size_t     _totalSize;
   size_t     _totalFreeBlocks;

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)frame.hpp	1.163 07/05/05 17:06:42 JVM"
+#pragma ident "@(#)frame.hpp	1.164 07/08/29 13:42:28 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -25,9 +25,7 @@
  *  
  */
 
-#ifdef CC_INTERP
-typedef class cInterpreter* interpreterState;
-#endif /* CC_INTERP */
+typedef class BytecodeInterpreter* interpreterState;
 
 class CodeBlob;
 
@@ -41,9 +39,7 @@ class CodeBlob;
 class frame VALUE_OBJ_CLASS_SPEC {
  private:
   // Instance variables:
-#ifndef CC_INTERP
   intptr_t* _sp; // stack pointer (from Thread::last_Java_sp)
-#endif // !CC_INTERP
   address   _pc; // program counter (the next instruction after the call)
 
   CodeBlob* _cb; // CodeBlob that "owns" pc
@@ -73,10 +69,9 @@ class frame VALUE_OBJ_CLASS_SPEC {
   address raw_pc() const;
 
   void set_pc( address   newpc );
-#ifndef CC_INTERP
-  void set_sp( intptr_t* newsp ) { _sp = newsp; }
+
   intptr_t* sp() const           { return _sp; }
-#endif // !CC_INTERP
+  void set_sp( intptr_t* newsp ) { _sp = newsp; }
 
 
   CodeBlob* cb() const           { return _cb; }
@@ -279,7 +274,12 @@ class frame VALUE_OBJ_CLASS_SPEC {
   jint  interpreter_frame_expression_stack_size() const;
 
   intptr_t* interpreter_frame_sender_sp() const;
+
+#ifndef CC_INTERP
+  // template based interpreter deoptimization support
   void  set_interpreter_frame_sender_sp(intptr_t* sender_sp);
+  void interpreter_frame_set_monitor_end(BasicObjectLock* value);
+#endif // CC_INTERP
 
   // BasicObjectLocks:
   //
@@ -296,7 +296,6 @@ class frame VALUE_OBJ_CLASS_SPEC {
   BasicObjectLock* previous_monitor_in_interpreter_frame(BasicObjectLock* current) const;
   static int interpreter_frame_monitor_size();
 
-  void interpreter_frame_set_monitor_end(BasicObjectLock* value);
   void interpreter_frame_verify_monitor(BasicObjectLock* value) const;
 
   // Tells whether the current interpreter_frame frame pointer

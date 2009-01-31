@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)psYoungGen.cpp	1.67 07/05/05 17:05:31 JVM"
+#pragma ident "@(#)psYoungGen.cpp	1.68 07/10/04 10:49:36 JVM"
 #endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -712,7 +712,7 @@ size_t PSYoungGen::available_to_live() {
   size_t delta_in_survivor = 0;
   ParallelScavengeHeap* heap = (ParallelScavengeHeap*)Universe::heap();
   const size_t space_alignment = heap->intra_generation_alignment();
-  const size_t gen_alignment = heap->generation_alignment();
+  const size_t gen_alignment = heap->young_gen_alignment();
 
   MutableSpace* space_shrinking = NULL;
   if (from_space()->end() > to_space()->end()) {

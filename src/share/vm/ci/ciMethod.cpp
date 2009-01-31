@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)ciMethod.cpp	1.104 07/05/05 17:05:15 JVM"
+#pragma ident "@(#)ciMethod.cpp	1.109 07/09/28 10:23:23 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -255,7 +255,7 @@ address ciMethod::interpreter_entry() {
   check_is_loaded();
   VM_ENTRY_MARK;
   methodHandle mh(THREAD, get_methodOop());
-  return AbstractInterpreter::entry_for_method(mh);
+  return Interpreter::entry_for_method(mh);
 }
 
 
@@ -408,7 +408,6 @@ ciCallProfile ciMethod::call_profile_at_bci(int bci) {
     if (data != NULL && data->is_CounterData()) {
       // Every profiled call site has a counter.
       int count = data->as_CounterData()->count();
-      result._count = count;
 
       if (!data->is_ReceiverTypeData()) {
         result._receiver_count[0] = 0;  // that's a definite zero
@@ -421,8 +420,6 @@ ciCallProfile ciMethod::call_profile_at_bci(int bci) {
           ciKlass* receiver = call->receiver(i);
           if (receiver == NULL)  continue;
           morphism += 1;
-          // we don't support array klasses this way
-          if (!receiver->is_instance_klass()) continue;
           int rcount = call->receiver_count(i);
           if (rcount == 0) rcount = 1; // Should be valid value
           receivers_count_total += rcount;
@@ -444,7 +441,17 @@ ciCallProfile ciMethod::call_profile_at_bci(int bci) {
              result._morphism = morphism;
            }
         }
+        // Make the count consistent if this is a call profile. If count is
+        // zero or less, presume that this is a typecheck profile and
+        // do nothing.  Otherwise, increase count to be the sum of all
+        // receiver's counts.
+        if (count > 0) {
+          if (count < receivers_count_total) {
+            count = receivers_count_total;
+          }
+        }
       }
+      result._count = count;
     }
   }
   return result;
@@ -526,60 +533,6 @@ ciMethod* ciMethod::find_monomorphic_target(ciInstanceKlass* caller,
   }
 
 #ifndef PRODUCT
-  if (VerifyDependencies || TraceDependencies) {
-    // The CHA module is going to be honorably retired.
-    // This is the only place where it is used.
-    // For a while, test equivalence between old and new methods.
-    KlassHandle caller_klass (THREAD, caller->get_klassOop());
-    KlassHandle callee_klass (THREAD, callee_holder->get_klassOop());
-    KlassHandle h_recv       (THREAD, actual_recv->get_klassOop());
-    symbolHandle h_name      (THREAD, name()->get_symbolOop());
-    symbolHandle h_signature (THREAD, signature()->get_symbolOop());
-    methodHandle cha_target;
-    CHAResult* result =
-      CHA::analyze_call(caller_klass, callee_klass, h_recv, h_name, h_signature);
-    if (TraceTypeProfile && Verbose) {
-      result->print();
-    }
-    if (result->is_monomorphic()) {
-      cha_target = result->monomorphic_target();
-    }
-
-    if (target() != NULL && cha_target() == NULL) {
-      ResourceMark rm;
-      ttyLocker ttyl;
-      if (xtty != NULL) {
-        xtty->begin_elem("missed_by_CHA");
-        xtty->method(target());
-        xtty->klass(actual_recv->get_klassOop());
-        xtty->end_elem("");
-      }
-      if (TraceDependencies) {
-        tty->print_cr("found unique method missed by CHA:");
-        tty->print_cr("  context = %s", instanceKlass::cast(actual_recv->get_klassOop())->external_name());
-        tty->print("  method  = ");
-        target->print_short_name(tty);
-        tty->cr();
-      }
-    }
-    if (cha_target() != NULL && target() == NULL) {
-      ResourceMark rm;
-      ttyLocker ttyl;
-      if (xtty != NULL) {
-        xtty->begin_elem("missed_by_deps_found_by_CHA");
-        xtty->method(cha_target());
-        xtty->klass(actual_recv->get_klassOop());
-        xtty->end_elem("");
-      }
-      if (TraceDependencies) {
-        tty->print_cr("missed unique method found by CHA:");
-        tty->print_cr("  context = %s", instanceKlass::cast(actual_recv->get_klassOop())->external_name());
-        tty->print("  method  = ");
-        cha_target->print_short_name(tty);
-        tty->cr();
-      }
-    }
-  }
   if (TraceDependencies && target() != NULL && target() != root_m->get_methodOop()) {
     tty->print("found a non-root unique target method");
     tty->print_cr("  context = %s", instanceKlass::cast(actual_recv->get_klassOop())->external_name());
@@ -627,7 +580,9 @@ ciMethod* ciMethod::resolve_invoke(ciKlass* caller, ciKlass* exact_receiver) {
    methodHandle m;
    // Only do exact lookup if receiver klass has been linked.  Otherwise,
    // the vtable has not been setup, and the LinkResolver will fail.
-   if (instanceKlass::cast(h_recv())->is_linked() && !exact_receiver->is_interface()) {
+   if (h_recv->oop_is_javaArray()
+        ||
+       instanceKlass::cast(h_recv())->is_linked() && !exact_receiver->is_interface()) {
      if (holder()->is_interface()) {
        m = LinkResolver::resolve_interface_call_or_null(h_recv, h_resolved, h_name, h_signature, caller_klass);
      } else {
@@ -760,26 +715,23 @@ ciMethodData* ciMethod::method_data() {
   if (_method_data != NULL) {
     return _method_data;
   }
-  if (ProfileInterpreter || Tier1UpdateMethodData) {
-    VM_ENTRY_MARK;
-    ciEnv* env = CURRENT_ENV;
-    Thread* my_thread = JavaThread::current();
-    methodHandle h_m(my_thread, get_methodOop());
+  VM_ENTRY_MARK;
+  ciEnv* env = CURRENT_ENV;
+  Thread* my_thread = JavaThread::current();
+  methodHandle h_m(my_thread, get_methodOop());
 
-    if (Tier1UpdateMethodData && is_tier1_compile(env->comp_level())) {
-      build_method_data(h_m);
-    }
-
-    if (h_m()->method_data() != NULL) {
-      _method_data = CURRENT_ENV->get_object(h_m()->method_data())->as_method_data();
-      _method_data->load_data();
-    } else {
-      _method_data = CURRENT_ENV->get_empty_methodData();
-    }
-    return _method_data;
+  if (Tier1UpdateMethodData && is_tier1_compile(env->comp_level())) {
+    build_method_data(h_m);
   }
+
+  if (h_m()->method_data() != NULL) {
+    _method_data = CURRENT_ENV->get_object(h_m()->method_data())->as_method_data();
+    _method_data->load_data();
+  } else {
+    _method_data = CURRENT_ENV->get_empty_methodData();
+  }
+  return _method_data;
                      
-  return NULL;
 }
 
 
@@ -949,7 +901,7 @@ void ciMethod::log_nmethod_identity(xmlStream* log) {
 bool ciMethod::is_not_reached(int bci) {
   check_is_loaded();
   VM_ENTRY_MARK;
-  return AbstractInterpreter::is_not_reached(
+  return Interpreter::is_not_reached(
                methodHandle(THREAD, get_methodOop()), bci);
 }
 
@@ -1008,9 +960,9 @@ bool ciMethod::check_call(int refinfo_index, bool is_static) const {
 // ciMethod::print_codes
 //
 // Print the bytecodes for this method.
-void ciMethod::print_codes() {
+void ciMethod::print_codes_on(outputStream* st) {
   check_is_loaded();
-  GUARDED_VM_ENTRY(get_methodOop()->print_codes();)
+  GUARDED_VM_ENTRY(get_methodOop()->print_codes_on(st);)
 }
 
 
@@ -1049,9 +1001,9 @@ ciMethodBlocks  *ciMethod::get_method_blocks() {
 // ciMethod::print_codes
 //
 // Print a range of the bytecodes for this method.
-void ciMethod::print_codes(int from, int to) {
+void ciMethod::print_codes_on(int from, int to, outputStream* st) {
   check_is_loaded();
-  GUARDED_VM_ENTRY(get_methodOop()->print_codes(from, to);)
+  GUARDED_VM_ENTRY(get_methodOop()->print_codes_on(from, to, st);)
 }
 
 // ------------------------------------------------------------------
@@ -1076,19 +1028,19 @@ void ciMethod::print_short_name(outputStream* st) {
 // ciMethod::print_impl
 //
 // Implementation of the print method.
-void ciMethod::print_impl() {
-  ciObject::print_impl();
-  tty->print(" name=");
-  name()->print_symbol();
-  tty->print(" holder=");
-  holder()->print_name();
-  tty->print(" signature=");
-  signature()->print_signature();
+void ciMethod::print_impl(outputStream* st) {
+  ciObject::print_impl(st);
+  st->print(" name=");
+  name()->print_symbol_on(st);
+  st->print(" holder=");
+  holder()->print_name_on(st);
+  st->print(" signature=");
+  signature()->as_symbol()->print_symbol_on(st);
   if (is_loaded()) {
-    tty->print(" loaded=true flags=");
-    flags().print_member_flags();
+    st->print(" loaded=true flags=");
+    flags().print_member_flags(st);
   } else {
-    tty->print(" loaded=false");
+    st->print(" loaded=false");
   }
 }
 

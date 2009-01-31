@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)jvmtiExport.cpp	1.125 07/05/29 09:44:25 JVM"
+#pragma ident "@(#)jvmtiExport.cpp	1.127 07/07/18 17:27:01 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -35,7 +35,6 @@
 #define EVT_TRIG_TRACE(evt,out)
 #define EVT_TRACE(evt,out)
 #endif
-
 
 ///////////////////////////////////////////////////////////////
 //
@@ -268,6 +267,365 @@ public:
   }
 };
 
+//////////////////////////////////////////////////////////////////////////////
+
+int               JvmtiExport::_field_access_count                        = 0;
+int               JvmtiExport::_field_modification_count                  = 0;
+
+bool              JvmtiExport::_can_access_local_variables                = false;
+bool              JvmtiExport::_can_examine_or_deopt_anywhere             = false;
+bool              JvmtiExport::_can_hotswap_or_post_breakpoint            = false;
+bool              JvmtiExport::_can_modify_any_class                      = false;
+bool              JvmtiExport::_can_walk_any_space                        = false;
+
+bool              JvmtiExport::_has_redefined_a_class                     = false;
+bool		  JvmtiExport::_all_dependencies_are_recorded		  = false;
+
+//
+// field access management
+//
+
+// interpreter generator needs the address of the counter
+address JvmtiExport::get_field_access_count_addr() {
+  // We don't grab a lock because we don't want to
+  // serialize field access between all threads. This means that a
+  // thread on another processor can see the wrong count value and
+  // may either miss making a needed call into post_field_access()
+  // or will make an unneeded call into post_field_access(). We pay
+  // this price to avoid slowing down the VM when we aren't watching
+  // field accesses.
+  // Other access/mutation safe by virtue of being in VM state.
+  return (address)(&_field_access_count);
+}
+
+//
+// field modification management
+//
+
+// interpreter generator needs the address of the counter
+address JvmtiExport::get_field_modification_count_addr() {
+  // We don't grab a lock because we don't
+  // want to serialize field modification between all threads. This
+  // means that a thread on another processor can see the wrong
+  // count value and may either miss making a needed call into
+  // post_field_modification() or will make an unneeded call into
+  // post_field_modification(). We pay this price to avoid slowing
+  // down the VM when we aren't watching field modifications.
+  // Other access/mutation safe by virtue of being in VM state.
+  return (address)(&_field_modification_count);
+}
+
+
+///////////////////////////////////////////////////////////////
+// Functions needed by java.lang.instrument for starting up javaagent.
+///////////////////////////////////////////////////////////////
+
+jint  
+JvmtiExport::get_jvmti_interface(JavaVM *jvm, void **penv, jint version) {
+  /* To Do: add version checks */
+
+  if (JvmtiEnv::get_phase() == JVMTI_PHASE_LIVE) {
+    JavaThread* current_thread = (JavaThread*) ThreadLocalStorage::thread();
+    // transition code: native to VM
+    ThreadInVMfromNative __tiv(current_thread);
+    __ENTRY(jvmtiEnv*, JvmtiExport::get_jvmti_interface, current_thread)
+    debug_only(VMNativeEntryWrapper __vew;) 
+
+    JvmtiEnv *jvmti_env = JvmtiEnv::create_a_jvmti();
+    *penv = jvmti_env->jvmti_external();  // actual type is jvmtiEnv* -- not to be confused with JvmtiEnv*
+    return JNI_OK; 
+
+  } else if (JvmtiEnv::get_phase() == JVMTI_PHASE_ONLOAD) {
+    // not live, no thread to transition
+    JvmtiEnv *jvmti_env = JvmtiEnv::create_a_jvmti();
+    *penv = jvmti_env->jvmti_external();  // actual type is jvmtiEnv* -- not to be confused with JvmtiEnv*
+    return JNI_OK; 
+
+  } else {
+    // Called at the wrong time
+    *penv = NULL;
+    return JNI_EDETACHED;
+  }
+}
+
+void JvmtiExport::enter_primordial_phase() { 
+  JvmtiEnvBase::set_phase(JVMTI_PHASE_PRIMORDIAL);
+}
+
+void JvmtiExport::enter_start_phase() { 
+  JvmtiManageCapabilities::recompute_always_capabilities();
+  JvmtiEnvBase::set_phase(JVMTI_PHASE_START);
+}
+
+void JvmtiExport::enter_onload_phase() { 
+  JvmtiEnvBase::set_phase(JVMTI_PHASE_ONLOAD);
+}
+
+void JvmtiExport::enter_live_phase() { 
+  JvmtiEnvBase::set_phase(JVMTI_PHASE_LIVE);
+}
+
+//
+// JVMTI events that the VM posts to the debugger and also startup agent
+// and call the agent's premain() for java.lang.instrument.
+//
+
+void JvmtiExport::post_vm_start() {
+  EVT_TRIG_TRACE(JVMTI_EVENT_VM_START, ("JVMTI Trg VM start event triggered" ));
+
+  // can now enable some events 
+  JvmtiEventController::vm_start();
+
+  JvmtiEnvIterator it; 
+  for (JvmtiEnv* env = it.first(); env != NULL; env = it.next(env)) {
+    if (env->is_enabled(JVMTI_EVENT_VM_START)) {
+      EVT_TRACE(JVMTI_EVENT_VM_START, ("JVMTI Evt VM start event sent" ));
+
+      JavaThread *thread  = JavaThread::current();
+      JvmtiThreadEventMark jem(thread);
+      JvmtiJavaThreadEventTransition jet(thread);
+      jvmtiEventVMStart callback = env->callbacks()->VMStart;
+      if (callback != NULL) {
+        (*callback)(env->jvmti_external(), jem.jni_env());
+      }
+    }
+  }  
+}
+
+
+void JvmtiExport::post_vm_initialized() {
+  EVT_TRIG_TRACE(JVMTI_EVENT_VM_INIT, ("JVMTI Trg VM init event triggered" ));
+
+  // can now enable events 
+  JvmtiEventController::vm_init();
+
+  JvmtiEnvIterator it; 
+  for (JvmtiEnv* env = it.first(); env != NULL; env = it.next(env)) {
+    if (env->is_enabled(JVMTI_EVENT_VM_INIT)) {
+      EVT_TRACE(JVMTI_EVENT_VM_INIT, ("JVMTI Evt VM init event sent" ));
+
+      JavaThread *thread  = JavaThread::current();
+      JvmtiThreadEventMark jem(thread);
+      JvmtiJavaThreadEventTransition jet(thread);
+      jvmtiEventVMInit callback = env->callbacks()->VMInit;
+      if (callback != NULL) {
+        (*callback)(env->jvmti_external(), jem.jni_env(), jem.jni_thread());
+      }
+    }
+  }  
+}
+
+
+void JvmtiExport::post_vm_death() {
+  EVT_TRIG_TRACE(JVMTI_EVENT_VM_DEATH, ("JVMTI Trg VM death event triggered" ));
+
+  JvmtiEnvIterator it; 
+  for (JvmtiEnv* env = it.first(); env != NULL; env = it.next(env)) {
+    if (env->is_enabled(JVMTI_EVENT_VM_DEATH)) {
+      EVT_TRACE(JVMTI_EVENT_VM_DEATH, ("JVMTI Evt VM death event sent" ));
+      
+      JavaThread *thread  = JavaThread::current();
+      JvmtiEventMark jem(thread);
+      JvmtiJavaThreadEventTransition jet(thread);
+      jvmtiEventVMDeath callback = env->callbacks()->VMDeath;
+      if (callback != NULL) {
+        (*callback)(env->jvmti_external(), jem.jni_env());
+      }
+    }
+  }
+
+  JvmtiEnvBase::set_phase(JVMTI_PHASE_DEAD);
+  JvmtiEventController::vm_death();
+}
+
+char**
+JvmtiExport::get_all_native_method_prefixes(int* count_ptr) {
+  // Have to grab JVMTI thread state lock to be sure environment doesn't
+  // go away while we iterate them.  No locks during VM bring-up.
+  if (Threads::number_of_threads() == 0 || SafepointSynchronize::is_at_safepoint()) {
+    return JvmtiEnvBase::get_all_native_method_prefixes(count_ptr);
+  } else {
+    MutexLocker mu(JvmtiThreadState_lock);
+    return JvmtiEnvBase::get_all_native_method_prefixes(count_ptr);
+  }
+}
+
+class JvmtiClassFileLoadHookPoster : public StackObj {
+ private:
+  symbolHandle         _h_name;
+  Handle               _class_loader;
+  Handle               _h_protection_domain;
+  unsigned char **     _data_ptr;
+  unsigned char **     _end_ptr;
+  JavaThread *         _thread;
+  jint                 _curr_len;
+  unsigned char *      _curr_data;
+  JvmtiEnv *           _curr_env; 
+  jint *               _cached_length_ptr;
+  unsigned char **     _cached_data_ptr;
+  JvmtiThreadState *   _state;
+  KlassHandle *        _h_class_being_redefined;
+  JvmtiClassLoadKind   _load_kind;
+
+ public:
+  inline JvmtiClassFileLoadHookPoster(symbolHandle h_name, Handle class_loader,
+                                      Handle h_protection_domain, 
+                                      unsigned char **data_ptr, unsigned char **end_ptr, 
+                                      unsigned char **cached_data_ptr, 
+                                      jint *cached_length_ptr) {
+    _h_name = h_name;
+    _class_loader = class_loader;
+    _h_protection_domain = h_protection_domain;
+    _data_ptr = data_ptr;
+    _end_ptr = end_ptr;
+    _thread = JavaThread::current();
+    _curr_len = *end_ptr - *data_ptr;
+    _curr_data = *data_ptr;
+    _curr_env = NULL; 
+    _cached_length_ptr = cached_length_ptr;
+    _cached_data_ptr = cached_data_ptr;
+    *_cached_length_ptr = 0;
+    *_cached_data_ptr = NULL;
+
+    _state = _thread->jvmti_thread_state();
+    if (_state != NULL) {
+      _h_class_being_redefined = _state->get_class_being_redefined();
+      _load_kind = _state->get_class_load_kind();
+      // Clear class_being_redefined flag here. The action 
+      // from agent handler could generate a new class file load
+      // hook event and if it is not cleared the new event generated
+      // from regular class file load could have this stale redefined
+      // class handle info. 
+      _state->clear_class_being_redefined();
+    } else {
+      // redefine and retransform will always set the thread state
+      _h_class_being_redefined = (KlassHandle *) NULL;
+      _load_kind = jvmti_class_load_kind_load;
+    }
+  }
+
+  void post() {
+//    EVT_TRIG_TRACE(JVMTI_EVENT_CLASS_FILE_LOAD_HOOK,
+//                   ("JVMTI [%s] class file load hook event triggered",  
+//                    JvmtiTrace::safe_get_thread_name(_thread)));
+    post_all_envs();
+    copy_modified_data();
+  }
+
+ private:
+  void post_all_envs() {
+    if (_load_kind != jvmti_class_load_kind_retransform) {
+      // for class load and redefine, 
+      // call the non-retransformable agents
+      JvmtiEnvIterator it; 
+      for (JvmtiEnv* env = it.first(); env != NULL; env = it.next(env)) {
+        if (!env->is_retransformable() && env->is_enabled(JVMTI_EVENT_CLASS_FILE_LOAD_HOOK)) {
+          // non-retransformable agents cannot retransform back,
+          // so no need to cache the original class file bytes
+          post_to_env(env, false);
+        }
+      }
+    }
+    JvmtiEnvIterator it; 
+    for (JvmtiEnv* env = it.first(); env != NULL; env = it.next(env)) {
+      // retransformable agents get all events
+      if (env->is_retransformable() && env->is_enabled(JVMTI_EVENT_CLASS_FILE_LOAD_HOOK)) {
+        // retransformable agents need to cache the original class file 
+        // bytes if changes are made via the ClassFileLoadHook
+        post_to_env(env, true);
+      }
+    }
+  }
+
+  void post_to_env(JvmtiEnv* env, bool caching_needed) {
+    unsigned char *new_data = NULL;
+    jint new_len = 0;
+//    EVT_TRACE(JVMTI_EVENT_CLASS_FILE_LOAD_HOOK,
+//     ("JVMTI [%s] class file load hook event sent %s  data_ptr = %d, data_len = %d",  
+//               JvmtiTrace::safe_get_thread_name(_thread),
+//               _h_name.is_null() ? "NULL" : _h_name->as_utf8(),
+//               _curr_data, _curr_len ));
+    JvmtiClassFileLoadEventMark jem(_thread, _h_name, _class_loader, 
+                                    _h_protection_domain, 
+                                    _h_class_being_redefined);
+    JvmtiJavaThreadEventTransition jet(_thread);
+    JNIEnv* jni_env =  (JvmtiEnv::get_phase() == JVMTI_PHASE_PRIMORDIAL)? 
+                                                        NULL : jem.jni_env();
+    jvmtiEventClassFileLoadHook callback = env->callbacks()->ClassFileLoadHook;
+    if (callback != NULL) {
+      (*callback)(env->jvmti_external(), jni_env,
+                  jem.class_being_redefined(),
+                  jem.jloader(), jem.class_name(), 
+                  jem.protection_domain(),
+                  _curr_len, _curr_data,
+                  &new_len, &new_data);
+    }
+    if (new_data != NULL) {
+      // this agent has modified class data. 
+      if (caching_needed && *_cached_data_ptr == NULL) {
+        // data has been changed by the new retransformable agent
+        // and it hasn't already been cached, cache it
+        *_cached_data_ptr = (unsigned char *)os::malloc(_curr_len);
+        memcpy(*_cached_data_ptr, _curr_data, _curr_len);
+        *_cached_length_ptr = _curr_len;
+      }
+
+      if (_curr_data != *_data_ptr) {
+        // curr_data is previous agent modified class data.
+        // And this has been changed by the new agent so
+        // we can delete it now.           
+        _curr_env->Deallocate(_curr_data);
+      }
+
+      // Class file data has changed by the current agent.
+      _curr_data = new_data;
+      _curr_len = new_len;
+      // Save the current agent env we need this to deallocate the
+      // memory allocated by this agent.
+      _curr_env = env;
+    }
+  }
+
+  void copy_modified_data() {
+    // if one of the agent has modified class file data.
+    // Copy modified class data to new resources array.
+    if (_curr_data != *_data_ptr) {
+      *_data_ptr = NEW_RESOURCE_ARRAY(u1, _curr_len);
+      memcpy(*_data_ptr, _curr_data, _curr_len);
+      *_end_ptr = *_data_ptr + _curr_len;
+      _curr_env->Deallocate(_curr_data);
+    }
+  }
+};
+
+bool JvmtiExport::_should_post_class_file_load_hook = false;
+
+// this entry is for class file load hook on class load, redefine and retransform
+void JvmtiExport::post_class_file_load_hook(symbolHandle h_name, 
+                                            Handle class_loader,
+                                            Handle h_protection_domain, 
+                                            unsigned char **data_ptr, 
+                                            unsigned char **end_ptr, 
+                                            unsigned char **cached_data_ptr, 
+                                            jint *cached_length_ptr) {
+  JvmtiClassFileLoadHookPoster poster(h_name, class_loader, 
+                                      h_protection_domain, 
+                                      data_ptr, end_ptr,
+                                      cached_data_ptr, 
+                                      cached_length_ptr);
+  poster.post();
+}
+
+void JvmtiExport::report_unsupported(bool on) {
+  // If any JVMTI service is turned on, we need to exit before native code
+  // tries to access nonexistant services.
+  if (on) {
+    vm_exit_during_initialization("Java Kernel does not support JVMTI.");
+  }
+}
+
+
+#ifndef JVMTI_KERNEL
 static inline klassOop oop_to_klassOop(oop obj) {
   klassOop k = obj->klass();
 
@@ -488,48 +846,11 @@ void JvmtiExport::post_raw_breakpoint(JavaThread *thread, methodOop method, addr
   }
 }
 
-jint  
-JvmtiExport::get_jvmti_interface(JavaVM *jvm, void **penv, jint version) {
-  /* To Do: add version checks */
-
-  if (JvmtiEnv::get_phase() == JVMTI_PHASE_LIVE) {
-    JavaThread* current_thread = (JavaThread*) ThreadLocalStorage::thread();
-    // transition code: native to VM
-    ThreadInVMfromNative __tiv(current_thread);
-    __ENTRY(jvmtiEnv*, JvmtiExport::get_jvmti_interface, current_thread)
-    debug_only(VMNativeEntryWrapper __vew;) 
-
-    JvmtiEnv *jvmti_env = JvmtiEnv::create_a_jvmti();
-    *penv = jvmti_env->jvmti_external();  // actual type is jvmtiEnv* -- not to be confused with JvmtiEnv*
-    return JNI_OK; 
-
-  } else if (JvmtiEnv::get_phase() == JVMTI_PHASE_ONLOAD) {
-    // not live, no thread to transition
-    JvmtiEnv *jvmti_env = JvmtiEnv::create_a_jvmti();
-    *penv = jvmti_env->jvmti_external();  // actual type is jvmtiEnv* -- not to be confused with JvmtiEnv*
-    return JNI_OK; 
-
-  } else {
-    // Called at the wrong time
-    *penv = NULL;
-    return JNI_EDETACHED;
-  }
-}
-
-
 //////////////////////////////////////////////////////////////////////////////
 
-int               JvmtiExport::_field_access_count                        = 0;
-int               JvmtiExport::_field_modification_count                  = 0;
-
 bool              JvmtiExport::_can_get_source_debug_extension            = false;
-bool              JvmtiExport::_can_examine_or_deopt_anywhere             = false;
 bool              JvmtiExport::_can_maintain_original_method_order        = false;
 bool              JvmtiExport::_can_post_interpreter_events               = false;
-bool              JvmtiExport::_can_hotswap_or_post_breakpoint            = false;
-bool              JvmtiExport::_can_modify_any_class                      = false;
-bool              JvmtiExport::_can_walk_any_space                        = false;
-bool              JvmtiExport::_can_access_local_variables                = false;
 bool              JvmtiExport::_can_post_exceptions                       = false;
 bool              JvmtiExport::_can_post_breakpoint                       = false;
 bool              JvmtiExport::_can_post_field_access                     = false;
@@ -547,7 +868,6 @@ bool              JvmtiExport::_should_post_class_prepare                 = fals
 bool              JvmtiExport::_should_post_class_unload                  = false;
 bool              JvmtiExport::_should_post_thread_life                   = false;
 bool              JvmtiExport::_should_clean_up_heap_objects              = false;
-bool              JvmtiExport::_should_post_class_file_load_hook          = false;
 bool              JvmtiExport::_should_post_native_method_bind            = false;
 bool              JvmtiExport::_should_post_dynamic_code_generated        = false;
 bool              JvmtiExport::_should_post_data_dump                     = false;
@@ -562,67 +882,8 @@ bool              JvmtiExport::_should_post_garbage_collection_finish     = fals
 bool		  JvmtiExport::_should_post_object_free			  = false;
 bool		  JvmtiExport::_should_post_resource_exhausted        	  = false;
 bool              JvmtiExport::_should_post_vm_object_alloc               = false;
-bool              JvmtiExport::_has_redefined_a_class                     = false;
-bool		  JvmtiExport::_all_dependencies_are_recorded		  = false;
-
-
-
-void JvmtiExport::enter_primordial_phase() { 
-  JvmtiEnvBase::set_phase(JVMTI_PHASE_PRIMORDIAL);
-}
-
-void JvmtiExport::enter_start_phase() { 
-  JvmtiManageCapabilities::recompute_always_capabilities();
-  JvmtiEnvBase::set_phase(JVMTI_PHASE_START);
-}
-
-void JvmtiExport::enter_onload_phase() { 
-  JvmtiEnvBase::set_phase(JVMTI_PHASE_ONLOAD);
-}
-
-void JvmtiExport::enter_live_phase() { 
-  JvmtiEnvBase::set_phase(JVMTI_PHASE_LIVE);
-}
-
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-//
-// field access management
-//
-
-// interpreter generator needs the address of the counter
-address JvmtiExport::get_field_access_count_addr() {
-  // We don't grab a lock because we don't want to
-  // serialize field access between all threads. This means that a
-  // thread on another processor can see the wrong count value and
-  // may either miss making a needed call into post_field_access()
-  // or will make an unneeded call into post_field_access(). We pay
-  // this price to avoid slowing down the VM when we aren't watching
-  // field accesses.
-  // Other access/mutation safe by virtue of being in VM state.
-  return (address)(&_field_access_count);
-}
-
-
-//
-// field modification management
-//
-
-// interpreter generator needs the address of the counter
-address JvmtiExport::get_field_modification_count_addr() {
-  // We don't grab a lock because we don't
-  // want to serialize field modification between all threads. This
-  // means that a thread on another processor can see the wrong
-  // count value and may either miss making a needed call into
-  // post_field_modification() or will make an unneeded call into
-  // post_field_modification(). We pay this price to avoid slowing
-  // down the VM when we aren't watching field modifications.
-  // Other access/mutation safe by virtue of being in VM state.
-  return (address)(&_field_modification_count);
-}
 
 
 //
@@ -670,104 +931,6 @@ bool JvmtiExport::hide_single_stepping(JavaThread *thread) {
     return false; 
   }
 }
-
-//
-// JVMTI events that the VM posts to the debugger
-//
-
-void JvmtiExport::post_vm_start() {
-  EVT_TRIG_TRACE(JVMTI_EVENT_VM_START, ("JVMTI Trg VM start event triggered" ));
-
-  // can now enable some events 
-  JvmtiEventController::vm_start();
-
-  JvmtiEnvIterator it; 
-  for (JvmtiEnv* env = it.first(); env != NULL; env = it.next(env)) {
-    if (env->is_enabled(JVMTI_EVENT_VM_START)) {
-      EVT_TRACE(JVMTI_EVENT_VM_START, ("JVMTI Evt VM start event sent" ));
-
-      JavaThread *thread  = JavaThread::current();
-      JvmtiThreadEventMark jem(thread);
-      JvmtiJavaThreadEventTransition jet(thread);
-      jvmtiEventVMStart callback = env->callbacks()->VMStart;
-      if (callback != NULL) {
-        (*callback)(env->jvmti_external(), jem.jni_env());
-      }
-    }
-  }  
-}
-
-
-void JvmtiExport::post_vm_initialized() {
-  EVT_TRIG_TRACE(JVMTI_EVENT_VM_INIT, ("JVMTI Trg VM init event triggered" ));
-
-  // can now enable events 
-  JvmtiEventController::vm_init();
-
-  JvmtiEnvIterator it; 
-  for (JvmtiEnv* env = it.first(); env != NULL; env = it.next(env)) {
-    if (env->is_enabled(JVMTI_EVENT_VM_INIT)) {
-      EVT_TRACE(JVMTI_EVENT_VM_INIT, ("JVMTI Evt VM init event sent" ));
-
-      JavaThread *thread  = JavaThread::current();
-      JvmtiThreadEventMark jem(thread);
-      JvmtiJavaThreadEventTransition jet(thread);
-      jvmtiEventVMInit callback = env->callbacks()->VMInit;
-      if (callback != NULL) {
-        (*callback)(env->jvmti_external(), jem.jni_env(), jem.jni_thread());
-      }
-    }
-  }  
-}
-
-
-extern "C" {
-  typedef void (JNICALL *Agent_OnUnload_t)(JavaVM *);
-}
-
-void JvmtiExport::post_vm_death() {
-  EVT_TRIG_TRACE(JVMTI_EVENT_VM_DEATH, ("JVMTI Trg VM death event triggered" ));
-
-  JvmtiEnvIterator it; 
-  for (JvmtiEnv* env = it.first(); env != NULL; env = it.next(env)) {
-    if (env->is_enabled(JVMTI_EVENT_VM_DEATH)) {
-      EVT_TRACE(JVMTI_EVENT_VM_DEATH, ("JVMTI Evt VM death event sent" ));
-      
-      JavaThread *thread  = JavaThread::current();
-      JvmtiEventMark jem(thread);
-      JvmtiJavaThreadEventTransition jet(thread);
-      jvmtiEventVMDeath callback = env->callbacks()->VMDeath;
-      if (callback != NULL) {
-        (*callback)(env->jvmti_external(), jem.jni_env());
-      }
-    }
-  }
-
-  JvmtiEnvBase::set_phase(JVMTI_PHASE_DEAD);
-  JvmtiEventController::vm_death();
-
-  // Send any Agent_OnUnload notifications
-  const char *on_unload_symbols[] = AGENT_ONUNLOAD_SYMBOLS;
-  extern struct JavaVM_ main_vm;
-  for (AgentLibrary* agent = Arguments::agents(); agent != NULL; agent = agent->next()) {
-
-    // Find the Agent_OnUnload function.
-    for (uint symbol_index = 0; symbol_index < ARRAY_SIZE(on_unload_symbols); symbol_index++) {
-      Agent_OnUnload_t unload_entry = CAST_TO_FN_PTR(Agent_OnUnload_t,
-               hpi::dll_lookup(agent->os_lib(), on_unload_symbols[symbol_index]));
-
-      // Invoke the Agent_OnUnload function
-      if (unload_entry != NULL) {
-        JavaThread* thread = JavaThread::current();
-        ThreadToNativeFromVM ttn(thread);
-        HandleMark hm(thread);
-        (*unload_entry)(&main_vm);
-        break;
-      }
-    }
-  }
-}
-
 
 void JvmtiExport::post_class_load(JavaThread *thread, klassOop klass) {
   HandleMark hm(thread);  
@@ -1533,170 +1696,6 @@ void JvmtiExport::post_field_modification(JavaThread *thread, methodOop method,
   }
 }
 
-class JvmtiClassFileLoadHookPoster : public StackObj {
- private:
-  symbolHandle         _h_name;
-  Handle               _class_loader;
-  Handle               _h_protection_domain;
-  unsigned char **     _data_ptr;
-  unsigned char **     _end_ptr;
-  JavaThread *         _thread;
-  jint                 _curr_len;
-  unsigned char *      _curr_data;
-  JvmtiEnv *           _curr_env; 
-  jint *               _cached_length_ptr;
-  unsigned char **     _cached_data_ptr;
-  JvmtiThreadState *   _state;
-  KlassHandle *        _h_class_being_redefined;
-  JvmtiClassLoadKind   _load_kind;
-
- public:
-  inline JvmtiClassFileLoadHookPoster(symbolHandle h_name, Handle class_loader,
-                                      Handle h_protection_domain, 
-                                      unsigned char **data_ptr, unsigned char **end_ptr, 
-                                      unsigned char **cached_data_ptr, 
-                                      jint *cached_length_ptr) {
-    _h_name = h_name;
-    _class_loader = class_loader;
-    _h_protection_domain = h_protection_domain;
-    _data_ptr = data_ptr;
-    _end_ptr = end_ptr;
-    _thread = JavaThread::current();
-    _curr_len = *end_ptr - *data_ptr;
-    _curr_data = *data_ptr;
-    _curr_env = NULL; 
-    _cached_length_ptr = cached_length_ptr;
-    _cached_data_ptr = cached_data_ptr;
-    *_cached_length_ptr = 0;
-    *_cached_data_ptr = NULL;
-
-    _state = _thread->jvmti_thread_state();
-    if (_state != NULL) {
-      _h_class_being_redefined = _state->get_class_being_redefined();
-      _load_kind = _state->get_class_load_kind();
-      // Clear class_being_redefined flag here. The action 
-      // from agent handler could generate a new class file load
-      // hook event and if it is not cleared the new event generated
-      // from regular class file load could have this stale redefined
-      // class handle info. 
-      _state->clear_class_being_redefined();
-    } else {
-      // redefine and retransform will always set the thread state
-      _h_class_being_redefined = (KlassHandle *) NULL;
-      _load_kind = jvmti_class_load_kind_load;
-    }
-  }
-
-  void post() {
-//    EVT_TRIG_TRACE(JVMTI_EVENT_CLASS_FILE_LOAD_HOOK,
-//                   ("JVMTI [%s] class file load hook event triggered",  
-//                    JvmtiTrace::safe_get_thread_name(_thread)));
-    post_all_envs();
-    copy_modified_data();
-  }
-
- private:
-  void post_all_envs() {
-    if (_load_kind != jvmti_class_load_kind_retransform) {
-      // for class load and redefine, 
-      // call the non-retransformable agents
-      JvmtiEnvIterator it; 
-      for (JvmtiEnv* env = it.first(); env != NULL; env = it.next(env)) {
-        if (!env->is_retransformable() && env->is_enabled(JVMTI_EVENT_CLASS_FILE_LOAD_HOOK)) {
-          // non-retransformable agents cannot retransform back,
-          // so no need to cache the original class file bytes
-          post_to_env(env, false);
-        }
-      }
-    }
-    JvmtiEnvIterator it; 
-    for (JvmtiEnv* env = it.first(); env != NULL; env = it.next(env)) {
-      // retransformable agents get all events
-      if (env->is_retransformable() && env->is_enabled(JVMTI_EVENT_CLASS_FILE_LOAD_HOOK)) {
-        // retransformable agents need to cache the original class file 
-        // bytes if changes are made via the ClassFileLoadHook
-        post_to_env(env, true);
-      }
-    }
-  }
-
-  void post_to_env(JvmtiEnv* env, bool caching_needed) {
-    unsigned char *new_data = NULL;
-    jint new_len = 0;
-//    EVT_TRACE(JVMTI_EVENT_CLASS_FILE_LOAD_HOOK,
-//     ("JVMTI [%s] class file load hook event sent %s  data_ptr = %d, data_len = %d",  
-//               JvmtiTrace::safe_get_thread_name(_thread),
-//               _h_name.is_null() ? "NULL" : _h_name->as_utf8(),
-//               _curr_data, _curr_len ));
-    JvmtiClassFileLoadEventMark jem(_thread, _h_name, _class_loader, 
-                                    _h_protection_domain, 
-                                    _h_class_being_redefined);
-    JvmtiJavaThreadEventTransition jet(_thread);
-    JNIEnv* jni_env =  (JvmtiEnv::get_phase() == JVMTI_PHASE_PRIMORDIAL)? 
-                                                        NULL : jem.jni_env();
-    jvmtiEventClassFileLoadHook callback = env->callbacks()->ClassFileLoadHook;
-    if (callback != NULL) {
-      (*callback)(env->jvmti_external(), jni_env,
-                  jem.class_being_redefined(),
-                  jem.jloader(), jem.class_name(), 
-                  jem.protection_domain(),
-                  _curr_len, _curr_data,
-                  &new_len, &new_data);
-    }
-    if (new_data != NULL) {
-      // this agent has modified class data. 
-      if (caching_needed && *_cached_data_ptr == NULL) {
-        // data has been changed by the new retransformable agent
-        // and it hasn't already been cached, cache it
-        *_cached_data_ptr = (unsigned char *)os::malloc(_curr_len);
-        memcpy(*_cached_data_ptr, _curr_data, _curr_len);
-        *_cached_length_ptr = _curr_len;
-      }
-
-      if (_curr_data != *_data_ptr) {
-        // curr_data is previous agent modified class data.
-        // And this has been changed by the new agent so
-        // we can delete it now.           
-        _curr_env->Deallocate(_curr_data);
-      }
-
-      // Class file data has changed by the current agent.
-      _curr_data = new_data;
-      _curr_len = new_len;
-      // Save the current agent env we need this to deallocate the
-      // memory allocated by this agent.
-      _curr_env = env;
-    }
-  }
-
-  void copy_modified_data() {
-    // if one of the agent has modified class file data.
-    // Copy modified class data to new resources array.
-    if (_curr_data != *_data_ptr) {
-      *_data_ptr = NEW_RESOURCE_ARRAY(u1, _curr_len);
-      memcpy(*_data_ptr, _curr_data, _curr_len);
-      *_end_ptr = *_data_ptr + _curr_len;
-      _curr_env->Deallocate(_curr_data);
-    }
-  }
-};
-
-// this entry is for class file load hook on class load, redefine and retransform
-void JvmtiExport::post_class_file_load_hook(symbolHandle h_name, 
-                                            Handle class_loader,
-                                            Handle h_protection_domain, 
-                                            unsigned char **data_ptr, 
-                                            unsigned char **end_ptr, 
-                                            unsigned char **cached_data_ptr, 
-                                            jint *cached_length_ptr) {
-  JvmtiClassFileLoadHookPoster poster(h_name, class_loader, 
-                                      h_protection_domain, 
-                                      data_ptr, end_ptr,
-                                      cached_data_ptr, 
-                                      cached_length_ptr);
-  poster.post();
-}
-
 void JvmtiExport::post_native_method_bind(methodOop method, address* function_ptr) {
   JavaThread* thread = JavaThread::current();    
   assert(thread->thread_state() == _thread_in_vm, "must be in vm state");
@@ -2133,19 +2132,6 @@ void JvmtiExport::post_vm_object_alloc(JavaThread *thread,  oop object) {
   }
 }
 
-
-char**
-JvmtiExport::get_all_native_method_prefixes(int* count_ptr) {
-  // Have to grab JVMTI thread state lock to be sure environment doesn't
-  // go away while we iterate them.  No locks during VM bring-up.
-  if (Threads::number_of_threads() == 0 || SafepointSynchronize::is_at_safepoint()) {
-    return JvmtiEnvBase::get_all_native_method_prefixes(count_ptr);
-  } else {
-    MutexLocker mu(JvmtiThreadState_lock);
-    return JvmtiEnvBase::get_all_native_method_prefixes(count_ptr);
-  }
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 void JvmtiExport::cleanup_thread(JavaThread* thread) {
@@ -2175,6 +2161,7 @@ extern "C" {
   typedef jint (JNICALL *OnAttachEntry_t)(JavaVM*, char *, void *);
 }
 
+#ifndef SERVICES_KERNEL
 jint JvmtiExport::load_agent_library(AttachOperation* op, outputStream* st) {
   char ebuf[1024];
   char buffer[JVM_MAXPATHLEN];
@@ -2252,6 +2239,7 @@ jint JvmtiExport::load_agent_library(AttachOperation* op, outputStream* st) {
   }
   return result;
 }
+#endif // SERVICES_KERNEL
 
 // CMS has completed referencing processing so may need to update
 // tag maps. 
@@ -2506,5 +2494,5 @@ JvmtiGCMarker::~JvmtiGCMarker() {
   // Notify heap/object tagging support
   JvmtiTagMap::gc_epilogue(_full);
 }
-
+#endif // JVMTI_KERNEL
 

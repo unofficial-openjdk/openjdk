@@ -468,7 +468,7 @@ extern bool can_branch_register( Node *bol, Node *cmp );
 %}
 
 source %{
-#pragma ident "@(#)sparc.ad	1.454 07/05/17 15:48:27 JVM"
+#pragma ident "@(#)sparc.ad	1.456 07/09/28 10:23:30 JVM"
 
 #define __ _masm.
 
@@ -577,8 +577,8 @@ void emit_break(CodeBuffer &cbuf) {
 }
 
 #ifndef PRODUCT
-void MachBreakpointNode::format( PhaseRegAlloc * ) const {
-  tty->print("TA");
+void MachBreakpointNode::format( PhaseRegAlloc *, outputStream *st ) const {
+  st->print("TA");
 }
 #endif
 
@@ -1035,15 +1035,15 @@ void emit_ptr(CodeBuffer &cbuf, intptr_t val, Register reg, bool ForceRelocatabl
 //=============================================================================
 
 #ifndef PRODUCT
-void MachPrologNode::format( PhaseRegAlloc *ra_ ) const {
+void MachPrologNode::format( PhaseRegAlloc *ra_, outputStream *st ) const {
   Compile* C = ra_->C;
 
   for (int i = 0; i < OptoPrologueNops; i++) {
-    tty->print_cr("NOP"); tty->print("\t");
+    st->print_cr("NOP"); st->print("\t");
   }
 
   if( VerifyThread ) {
-    tty->print_cr("Verify_Thread"); tty->print("\t");
+    st->print_cr("Verify_Thread"); st->print("\t");
   }
 
   size_t framesize = C->frame_slots() << LogBytesPerInt;
@@ -1054,15 +1054,15 @@ void MachPrologNode::format( PhaseRegAlloc *ra_ ) const {
   // stack.  But the stack safety zone should account for that.
   // See bugs 4446381, 4468289, 4497237.
   if (C->need_stack_bang(framesize)) {
-    tty->print_cr("! stack bang"); tty->print("\t"); 
+    st->print_cr("! stack bang"); st->print("\t"); 
   }
 
   if (Assembler::is_simm13(-framesize)) {
-    tty->print   ("SAVE   R_SP,-%d,R_SP",framesize);
+    st->print   ("SAVE   R_SP,-%d,R_SP",framesize);
   } else {
-    tty->print_cr("SETHI  R_SP,hi%%(-%d),R_G3",framesize); tty->print("\t");
-    tty->print_cr("ADD    R_G3,lo%%(-%d),R_G3",framesize); tty->print("\t");
-    tty->print   ("SAVE   R_SP,R_G3,R_SP");
+    st->print_cr("SETHI  R_SP,hi%%(-%d),R_G3",framesize); st->print("\t");
+    st->print_cr("ADD    R_G3,lo%%(-%d),R_G3",framesize); st->print("\t");
+    st->print   ("SAVE   R_SP,R_G3,R_SP");
   }
 
 }
@@ -1111,22 +1111,22 @@ int MachPrologNode::reloc() const {
 
 //=============================================================================
 #ifndef PRODUCT
-void MachEpilogNode::format( PhaseRegAlloc *ra_ ) const {
+void MachEpilogNode::format( PhaseRegAlloc *ra_, outputStream *st ) const {
   Compile* C = ra_->C;
 
   if( do_polling() && ra_->C->is_method_compilation() ) {
-    tty->print("SETHI  #PollAddr,L0\t! Load Polling address\n\t");
+    st->print("SETHI  #PollAddr,L0\t! Load Polling address\n\t");
 #ifdef _LP64
-    tty->print("LDX    [L0],G0\t!Poll for Safepointing\n\t");
+    st->print("LDX    [L0],G0\t!Poll for Safepointing\n\t");
 #else
-    tty->print("LDUW   [L0],G0\t!Poll for Safepointing\n\t");
+    st->print("LDUW   [L0],G0\t!Poll for Safepointing\n\t");
 #endif
   }
 
   if( do_polling() )
-    tty->print("RET\n\t");
+    st->print("RET\n\t");
 
-  tty->print("RESTORE");
+  st->print("RESTORE");
 }
 #endif
 
@@ -1183,7 +1183,7 @@ static enum RC rc_class( OptoReg::Name reg ) {
   return rc_float;
 }
 
-static int impl_helper( const MachNode *mach, CodeBuffer *cbuf, PhaseRegAlloc *ra_, bool do_size, bool is_load, int offset, int reg, int opcode, const char *op_str, int size ) {
+static int impl_helper( const MachNode *mach, CodeBuffer *cbuf, PhaseRegAlloc *ra_, bool do_size, bool is_load, int offset, int reg, int opcode, const char *op_str, int size, outputStream* st ) {
   if( cbuf ) {
     // Better yet would be some mechanism to handle variable-size matches correctly
     if (!Assembler::is_simm13(offset + STACK_BIAS)) {
@@ -1194,26 +1194,29 @@ static int impl_helper( const MachNode *mach, CodeBuffer *cbuf, PhaseRegAlloc *r
   }
 #ifndef PRODUCT
   else if( !do_size ) { 
-    if( size != 0 ) tty->print("\n\t"); 
-    if( is_load ) tty->print("%s   [R_SP + #%d],R_%s\t! spill",op_str,offset,OptoReg::regname(reg)); 
-    else          tty->print("%s   R_%s,[R_SP + #%d]\t! spill",op_str,OptoReg::regname(reg),offset); 
+    if( size != 0 ) st->print("\n\t"); 
+    if( is_load ) st->print("%s   [R_SP + #%d],R_%s\t! spill",op_str,offset,OptoReg::regname(reg)); 
+    else          st->print("%s   R_%s,[R_SP + #%d]\t! spill",op_str,OptoReg::regname(reg),offset); 
   }
 #endif
   return size+4;
 }
 
-static int impl_mov_helper( CodeBuffer *cbuf, bool do_size, int src, int dst, int op1, int op2, const char *op_str, int size ) {
+static int impl_mov_helper( CodeBuffer *cbuf, bool do_size, int src, int dst, int op1, int op2, const char *op_str, int size, outputStream* st ) {
   if( cbuf ) emit3( *cbuf, Assembler::arith_op, Matcher::_regEncode[dst], op1, 0, op2, Matcher::_regEncode[src] ); 
 #ifndef PRODUCT
   else if( !do_size ) {
-    if( size != 0 ) tty->print("\n\t"); 
-    tty->print("%s  R_%s,R_%s\t! spill",op_str,OptoReg::regname(src),OptoReg::regname(dst));
+    if( size != 0 ) st->print("\n\t"); 
+    st->print("%s  R_%s,R_%s\t! spill",op_str,OptoReg::regname(src),OptoReg::regname(dst));
   }
 #endif
   return size+4;
 }
 
-uint MachSpillCopyNode::implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bool do_size ) const {
+uint MachSpillCopyNode::implementation( CodeBuffer *cbuf,
+                                        PhaseRegAlloc *ra_,
+                                        bool do_size,
+                                        outputStream* st ) const {
   // Get registers to move 
   OptoReg::Name src_second = ra_->get_reg_second(in(1));
   OptoReg::Name src_first = ra_->get_reg_first(in(1));
@@ -1242,9 +1245,9 @@ uint MachSpillCopyNode::implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bo
     if( (src_first&1)==0 && src_first+1 == src_second ) {
       src_second    = OptoReg::Name(R_F31_num);
       src_second_rc = rc_float;
-      size = impl_helper(this,cbuf,ra_,do_size,true,offset,R_F30_num,Assembler::lddf_op3,"LDDF",size);
+      size = impl_helper(this,cbuf,ra_,do_size,true,offset,R_F30_num,Assembler::lddf_op3,"LDDF",size, st);
     } else {
-      size = impl_helper(this,cbuf,ra_,do_size,true,offset,R_F30_num,Assembler::ldf_op3 ,"LDF ",size);
+      size = impl_helper(this,cbuf,ra_,do_size,true,offset,R_F30_num,Assembler::ldf_op3 ,"LDF ",size, st);
     }
     src_first    = OptoReg::Name(R_F30_num); 
     src_first_rc = rc_float;  
@@ -1252,7 +1255,7 @@ uint MachSpillCopyNode::implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bo
 
   if( src_second_rc == rc_stack && dst_second_rc == rc_stack ) {
     int offset = ra_->reg2offset(src_second);
-    size = impl_helper(this,cbuf,ra_,do_size,true,offset,R_F31_num,Assembler::ldf_op3,"LDF ",size);
+    size = impl_helper(this,cbuf,ra_,do_size,true,offset,R_F31_num,Assembler::ldf_op3,"LDF ",size, st);
     src_second    = OptoReg::Name(R_F31_num);
     src_second_rc = rc_float;
   }
@@ -1263,17 +1266,17 @@ uint MachSpillCopyNode::implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bo
     int offset = frame::register_save_words*wordSize;
     if( cbuf ) {
       emit3_simm13( *cbuf, Assembler::arith_op, R_SP_enc, Assembler::sub_op3, R_SP_enc, 16 );
-      impl_helper(this,cbuf,ra_,do_size,false,offset,src_first,Assembler::stf_op3 ,"STF ",size);
-      impl_helper(this,cbuf,ra_,do_size,true ,offset,dst_first,Assembler::lduw_op3,"LDUW",size);
+      impl_helper(this,cbuf,ra_,do_size,false,offset,src_first,Assembler::stf_op3 ,"STF ",size, st);
+      impl_helper(this,cbuf,ra_,do_size,true ,offset,dst_first,Assembler::lduw_op3,"LDUW",size, st);
       emit3_simm13( *cbuf, Assembler::arith_op, R_SP_enc, Assembler::add_op3, R_SP_enc, 16 );
     } 
 #ifndef PRODUCT
     else if( !do_size ) {
-      if( size != 0 ) tty->print("\n\t"); 
-      tty->print(  "SUB    R_SP,16,R_SP\n");
-      impl_helper(this,cbuf,ra_,do_size,false,offset,src_first,Assembler::stf_op3 ,"STF ",size);
-      impl_helper(this,cbuf,ra_,do_size,true ,offset,dst_first,Assembler::lduw_op3,"LDUW",size);
-      tty->print("\tADD    R_SP,16,R_SP\n");
+      if( size != 0 ) st->print("\n\t"); 
+      st->print(  "SUB    R_SP,16,R_SP\n");
+      impl_helper(this,cbuf,ra_,do_size,false,offset,src_first,Assembler::stf_op3 ,"STF ",size, st);
+      impl_helper(this,cbuf,ra_,do_size,true ,offset,dst_first,Assembler::lduw_op3,"LDUW",size, st);
+      st->print("\tADD    R_SP,16,R_SP\n");
     }
 #endif
     size += 16;
@@ -1313,10 +1316,10 @@ uint MachSpillCopyNode::implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bo
         emit3       ( *cbuf, Assembler::arith_op, Matcher::_regEncode[dst_first], Assembler:: or_op3, Matcher::_regEncode[tmp], 0, Matcher::_regEncode[src_second] );
 #ifndef PRODUCT
       } else if( !do_size ) {
-        if( size != 0 ) tty->print("\n\t"); 
-        tty->print("SLLX   R_%s,32,R_%s\t! Move O0-first to O7-high\n\t", OptoReg::regname(src_first), OptoReg::regname(tmp));
-        tty->print("SRL    R_%s, 0,R_%s\t! Zero-extend O1\n\t", OptoReg::regname(src_second), OptoReg::regname(src_second));
-        tty->print("OR     R_%s,R_%s,R_%s\t! spill",OptoReg::regname(tmp), OptoReg::regname(src_second), OptoReg::regname(dst_first));
+        if( size != 0 ) st->print("\n\t"); 
+        st->print("SLLX   R_%s,32,R_%s\t! Move O0-first to O7-high\n\t", OptoReg::regname(src_first), OptoReg::regname(tmp));
+        st->print("SRL    R_%s, 0,R_%s\t! Zero-extend O1\n\t", OptoReg::regname(src_second), OptoReg::regname(src_second));
+        st->print("OR     R_%s,R_%s,R_%s\t! spill",OptoReg::regname(tmp), OptoReg::regname(src_second), OptoReg::regname(dst_first));
 #endif
       }
       return size+12;
@@ -1347,11 +1350,11 @@ uint MachSpillCopyNode::implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bo
       }
 #ifndef PRODUCT
       else if( !do_size ) {
-        if( size != 0 ) tty->print("\n\t");  // %%%%% !!!!! 
-        tty->print("SRLX   R_%s,32,R_%s\t! Extract MSW\n\t",OptoReg::regname(src_second),OptoReg::regname(tdest));
-        tty->print("SRL    R_%s, 0,R_%s\t! Extract LSW\n\t",OptoReg::regname(src_first),OptoReg::regname(dst_second));
+        if( size != 0 ) st->print("\n\t");  // %%%%% !!!!! 
+        st->print("SRLX   R_%s,32,R_%s\t! Extract MSW\n\t",OptoReg::regname(src_second),OptoReg::regname(tdest));
+        st->print("SRL    R_%s, 0,R_%s\t! Extract LSW\n\t",OptoReg::regname(src_first),OptoReg::regname(dst_second));
         if (tdest != dst_first) {
-          tty->print("MOV    R_%s,R_%s\t! spill\n\t", OptoReg::regname(tdest), OptoReg::regname(dst_first));
+          st->print("MOV    R_%s,R_%s\t! spill\n\t", OptoReg::regname(tdest), OptoReg::regname(dst_first));
         }
       }
 #endif // PRODUCT
@@ -1360,7 +1363,7 @@ uint MachSpillCopyNode::implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bo
 #endif // !_LP64
     // Else normal reg-reg copy
     assert( src_second != dst_first, "smashed second before evacuating it" );
-    size = impl_mov_helper(cbuf,do_size,src_first,dst_first,Assembler::or_op3,0,"MOV  ",size);
+    size = impl_mov_helper(cbuf,do_size,src_first,dst_first,Assembler::or_op3,0,"MOV  ",size, st);
     assert( (src_first&1) == 0 && (dst_first&1) == 0, "never move second-halves of int registers" );
     // This moves an aligned adjacent pair.
     // See if we are done.
@@ -1373,8 +1376,8 @@ uint MachSpillCopyNode::implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bo
     int offset = ra_->reg2offset(dst_first);
     // Further check for aligned-adjacent pair, so we can use a double store
     if( (src_first&1)==0 && src_first+1 == src_second && (dst_first&1)==0 && dst_first+1 == dst_second )
-      return impl_helper(this,cbuf,ra_,do_size,false,offset,src_first,Assembler::stx_op3,"STX ",size);
-    size  =  impl_helper(this,cbuf,ra_,do_size,false,offset,src_first,Assembler::stw_op3,"STW ",size);
+      return impl_helper(this,cbuf,ra_,do_size,false,offset,src_first,Assembler::stx_op3,"STX ",size, st);
+    size  =  impl_helper(this,cbuf,ra_,do_size,false,offset,src_first,Assembler::stw_op3,"STW ",size, st);
   }
 
   // Check for integer load
@@ -1382,16 +1385,16 @@ uint MachSpillCopyNode::implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bo
     int offset = ra_->reg2offset(src_first);
     // Further check for aligned-adjacent pair, so we can use a double load
     if( (src_first&1)==0 && src_first+1 == src_second && (dst_first&1)==0 && dst_first+1 == dst_second )
-      return impl_helper(this,cbuf,ra_,do_size,true,offset,dst_first,Assembler::ldx_op3 ,"LDX ",size);
-    size  =  impl_helper(this,cbuf,ra_,do_size,true,offset,dst_first,Assembler::lduw_op3,"LDUW",size);
+      return impl_helper(this,cbuf,ra_,do_size,true,offset,dst_first,Assembler::ldx_op3 ,"LDX ",size, st);
+    size  =  impl_helper(this,cbuf,ra_,do_size,true,offset,dst_first,Assembler::lduw_op3,"LDUW",size, st);
   }
 
   // Check for float reg-reg copy
   if( src_first_rc == rc_float && dst_first_rc == rc_float ) {
     // Further check for aligned-adjacent pair, so we can use a double move
     if( (src_first&1)==0 && src_first+1 == src_second && (dst_first&1)==0 && dst_first+1 == dst_second )
-      return impl_mov_helper(cbuf,do_size,src_first,dst_first,Assembler::fpop1_op3,Assembler::fmovd_opf,"FMOVD",size);
-    size  =  impl_mov_helper(cbuf,do_size,src_first,dst_first,Assembler::fpop1_op3,Assembler::fmovs_opf,"FMOVS",size);
+      return impl_mov_helper(cbuf,do_size,src_first,dst_first,Assembler::fpop1_op3,Assembler::fmovd_opf,"FMOVD",size, st);
+    size  =  impl_mov_helper(cbuf,do_size,src_first,dst_first,Assembler::fpop1_op3,Assembler::fmovs_opf,"FMOVS",size, st);
   }
 
   // Check for float store
@@ -1399,8 +1402,8 @@ uint MachSpillCopyNode::implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bo
     int offset = ra_->reg2offset(dst_first);
     // Further check for aligned-adjacent pair, so we can use a double store
     if( (src_first&1)==0 && src_first+1 == src_second && (dst_first&1)==0 && dst_first+1 == dst_second )
-      return impl_helper(this,cbuf,ra_,do_size,false,offset,src_first,Assembler::stdf_op3,"STDF",size);
-    size  =  impl_helper(this,cbuf,ra_,do_size,false,offset,src_first,Assembler::stf_op3 ,"STF ",size);
+      return impl_helper(this,cbuf,ra_,do_size,false,offset,src_first,Assembler::stdf_op3,"STDF",size, st);
+    size  =  impl_helper(this,cbuf,ra_,do_size,false,offset,src_first,Assembler::stf_op3 ,"STF ",size, st);
   }
 
   // Check for float load
@@ -1408,8 +1411,8 @@ uint MachSpillCopyNode::implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bo
     int offset = ra_->reg2offset(src_first);
     // Further check for aligned-adjacent pair, so we can use a double load
     if( (src_first&1)==0 && src_first+1 == src_second && (dst_first&1)==0 && dst_first+1 == dst_second )
-      return impl_helper(this,cbuf,ra_,do_size,true,offset,dst_first,Assembler::lddf_op3,"LDDF",size);
-    size  =  impl_helper(this,cbuf,ra_,do_size,true,offset,dst_first,Assembler::ldf_op3 ,"LDF ",size);
+      return impl_helper(this,cbuf,ra_,do_size,true,offset,dst_first,Assembler::lddf_op3,"LDDF",size, st);
+    size  =  impl_helper(this,cbuf,ra_,do_size,true,offset,dst_first,Assembler::ldf_op3 ,"LDF ",size, st);
   }
 
   // --------------------------------------------------------------------
@@ -1437,8 +1440,8 @@ uint MachSpillCopyNode::implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bo
       emit3_simm13( *cbuf, Assembler::arith_op, Matcher::_regEncode[dst_second], Assembler::srlx_op3, Matcher::_regEncode[src_second-1], 0x1020 );
 #ifndef PRODUCT
     } else if( !do_size ) {
-      if( size != 0 ) tty->print("\n\t");
-      tty->print("SRLX   R_%s,32,R_%s\t! spill: Move high bits down low",OptoReg::regname(src_second-1),OptoReg::regname(dst_second));
+      if( size != 0 ) st->print("\n\t");
+      st->print("SRLX   R_%s,32,R_%s\t! spill: Move high bits down low",OptoReg::regname(src_second-1),OptoReg::regname(dst_second));
 #endif
     }
     return size+4;
@@ -1452,8 +1455,8 @@ uint MachSpillCopyNode::implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bo
       emit3_simm13( *cbuf, Assembler::arith_op, Matcher::_regEncode[R_O7_num], Assembler::srlx_op3, Matcher::_regEncode[src_second-1], 0x1020 );
 #ifndef PRODUCT
     } else if( !do_size ) {
-      if( size != 0 ) tty->print("\n\t");
-      tty->print("SRLX   R_%s,32,R_%s\t! spill: Move high bits down low",OptoReg::regname(src_second-1),OptoReg::regname(R_O7_num));
+      if( size != 0 ) st->print("\n\t");
+      st->print("SRLX   R_%s,32,R_%s\t! spill: Move high bits down low",OptoReg::regname(src_second-1),OptoReg::regname(R_O7_num));
 #endif
     }
     size+=4;
@@ -1462,15 +1465,15 @@ uint MachSpillCopyNode::implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bo
 
   // Check for high word integer load
   if( dst_second_rc == rc_int && src_second_rc == rc_stack )
-    return impl_helper(this,cbuf,ra_,do_size,true ,ra_->reg2offset(src_second),dst_second,Assembler::lduw_op3,"LDUW",size);
+    return impl_helper(this,cbuf,ra_,do_size,true ,ra_->reg2offset(src_second),dst_second,Assembler::lduw_op3,"LDUW",size, st);
 
   // Check for high word integer store
   if( src_second_rc == rc_int && dst_second_rc == rc_stack )
-    return impl_helper(this,cbuf,ra_,do_size,false,ra_->reg2offset(dst_second),src_second,Assembler::stw_op3 ,"STW ",size);
+    return impl_helper(this,cbuf,ra_,do_size,false,ra_->reg2offset(dst_second),src_second,Assembler::stw_op3 ,"STW ",size, st);
 
   // Check for high word float store
   if( src_second_rc == rc_float && dst_second_rc == rc_stack )
-    return impl_helper(this,cbuf,ra_,do_size,false,ra_->reg2offset(dst_second),src_second,Assembler::stf_op3 ,"STF ",size);
+    return impl_helper(this,cbuf,ra_,do_size,false,ra_->reg2offset(dst_second),src_second,Assembler::stf_op3 ,"STF ",size, st);
 
 #endif // !_LP64
 
@@ -1478,23 +1481,23 @@ uint MachSpillCopyNode::implementation( CodeBuffer *cbuf, PhaseRegAlloc *ra_, bo
 }
 
 #ifndef PRODUCT
-void MachSpillCopyNode::format( PhaseRegAlloc *ra_ ) const {
-  implementation( NULL, ra_, false );
+void MachSpillCopyNode::format( PhaseRegAlloc *ra_, outputStream *st ) const {
+  implementation( NULL, ra_, false, st );
 }
 #endif
 
 void MachSpillCopyNode::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {
-  implementation( &cbuf, ra_, false );
+  implementation( &cbuf, ra_, false, NULL );
 }
 
 uint MachSpillCopyNode::size(PhaseRegAlloc *ra_) const {
-  return implementation( NULL, ra_, true );
+  return implementation( NULL, ra_, true, NULL );
 }
 
 //=============================================================================
 #ifndef PRODUCT
-void MachNopNode::format( PhaseRegAlloc * ) const {
-  tty->print("NOP \t# %d bytes pad for loops and calls", 4 * _count);
+void MachNopNode::format( PhaseRegAlloc *, outputStream *st ) const {
+  st->print("NOP \t# %d bytes pad for loops and calls", 4 * _count);
 }
 #endif
 
@@ -1512,10 +1515,10 @@ uint MachNopNode::size(PhaseRegAlloc *ra_) const {
 
 //=============================================================================
 #ifndef PRODUCT
-void BoxLockNode::format( PhaseRegAlloc *ra_ ) const {
+void BoxLockNode::format( PhaseRegAlloc *ra_, outputStream *st ) const {
   int offset = ra_->reg2offset(in_RegMask(0).find_first_elem());
   int reg = ra_->get_reg_first(this);
-  tty->print("LEA    [R_SP+#%d+BIAS],%s",offset,Matcher::regName[reg]);
+  st->print("LEA    [R_SP+#%d+BIAS],%s",offset,Matcher::regName[reg]);
 }
 #endif
 
@@ -1587,16 +1590,16 @@ uint reloc_java_to_interp() {
 
 //=============================================================================
 #ifndef PRODUCT
-void MachUEPNode::format( PhaseRegAlloc *ra_ ) const {
-  tty->print_cr("\nUEP:");
+void MachUEPNode::format( PhaseRegAlloc *ra_, outputStream *st ) const {
+  st->print_cr("\nUEP:");
 #ifdef    _LP64
-  tty->print_cr("\tLDX    [R_O0 + oopDesc::klass_offset_in_bytes],R_G5\t! Inline cache check");
-  tty->print_cr("\tCMP    R_G5,R_G3" );
-  tty->print   ("\tTne    xcc,R_G0+ST_RESERVED_FOR_USER_0+2");
+  st->print_cr("\tLDX    [R_O0 + oopDesc::klass_offset_in_bytes],R_G5\t! Inline cache check");
+  st->print_cr("\tCMP    R_G5,R_G3" );
+  st->print   ("\tTne    xcc,R_G0+ST_RESERVED_FOR_USER_0+2");
 #else  // _LP64
-  tty->print_cr("\tLDUW   [R_O0 + oopDesc::klass_offset_in_bytes],R_G5\t! Inline cache check");
-  tty->print_cr("\tCMP    R_G5,R_G3" );
-  tty->print   ("\tTne    icc,R_G0+ST_RESERVED_FOR_USER_0+2");
+  st->print_cr("\tLDUW   [R_O0 + oopDesc::klass_offset_in_bytes],R_G5\t! Inline cache check");
+  st->print_cr("\tCMP    R_G5,R_G3" );
+  st->print   ("\tTne    icc,R_G0+ST_RESERVED_FOR_USER_0+2");
 #endif // _LP64
 }
 #endif
@@ -1731,6 +1734,20 @@ const bool Matcher::convL2FSupported(void) {
 bool Matcher::is_short_branch_offset(int offset) {
   return false;
 }
+
+const bool Matcher::isSimpleConstant64(jlong value) {
+  // Will one (StoreL ConL) be cheaper than two (StoreI ConI)?.
+  // Depends on optimizations in MacroAssembler::setx.
+  int hi = (int)(value >> 32);
+  int lo = (int)(value & ~0);
+  return (hi == 0) || (hi == -1) || (lo == 0);
+}
+
+// No scaling for the parameter the ClearArray node.
+const bool Matcher::init_array_count_is_in_bytes = true;
+
+// Threshold size for cleararray.
+const int Matcher::init_array_short_size = 8 * BytesPerLong;
 
 // Should the Matcher clone shifts on addressing modes, expecting them to
 // be subsumed into complex addressing expressions or compute them into
@@ -2811,13 +2828,12 @@ enc_class Fast_Unlock(iRegP oop, iRegP box, o7RegP scratch, iRegP scratch2) %{
   // Compiler ensures base is doubleword aligned and cnt is count of doublewords
   enc_class enc_Clear_Array(iRegX cnt, iRegP base, iRegX temp) %{
     MacroAssembler _masm(&cbuf);
-    Register	nof_dwords_arg   = reg_to_register_object($cnt$$reg);
+    Register    nof_bytes_arg   = reg_to_register_object($cnt$$reg);
     Register    nof_bytes_tmp    = reg_to_register_object($temp$$reg);
     Register	base_pointer_arg = reg_to_register_object($base$$reg);
 
     Label loop;
-    // DoubleWord (8-byte) count -> byte count
-    __ sllx(nof_dwords_arg, 3, nof_bytes_tmp); 
+    __ mov(nof_bytes_arg, nof_bytes_tmp);
 
     // Loop and clear, walking backwards through the array.
     // nof_bytes_tmp (if >0) is always the number of bytes to zero
@@ -8626,7 +8642,7 @@ instruct clear_array(iRegX cnt, iRegP base, iRegX temp, Universe dummy, flagsReg
   match(Set dummy (ClearArray cnt base));
   effect(TEMP temp, KILL ccr);
   ins_cost(300);
-  format %{ "SLLX   $cnt,3,$temp\t! Convert dwords to bytes\n"
+  format %{ "MOV    $cnt,$temp\n"
     "loop:   SUBcc  $temp,8,$temp\t! Count down a dword of bytes\n"
     "        BRge   loop\t\t! Clearing loop\n"
     "        STX    G0,[$base+$temp]\t! delay slot" %}

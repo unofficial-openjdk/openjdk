@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)collectedHeap.hpp	1.55 07/05/17 15:52:57 JVM"
+#pragma ident "@(#)collectedHeap.hpp	1.58 07/09/07 10:56:50 JVM"
 #endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -245,6 +245,11 @@ class CollectedHeap : public CHeapObj {
     return p == NULL || is_in_permanent(p);
   }
 
+  // Returns "TRUE" if "p" is a method oop in the
+  // current heap, with high probability. This predicate
+  // is not stable, in general.
+  bool is_valid_method(oop p) const;
+
   void set_gc_cause(GCCause::Cause v) {
      if (UsePerfData) {
        _gc_lastcause = _gc_cause;
@@ -363,6 +368,25 @@ class CollectedHeap : public CHeapObj {
     guarantee(false, "thread-local allocation buffers not supported");
     return 0;
   }
+  // Can a compiler initialize a new object without store barriers?
+  // This permission only extends from the creation of a new object
+  // via a TLAB up to the first subsequent safepoint.
+  virtual bool can_elide_tlab_store_barriers() const {
+    guarantee(kind() < CollectedHeap::G1CollectedHeap, "else change or refactor this");
+    return true;
+  }
+  // If a compiler is eliding store barriers for TLAB-allocated objects,
+  // there is probably a corresponding slow path which can produce
+  // an object allocated anywhere.  The compiler's runtime support
+  // promises to call this function on such a slow-path-allocated
+  // object before performing initializations that have elided
+  // store barriers.  Returns new_obj, or maybe a safer copy thereof.
+  virtual oop new_store_barrier(oop new_obj);
+
+  // Can a compiler elide a store barrier when it writes
+  // a permanent oop into the heap?  Applies when the compiler
+  // is storing x to the heap, where x->is_perm() is true.
+  virtual bool can_elide_permanent_oop_store_barriers() const;
   
   // Does this heap support heap inspection (+PrintClassHistogram?)
   virtual bool supports_heap_inspection() const {
@@ -386,7 +410,7 @@ class CollectedHeap : public CHeapObj {
   // Returns "true" iff there is a stop-world GC in progress.  (I assume
   // that it should answer "false" for the concurrent part of a concurrent
   // collector -- dld).
-  bool is_gc_active() { return _is_gc_active; }
+  bool is_gc_active() const { return _is_gc_active; }
 
   // Total number of GC collections (started)
   unsigned int total_collections() const { return _total_collections; }

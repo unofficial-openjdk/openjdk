@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)sharedRuntime.cpp	1.382 07/07/19 12:19:08 JVM"
+#pragma ident "@(#)sharedRuntime.cpp	1.383 08/05/13 16:13:34 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -1489,11 +1489,9 @@ char* SharedRuntime::generate_class_cast_message(
   const char* desc = " cannot be cast to ";
   size_t msglen = strlen(objName) + strlen(desc) + strlen(targetKlassName) + 1;
 
-  char* message = NEW_C_HEAP_ARRAY(char, msglen);
+  char* message = NEW_RESOURCE_ARRAY(char, msglen);
   if (NULL == message) {
-    // out of memory - can't use a detailed message.  Since caller is 
-    // using a resource mark to free memory, returning this should be 
-    // safe (caller won't explicitly delete it).
+    // Shouldn't happen, but don't cause even more problems if it does
     message = const_cast<char*>(objName); 
   } else {
     jio_snprintf(message, msglen, "%s%s%s", objName, desc, targetKlassName);

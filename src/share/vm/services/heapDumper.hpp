@@ -1,8 +1,8 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)heapDumper.hpp	1.8 07/05/05 17:07:05 JVM"
+#pragma ident "@(#)heapDumper.hpp	1.11 07/07/02 11:45:25 JVM"
 #endif
 /*
- * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,6 @@
  * have any questions.
  *  
  */
-
 
 // HeapDumper is used to dump the java heap to file in HPROF binary format:
 //
@@ -68,5 +67,6 @@ class HeapDumper : public StackObj {
 
   // returns error message (resource allocated), or NULL if no error
   char* error_as_C_string() const;
-};
 
+  static void dump_heap()    KERNEL_RETURN;
+};

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)loopopts.cpp	1.221 08/06/19 12:08:11 JVM"
+#pragma ident "@(#)loopopts.cpp	1.222 08/11/24 12:23:09 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -32,7 +32,7 @@
 //------------------------------split_thru_phi---------------------------------
 // Split Node 'n' through merge point if there is enough win.
 Node *PhaseIdealLoop::split_thru_phi( Node *n, Node *region, int policy ) {
-  if (n->Opcode() == Op_ConvI2L && n->bottom_type() != TypeLong::LONG) {
+  if (n->Opcode() == Op_ConvI2L && n->bottom_type() != TypeLong::BOTTOM) {
     // ConvI2L may have type information on it which is unsafe to push up
     // so disable this for now
     return NULL;
@@ -607,6 +607,9 @@ Node *PhaseIdealLoop::split_if_with_blocks_pre( Node *n ) {
       return n;
     }
   }
+
+  // Use same limit as split_if_with_blocks_post
+  if( C->unique() > 35000 ) return n; // Method too big
 
   // Split 'n' through the merge point if it is profitable
   Node *phi = split_thru_phi( n, n_blk, policy );
@@ -1243,20 +1246,26 @@ void PhaseIdealLoop::clone_loop( IdealLoopTree *loop, Node_List &old_new, int dd
         assert( dd_r >= dom_depth(dom_lca(newuse,use)), "" );
 
         // The original user of 'use' uses 'r' instead.
-        for (DUIterator_Last lmin, l = use->last_outs(lmin); l >= lmin; --l) {
+        for (DUIterator_Last lmin, l = use->last_outs(lmin); l >= lmin;) {
           Node* useuse = use->last_out(l);
           _igvn.hash_delete(useuse);
           _igvn._worklist.push(useuse);
+          uint uses_found = 0;
           if( useuse->in(0) == use ) {
             useuse->set_req(0, r);
+            uses_found++;
             if( useuse->is_CFG() ) {
               assert( dom_depth(useuse) > dd_r, "" );
               set_idom(useuse, r, dom_depth(useuse));
             }
           }
-          for( uint k = 1; k < useuse->req(); k++ )
-            if( useuse->in(k) == use )
+          for( uint k = 1; k < useuse->req(); k++ ) {
+            if( useuse->in(k) == use ) {
               useuse->set_req(k, r);
+              uses_found++;
+            }
+          }
+          l -= uses_found;    // we deleted 1 or more copies of this edge
         }
 
         // Now finish up 'r'

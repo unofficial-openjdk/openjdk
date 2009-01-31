@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)reflection.cpp	1.178 07/05/23 10:54:08 JVM"
+#pragma ident "@(#)reflection.cpp	1.179 07/08/09 09:12:05 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -298,7 +298,7 @@ klassOop Reflection::basic_type_mirror_to_arrayklass(oop basic_type_mirror, TRAP
 
 oop Reflection:: basic_type_arrayklass_to_mirror(klassOop basic_type_arrayklass, TRAPS) {
   BasicType type = typeArrayKlass::cast(basic_type_arrayklass)->element_type();
-  return SystemDictionary::java_mirror(type);
+  return Universe::java_mirror(type);
 }
 
 
@@ -625,7 +625,7 @@ Handle Reflection::new_type(symbolHandle signature, KlassHandle k, TRAPS) {
   // Basic types
   BasicType type = vmSymbols::signature_type(signature());
   if (type != T_OBJECT) {
-    return Handle(THREAD, SystemDictionary::java_mirror(type));
+    return Handle(THREAD, Universe::java_mirror(type));
   }
 
   oop loader = instanceKlass::cast(k())->class_loader();

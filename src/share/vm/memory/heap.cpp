@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)heap.cpp	1.54 07/05/05 17:05:46 JVM"
+#pragma ident "@(#)heap.cpp	1.55 07/10/04 10:49:31 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -95,27 +95,37 @@ void CodeHeap::on_code_mapping(char* base, size_t size) {
 }
 
 
-bool CodeHeap::reserve(size_t reserved_size, size_t committed_size, size_t segment_size) {
+bool CodeHeap::reserve(size_t reserved_size, size_t committed_size,
+		       size_t segment_size) {
+  assert(reserved_size >= committed_size, "reserved < committed");
   assert(segment_size >= sizeof(FreeBlock), "segment size is too small");
   assert(is_power_of_2(segment_size), "segment_size must be a power of 2");
+
   _segment_size      = segment_size;
   _log2_segment_size = exact_log2(segment_size);
-  // reserve space for _memory
-  assert(reserved_size >= committed_size, "reserved size must be >= committed size");
-  if (!_memory.initialize(
-        ReservedSpace(align_to_allocation_size(reserved_size),
-                      // On Solaris using MPSS only, try for large
-                      // page allocation of the code cache
-                      SOLARIS_ONLY(UseMPSS ? os::large_page_size() : 0) NOT_SOLARIS(0),
-                      SOLARIS_ONLY(UseMPSS)                             NOT_SOLARIS(false),
-                      NULL),
-        align_to_allocation_size(committed_size))) {
+
+  // Reserve and initialize space for _memory.
+  const size_t page_size = os::page_size_for_region(committed_size,
+						    reserved_size, 8);
+  const size_t granularity = os::vm_allocation_granularity();
+  const size_t r_align = MAX2(page_size, granularity);
+  const size_t r_size = align_size_up(reserved_size, r_align);
+  const size_t c_size = align_size_up(committed_size, page_size);
+  
+  const size_t rs_align = page_size == (size_t) os::vm_page_size() ? 0 :
+    MAX2(page_size, granularity);
+  ReservedSpace rs(r_size, rs_align, false);
+  os::trace_page_sizes("code heap", committed_size, reserved_size, page_size,
+		       rs.base(), rs.size());
+  if (!_memory.initialize(rs, c_size)) {
     return false;
   }
+
   on_code_mapping(_memory.low(), _memory.committed_size());
   _number_of_committed_segments = number_of_segments(_memory.committed_size());
   _number_of_reserved_segments  = number_of_segments(_memory.reserved_size());
   assert(_number_of_reserved_segments >= _number_of_committed_segments, "just checking");
+
   // reserve space for _segmap
   if (!_segmap.initialize(align_to_page_size(_number_of_reserved_segments), align_to_page_size(_number_of_committed_segments))) {
     return false;  
@@ -123,6 +133,7 @@ bool CodeHeap::reserve(size_t reserved_size, size_t committed_size, size_t segme
   assert(_segmap.committed_size() >= (size_t) _number_of_committed_segments, "could not commit  enough space for segment map");
   assert(_segmap.reserved_size()  >= (size_t) _number_of_reserved_segments , "could not reserve enough space for segment map");
   assert(_segmap.reserved_size()  >= _segmap.committed_size()     , "just checking");
+
   // initialize remaining instance variables
   clear();
   return true;

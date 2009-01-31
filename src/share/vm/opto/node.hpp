@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)node.hpp	1.221 07/05/17 17:44:27 JVM"
+#pragma ident "@(#)node.hpp	1.224 07/09/28 10:33:17 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -59,6 +59,7 @@ class CountedLoopEndNode;
 class FastLockNode;
 class FastUnlockNode;
 class IfNode;
+class InitializeNode;
 class JVMState;
 class JumpNode;
 class JumpProjNode;
@@ -538,6 +539,7 @@ public:
         DEFINE_CLASS_ID(NeverBranch, MultiBranch, 2)
       DEFINE_CLASS_ID(Start,       Multi, 2)
       DEFINE_CLASS_ID(MemBar,      Multi, 3)
+        DEFINE_CLASS_ID(Initialize,    MemBar, 0)
 
     DEFINE_CLASS_ID(Mach,  Node, 1)
       DEFINE_CLASS_ID(MachReturn, Mach, 0)
@@ -687,6 +689,7 @@ public:
   DEFINE_CLASS_QUERY(If)
   DEFINE_CLASS_QUERY(IfFalse)
   DEFINE_CLASS_QUERY(IfTrue)
+  DEFINE_CLASS_QUERY(Initialize)
   DEFINE_CLASS_QUERY(Jump)
   DEFINE_CLASS_QUERY(JumpProj)
   DEFINE_CLASS_QUERY(Load)
@@ -840,6 +843,10 @@ public:
   // value, if it appears (by local graph inspection) to be computed by a simple conditional.
   bool is_iteratively_computed();
 
+  // Determine if a node is Counted loop induction variable.
+  // The method is defined in loopnode.cpp.
+  const Node* is_loop_iv() const;
+
   // Return a node with opcode "opc" and same inputs as "this" if one can
   // be found; Otherwise return NULL;
   Node* find_similar(int opc);
@@ -870,7 +877,7 @@ public:
   virtual JVMState* jvms() const;
 
   // Print as assembly
-  virtual void format( PhaseRegAlloc * ) const;
+  virtual void format( PhaseRegAlloc *, outputStream* st = tty ) const;
   // Emit bytes starting at parameter 'ptr'
   // Bump 'ptr' by the number of output bytes 
   virtual void emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const;
@@ -945,7 +952,7 @@ public:
   virtual void dump_req() const;     // Print required-edge info
   virtual void dump_prec() const;    // Print precedence-edge info
   virtual void dump_out() const;     // Print the output edge info
-  virtual void dump_spec() const {}; // Print per-node info
+  virtual void dump_spec(outputStream *st) const {}; // Print per-node info
   void verify_edges(Unique_Node_List &visited); // Verify bi-directional edges
   void verify() const;               // Check Def-Use info for my subgraph
   static void verify_recur(const Node *n, int verify_depth, VectorSet &old_space, VectorSet &new_space);
@@ -1483,7 +1490,7 @@ public:
   virtual const Type *bottom_type() const;
   virtual       uint  ideal_reg() const;
 #ifndef PRODUCT
-  virtual void dump_spec() const;
+  virtual void dump_spec(outputStream *st) const;
 #endif
 };
 

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)vmSymbols.hpp	1.162 07/05/17 15:50:40 JVM"
+#pragma ident "@(#)vmSymbols.hpp	1.166 07/11/01 16:55:02 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -61,12 +61,17 @@
   template(java_lang_ThreadDeath,                     "java/lang/ThreadDeath")                    \
   template(java_lang_Boolean,                         "java/lang/Boolean")                        \
   template(java_lang_Character,                       "java/lang/Character")                      \
+  template(java_lang_Character_CharacterCache,        "java/lang/Character$CharacterCache")       \
   template(java_lang_Float,                           "java/lang/Float")                          \
   template(java_lang_Double,                          "java/lang/Double")                         \
   template(java_lang_Byte,                            "java/lang/Byte")                           \
+  template(java_lang_Byte_Cache,                      "java/lang/Byte$ByteCache")                 \
   template(java_lang_Short,                           "java/lang/Short")                          \
+  template(java_lang_Short_ShortCache,                "java/lang/Short$ShortCache")               \
   template(java_lang_Integer,                         "java/lang/Integer")                        \
+  template(java_lang_Integer_IntegerCache,            "java/lang/Integer$IntegerCache")           \
   template(java_lang_Long,                            "java/lang/Long")                           \
+  template(java_lang_Long_LongCache,                  "java/lang/Long$LongCache")                 \
   template(java_lang_Shutdown,                        "java/lang/Shutdown")                       \
   template(java_lang_ref_Reference,                   "java/lang/ref/Reference")                  \
   template(java_lang_ref_SoftReference,               "java/lang/ref/SoftReference")              \
@@ -94,9 +99,12 @@
   template(java_util_Vector,                          "java/util/Vector")                         \
   template(java_util_AbstractList,                    "java/util/AbstractList")                   \
   template(java_util_Hashtable,                       "java/util/Hashtable")                      \
+  template(java_util_HashMap,                         "java/util/HashMap")                        \
   template(java_lang_Compiler,                        "java/lang/Compiler")                       \
   template(sun_misc_Signal,                           "sun/misc/Signal")                          \
   template(java_lang_AssertionStatusDirectives,       "java/lang/AssertionStatusDirectives")      \
+  template(sun_jkernel_DownloadManager,               "sun/jkernel/DownloadManager")              \
+  template(getBootClassPathEntryForClass_name,        "getBootClassPathEntryForClass")            \
                                                                                                   \
   /* class file format tags */                                                                    \
   template(tag_source_file,                           "SourceFile")                               \
@@ -275,7 +283,9 @@
   template(exclusive_owner_thread_name,               "exclusiveOwnerThread")                     \
   template(park_blocker_name,                         "parkBlocker")                              \
   template(park_event_name,                           "nativeParkEventPointer")                   \
+  template(cache_field_name,                          "cache")                                    \
   template(value_name,                                "value")                                    \
+  template(frontCacheEnabled_name,                    "frontCacheEnabled")                        \
                                                                                                   \
   /* non-intrinsic name/signature pairs: */                                                       \
   template(register_method_name,                      "register")                                 \

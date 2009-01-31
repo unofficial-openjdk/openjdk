@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)instanceKlass.hpp	1.200 08/06/19 10:32:39 JVM"
+#pragma ident "@(#)instanceKlass.hpp	1.201 08/11/24 12:22:50 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -79,9 +79,28 @@ class JNIid;
 class jniIdMapBase;
 class BreakpointInfo;
 class fieldDescriptor;
+class DepChange;
 class nmethodBucket;
 class PreviousVersionNode;
 class JvmtiCachedClassFieldMap;
+
+// This is used in iterators below.
+class FieldClosure: public StackObj {
+public:
+  virtual void do_field(fieldDescriptor* fd) = 0;
+};
+
+#ifndef PRODUCT
+// Print fields.
+// If "obj" argument to constructor is NULL, prints static fields, otherwise prints non-static fields.
+class FieldPrinter: public FieldClosure { 
+   oop _obj; 
+   outputStream* _st; 
+ public: 
+   FieldPrinter(outputStream* st, oop obj = NULL) : _obj(obj), _st(st) {} 
+   void do_field(fieldDescriptor* fd);
+};
+#endif  // !PRODUCT
 
 class instanceKlass: public Klass {
   friend class VMStructs;
@@ -478,7 +497,7 @@ class instanceKlass: public Klass {
   JNIid* jni_id_for(int offset);
 
   // maintenance of deoptimization dependencies
-  int mark_dependent_nmethods(klassOop dependee);
+  int mark_dependent_nmethods(DepChange& changes);
   void add_dependent_nmethod(nmethod* nm);
   void remove_dependent_nmethod(nmethod* nm);
 
@@ -525,9 +544,10 @@ class instanceKlass: public Klass {
   bool oop_is_instance_slow() const        { return true; }
 
   // Iterators
-  void do_local_static_fields(void f(fieldDescriptor*, oop), oop obj);
+  void do_local_static_fields(FieldClosure* cl);
+  void do_nonstatic_fields(FieldClosure* cl); // including inherited fields
   void do_local_static_fields(void f(fieldDescriptor*, TRAPS), TRAPS);
-  void do_nonstatic_fields(void f(fieldDescriptor*, oop), oop obj); // including inherited fields
+
   void methods_do(void f(methodOop method));
   void array_klasses_do(void f(klassOop k));
   void with_array_klasses_do(void f(klassOop k));
@@ -718,6 +738,9 @@ public:
   // Printing
   void oop_print_on      (oop obj, outputStream* st);
   void oop_print_value_on(oop obj, outputStream* st);
+
+  void print_dependent_nmethods(bool verbose = false);
+  bool is_dependent_nmethod(nmethod* nm);
 #endif
 
  public:

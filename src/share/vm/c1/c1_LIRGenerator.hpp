@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)c1_LIRGenerator.hpp	1.13 07/05/05 17:05:07 JVM"
+#pragma ident "@(#)c1_LIRGenerator.hpp	1.14 07/06/18 14:25:25 JVM"
 #endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -252,6 +252,19 @@ class LIRGenerator: public InstructionVisitor, public BlockClosure {
   LIR_Opr call_runtime(Value arg1, address entry, ValueType* result_type, CodeEmitInfo* info);
   LIR_Opr call_runtime(Value arg1, Value arg2, address entry, ValueType* result_type, CodeEmitInfo* info);
 
+  // GC Barriers
+
+  // generic interface
+
+  void post_barrier(LIR_OprDesc* addr, LIR_OprDesc* new_val);
+
+  // specific implementations
+
+  // post barriers
+
+  void CardTableModRef_post_barrier(LIR_OprDesc* addr, LIR_OprDesc* new_val);
+
+
   static LIR_Opr result_register_for(ValueType* type, bool callee = false);
 
   ciObject* get_jobject_constant(Value value);
@@ -325,8 +338,6 @@ class LIRGenerator: public InstructionVisitor, public BlockClosure {
   }
   LIR_Address* emit_array_address(LIR_Opr array_opr, LIR_Opr index_opr, BasicType type, bool needs_card_mark);
 
-  void write_barrier(LIR_Opr addr);
-
   // machine preferences and characteristics
   bool can_inline_as_constant(Value i) const;
   bool can_inline_as_constant(LIR_Const* c) const;
@@ -359,6 +370,15 @@ class LIRGenerator: public InstructionVisitor, public BlockClosure {
   LIR_Opr new_register(BasicType type);
   LIR_Opr new_register(Value value)              { return new_register(as_BasicType(value->type())); }
   LIR_Opr new_register(ValueType* type)          { return new_register(as_BasicType(type)); }
+
+  // returns a register suitable for doing pointer math
+  LIR_Opr new_pointer_register() {
+#ifdef _LP64
+    return new_register(T_LONG);
+#else
+    return new_register(T_INT);
+#endif
+  }
 
   static LIR_Condition lir_cond(If::Condition cond) {
     LIR_Condition l;

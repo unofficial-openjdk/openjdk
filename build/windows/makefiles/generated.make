@@ -34,13 +34,14 @@ JvmtiOutDir=jvmtifiles
 !include $(WorkSpace)/build/windows/makefiles/sa.make
 
 !if ("$(Variant)" == "compiler2") || ("$(Variant)" == "tiered")
-default:: includeDB.current Dependencies incls/ad_$(ARCH).cpp incls/dfa_$(ARCH).cpp $(JvmtiGeneratedFiles)
+default:: includeDB.current Dependencies incls/ad_$(Platform_arch_model).cpp incls/dfa_$(Platform_arch_model).cpp $(JvmtiGeneratedFiles)
 !else
 default:: includeDB.current Dependencies $(JvmtiGeneratedFiles)
 !endif
 
 # core plus serial gc
 IncludeDBs_base=$(WorkSpace)/src/share/vm/includeDB_core \
+           $(WorkSpace)/src/share/vm/includeDB_jvmti \
            $(WorkSpace)/src/share/vm/includeDB_gc \
            $(WorkSpace)/src/share/vm/gc_implementation/includeDB_gc_serial
 
@@ -51,7 +52,8 @@ IncludeDBs_gc= $(WorkSpace)/src/share/vm/includeDB_gc_parallel \
            $(WorkSpace)/src/share/vm/gc_implementation/includeDB_gc_parNew \
            $(WorkSpace)/src/share/vm/gc_implementation/includeDB_gc_concurrentMarkSweep
 
-IncludeDBs_core=$(IncludeDBs_base) $(IncludeDBs_gc)
+IncludeDBs_core=$(IncludeDBs_base) $(IncludeDBs_gc) \
+                $(WorkSpace)/src/share/vm/includeDB_features
 
 !if "$(Variant)" == "core"
 IncludeDBs=$(IncludeDBs_core)
@@ -81,7 +83,7 @@ includeDB.current Dependencies: classes/MakeDeps.class $(IncludeDBs)
 	cat $(IncludeDBs) > includeDB
 	if exist incls rmdir /s /q incls
 	mkdir incls
-	$(RUN_JAVA) -Djava.class.path=classes MakeDeps WinGammaPlatform$(VcVersion) $(WorkSpace)/build/windows/platform_$(ARCH) includeDB $(MakeDepsOptions)
+	$(RUN_JAVA) -Djava.class.path=classes MakeDeps WinGammaPlatform$(VcVersion) $(WorkSpace)/build/windows/platform_$(BUILDARCH) includeDB $(MakeDepsOptions)
 	rm -f includeDB.current
 	cp includeDB includeDB.current
 

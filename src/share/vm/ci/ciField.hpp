@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)ciField.hpp	1.21 07/05/05 17:05:12 JVM"
+#pragma ident "@(#)ciField.hpp	1.23 07/09/28 10:23:24 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -34,6 +34,7 @@ class ciField : public ResourceObj {
   CI_PACKAGE_ACCESS
   friend class ciEnv;
   friend class ciInstanceKlass;
+  friend class NonStaticFieldFiller;
 
 private:
   ciFlags          _flags;
@@ -59,7 +60,7 @@ private:
   void initialize_from(fieldDescriptor* fd);
 
   // The implementation of the print method.
-  void print_impl();
+  void print_impl(outputStream* st);
 
 public:
   ciFlags flags() { return _flags; }

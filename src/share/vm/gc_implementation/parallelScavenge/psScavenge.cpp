@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)psScavenge.cpp	1.98 07/06/08 23:12:37 JVM"
+#pragma ident "@(#)psScavenge.cpp	1.99 07/09/07 09:53:34 JVM"
 #endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -778,7 +778,7 @@ void PSScavenge::initialize() {
     mr,                         // span
     true,                       // atomic_discovery
     true,                       // mt_discovery
-    &_is_alive_closure,
+    NULL,                       // is_alive_non_header
     ParallelGCThreads,
     ParallelRefProcEnabled);
 

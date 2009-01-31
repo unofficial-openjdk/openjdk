@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)bytecodeHistogram.hpp	1.27 07/05/05 17:05:36 JVM"
+#pragma ident "@(#)bytecodeHistogram.hpp	1.28 07/08/29 13:42:23 JVM"
 #endif
 /*
  * Copyright 1997-2004 Sun Microsystems, Inc.  All Rights Reserved.
@@ -32,11 +32,8 @@ class BytecodeCounter: AllStatic {
   NOT_PRODUCT(static int   _counter_value;)
   NOT_PRODUCT(static jlong _reset_time;)
 
-  friend class AbstractInterpreterGenerator;
-  friend class         InterpreterGenerator;
-#ifdef CC_INTERP
-  friend class         cInterpreter;
-#endif
+  friend class TemplateInterpreterGenerator;
+  friend class         BytecodeInterpreter;
 
  public:
   // Initialization
@@ -58,11 +55,9 @@ class BytecodeHistogram: AllStatic {
  private:
   NOT_PRODUCT(static int _counters[Bytecodes::number_of_codes];)   // a counter for each bytecode
 
-  friend class AbstractInterpreterGenerator;
+  friend class TemplateInterpreterGenerator;
   friend class         InterpreterGenerator;
-#ifdef CC_INTERP
-  friend class         cInterpreter;
-#endif
+  friend class         BytecodeInterpreter;
 
  public:
   // Initialization
@@ -88,7 +83,7 @@ class BytecodePairHistogram: AllStatic {
   NOT_PRODUCT(static int  _index;)                      // new bytecode is shifted in - used to index into _counters
   NOT_PRODUCT(static int  _counters[number_of_pairs];)  // a counter for each pair
 
-  friend class AbstractInterpreterGenerator;
+  friend class TemplateInterpreterGenerator;
   friend class         InterpreterGenerator;
 
  public:

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)compactingPermGenGen.hpp	1.20 07/05/05 17:05:45 JVM"
+#pragma ident "@(#)compactingPermGenGen.hpp	1.22 07/08/31 18:41:29 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -172,8 +172,7 @@ public:
    } 
 
   inline bool is_in(const void* p) const {
-    if (!is_in_unshared(p) && !is_in_shared(p)) return false;
-    return true;
+    return is_in_unshared(p) || is_in_shared(p);
   }
 
   inline PermanentGenerationSpec* spec() const { return _spec; }
@@ -237,7 +236,7 @@ public:
   void verify(bool allow_dirty);
 
   // Serialization
-  static void initialize_oops();
+  static void initialize_oops() KERNEL_RETURN;
   static void serialize_oops(SerializeOopClosure* soc);
   void serialize_bts(SerializeOopClosure* soc);
 

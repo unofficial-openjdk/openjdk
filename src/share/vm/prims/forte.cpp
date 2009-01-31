@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)forte.cpp	1.69 07/05/17 16:02:39 JVM"
+#pragma ident "@(#)forte.cpp	1.70 07/08/31 18:43:32 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -403,40 +403,6 @@ void vframeStreamForte::forte_next() {
   } while (!fill_from_frame());
 }
 
-
-// is_valid_method() exists in fprofiler.cpp and now here.
-// We need one central version of this routine.
-
-bool forte_is_valid_method(methodOop method) {
-
-  if (method == NULL || 
-      // The methodOop is extracted via an offset from the current
-      // interpreter frame. With AsyncGetCallTrace() the interpreter
-      // frame may still be under construction so we need to make
-      // sure that we got an aligned oop before we try to use it.
-      !Space::is_aligned(method) ||
-      !Universe::heap()->is_in((void*)method) ||
-      // See if GC became active after we entered AsyncGetCallTrace()
-      // and before we try to use the methodOop. This routine is
-      // used in validation of the top_frame so we don't have any
-      // other data to flush if we bail due to GC here.
-      // Yes, there is still a window after this check and before
-      // we use methodOop below, but we can't lock out GC so that
-      // has to be an acceptable risk.
-      Universe::heap()->is_gc_active() ||
-      //
-      // is_perm_and_alloced() needs to be checked before klass() because you can
-      // get a method pointing into the unmapped part of the heap's
-      // reserved area (e.g., a very high address just within bounds),
-      // and the instruction which loads the class will SIGSEGV.
-      !method->is_perm_and_alloced() || 
-      method->klass() != Universe::methodKlassObj()) {
-    return false;   // doesn't look good
-  }
-  return true;      // hopefully this is a method indeed
-}
-
-
 // Determine if 'fr' is a walkable, compiled frame.
 // *is_compiled_p is set to true if the frame is compiled and if it
 // is, then *is_walkable_p is set to true if it is also walkable.
@@ -505,7 +471,7 @@ static bool forte_is_walkable_interpreted_frame(frame* fr,
       // access address in order not to trigger asserts that
       // are built in interpreter_frame_method function
       methodOop method = *fr->interpreter_frame_method_addr();
-      if (forte_is_valid_method(method)) {
+      if (Universe::heap()->is_valid_method(method)) {
         intptr_t bcx = fr->interpreter_frame_bcx();
         int      bci = method->validate_bci_from_bcx(bcx);
         // note: bci is set to -1 if not a valid bci
@@ -680,6 +646,8 @@ static void forte_fill_call_trace_given_top(JavaThread* thd,
     return;
   }
 
+  CollectedHeap* ch = Universe::heap();
+
   if (method != NULL) {
     // The method is not stored GC safe so see if GC became active
     // after we entered AsyncGetCallTrace() and before we try to
@@ -687,7 +655,7 @@ static void forte_fill_call_trace_given_top(JavaThread* thd,
     // Yes, there is still a window after this check and before
     // we use methodOop below, but we can't lock out GC so that
     // has to be an acceptable risk.
-    if (!forte_is_valid_method(method)) {
+    if (!ch->is_valid_method(method)) {
       trace->num_frames = -2;
       return;
     }
@@ -725,7 +693,7 @@ static void forte_fill_call_trace_given_top(JavaThread* thd,
     // Yes, there is still a window after this check and before
     // we use methodOop below, but we can't lock out GC so that
     // has to be an acceptable risk.
-    if (!forte_is_valid_method(method)) {
+    if (!ch->is_valid_method(method)) {
       // we throw away everything we've gathered in this sample since
       // none of it is safe
       trace->num_frames = -2;

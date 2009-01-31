@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)deoptimization.cpp	1.282 07/05/17 16:05:24 JVM"
+#pragma ident "@(#)deoptimization.cpp	1.284 07/08/29 13:42:28 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -89,12 +89,15 @@ void Deoptimization::UnrollBlock::print() {
 }
 
 
-JRT_LEAF(Deoptimization::UnrollBlock*, Deoptimization::fetch_unroll_info(JavaThread* thread))
+// In order to make fetch_unroll_info work properly with escape
+// analysis, The method was changed from JRT_LEAF to JRT_BLOCK_ENTRY and
+// ResetNoHandleMark and HandleMark were removed from it. The actual reallocation
+// of previously eliminated objects occurs in realloc_objects, which is
+// called from the method fetch_unroll_info_helper below.
+JRT_BLOCK_ENTRY(Deoptimization::UnrollBlock*, Deoptimization::fetch_unroll_info(JavaThread* thread))
   // It is actually ok to allocate handles in a leaf method. It causes no safepoints,
   // but makes the entry a little slower. There is however a little dance we have to
   // do in debug mode to get around the NoHandleMark code in the JRT_LEAF macro
-  ResetNoHandleMark rnhm; // No-op in release/product versions  
-  HandleMark hm;
 
   // fetch_unroll_info() is called at the beginning of the deoptimization
   // handler. Note this fact before we start generating temporary frames
@@ -125,12 +128,67 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
   // Now get the deoptee with a valid map
   frame deoptee = stub_frame.sender(&map);
 
-  // We are safepoint safe up to this call
-  vframeArray* array = create_vframeArray(thread, deoptee, &map);
+  // Create a growable array of VFrames where each VFrame represents an inlined
+  // Java frame.  This storage is allocated with the usual system arena.
+  assert(deoptee.is_compiled_frame(), "Wrong frame type");
+  GrowableArray<compiledVFrame*>* chunk = new GrowableArray<compiledVFrame*>(10);  
+  vframe* vf = vframe::new_vframe(&deoptee, &map, thread);        
+  while (!vf->is_top()) {
+    assert(vf->is_compiled_frame(), "Wrong frame type");
+    chunk->push(compiledVFrame::cast(vf));
+    vf = vf->sender();
+  }
+  assert(vf->is_compiled_frame(), "Wrong frame type");
+  chunk->push(compiledVFrame::cast(vf));
 
-  // We are no longer safepoint safe. If a safepoint occurs from here on
+#ifdef COMPILER2
+  // Reallocate the non-escaping objects and restore their fields. Then
+  // relock objects if synchronization on them was eliminated.
+  if (DoEscapeAnalysis && EliminateAllocations) {
+    GrowableArray<ScopeValue*>* objects = chunk->at(0)->scope()->objects();
+    bool reallocated = false;
+    if (objects != NULL) {
+      JRT_BLOCK
+        reallocated = realloc_objects(thread, &deoptee, objects, THREAD);
+      JRT_END
+    }
+    if (reallocated) {
+      reassign_fields(&deoptee, &map, objects);
+#ifndef PRODUCT
+      if (TraceDeoptimization) {
+        ttyLocker ttyl;
+        tty->print_cr("REALLOC OBJECTS in thread " INTPTR_FORMAT, thread);
+        print_objects(objects);
+      }
+#endif
+    }
+    for (int i = 0; i < chunk->length(); i++) {
+      GrowableArray<MonitorValue*>* monitors = chunk->at(i)->scope()->monitors();
+      if (monitors != NULL) {
+        relock_objects(&deoptee, &map, monitors);
+#ifndef PRODUCT
+        if (TraceDeoptimization) {
+          ttyLocker ttyl;
+          tty->print_cr("RELOCK OBJECTS in thread " INTPTR_FORMAT, thread);
+          for (int j = 0; i < monitors->length(); i++) {
+            MonitorValue* mv = monitors->at(i);
+            if (mv->eliminated()) {
+              StackValue* owner = StackValue::create_stack_value(&deoptee, &map, mv->owner());
+              tty->print_cr("     object <" INTPTR_FORMAT "> locked", owner->get_obj()());
+            }
+          }
+        }
+#endif
+      }
+    }
+  }
+#endif // COMPILER2
+  // Ensure that no safepoint is taken after pointers have been stored
+  // in fields of rematerialized objects.  If a safepoint occurs from here on
   // out the java state residing in the vframeArray will be missed.
   No_Safepoint_Verifier no_safepoint;
+
+  vframeArray* array = create_vframeArray(thread, deoptee, &map, chunk);
 
   assert(thread->vframe_array_head() == NULL, "Pending deopt!");;
   thread->set_vframe_array_head(array);
@@ -194,7 +252,7 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
   int popframe_extra_args = 0;
   // Create an interpreter return address for the stub to use as its return
   // address so the skeletal frames are perfectly walkable
-  frame_pcs[number_of_frames] = AbstractInterpreter::deopt_entry(vtos, 0);
+  frame_pcs[number_of_frames] = Interpreter::deopt_entry(vtos, 0);
 
   // PopFrame requires that the preserved incoming arguments from the recently-popped topmost
   // activation be put back on the expression stack of the caller for reexecution
@@ -228,7 +286,7 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
     // as interpreted so the skeleton frame will be walkable
     // The correct pc will be set when the skeleton frame is completely filled out
     // The final pc we store in the loop is wrong and will be overwritten below
-    frame_pcs[number_of_frames - 1 - index ] = AbstractInterpreter::deopt_entry(vtos, 0) - frame::pc_return_offset;
+    frame_pcs[number_of_frames - 1 - index ] = Interpreter::deopt_entry(vtos, 0) - frame::pc_return_offset;
 
     callee_parameters = array->element(index)->method()->size_of_parameters();
     callee_locals = array->element(index)->method()->max_locals();
@@ -543,21 +601,206 @@ int Deoptimization::deoptimize_dependents() {
   return 0;
 }
 
-vframeArray* Deoptimization::create_vframeArray(JavaThread* thread, frame fr, RegisterMap *reg_map) {
-  // Create a growable array of VFrames where each VFrame represents an inlined
-  // Java frame.  This storage is allocated with the usual system arena.
-#ifdef ASSERT
-  assert(fr.is_compiled_frame(), "Wrong frame type");
-#endif /* ASSERT */
-  GrowableArray<compiledVFrame*>* chunk = new GrowableArray<compiledVFrame*>(10);  
-  vframe* vf = vframe::new_vframe(&fr, reg_map, thread);        
-  while (!vf->is_top()) {
-    assert(vf->is_compiled_frame(), "Wrong frame type");
-    chunk->push(compiledVFrame::cast(vf));
-    vf = vf->sender();
+
+#ifdef COMPILER2
+bool Deoptimization::realloc_objects(JavaThread* thread, frame* fr, GrowableArray<ScopeValue*>* objects, TRAPS) {
+  Handle pending_exception(thread->pending_exception());
+  const char* exception_file = thread->exception_file();
+  int exception_line = thread->exception_line();
+  thread->clear_pending_exception();
+  
+  for (int i = 0; i < objects->length(); i++) {
+    assert(objects->at(i)->is_object(), "invalid debug information");
+    ObjectValue* sv = (ObjectValue*) objects->at(i);
+
+    KlassHandle k(((ConstantOopReadValue*) sv->klass())->value()());
+    oop obj = NULL;
+
+    if (k->oop_is_instance()) {
+      instanceKlass* ik = instanceKlass::cast(k());
+      obj = ik->allocate_instance(CHECK_(false));
+    } else if (k->oop_is_typeArray()) {
+      typeArrayKlass* ak = typeArrayKlass::cast(k());
+      assert(sv->field_size() % type2size[ak->element_type()] == 0, "non-integral array length");
+      int len = sv->field_size() / type2size[ak->element_type()];
+      obj = ak->allocate(len, CHECK_(false));
+    } else if (k->oop_is_objArray()) {
+      objArrayKlass* ak = objArrayKlass::cast(k());
+      obj = ak->allocate(sv->field_size(), CHECK_(false));
+    }
+
+    assert(obj != NULL, "allocation failed");
+    assert(sv->value().is_null(), "redundant reallocation");
+    sv->set_value(obj);
   }
-  assert(vf->is_compiled_frame(), "Wrong frame type");
-  chunk->push(compiledVFrame::cast(vf));
+
+  if (pending_exception.not_null()) {
+    thread->set_pending_exception(pending_exception(), exception_file, exception_line);
+  }
+
+  return true;
+}
+
+// This assumes that the fields are stored in ObjectValue in the same order
+// they are yielded by do_nonstatic_fields.
+class FieldReassigner: public FieldClosure {
+  frame* _fr;
+  RegisterMap* _reg_map;
+  ObjectValue* _sv;
+  instanceKlass* _ik;
+  oop _obj;
+
+  int _i;
+public:
+  FieldReassigner(frame* fr, RegisterMap* reg_map, ObjectValue* sv, oop obj) :
+    _fr(fr), _reg_map(reg_map), _sv(sv), _obj(obj), _i(0) {}
+
+  int i() const { return _i; }
+  
+
+  void do_field(fieldDescriptor* fd) {
+    StackValue* value =
+      StackValue::create_stack_value(_fr, _reg_map, _sv->field_at(i()));
+    int offset = fd->offset();
+    switch (fd->field_type()) {
+    case T_OBJECT: case T_ARRAY:
+      assert(value->type() == T_OBJECT, "Agreement.");
+      _obj->obj_field_put(offset, value->get_obj()());
+      break;
+
+    case T_LONG: case T_DOUBLE: {
+      assert(value->type() == T_INT, "Agreement.");
+      StackValue* low =
+	StackValue::create_stack_value(_fr, _reg_map, _sv->field_at(++_i));
+      jlong res = jlong_from((jint)value->get_int(), (jint)low->get_int());
+      _obj->long_field_put(offset, res);
+      break;
+    }
+
+    case T_INT: case T_FLOAT: // 4 bytes.
+      assert(value->type() == T_INT, "Agreement.");
+      _obj->int_field_put(offset, (jint)value->get_int());
+      break;
+
+    case T_SHORT: case T_CHAR: // 2 bytes
+      assert(value->type() == T_INT, "Agreement.");
+      _obj->short_field_put(offset, (jshort)value->get_int());
+      break;
+
+    case T_BOOLEAN: // 1 byte
+      assert(value->type() == T_INT, "Agreement.");
+      _obj->bool_field_put(offset, (jboolean)value->get_int());
+      break;
+
+    default:
+      ShouldNotReachHere();
+    }
+    _i++;
+  }
+};
+
+// restore elements of an eliminated type array
+void Deoptimization::reassign_type_array_elements(frame* fr, RegisterMap* reg_map, ObjectValue* sv, typeArrayOop obj, BasicType type) {
+  StackValue* low;
+  jlong lval;
+  int index = 0;
+
+  for (int i = 0; i < sv->field_size(); i++) {
+    StackValue* value = StackValue::create_stack_value(fr, reg_map, sv->field_at(i));
+    switch(type) {
+      case T_BOOLEAN: obj->bool_at_put (index, (jboolean) value->get_int()); break;
+      case T_BYTE:    obj->byte_at_put (index, (jbyte)    value->get_int()); break;
+      case T_CHAR:    obj->char_at_put (index, (jchar)    value->get_int()); break;
+      case T_SHORT:   obj->short_at_put(index, (jshort)   value->get_int()); break;
+      case T_INT:     obj->int_at_put  (index, (jint)     value->get_int()); break;
+      case T_FLOAT:   obj->float_at_put(index, (jfloat)   value->get_int()); break;
+      case T_LONG:
+      case T_DOUBLE:
+        low = StackValue::create_stack_value(fr, reg_map, sv->field_at(++i));
+        lval = jlong_from((jint)value->get_int(), (jint)low->get_int());
+        sv->value()->long_field_put(index, lval);
+        break;
+      default:
+        ShouldNotReachHere();
+    }
+    index++;
+  }
+}
+
+
+// restore fields of an eliminated object array
+void Deoptimization::reassign_object_array_elements(frame* fr, RegisterMap* reg_map, ObjectValue* sv, objArrayOop obj) {
+  for (int i = 0; i < sv->field_size(); i++) {
+    StackValue* value = StackValue::create_stack_value(fr, reg_map, sv->field_at(i));
+    assert(value->type() == T_OBJECT, "object element expected");
+    obj->obj_at_put(i, value->get_obj()());
+  }
+}
+
+
+// restore fields of all eliminated objects and arrays
+void Deoptimization::reassign_fields(frame* fr, RegisterMap* reg_map, GrowableArray<ScopeValue*>* objects) {
+  for (int i = 0; i < objects->length(); i++) {
+    ObjectValue* sv = (ObjectValue*) objects->at(i);
+    KlassHandle k(((ConstantOopReadValue*) sv->klass())->value()());
+    Handle obj = sv->value();
+    assert(obj.not_null(), "reallocation was missed");
+
+    if (k->oop_is_instance()) {
+      instanceKlass* ik = instanceKlass::cast(k());
+      FieldReassigner reassign(fr, reg_map, sv, obj());
+      ik->do_nonstatic_fields(&reassign);
+    } else if (k->oop_is_typeArray()) {
+      typeArrayKlass* ak = typeArrayKlass::cast(k());
+      reassign_type_array_elements(fr, reg_map, sv, (typeArrayOop) obj(), ak->element_type());
+    } else if (k->oop_is_objArray()) {
+      reassign_object_array_elements(fr, reg_map, sv, (objArrayOop) obj());
+    }
+  }
+}
+
+
+// relock objects for which synchronization was eliminated
+void Deoptimization::relock_objects(frame* fr, RegisterMap* reg_map, GrowableArray<MonitorValue*>* monitors) {
+  for (int i = 0; i < monitors->length(); i++) {
+    MonitorValue* mv = monitors->at(i);
+    StackValue* owner = StackValue::create_stack_value(fr, reg_map, mv->owner());
+    if (mv->eliminated()) {
+      Handle obj = owner->get_obj();
+      assert(obj.not_null(), "reallocation was missed");
+      BasicLock* lock = StackValue::resolve_monitor_lock(fr, mv->basic_lock());
+      lock->set_displaced_header(obj->mark());
+      obj->set_mark((markOop) lock);
+    }
+    assert(owner->get_obj()->is_locked(), "object must be locked now");
+  }
+}
+
+
+#ifndef PRODUCT
+// print information about reallocated objects
+void Deoptimization::print_objects(GrowableArray<ScopeValue*>* objects) {
+  fieldDescriptor fd;
+
+  for (int i = 0; i < objects->length(); i++) {
+    ObjectValue* sv = (ObjectValue*) objects->at(i);
+    KlassHandle k(((ConstantOopReadValue*) sv->klass())->value()());
+    Handle obj = sv->value();
+    
+    tty->print("     object <" INTPTR_FORMAT "> of type ", sv->value()());
+    k->as_klassOop()->print_value();
+    tty->print(" allocated (%d bytes)", obj->size() * HeapWordSize);
+    tty->cr();
+
+    if (Verbose) {
+      k->oop_print_on(obj(), tty);
+    }
+  }
+}
+#endif
+#endif // COMPILER2
+
+vframeArray* Deoptimization::create_vframeArray(JavaThread* thread, frame fr, RegisterMap *reg_map, GrowableArray<compiledVFrame*>* chunk) {
 
 #ifndef PRODUCT
   if (TraceDeoptimization) {

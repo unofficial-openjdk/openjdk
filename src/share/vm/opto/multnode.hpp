@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)multnode.hpp	1.46 07/05/05 17:06:24 JVM"
+#pragma ident "@(#)multnode.hpp	1.47 07/09/28 10:23:05 JVM"
 #endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -79,7 +79,7 @@ public:
   virtual uint ideal_reg() const;
   virtual const RegMask &out_RegMask() const;
 #ifndef PRODUCT
-  virtual void dump_spec() const;
+  virtual void dump_spec(outputStream *st) const;
 #endif
 };
 

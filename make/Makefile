@@ -83,12 +83,13 @@ endif
 # Typical C1/C2 targets made available with this Makefile
 C1_VM_TARGETS=product1 fastdebug1 optimized1 jvmg1
 C2_VM_TARGETS=product  fastdebug  optimized  jvmg
+KERNEL_VM_TARGETS=productkernel fastdebugkernel optimizedkernel jvmgkernel
 
 all:           all_product all_fastdebug
-all_product:   product product1 docs export_product
-all_fastdebug: fastdebug fastdebug1 docs export_fastdebug
-all_debug:     jvmg jvmg1 docs export_debug
-all_optimized: optimized optimized1 docs export_optimized
+all_product:   product product1 productkernel docs export_product
+all_fastdebug: fastdebug fastdebug1 fastdebugkernel docs export_fastdebug
+all_debug:     jvmg jvmg1 jvmgkernel docs export_debug
+all_optimized: optimized optimized1 optimizedkernel docs export_optimized
 
 # Do everything
 world:         all create_jdk
@@ -111,6 +112,10 @@ $(C1_VM_TARGETS):
 $(C2_VM_TARGETS):
 	$(CD) $(GAMMADIR)/make; \
 	$(MAKE) VM_TARGET=$@ generic_build2 $(ALT_OUT)
+
+$(KERNEL_VM_TARGETS):
+	$(CD) $(GAMMADIR)/make; \
+	$(MAKE) VM_TARGET=$@ generic_buildkernel $(ALT_OUT)
 
 # Build compiler1 (client) rule, different for platforms
 generic_build1:
@@ -154,6 +159,24 @@ else
 		      $(MAKE_ARGS) $(VM_TARGET)
 endif
 
+generic_buildkernel:
+	$(MKDIR) -p $(OUTPUTDIR)
+ifeq ($(OSNAME),windows)
+  ifeq ($(ARCH_DATA_MODEL), 32)
+	$(CD) $(OUTPUTDIR); \
+	    $(NMAKE) -f $(ABS_OS_MAKEFILE) \
+		      Variant=kernel \
+                      WorkSpace=$(ABS_GAMMADIR) \
+		      BootStrapDir=$(ABS_BOOTDIR) \
+                      BuildUser=$(USERNAME) \
+		      $(MAKE_ARGS) $(VM_TARGET:%kernel=%)
+  else
+	@$(ECHO) "No kernel ($(VM_TARGET)) for ARCH_DATA_MODEL=$(ARCH_DATA_MODEL)"
+  endif
+else
+	@$(ECHO) "No kernel ($(VM_TARGET)) for OS_NAME=$(OSNAME)"
+endif
+
 # Export file rule
 generic_export: $(EXPORT_LIST)
 export_product:
@@ -183,8 +206,10 @@ XUSAGE=$(HS_SRC_DIR)/share/vm/Xusage.txt
 DOCS_DIR=$(OUTPUTDIR)/$(VM_PLATFORM)_docs
 C1_BASE_DIR=$(OUTPUTDIR)/$(VM_PLATFORM)_compiler1
 C2_BASE_DIR=$(OUTPUTDIR)/$(VM_PLATFORM)_compiler2
+KERNEL_BASE_DIR=$(OUTPUTDIR)/$(VM_PLATFORM)_kernel
 C1_DIR=$(C1_BASE_DIR)/$(VM_SUBDIR)
 C2_DIR=$(C2_BASE_DIR)/$(VM_SUBDIR)
+KERNEL_DIR=$(KERNEL_BASE_DIR)/$(VM_SUBDIR)
 
 # Misc files and generated files need to come from C1 or C2 area
 ifeq ($(ARCH_DATA_MODEL), 32)
@@ -225,6 +250,14 @@ $(EXPORT_SERVER_DIR)/%.pdb:  $(C2_DIR)/%.pdb
 	$(install-file)
 $(EXPORT_SERVER_DIR)/%.map:  $(C2_DIR)/%.map
 	$(install-file)
+
+# Kernel files always come from kernel area
+$(EXPORT_KERNEL_DIR)/%.dll:  $(KERNEL_DIR)/%.dll
+	$(install-file)
+$(EXPORT_KERNEL_DIR)/%.pdb:  $(KERNEL_DIR)/%.pdb
+	$(install-file)
+$(EXPORT_KERNEL_DIR)/%.map:  $(KERNEL_DIR)/%.map
+	$(install-file)
 endif
 
 # Shared Library
@@ -263,7 +296,7 @@ $(EXPORT_DOCS_DIR)/platform/jvmti/%: $(DOCS_DIR)/%
 	$(install-file)
 
 # Xusage file
-$(EXPORT_SERVER_DIR)/Xusage.txt $(EXPORT_CLIENT_DIR)/Xusage.txt: $(XUSAGE)
+$(EXPORT_SERVER_DIR)/Xusage.txt $(EXPORT_CLIENT_DIR)/Xusage.txt $(EXPORT_KERNEL_DIR)/Xusage.txt: $(XUSAGE)
 	$(prep-target)
 	$(RM) $@.temp
 	$(SED) 's/\(separated by \)[;:]/\1$(PATH_SEP)/g' $< > $@.temp
@@ -276,6 +309,7 @@ clobber clean: clean_build clean_export clean_jdk
 clean_build:
 	$(RM) -r $(C1_DIR)
 	$(RM) -r $(C2_DIR)
+	$(RM) -r $(KERNEL_DIR)
 clean_export:
 	$(RM) -r $(EXPORT_PATH)
 clean_jdk:
@@ -377,6 +411,7 @@ target_help:
 	@$(ECHO) "Others targets are:"
 	@$(ECHO) "   $(C1_VM_TARGETS)"
 	@$(ECHO) "   $(C2_VM_TARGETS)"
+	@$(ECHO) "   $(KERNEL_VM_TARGETS)"
 
 # Variable help (only common ones used by this workspace)
 variable_help: variable_help_intro variable_list variable_help_end
@@ -462,7 +497,8 @@ examples_help:
 include $(GAMMADIR)/make/jprt.gmk
 
 .PHONY: all world clobber clean help $(C1_VM_TARGETS) $(C2_VM_TARGETS) \
-	generic_build1 generic_build2 generic_export \
+        $(KERNEL_VM_TARGETS) \
+	generic_build1 generic_build2 generic_buildkernel generic_export \
 	export_product export_fastdebug export_debug export_optimized \
 	export_jdk_product export_jdk_fastdebug export_jdk_debug \
 	create_jdk copy_jdk update_jdk test_jdk \

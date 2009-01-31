@@ -1,8 +1,8 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)memnode.cpp	1.238 08/06/19 10:10:54 JVM"
+#pragma ident "@(#)memnode.cpp	1.239 08/11/24 12:23:43 JVM"
 #endif
 /*
- * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,7 @@ const TypePtr *MemNode::adr_type() const {
 }
 
 #ifndef PRODUCT
-void MemNode::dump_spec() const {
+void MemNode::dump_spec(outputStream *st) const {
   if (in(Address) == NULL)  return; // node is dead
 #ifndef ASSERT
   // fake the missing field
@@ -51,37 +51,37 @@ void MemNode::dump_spec() const {
   if (in(Address) != NULL)
     _adr_type = in(Address)->bottom_type()->isa_ptr();
 #endif
-  dump_adr_type(this, _adr_type);
+  dump_adr_type(this, _adr_type, st);
 
   Compile* C = Compile::current();
   if( C->alias_type(_adr_type)->is_volatile() )
-    tty->print(" Volatile!");
+    st->print(" Volatile!");
 }
 
-void MemNode::dump_adr_type(const Node* mem, const TypePtr* adr_type) {
-  tty->print(" @");
+void MemNode::dump_adr_type(const Node* mem, const TypePtr* adr_type, outputStream *st) {
+  st->print(" @");
   if (adr_type == NULL) {
-    tty->print("NULL");
+    st->print("NULL");
   } else {
-    adr_type->dump();
+    adr_type->dump_on(st);
     Compile* C = Compile::current();
     Compile::AliasType* atp = NULL;
     if (C->have_alias_type(adr_type))  atp = C->alias_type(adr_type);
     if (atp == NULL)
-      tty->print(", idx=?\?;");
+      st->print(", idx=?\?;");
     else if (atp->index() == Compile::AliasIdxBot)
-      tty->print(", idx=Bot;");
+      st->print(", idx=Bot;");
     else if (atp->index() == Compile::AliasIdxTop)
-      tty->print(", idx=Top;");
+      st->print(", idx=Top;");
     else if (atp->index() == Compile::AliasIdxRaw)
-      tty->print(", idx=Raw;");
+      st->print(", idx=Raw;");
     else {
       ciField* field = atp->field();
       if (field) {
-        tty->print(", name=");
-        field->print_name_on(tty);
+        st->print(", name=");
+        field->print_name_on(st);
       }
-      tty->print(", idx=%d;", atp->index());
+      st->print(", idx=%d;", atp->index());
     }
   }
 }
@@ -110,6 +110,20 @@ Node *MemNode::Ideal_common(PhaseGVN *phase, bool can_reshape) {
 
   // Avoid independent memory operations
   Node* old_mem = mem;
+
+  if (mem->is_Proj() && mem->in(0)->is_Initialize()) {
+    InitializeNode* init = mem->in(0)->as_Initialize();
+    if (init->is_complete()) {  // i.e., after macro expansion
+      const TypePtr* tp = t_adr->is_ptr();
+      uint alias_idx = phase->C->get_alias_index(tp);
+      // Free this slice from the init.  It was hooked, temporarily,
+      // by GraphKit::set_output_for_allocation.
+      if (alias_idx > Compile::AliasIdxRaw) {
+        mem = init->memory(alias_idx);
+        // ...but not with the raw-pointer slice.
+      }
+    }
+  }
 
   if (mem->is_MergeMem()) {
     MergeMemNode* mmem = mem->as_MergeMem();
@@ -167,6 +181,65 @@ Node *MemNode::Ideal_common(PhaseGVN *phase, bool can_reshape) {
   return NULL;
 }
 
+// Helper function for proving some simple control dominations.
+// Attempt to prove that control input 'dom' dominates (or equals) 'sub'.
+// Already assumes that 'dom' is available at 'sub', and that 'sub'
+// is not a constant (dominated by the method's StartNode).
+// Used by MemNode::find_previous_store to prove that the
+// control input of a memory operation predates (dominates)
+// an allocation it wants to look past.
+bool MemNode::detect_dominating_control(Node* dom, Node* sub) {
+  if (dom == NULL)      return false;
+  if (dom->is_Proj())   dom = dom->in(0);
+  if (dom->is_Start())  return true; // anything inside the method
+  if (dom->is_Root())   return true; // dom 'controls' a constant
+  int cnt = 20;                      // detect cycle or too much effort
+  while (sub != NULL) {              // walk 'sub' up the chain to 'dom'
+    if (--cnt < 0)   return false;   // in a cycle or too complex
+    if (sub == dom)  return true;
+    if (sub->is_Start())  return false;
+    if (sub->is_Root())   return false;
+    Node* up = sub->in(0);
+    if (sub == up && sub->is_Region()) {
+      for (uint i = 1; i < sub->req(); i++) {
+        Node* in = sub->in(i);
+        if (in != NULL && !in->is_top() && in != sub) {
+          up = in; break;            // take any path on the way up to 'dom'
+        }
+      }
+    }
+    if (sub == up)  return false;    // some kind of tight cycle
+    sub = up;
+  }
+  return false;
+}
+
+//---------------------detect_ptr_independence---------------------------------
+// Used by MemNode::find_previous_store to prove that two base
+// pointers are never equal.
+// The pointers are accompanied by their associated allocations,
+// if any, which have been previously discovered by the caller.
+bool MemNode::detect_ptr_independence(Node* p1, AllocateNode* a1,
+                                      Node* p2, AllocateNode* a2,
+                                      PhaseTransform* phase) {
+  // Attempt to prove that these two pointers cannot be aliased.
+  // They may both manifestly be allocations, and they should differ.
+  // Or, if they are not both allocations, they can be distinct constants.
+  // Otherwise, one is an allocation and the other a pre-existing value.
+  if (a1 == NULL && a2 == NULL) {           // neither an allocation
+    return (p1 != p2) && p1->is_Con() && p2->is_Con();
+  } else if (a1 != NULL && a2 != NULL) {    // both allocations
+    return (a1 != a2);
+  } else if (a1 != NULL) {                  // one allocation a1
+    // (Note:  p2->is_Con implies p2->in(0)->is_Root, which dominates.)
+    return detect_dominating_control(p2->in(0), a1->in(0));
+  } else { //(a2 != NULL)                   // one allocation a2
+    return detect_dominating_control(p1->in(0), a2->in(0));
+  }
+  return false;
+}
+
+
 // The logic for reordering loads and stores uses four steps:
 // (a) Walk carefully past stores and initializations which we
 //     can prove are independent of this load.
@@ -218,10 +291,54 @@ Node* MemNode::find_previous_store(PhaseTransform* phase) {
           continue;           // (a) advance through independent store memory
         }
       }
+      if (st_base != base &&
+          detect_ptr_independence(base, alloc,
+                                  st_base,
+                                  AllocateNode::Ideal_allocation(st_base, phase),
+                                  phase)) {
+        // Success:  The bases are provably independent.
+        mem = mem->in(MemNode::Memory);
+        continue;           // (a) advance through independent store memory
+      }
 
       // (b) At this point, if the bases or offsets do not agree, we lose,
       // since we have not managed to prove 'this' and 'mem' independent.
       if (st_base == base && st_offset == offset) {
+        return mem;         // let caller handle steps (c), (d)
+      }
+
+    } else if (mem->is_Proj() && mem->in(0)->is_Initialize()) {
+      InitializeNode* st_init = mem->in(0)->as_Initialize();
+      AllocateNode*  st_alloc = st_init->allocation();
+      if (st_alloc == NULL)
+        break;              // something degenerated
+      bool known_identical = false;
+      bool known_independent = false;
+      if (alloc == st_alloc)
+        known_identical = true;
+      else if (alloc != NULL)
+        known_independent = true;
+      else if (ctrl != NULL &&
+               detect_dominating_control(ctrl, st_alloc->in(0)))
+        known_independent = true;
+
+      if (known_independent) {
+        // The bases are provably independent: Either they are
+        // manifestly distinct allocations, or else the control
+        // of this load dominates the store's allocation.
+        int alias_idx = phase->C->get_alias_index(adr_type());
+        if (alias_idx == Compile::AliasIdxRaw) {
+          mem = st_alloc->in(TypeFunc::Memory);
+        } else {
+          mem = st_init->memory(alias_idx);
+        }
+        continue;           // (a) advance through independent store memory
+      }
+
+      // (b) at this point, if we are not looking at a store initializing
+      // the same allocation we are loading from, we lose.
+      if (known_identical) {
+        // From caller, can_see_stored_value will consult find_captured_store.
         return mem;         // let caller handle steps (c), (d)
       }
 
@@ -460,11 +577,11 @@ uint LoadNode::ideal_reg() const {
 }
 
 #ifndef PRODUCT
-void LoadNode::dump_spec() const { 
-  MemNode::dump_spec();
+void LoadNode::dump_spec(outputStream *st) const { 
+  MemNode::dump_spec(st);
   if( !Verbose && !WizardMode ) {
     // standard dump does this in Verbose and WizardMode
-    tty->print(" #"); _type->dump();
+    st->print(" #"); _type->dump_on(st);
   }
 }
 #endif
@@ -520,16 +637,105 @@ uint LoadNode::hash() const {
 Node* MemNode::can_see_stored_value(Node* st, PhaseTransform* phase) const {
   Node* ld_adr = in(MemNode::Address);
 
-  if (st->is_Store()) {
-    Node* st_adr = st->in(MemNode::Address);
-    if (!phase->eqv(st_adr, ld_adr)) {
-      return NULL;
+  const TypeInstPtr* tp = phase->type(ld_adr)->isa_instptr();
+  Compile::AliasType* atp = tp != NULL ? phase->C->alias_type(tp) : NULL;
+  if (EliminateAutoBox && atp != NULL && atp->index() >= Compile::AliasIdxRaw &&
+      atp->field() != NULL && !atp->field()->is_volatile()) {
+    uint alias_idx = atp->index();
+    bool final = atp->field()->is_final();
+    Node* result = NULL;
+    Node* current = st;
+    // Skip through chains of MemBarNodes checking the MergeMems for
+    // new states for the slice of this load.  Stop once any other
+    // kind of node is encountered.  Loads from final memory can skip
+    // through any kind of MemBar but normal loads shouldn't skip
+    // through MemBarAcquire since the could allow them to move out of
+    // a synchronized region.
+    while (current->is_Proj()) {
+      int opc = current->in(0)->Opcode();
+      if ((final && opc == Op_MemBarAcquire) ||
+          opc == Op_MemBarRelease || opc == Op_MemBarCPUOrder) {
+        Node* mem = current->in(0)->in(TypeFunc::Memory);
+        if (mem->is_MergeMem()) {
+          MergeMemNode* merge = mem->as_MergeMem();
+          Node* new_st = merge->memory_at(alias_idx);
+          if (new_st == merge->base_memory()) {
+            // Keep searching
+            current = merge->base_memory();
+            continue;
+          }
+          // Save the new memory state for the slice and fall through
+          // to exit.
+          result = new_st;
+        }
+      }
+      break;
     }
-    // Now prove that we have a LoadQ matched to a StoreQ, for some Q.
-    if (store_Opcode() != st->Opcode()) {
-      return NULL;
+    if (result != NULL) {
+      st = result;
     }
-    return st->in(MemNode::ValueIn);
+  }
+
+
+  // Loop around twice in the case Load -> Initialize -> Store.
+  // (See PhaseIterGVN::add_users_to_worklist, which knows about this case.)
+  for (int trip = 0; trip <= 1; trip++) {
+
+    if (st->is_Store()) {
+      Node* st_adr = st->in(MemNode::Address);
+      if (!phase->eqv(st_adr, ld_adr)) {
+        // Try harder before giving up...  Match raw and non-raw pointers.
+        intptr_t st_off = 0;
+        AllocateNode* alloc = AllocateNode::Ideal_allocation(st_adr, phase, st_off);
+        if (alloc == NULL)       return NULL;
+        intptr_t ld_off = 0;
+        AllocateNode* allo2 = AllocateNode::Ideal_allocation(ld_adr, phase, ld_off);
+        if (alloc != allo2)      return NULL;
+        if (ld_off != st_off)    return NULL;
+        // At this point we have proven something like this setup:
+        //  A = Allocate(...)
+        //  L = LoadQ(,  AddP(CastPP(, A.Parm),, #Off))
+        //  S = StoreQ(, AddP(,        A.Parm  , #Off), V)
+        // (Actually, we haven't yet proven the Q's are the same.)
+        // In other words, we are loading from a casted version of
+        // the same pointer-and-offset that we stored to.
+        // Thus, we are able to replace L by V.
+      }
+      // Now prove that we have a LoadQ matched to a StoreQ, for some Q.
+      if (store_Opcode() != st->Opcode())
+        return NULL;
+      return st->in(MemNode::ValueIn);
+    }
+
+    intptr_t offset = 0;  // scratch
+
+    // A load from a freshly-created object always returns zero.
+    // (This can happen after LoadNode::Ideal resets the load's memory input
+    // to find_captured_store, which returned InitializeNode::zero_memory.)
+    if (st->is_Proj() && st->in(0)->is_Allocate() &&
+        st->in(0) == AllocateNode::Ideal_allocation(ld_adr, phase, offset) &&
+        offset >= st->in(0)->as_Allocate()->minimum_header_size()) {
+      // return a zero value for the load's basic type
+      // (This is one of the few places where a generic PhaseTransform
+      // can create new nodes.  Think of it as lazily manifesting
+      // virtually pre-existing constants.)
+      return phase->zerocon(memory_type());
+    }
+
+    // A load from an initialization barrier can match a captured store.
+    if (st->is_Proj() && st->in(0)->is_Initialize()) {
+      InitializeNode* init = st->in(0)->as_Initialize();
+      AllocateNode* alloc = init->allocation();
+      if (alloc != NULL &&
+          alloc == AllocateNode::Ideal_allocation(ld_adr, phase, offset)) {
+        // examine a captured store value
+        st = init->find_captured_store(offset, memory_size(), phase);
+        if (st != NULL)
+          continue;             // take one more trip around
+      }
+    }
+
+    break;
   }
 
   return NULL;
@@ -560,9 +766,173 @@ Node *LoadNode::Identity( PhaseTransform *phase ) {
   return this;
 }
 
+
+// Returns true if the AliasType refers to the field that holds the
+// cached box array.  Currently only handles the IntegerCache case.
+static bool is_autobox_cache(Compile::AliasType* atp) {
+  if (atp != NULL && atp->field() != NULL) {
+    ciField* field = atp->field();
+    ciSymbol* klass = field->holder()->name();
+    if (field->name() == ciSymbol::cache_field_name() &&
+        field->holder()->uses_default_loader() &&
+        klass == ciSymbol::java_lang_Integer_IntegerCache()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Fetch the base value in the autobox array
+static bool fetch_autobox_base(Compile::AliasType* atp, int& cache_offset) {
+  if (atp != NULL && atp->field() != NULL) {
+    ciField* field = atp->field();
+    ciSymbol* klass = field->holder()->name();
+    if (field->name() == ciSymbol::cache_field_name() &&
+        field->holder()->uses_default_loader() &&
+        klass == ciSymbol::java_lang_Integer_IntegerCache()) {
+      assert(field->is_constant(), "what?");
+      ciObjArray* array = field->constant_value().as_object()->as_obj_array();
+      // Fetch the box object at the base of the array and get its value
+      ciInstance* box = array->obj_at(0)->as_instance();
+      ciInstanceKlass* ik = box->klass()->as_instance_klass();
+      if (ik->nof_nonstatic_fields() == 1) {
+        // This should be true nonstatic_field_at requires calling
+        // nof_nonstatic_fields so check it anyway
+        ciConstant c = box->field_value(ik->nonstatic_field_at(0));
+        cache_offset = c.as_int();
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+// Returns true if the AliasType refers to the value field of an
+// autobox object.  Currently only handles Integer.
+static bool is_autobox_object(Compile::AliasType* atp) {
+  if (atp != NULL && atp->field() != NULL) {
+    ciField* field = atp->field();
+    ciSymbol* klass = field->holder()->name();
+    if (field->name() == ciSymbol::value_name() &&
+        field->holder()->uses_default_loader() &&
+        klass == ciSymbol::java_lang_Integer()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+
+// We're loading from an object which has autobox behaviour.
+// If this object is result of a valueOf call we'll have a phi
+// merging a newly allocated object and a load from the cache.
+// We want to replace this load with the original incoming
+// argument to the valueOf call.
+Node* LoadNode::eliminate_autobox(PhaseGVN* phase) {
+  Node* base = in(Address)->in(AddPNode::Base);
+  if (base->is_Phi() && base->req() == 3) {
+    AllocateNode* allocation = NULL;
+    int allocation_index = -1;
+    int load_index = -1;
+    for (uint i = 1; i < base->req(); i++) {
+      allocation = AllocateNode::Ideal_allocation(base->in(i), phase);
+      if (allocation != NULL) {
+        allocation_index = i;
+        load_index = 3 - allocation_index;
+        break;
+      }
+    }
+    LoadNode* load = NULL;
+    if (allocation != NULL && base->in(load_index)->is_Load()) {
+      load = base->in(load_index)->as_Load();
+    }
+    if (load != NULL && in(Memory)->is_Phi() && in(Memory)->in(0) == base->in(0)) {
+      // Push the loads from the phi that comes from valueOf up
+      // through it to allow elimination of the loads and the recovery
+      // of the original value.
+      Node* mem_phi = in(Memory);
+      Node* offset = in(Address)->in(AddPNode::Offset);
+
+      Node* in1 = clone();
+      Node* in1_addr = in1->in(Address)->clone();
+      in1_addr->set_req(AddPNode::Base, base->in(allocation_index));
+      in1_addr->set_req(AddPNode::Address, base->in(allocation_index));
+      in1_addr->set_req(AddPNode::Offset, offset);
+      in1->set_req(0, base->in(allocation_index));
+      in1->set_req(Address, in1_addr);
+      in1->set_req(Memory, mem_phi->in(allocation_index));
+
+      Node* in2 = clone();
+      Node* in2_addr = in2->in(Address)->clone();
+      in2_addr->set_req(AddPNode::Base, base->in(load_index));
+      in2_addr->set_req(AddPNode::Address, base->in(load_index));
+      in2_addr->set_req(AddPNode::Offset, offset);
+      in2->set_req(0, base->in(load_index));
+      in2->set_req(Address, in2_addr);
+      in2->set_req(Memory, mem_phi->in(load_index));
+
+      in1_addr = phase->transform(in1_addr);
+      in1 =      phase->transform(in1);
+      in2_addr = phase->transform(in2_addr);
+      in2 =      phase->transform(in2);
+
+      PhiNode* result = PhiNode::make_blank(base->in(0), this);
+      result->set_req(allocation_index, in1);
+      result->set_req(load_index, in2);
+      return result;
+    }
+  } else if (base->is_Load()) {
+    // Eliminate the load of Integer.value for integers from the cache
+    // array by deriving the value from the index into the array.
+    // Capture the offset of the load and then reverse the computation.
+    Node* load_base = base->in(Address)->in(AddPNode::Base);
+    if (load_base != NULL) {
+      Compile::AliasType* atp = phase->C->alias_type(load_base->adr_type());
+      intptr_t cache_offset;
+      int shift = -1;
+      Node* cache = NULL;
+      if (is_autobox_cache(atp)) {
+        shift  = exact_log2(type2aelembytes[T_OBJECT]);
+        cache = AddPNode::Ideal_base_and_offset(load_base->in(Address), phase, cache_offset);
+      }
+      if (cache != NULL && base->in(Address)->is_AddP()) {
+        Node* elements[4];
+        int count = base->in(Address)->as_AddP()->unpack_offsets(elements, ARRAY_SIZE(elements));
+        int cache_low;
+        if (count > 0 && fetch_autobox_base(atp, cache_low)) {
+          int offset = arrayOopDesc::base_offset_in_bytes(memory_type()) - (cache_low << shift);
+          // Add up all the offsets making of the address of the load
+          Node* result = elements[0];
+          for (int i = 1; i < count; i++) {
+            result = phase->transform(new (phase->C, 3) AddXNode(result, elements[i]));
+          }
+          // Remove the constant offset from the address and then
+          // remove the scaling of the offset to recover the original index.
+          result = phase->transform(new (phase->C, 3) AddXNode(result, phase->MakeConX(-offset)));
+          if (result->Opcode() == Op_LShiftX && result->in(2) == phase->intcon(shift)) {
+            // Peel the shift off directly but wrap it in a dummy node
+            // since Ideal can't return existing nodes
+            result = new (phase->C, 3) RShiftXNode(result->in(1), phase->intcon(0));
+          } else {
+            result = new (phase->C, 3) RShiftXNode(result, phase->intcon(shift));
+          }
+#ifdef _LP64
+          result = new (phase->C, 2) ConvL2INode(phase->transform(result));
+#endif                
+          return result;
+        }
+      }
+    }
+  }
+  return NULL;
+}
+
+
 //------------------------------Ideal------------------------------------------
 // If the load is from Field memory and the pointer is non-null, we can
 // zero out the control input.
+// If the offset is constant and the base is an object allocation,
+// try to hook me up to the exact initializing store.
 Node *LoadNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   Node* p = MemNode::Ideal_common(phase, can_reshape);
   if (p)  return (p == NodeSentinel) ? NULL : p;
@@ -578,16 +948,30 @@ Node *LoadNode::Ideal(PhaseGVN *phase, bool can_reshape) {
     set_req(MemNode::Control,ctrl);
   }
 
-  // Check for useless memory edge in some common special cases
-  if( in(MemNode::Control) ) {
-    Node *adr = address->is_AddP() ? address->in(AddPNode::Base) : address;
-    if( adr->is_Proj() && adr->as_Proj()->_con == TypeFunc::Parms && 
-        adr->in(0)->is_Start() && phase->type(adr)->is_ptr()->_ptr == TypePtr::NotNull ) {
+  // Check for useless control edge in some common special cases
+  if (in(MemNode::Control) != NULL) {
+    intptr_t ignore = 0;
+    Node*    base   = AddPNode::Ideal_base_and_offset(address, phase, ignore);
+    if (base != NULL
+        && phase->type(base)->higher_equal(TypePtr::NOTNULL)
+        && detect_dominating_control(base->in(0), phase->C->start())) {
+      // A method-invariant, non-null address (constant or 'this' argument).
       set_req(MemNode::Control, NULL);
     }
   }
 
-  // Check for prior array store with a different offset; make Load
+  if (EliminateAutoBox && can_reshape && in(Address)->is_AddP()) {
+    Node* base = in(Address)->in(AddPNode::Base);
+    if (base != NULL) {
+      Compile::AliasType* atp = phase->C->alias_type(adr_type());
+      if (is_autobox_object(atp)) {
+        Node* result = eliminate_autobox(phase);
+        if (result != NULL) return result;
+      }
+    }
+  }
+
+  // Check for prior store with a different base or offset; make Load
   // independent.  Skip through any number of them.  Bail out if the stores
   // are in an endless dead cycle and report no progress.  This is a key
   // transform for Reflection.  However, if after skipping through the Stores
@@ -689,6 +1073,17 @@ const Type *LoadNode::Value( PhaseTransform *phase ) const {
         if (jt->empty() && !t->empty()) {
           // This can happen if a interface-typed array narrows to a class type.
           jt = _type;
+        }
+        
+        if (EliminateAutoBox) {
+          // The pointers in the autobox arrays are always non-null
+          Node* base = in(Address)->in(AddPNode::Base);
+          if (base != NULL) {
+            Compile::AliasType* atp = phase->C->alias_type(base->adr_type());
+            if (is_autobox_cache(atp)) {
+              return jt->join(TypePtr::NOTNULL)->is_ptr();
+            }
+          }
         }
         return jt;
       }
@@ -794,7 +1189,14 @@ const Type *LoadNode::Value( PhaseTransform *phase ) const {
     }
   }
 
-  // (If loading from a freshly-allocated object, could produce zero here.)
+  // If we are loading from a freshly-allocated object, produce a zero,
+  // if the load is provably beyond the header of the object.
+  // (Also allow a variable load from a fresh array to produce zero.)
+  if (ReduceFieldZeroing) {
+    Node* value = can_see_stored_value(mem,phase);
+    if (value != NULL && value->is_Con())
+      return value->bottom_type();
+  }
 
   return _type;
 }
@@ -974,6 +1376,13 @@ const Type *LoadKlassNode::Value( PhaseTransform *phase ) const {
       // according to the element type's subclassing.
       return TypeKlassPtr::make(tkls->ptr(), elem, 0/*offset*/);
     }
+    if( klass->is_instance_klass() && tkls->klass_is_exact() &&
+        (uint)tkls->offset() == Klass::super_offset_in_bytes() + sizeof(oopDesc)) {
+      ciKlass* sup = klass->as_instance_klass()->super();
+      // The field is Klass::_super.  Return its (constant) value.
+      // (Folds up the 2nd indirection in aClassConstant.getSuperClass().)
+      return sup ? TypeKlassPtr::make(sup) : TypePtr::NULL_PTR;
+    }
   }
 
   // Bailout case
@@ -1082,8 +1491,8 @@ Node* LoadRangeNode::Identity( PhaseTransform *phase ) {
   }
 
   return this;
-}
 
+}
 //=============================================================================
 //---------------------------StoreNode::make-----------------------------------
 // Polymorphic factory method:
@@ -1126,6 +1535,8 @@ uint StoreNode::hash() const {
 
 //------------------------------Ideal------------------------------------------
 // Change back-to-back Store(, p, x) -> Store(m, p, y) to Store(m, p, x).
+// When a store immediately follows a relevant allocation/initialization,
+// try to capture it into the initialization, or hoist it above.
 Node *StoreNode::Ideal(PhaseGVN *phase, bool can_reshape) {
   Node* p = MemNode::Ideal_common(phase, can_reshape);
   if (p)  return (p == NodeSentinel) ? NULL : p;
@@ -1135,7 +1546,7 @@ Node *StoreNode::Ideal(PhaseGVN *phase, bool can_reshape) {
 
   // Back-to-back stores to same address?  Fold em up.
   // Generally unsafe if I have intervening uses...
-  if (can_reshape && mem->is_Store() && phase->eqv( mem->in(MemNode::Address), address )) {
+  if (mem->is_Store() && phase->eqv_uncast(mem->in(MemNode::Address), address)) {
     // Looking at a dead closed cycle of memory?
     assert(mem != mem->in(MemNode::Memory), "dead loop in StoreNode::Ideal");
 
@@ -1163,6 +1574,24 @@ Node *StoreNode::Ideal(PhaseGVN *phase, bool can_reshape) {
     }
   }
 
+  // Capture an unaliased, unconditional, simple store into an initializer.
+  // Or, if it is independent of the allocation, hoist it above the allocation.
+  if (ReduceFieldZeroing && /*can_reshape &&*/
+      mem->is_Proj() && mem->in(0)->is_Initialize()) {
+    InitializeNode* init = mem->in(0)->as_Initialize();
+    intptr_t offset = init->can_capture_store(this, phase);
+    if (offset > 0) {
+      Node* moved = init->capture_store(this, offset, phase);
+      // If the InitializeNode captured me, it made a raw copy of me,
+      // and I need to disappear.
+      if (moved != NULL) {
+        // %%% hack to ensure that Ideal returns a new node:
+        mem = MergeMemNode::make(phase->C, mem);
+        return mem;             // fold me away
+      }
+    }
+  }
+
   return NULL;                  // No further progress
 }
 
@@ -1181,17 +1610,48 @@ const Type *StoreNode::Value( PhaseTransform *phase ) const {
 //------------------------------Identity---------------------------------------
 // Remove redundant stores:
 //   Store(m, p, Load(m, p)) changes to m.
+//   Store(, p, x) -> Store(m, p, x) changes to Store(m, p, x).
 Node *StoreNode::Identity( PhaseTransform *phase ) {
   Node* mem = in(MemNode::Memory);
   Node* adr = in(MemNode::Address);
   Node* val = in(MemNode::ValueIn);
 
   // Load then Store?  Then the Store is useless
-  if (val->is_Load() &&
-      val->as_Load()->memory_size() == this->memory_size() &&
-      phase->eqv( val->in(MemNode::Address), adr ) &&
-      phase->eqv( val->in(MemNode::Memory ), mem )) {
+  if (val->is_Load() && 
+      phase->eqv_uncast( val->in(MemNode::Address), adr ) &&
+      phase->eqv_uncast( val->in(MemNode::Memory ), mem ) &&
+      val->as_Load()->store_Opcode() == Opcode()) {
     return mem;
+  }
+
+  // Two stores in a row of the same value?
+  if (mem->is_Store() &&
+      phase->eqv_uncast( mem->in(MemNode::Address), adr ) &&
+      phase->eqv_uncast( mem->in(MemNode::ValueIn), val ) &&
+      mem->Opcode() == Opcode()) {
+    return mem;
+  }
+
+  // Store of zero anywhere into a freshly-allocated object?
+  // Then the store is useless.
+  // (It must already have been captured by the InitializeNode.)
+  if (ReduceFieldZeroing && phase->type(val)->is_zero_type()) {
+    // a newly allocated object is already all-zeroes everywhere
+    if (mem->is_Proj() && mem->in(0)->is_Allocate()) {
+      return mem;
+    }
+
+    // the store may also apply to zero-bits in an earlier object
+    Node* prev_mem = find_previous_store(phase);
+    // Steps (a), (b):  Walk past independent stores to find an exact match.
+    if (prev_mem != NULL) {
+      Node* prev_val = can_see_stored_value(prev_mem, phase);
+      if (prev_val != NULL && phase->eqv(prev_val, val)) {
+        // prev_val and val might differ by a cast; it would be good
+        // to keep the more informative of the two.
+        return mem;
+      }
+    }
   }
 
   return this;
@@ -1376,16 +1836,20 @@ Node *ClearArrayNode::Identity( PhaseTransform *phase ) {
 //------------------------------Idealize---------------------------------------
 // Clearing a short array is faster with stores
 Node *ClearArrayNode::Ideal(PhaseGVN *phase, bool can_reshape){
-  const TypeInt *t = phase->type(in(2))->isa_int();
-  if( !t ) return NULL;
-  if( !t->is_con() ) return NULL;
-  int con = t->get_con();       // Length is in doublewords
-  // Length too long; use fast hardware clear
-  if( con > 8 ) return NULL;
+  const int unit = BytesPerLong;
+  const TypeX* t = phase->type(in(2))->isa_intptr_t();
+  if (!t)  return NULL;
+  if (!t->is_con())  return NULL;
+  intptr_t raw_count = t->get_con();
+  intptr_t size = raw_count;
+  if (!Matcher::init_array_count_is_in_bytes) size *= unit;
   // Clearing nothing uses the Identity call.
   // Negative clears are possible on dead ClearArrays
   // (see jck test stmt114.stmt11402.val).
-  if( con <= 0 ) return NULL;
+  if (size <= 0 || size % unit != 0)  return NULL;
+  intptr_t count = size / unit;
+  // Length too long; use fast hardware clear
+  if (size > Matcher::init_array_short_size)  return NULL;
   Node *mem = in(1);
   if( phase->type(mem)==Type::TOP ) return NULL;
   Node *adr = in(3);
@@ -1402,8 +1866,8 @@ Node *ClearArrayNode::Ideal(PhaseGVN *phase, bool can_reshape){
   Node *zero = phase->makecon(TypeLong::ZERO);
   Node *off  = phase->MakeConX(BytesPerLong);
   mem = new (phase->C, 4) StoreLNode(in(0),mem,adr,atp,zero);
-  con--;
-  while( con-- ) {
+  count--;
+  while( count-- ) {
     mem = phase->transform(mem);
     adr = phase->transform(new (phase->C, 4) AddPNode(base,adr,off));
     mem = new (phase->C, 4) StoreLNode(in(0),mem,adr,atp,zero);
@@ -1421,8 +1885,7 @@ Node* ClearArrayNode::clear_memory(Node* ctl, Node* mem, Node* dest,
   intptr_t offset = start_offset;
 
   int unit = BytesPerLong;
-
-  if (unit == BytesPerLong && (offset % BytesPerLong) != 0) {
+  if ((offset % unit) != 0) {
     Node* adr = new (C, 4) AddPNode(dest, dest, phase->MakeConX(offset));
     adr = phase->transform(adr);
     const TypePtr* atp = TypeRawPtr::BOTTOM;
@@ -1433,18 +1896,58 @@ Node* ClearArrayNode::clear_memory(Node* ctl, Node* mem, Node* dest,
   assert((offset % unit) == 0, "");
 
   // Initialize the remaining stuff, if any, with a ClearArray.
-  Node* zbase = phase->MakeConX(offset);
-  Node* zsize = phase->transform( new (C, 3) SubXNode(end_offset, zbase) );
-  Node* zinit = phase->zerocon((unit == BytesPerLong) ? T_LONG : T_INT);
+  return clear_memory(ctl, mem, dest, phase->MakeConX(offset), end_offset, phase);
+}
+
+Node* ClearArrayNode::clear_memory(Node* ctl, Node* mem, Node* dest,
+                                   Node* start_offset,
+                                   Node* end_offset,
+                                   PhaseGVN* phase) {
+  Compile* C = phase->C; 
+  int unit = BytesPerLong; 
+  Node* zbase = start_offset;
+  Node* zend  = end_offset;
 
   // Scale to the unit required by the CPU:
-  Node* shift = phase->intcon(exact_log2(unit));
-  zsize = phase->transform( new (C, 3) URShiftXNode(zsize, shift) );
+  if (!Matcher::init_array_count_is_in_bytes) {
+    Node* shift = phase->intcon(exact_log2(unit));
+    zbase = phase->transform( new(C,3) URShiftXNode(zbase, shift) );
+    zend  = phase->transform( new(C,3) URShiftXNode(zend,  shift) );
+  }
+
+  Node* zsize = phase->transform( new(C,3) SubXNode(zend, zbase) );
+  Node* zinit = phase->zerocon((unit == BytesPerLong) ? T_LONG : T_INT);
 
   // Bulk clear double-words
-  Node* adr = phase->transform( new (C, 4) AddPNode(dest, dest, zbase) );
+  Node* adr = phase->transform( new(C,4) AddPNode(dest, dest, start_offset) );
   mem = new (C, 4) ClearArrayNode(ctl, mem, zsize, adr);
   return phase->transform(mem);
+}
+
+Node* ClearArrayNode::clear_memory(Node* ctl, Node* mem, Node* dest,
+                                   intptr_t start_offset,
+                                   intptr_t end_offset,
+                                   PhaseGVN* phase) {
+  Compile* C = phase->C;
+  assert((end_offset % BytesPerInt) == 0, "odd end offset");
+  intptr_t done_offset = end_offset;
+  if ((done_offset % BytesPerLong) != 0) {
+    done_offset -= BytesPerInt;
+  }
+  if (done_offset > start_offset) {
+    mem = clear_memory(ctl, mem, dest,
+                       start_offset, phase->MakeConX(done_offset), phase);
+  }
+  if (done_offset < end_offset) { // emit the final 32-bit store
+    Node* adr = new (C, 4) AddPNode(dest, dest, phase->MakeConX(done_offset));
+    adr = phase->transform(adr);
+    const TypePtr* atp = TypeRawPtr::BOTTOM;
+    mem = StoreNode::make(C, ctl, mem, adr, atp, phase->zerocon(T_INT), T_INT);
+    mem = phase->transform(mem);
+    done_offset += BytesPerInt;
+  }
+  assert(done_offset == end_offset, "");
+  return mem;
 }
 
 //=============================================================================
@@ -1489,6 +1992,7 @@ MemBarNode* MemBarNode::make(Compile* C, int opcode, int atp, Node* pn) {
   case Op_MemBarRelease:   return new(C, len) MemBarReleaseNode(C,  atp, pn);
   case Op_MemBarVolatile:  return new(C, len) MemBarVolatileNode(C, atp, pn);
   case Op_MemBarCPUOrder:  return new(C, len) MemBarCPUOrderNode(C, atp, pn);
+  case Op_Initialize:      return new(C, len) InitializeNode(C,     atp, pn);
   default:                 ShouldNotReachHere(); return NULL;
   }
 }
@@ -1521,7 +2025,900 @@ Node *MemBarNode::match( const ProjNode *proj, const Matcher *m ) {
   return NULL;
 }
 
-//=============================================================================
+//===========================InitializeNode====================================
+// SUMMARY:
+// This node acts as a memory barrier on raw memory, after some raw stores.
+// The 'cooked' oop value feeds from the Initialize, not the Allocation.
+// The Initialize can 'capture' suitably constrained stores as raw inits.
+// It can coalesce related raw stores into larger units (called 'tiles').
+// It can avoid zeroing new storage for memory units which have raw inits.
+// At macro-expansion, it is marked 'complete', and does not optimize further.
+//
+// EXAMPLE:
+// The object 'new short[2]' occupies 16 bytes in a 32-bit machine.
+//   ctl = incoming control; mem* = incoming memory
+// (Note:  A star * on a memory edge denotes I/O and other standard edges.)
+// First allocate uninitialized memory and fill in the header:
+//   alloc = (Allocate ctl mem* 16 #short[].klass ...)
+//   ctl := alloc.Control; mem* := alloc.Memory*
+//   rawmem = alloc.Memory; rawoop = alloc.RawAddress
+// Then initialize to zero the non-header parts of the raw memory block:
+//   init = (Initialize alloc.Control alloc.Memory* alloc.RawAddress)
+//   ctl := init.Control; mem.SLICE(#short[*]) := init.Memory
+// After the initialize node executes, the object is ready for service:
+//   oop := (CheckCastPP init.Control alloc.RawAddress #short[])
+// Suppose its body is immediately initialized as {1,2}:
+//   store1 = (StoreC init.Control init.Memory (+ oop 12) 1)
+//   store2 = (StoreC init.Control store1      (+ oop 14) 2)
+//   mem.SLICE(#short[*]) := store2
+//
+// DETAILS:
+// An InitializeNode collects and isolates object initialization after
+// an AllocateNode and before the next possible safepoint.  As a
+// memory barrier (MemBarNode), it keeps critical stores from drifting
+// down past any safepoint or any publication of the allocation.
+// Before this barrier, a newly-allocated object may have uninitialized bits.
+// After this barrier, it may be treated as a real oop, and GC is allowed.
+//
+// The semantics of the InitializeNode include an implicit zeroing of
+// the new object from object header to the end of the object.
+// (The object header and end are determined by the AllocateNode.)
+//
+// Certain stores may be added as direct inputs to the InitializeNode.
+// These stores must update raw memory, and they must be to addresses
+// derived from the raw address produced by AllocateNode, and with
+// a constant offset.  They must be ordered by increasing offset.
+// The first one is at in(RawStores), the last at in(req()-1).
+// Unlike most memory operations, they are not linked in a chain,
+// but are displayed in parallel as users of the rawmem output of
+// the allocation.
+//
+// (See comments in InitializeNode::capture_store, which continue
+// the example given above.)
+//
+// When the associated Allocate is macro-expanded, the InitializeNode
+// may be rewritten to optimize collected stores.  A ClearArrayNode
+// may also be created at that point to represent any required zeroing.
+// The InitializeNode is then marked 'complete', prohibiting further
+// capturing of nearby memory operations.
+//
+// During macro-expansion, all captured initializations which store
+// constant values of 32 bits or smaller are coalesced (if advantagous)
+// into larger 'tiles' 32 or 64 bits.  This allows an object to be
+// initialized in fewer memory operations.  Memory words which are
+// covered by neither tiles nor non-constant stores are pre-zeroed
+// by explicit stores of zero.  (The code shape happens to do all
+// zeroing first, then all other stores, with both sequences occurring
+// in order of ascending offsets.)
+//
+// Alternatively, code may be inserted between an AllocateNode and its
+// InitializeNode, to perform arbitrary initialization of the new object.
+// E.g., the object copying intrinsics insert complex data transfers here.
+// The initialization must then be marked as 'complete' disable the
+// built-in zeroing semantics and the collection of initializing stores.
+//
+// While an InitializeNode is incomplete, reads from the memory state
+// produced by it are optimizable if they match the control edge and
+// new oop address associated with the allocation/initialization.
+// They return a stored value (if the offset matches) or else zero.
+// A write to the memory state, if it matches control and address,
+// and if it is to a constant offset, may be 'captured' by the
+// InitializeNode.  It is cloned as a raw memory operation and rewired
+// inside the initialization, to the raw oop produced by the allocation.
+// Operations on addresses which are provably distinct (e.g., to
+// other AllocateNodes) are allowed to bypass the initialization.
+//
+// The effect of all this is to consolidate object initialization
+// (both arrays and non-arrays, both piecewise and bulk) into a
+// single location, where it can be optimized as a unit.
+//
+// Only stores with an offset less than TrackedInitializationLimit words
+// will be considered for capture by an InitializeNode.  This puts a
+// reasonable limit on the complexity of optimized initializations.
+
+//---------------------------InitializeNode------------------------------------
+InitializeNode::InitializeNode(Compile* C, int adr_type, Node* rawoop)
+  : _is_complete(false),
+    MemBarNode(C, adr_type, rawoop)
+{
+  init_class_id(Class_Initialize);
+
+  assert(adr_type == Compile::AliasIdxRaw, "only valid atp");
+  assert(in(RawAddress) == rawoop, "proper init");
+  // Note:  allocation() can be NULL, for secondary initialization barriers
+}
+
+// Since this node is not matched, it will be processed by the
+// register allocator.  Declare that there are no constraints
+// on the allocation of the RawAddress edge.
+const RegMask &InitializeNode::in_RegMask(uint idx) const {
+  // This edge should be set to top, by the set_complete.  But be conservative.
+  if (idx == InitializeNode::RawAddress)
+    return *(Compile::current()->matcher()->idealreg2spillmask[in(idx)->ideal_reg()]);
+  return RegMask::Empty;
+}
+
+Node* InitializeNode::memory(uint alias_idx) {
+  Node* mem = in(Memory);
+  if (mem->is_MergeMem()) {
+    return mem->as_MergeMem()->memory_at(alias_idx);
+  } else {
+    // incoming raw memory is not split
+    return mem;
+  }
+}
+
+bool InitializeNode::is_non_zero() {
+  if (is_complete())  return false;
+  remove_extra_zeroes();
+  return (req() > RawStores);
+}
+
+void InitializeNode::set_complete(PhaseGVN* phase) {
+  assert(!is_complete(), "caller responsibility");
+  _is_complete = true;
+
+  // After this node is complete, it contains a bunch of
+  // raw-memory initializations.  There is no need for
+  // it to have anything to do with non-raw memory effects.
+  // Therefore, tell all non-raw users to re-optimize themselves,
+  // after skipping the memory effects of this initialization.
+  PhaseIterGVN* igvn = phase->is_IterGVN();
+  if (igvn)  igvn->add_users_to_worklist(this);
+}
+
+// convenience function
+// return false if the init contains any stores already
+bool AllocateNode::maybe_set_complete(PhaseGVN* phase) {
+  InitializeNode* init = initialization();
+  if (init == NULL || init->is_complete())  return false;
+  init->remove_extra_zeroes();
+  // for now, if this allocation has already collected any inits, bail:
+  if (init->is_non_zero())  return false;
+  init->set_complete(phase);
+  return true;
+}
+
+void InitializeNode::remove_extra_zeroes() {
+  if (req() == RawStores)  return;
+  Node* zmem = zero_memory();
+  uint fill = RawStores;
+  for (uint i = fill; i < req(); i++) {
+    Node* n = in(i);
+    if (n->is_top() || n == zmem)  continue;  // skip
+    if (fill < i)  set_req(fill, n);          // compact
+    ++fill;
+  }
+  // delete any empty spaces created:
+  while (fill < req()) {
+    del_req(fill);
+  }
+}
+
+// Helper for remembering which stores go with which offsets.
+intptr_t InitializeNode::get_store_offset(Node* st, PhaseTransform* phase) {
+  if (!st->is_Store())  return -1;  // can happen to dead code via subsume_node
+  intptr_t offset = -1;
+  Node* base = AddPNode::Ideal_base_and_offset(st->in(MemNode::Address),
+                                               phase, offset);
+  if (base == NULL)     return -1;  // something is dead,
+  if (offset < 0)       return -1;  //        dead, dead
+  return offset;
+}
+
+// Helper for proving that an initialization expression is
+// "simple enough" to be folded into an object initialization.
+// Attempts to prove that a store's initial value 'n' can be captured
+// within the initialization without creating a vicious cycle, such as:
+//     { Foo p = new Foo(); p.next = p; }
+// True for constants and parameters and small combinations thereof.
+bool InitializeNode::detect_init_independence(Node* n,
+                                              bool st_is_pinned,
+                                              int& count) {
+  if (n == NULL)      return true;   // (can this really happen?)
+  if (n->is_Proj())   n = n->in(0);
+  if (n == this)      return false;  // found a cycle
+  if (n->is_Con())    return true;
+  if (n->is_Start())  return true;   // params, etc., are OK
+  if (n->is_Root())   return true;   // even better
+
+  Node* ctl = n->in(0);
+  if (ctl != NULL && !ctl->is_top()) {
+    if (ctl->is_Proj())  ctl = ctl->in(0);
+    if (ctl == this)  return false;
+
+    // If we already know that the enclosing memory op is pinned right after
+    // the init, then any control flow that the store has picked up
+    // must have preceded the init, or else be equal to the init.
+    // Even after loop optimizations (which might change control edges)
+    // a store is never pinned *before* the availability of its inputs.
+    if (!MemNode::detect_dominating_control(ctl, this->in(0)))
+      return false;                  // failed to prove a good control
+
+  }
+
+  // Check data edges for possible dependencies on 'this'.
+  if ((count += 1) > 20)  return false;  // complexity limit
+  for (uint i = 1; i < n->req(); i++) {
+    Node* m = n->in(i);
+    if (m == NULL || m == n || m->is_top())  continue;
+    uint first_i = n->find_edge(m);
+    if (i != first_i)  continue;  // process duplicate edge just once
+    if (!detect_init_independence(m, st_is_pinned, count)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+// Here are all the checks a Store must pass before it can be moved into
+// an initialization.  Returns zero if a check fails.
+// On success, returns the (constant) offset to which the store applies,
+// within the initialized memory.
+intptr_t InitializeNode::can_capture_store(StoreNode* st, PhaseTransform* phase) {
+  const int FAIL = 0;
+  if (st->req() != MemNode::ValueIn + 1)
+    return FAIL;                // an inscrutable StoreNode (card mark?)
+  Node* ctl = st->in(MemNode::Control);
+  if (!(ctl != NULL && ctl->is_Proj() && ctl->in(0) == this))
+    return FAIL;                // must be unconditional after the initialization
+  Node* mem = st->in(MemNode::Memory);
+  if (!(mem->is_Proj() && mem->in(0) == this))
+    return FAIL;                // must not be preceded by other stores
+  Node* adr = st->in(MemNode::Address);
+  intptr_t offset;
+  AllocateNode* alloc = AllocateNode::Ideal_allocation(adr, phase, offset);
+  if (alloc == NULL)
+    return FAIL;                // inscrutable address
+  if (alloc != allocation())
+    return FAIL;                // wrong allocation!  (store needs to float up)
+  Node* val = st->in(MemNode::ValueIn);
+  int complexity_count = 0;
+  if (!detect_init_independence(val, true, complexity_count))
+    return FAIL;                // stored value must be 'simple enough'
+
+  return offset;                // success
+}
+
+// Find the captured store in(i) which corresponds to the range
+// [start..start+size) in the initialized object.
+// If there is one, return its index i.  If there isn't, return the
+// negative of the index where it should be inserted.
+// Return 0 if the queried range overlaps an initialization boundary
+// or if dead code is encountered.
+// If size_in_bytes is zero, do not bother with overlap checks.
+int InitializeNode::captured_store_insertion_point(intptr_t start,
+                                                   int size_in_bytes,
+                                                   PhaseTransform* phase) {
+  const int FAIL = 0, MAX_STORE = BytesPerLong;
+
+  if (is_complete())
+    return FAIL;                // arraycopy got here first; punt
+
+  assert(allocation() != NULL, "must be present");
+
+  // no negatives, no header fields:
+  if (start < (intptr_t) sizeof(oopDesc))  return FAIL;
+  if (start < (intptr_t) sizeof(arrayOopDesc) &&
+      start < (intptr_t) allocation()->minimum_header_size())  return FAIL;
+
+  // after a certain size, we bail out on tracking all the stores:
+  intptr_t ti_limit = (TrackedInitializationLimit * HeapWordSize);
+  if (start >= ti_limit)  return FAIL;
+
+  for (uint i = InitializeNode::RawStores, limit = req(); ; ) {
+    if (i >= limit)  return -(int)i; // not found; here is where to put it
+
+    Node*    st     = in(i);
+    intptr_t st_off = get_store_offset(st, phase);
+    if (st_off < 0) {
+      if (st != zero_memory()) {
+        return FAIL;            // bail out if there is dead garbage
+      }
+    } else if (st_off > start) {
+      // ...we are done, since stores are ordered
+      if (st_off < start + size_in_bytes) {
+        return FAIL;            // the next store overlaps
+      }
+      return -(int)i;           // not found; here is where to put it
+    } else if (st_off < start) {
+      if (size_in_bytes != 0 &&
+          start < st_off + MAX_STORE &&
+          start < st_off + st->as_Store()->memory_size()) {
+        return FAIL;            // the previous store overlaps
+      }
+    } else {
+      if (size_in_bytes != 0 &&
+          st->as_Store()->memory_size() != size_in_bytes) {
+        return FAIL;            // mismatched store size
+      }
+      return i;
+    }
+
+    ++i;
+  }
+}
+
+// Look for a captured store which initializes at the offset 'start'
+// with the given size.  If there is no such store, and no other
+// initialization interferes, then return zero_memory (the memory
+// projection of the AllocateNode).
+Node* InitializeNode::find_captured_store(intptr_t start, int size_in_bytes,
+                                          PhaseTransform* phase) {
+  assert(stores_are_sane(phase), "");
+  int i = captured_store_insertion_point(start, size_in_bytes, phase);
+  if (i == 0) {
+    return NULL;                // something is dead
+  } else if (i < 0) {
+    return zero_memory();       // just primordial zero bits here
+  } else {
+    Node* st = in(i);           // here is the store at this position
+    assert(get_store_offset(st->as_Store(), phase) == start, "sanity");
+    return st; 
+  }
+}
+
+// Create, as a raw pointer, an address within my new object at 'offset'.
+Node* InitializeNode::make_raw_address(intptr_t offset,
+                                       PhaseTransform* phase) {
+  Node* addr = in(RawAddress);
+  if (offset != 0) {
+    Compile* C = phase->C;
+    addr = phase->transform( new (C, 4) AddPNode(C->top(), addr,
+                                                 phase->MakeConX(offset)) );
+  }
+  return addr;
+}
+
+// Clone the given store, converting it into a raw store
+// initializing a field or element of my new object.
+// Caller is responsible for retiring the original store,
+// with subsume_node or the like.
+//
+// From the example above InitializeNode::InitializeNode,
+// here are the old stores to be captured:
+//   store1 = (StoreC init.Control init.Memory (+ oop 12) 1)
+//   store2 = (StoreC init.Control store1      (+ oop 14) 2)
+//
+// Here is the changed code; note the extra edges on init:
+//   alloc = (Allocate ...)
+//   rawoop = alloc.RawAddress
+//   rawstore1 = (StoreC alloc.Control alloc.Memory (+ rawoop 12) 1)
+//   rawstore2 = (StoreC alloc.Control alloc.Memory (+ rawoop 14) 2)
+//   init = (Initialize alloc.Control alloc.Memory rawoop
+//                      rawstore1 rawstore2)
+//
+Node* InitializeNode::capture_store(StoreNode* st, intptr_t start,
+                                    PhaseTransform* phase) {
+  assert(stores_are_sane(phase), "");
+
+  if (start < 0)  return NULL;
+  assert(can_capture_store(st, phase) == start, "sanity");
+
+  Compile* C = phase->C;
+  int size_in_bytes = st->memory_size();
+  int i = captured_store_insertion_point(start, size_in_bytes, phase);
+  if (i == 0)  return NULL;     // bail out
+  Node* prev_mem = NULL;        // raw memory for the captured store
+  if (i > 0) {
+    prev_mem = in(i);           // there is a pre-existing store under this one
+    set_req(i, C->top());       // temporarily disconnect it
+    // See StoreNode::Ideal 'st->outcnt() == 1' for the reason to disconnect.
+  } else {
+    i = -i;                     // no pre-existing store
+    prev_mem = zero_memory();   // a slice of the newly allocated object
+    if (i > InitializeNode::RawStores && in(i-1) == prev_mem)
+      set_req(--i, C->top());   // reuse this edge; it has been folded away
+    else
+      ins_req(i, C->top());     // build a new edge
+  }
+  Node* new_st = st->clone();
+  new_st->set_req(MemNode::Control, in(Control));
+  new_st->set_req(MemNode::Memory,  prev_mem);
+  new_st->set_req(MemNode::Address, make_raw_address(start, phase));
+  new_st = phase->transform(new_st);
+
+  // At this point, new_st might have swallowed a pre-existing store
+  // at the same offset, or perhaps new_st might have disappeared,
+  // if it redundantly stored the same value (or zero to fresh memory).
+
+  // In any case, wire it in:
+  set_req(i, new_st);
+
+  // The caller may now kill the old guy.
+  DEBUG_ONLY(Node* check_st = find_captured_store(start, size_in_bytes, phase));
+  assert(check_st == new_st || check_st == NULL, "must be findable");
+  assert(!is_complete(), "");
+  return new_st;
+}
+
+static bool store_constant(jlong* tiles, int num_tiles,
+                           intptr_t st_off, int st_size,
+                           jlong con) {
+  if ((st_off & (st_size-1)) != 0)
+    return false;               // strange store offset (assume size==2**N)
+  address addr = (address)tiles + st_off;
+  assert(st_off >= 0 && addr+st_size <= (address)&tiles[num_tiles], "oob");
+  switch (st_size) {
+  case sizeof(jbyte):  *(jbyte*) addr = (jbyte) con; break;
+  case sizeof(jchar):  *(jchar*) addr = (jchar) con; break;
+  case sizeof(jint):   *(jint*)  addr = (jint)  con; break;
+  case sizeof(jlong):  *(jlong*) addr = (jlong) con; break;
+  default: return false;        // strange store size (detect size!=2**N here)
+  }
+  return true;                  // return success to caller
+}
+
+// Coalesce subword constants into int constants and possibly
+// into long constants.  The goal, if the CPU permits,
+// is to initialize the object with a small number of 64-bit tiles.
+// Also, convert floating-point constants to bit patterns.
+// Non-constants are not relevant to this pass.
+//
+// In terms of the running example on InitializeNode::InitializeNode
+// and InitializeNode::capture_store, here is the transformation
+// of rawstore1 and rawstore2 into rawstore12:
+//   alloc = (Allocate ...)
+//   rawoop = alloc.RawAddress
+//   tile12 = 0x00010002
+//   rawstore12 = (StoreI alloc.Control alloc.Memory (+ rawoop 12) tile12)
+//   init = (Initialize alloc.Control alloc.Memory rawoop rawstore12)
+//
+void
+InitializeNode::coalesce_subword_stores(intptr_t header_size,
+                                        Node* size_in_bytes,
+                                        PhaseGVN* phase) {
+  Compile* C = phase->C;
+
+  assert(stores_are_sane(phase), "");
+  // Note:  After this pass, they are not completely sane,
+  // since there may be some overlaps.
+
+  int old_subword = 0, old_long = 0, new_int = 0, new_long = 0;
+
+  intptr_t ti_limit = (TrackedInitializationLimit * HeapWordSize);
+  intptr_t size_limit = phase->find_intptr_t_con(size_in_bytes, ti_limit);
+  size_limit = MIN2(size_limit, ti_limit);
+  size_limit = align_size_up(size_limit, BytesPerLong);
+  int num_tiles = size_limit / BytesPerLong;
+
+  // allocate space for the tile map:
+  const int small_len = DEBUG_ONLY(true ? 3 :) 30; // keep stack frames small
+  jlong  tiles_buf[small_len];
+  Node*  nodes_buf[small_len];
+  jlong  inits_buf[small_len];
+  jlong* tiles = ((num_tiles <= small_len) ? &tiles_buf[0]
+                  : NEW_RESOURCE_ARRAY(jlong, num_tiles));
+  Node** nodes = ((num_tiles <= small_len) ? &nodes_buf[0]
+                  : NEW_RESOURCE_ARRAY(Node*, num_tiles));
+  jlong* inits = ((num_tiles <= small_len) ? &inits_buf[0]
+                  : NEW_RESOURCE_ARRAY(jlong, num_tiles));
+  // tiles: exact bitwise model of all primitive constants
+  // nodes: last constant-storing node subsumed into the tiles model
+  // inits: which bytes (in each tile) are touched by any initializations
+
+  //// Pass A: Fill in the tile model with any relevant stores.
+
+  Copy::zero_to_bytes(tiles, sizeof(tiles[0]) * num_tiles);
+  Copy::zero_to_bytes(nodes, sizeof(nodes[0]) * num_tiles);
+  Copy::zero_to_bytes(inits, sizeof(inits[0]) * num_tiles);
+  Node* zmem = zero_memory(); // initially zero memory state
+  for (uint i = InitializeNode::RawStores, limit = req(); i < limit; i++) {
+    Node* st = in(i);
+    intptr_t st_off = get_store_offset(st, phase);
+
+    // Figure out the store's offset and constant value:
+    if (st_off < header_size)             continue; //skip (ignore header)
+    if (st->in(MemNode::Memory) != zmem)  continue; //skip (odd store chain)
+    int st_size = st->as_Store()->memory_size();
+    if (st_off + st_size > size_limit)    break;
+
+    // Record which bytes are touched, whether by constant or not.
+    if (!store_constant(inits, num_tiles, st_off, st_size, (jlong) -1))
+      continue;                 // skip (strange store size)
+
+    const Type* val = phase->type(st->in(MemNode::ValueIn));
+    if (!val->singleton())                continue; //skip (non-con store)
+    BasicType type = val->basic_type();
+
+    jlong con = 0;
+    switch (type) {
+    case T_INT:    con = val->is_int()->get_con();  break;
+    case T_LONG:   con = val->is_long()->get_con(); break;
+    case T_FLOAT:  con = jint_cast(val->getf());    break;
+    case T_DOUBLE: con = jlong_cast(val->getd());   break;
+    default:                              continue; //skip (odd store type)
+    }
+
+    if (type == T_LONG && Matcher::isSimpleConstant64(con) &&
+        st->Opcode() == Op_StoreL) {
+      continue;                 // This StoreL is already optimal.
+    }
+
+    // Store down the constant.
+    store_constant(tiles, num_tiles, st_off, st_size, con);
+
+    intptr_t j = st_off >> LogBytesPerLong;
+
+    if (type == T_INT && st_size == BytesPerInt
+        && (st_off & BytesPerInt) == BytesPerInt) {
+      jlong lcon = tiles[j];
+      if (!Matcher::isSimpleConstant64(lcon) &&
+          st->Opcode() == Op_StoreI) {
+        // This StoreI is already optimal by itself.
+        jint* intcon = (jint*) &tiles[j];
+        intcon[1] = 0;  // undo the store_constant()
+
+        // If the previous store is also optimal by itself, back up and
+        // undo the action of the previous loop iteration... if we can.
+        // But if we can't, just let the previous half take care of itself.
+        st = nodes[j];
+        st_off -= BytesPerInt;
+        con = intcon[0];
+        if (con != 0 && st != NULL && st->Opcode() == Op_StoreI) {
+          assert(st_off >= header_size, "still ignoring header");
+          assert(get_store_offset(st, phase) == st_off, "must be");
+          assert(in(i-1) == zmem, "must be");
+          DEBUG_ONLY(const Type* tcon = phase->type(st->in(MemNode::ValueIn)));
+          assert(con == tcon->is_int()->get_con(), "must be");
+          // Undo the effects of the previous loop trip, which swallowed st:
+          intcon[0] = 0;        // undo store_constant()
+          set_req(i-1, st);     // undo set_req(i, zmem)
+          nodes[j] = NULL;      // undo nodes[j] = st
+          --old_subword;        // undo ++old_subword
+        }
+        continue;               // This StoreI is already optimal.
+      }
+    }
+
+    // This store is not needed.
+    set_req(i, zmem);
+    nodes[j] = st;              // record for the moment
+    if (st_size < BytesPerLong) // something has changed
+          ++old_subword;        // includes int/float, but who's counting...
+    else  ++old_long;
+  }
+
+  if ((old_subword + old_long) == 0)
+    return;                     // nothing more to do
+
+  //// Pass B: Convert any non-zero tiles into optimal constant stores.
+  // Be sure to insert them before overlapping non-constant stores.
+  // (E.g., byte[] x = { 1,2,y,4 }  =>  x[int 0] = 0x01020004, x[2]=y.)
+  for (int j = 0; j < num_tiles; j++) {
+    jlong con  = tiles[j];
+    jlong init = inits[j];
+    if (con == 0)  continue;
+    jint con0,  con1;           // split the constant, address-wise
+    jint init0, init1;          // split the init map, address-wise
+    { union { jlong con; jint intcon[2]; } u;
+      u.con = con;
+      con0  = u.intcon[0];
+      con1  = u.intcon[1];
+      u.con = init;
+      init0 = u.intcon[0];
+      init1 = u.intcon[1];
+    }
+
+    Node* old = nodes[j];
+    assert(old != NULL, "need the prior store");
+    intptr_t offset = (j * BytesPerLong);
+
+    bool split = !Matcher::isSimpleConstant64(con);
+
+    if (offset < header_size) {
+      assert(offset + BytesPerInt >= header_size, "second int counts");
+      assert(*(jint*)&tiles[j] == 0, "junk in header");
+      split = true;             // only the second word counts
+      // Example:  int a[] = { 42 ... }
+    } else if (con0 == 0 && init0 == -1) {
+      split = true;             // first word is covered by full inits
+      // Example:  int a[] = { ... foo(), 42 ... }
+    } else if (con1 == 0 && init1 == -1) {
+      split = true;             // second word is covered by full inits
+      // Example:  int a[] = { ... 42, foo() ... }
+    }
+
+    // Here's a case where init0 is neither 0 nor -1:
+    //   byte a[] = { ... 0,0,foo(),0,  0,0,0,42 ... }
+    // Assuming big-endian memory, init0, init1 are 0x0000FF00, 0x000000FF.
+    // In this case the tile is not split; it is (jlong)42.
+    // The big tile is stored down, and then the foo() value is inserted.
+    // (If there were foo(),foo() instead of foo(),0, init0 would be -1.)
+
+    Node* ctl = old->in(MemNode::Control);
+    Node* adr = make_raw_address(offset, phase);
+    const TypePtr* atp = TypeRawPtr::BOTTOM;
+
+    // One or two coalesced stores to plop down.
+    Node*    st[2];
+    intptr_t off[2];
+    int  nst = 0;
+    if (!split) {
+      ++new_long;
+      off[nst] = offset;
+      st[nst++] = StoreNode::make(C, ctl, zmem, adr, atp,
+                                  phase->longcon(con), T_LONG);
+    } else {
+      // Omit either if it is a zero.
+      if (con0 != 0) {
+        ++new_int;
+        off[nst]  = offset;
+        st[nst++] = StoreNode::make(C, ctl, zmem, adr, atp,
+                                    phase->intcon(con0), T_INT);
+      }
+      if (con1 != 0) {
+        ++new_int;
+        offset += BytesPerInt;
+        adr = make_raw_address(offset, phase);
+        off[nst]  = offset;
+        st[nst++] = StoreNode::make(C, ctl, zmem, adr, atp,
+                                    phase->intcon(con1), T_INT);
+      }
+    }
+
+    // Insert second store first, then the first before the second.
+    // Insert each one just before any overlapping non-constant stores.
+    while (nst > 0) {
+      Node* st1 = st[--nst];
+      C->copy_node_notes_to(st1, old);
+      st1 = phase->transform(st1);
+      offset = off[nst];
+      assert(offset >= header_size, "do not smash header");
+      int ins_idx = captured_store_insertion_point(offset, /*size:*/0, phase);
+      guarantee(ins_idx != 0, "must re-insert constant store");
+      if (ins_idx < 0)  ins_idx = -ins_idx;  // never overlap
+      if (ins_idx > InitializeNode::RawStores && in(ins_idx-1) == zmem)
+        set_req(--ins_idx, st1);
+      else
+        ins_req(ins_idx, st1);
+    }
+  }
+
+  if (PrintCompilation && WizardMode)
+    tty->print_cr("Changed %d/%d subword/long constants into %d/%d int/long",
+                  old_subword, old_long, new_int, new_long);
+  if (C->log() != NULL)
+    C->log()->elem("comment that='%d/%d subword/long to %d/%d int/long'",
+                   old_subword, old_long, new_int, new_long);
+
+  // Clean up any remaining occurrences of zmem:
+  remove_extra_zeroes();
+}
+
+// Explore forward from in(start) to find the first fully initialized
+// word, and return its offset.  Skip groups of subword stores which
+// together initialize full words.  If in(start) is itself part of a
+// fully initialized word, return the offset of in(start).  If there
+// are no following full-word stores, or if something is fishy, return
+// a negative value.
+intptr_t InitializeNode::find_next_fullword_store(uint start, PhaseGVN* phase) {
+  int       int_map = 0;
+  intptr_t  int_map_off = 0;
+  const int FULL_MAP = right_n_bits(BytesPerInt);  // the int_map we hope for
+
+  for (uint i = start, limit = req(); i < limit; i++) {
+    Node* st = in(i);
+
+    intptr_t st_off = get_store_offset(st, phase);
+    if (st_off < 0)  break;  // return conservative answer
+
+    int st_size = st->as_Store()->memory_size();
+    if (st_size >= BytesPerInt && (st_off % BytesPerInt) == 0) {
+      return st_off;            // we found a complete word init
+    }
+
+    // update the map:
+
+    intptr_t this_int_off = align_size_down(st_off, BytesPerInt);
+    if (this_int_off != int_map_off) {
+      // reset the map:
+      int_map = 0;
+      int_map_off = this_int_off;
+    }
+
+    int subword_off = st_off - this_int_off;
+    int_map |= right_n_bits(st_size) << subword_off;
+    if ((int_map & FULL_MAP) == FULL_MAP) {
+      return this_int_off;      // we found a complete word init
+    }
+
+    // Did this store hit or cross the word boundary?
+    intptr_t next_int_off = align_size_down(st_off + st_size, BytesPerInt);
+    if (next_int_off == this_int_off + BytesPerInt) {
+      // We passed the current int, without fully initializing it.
+      int_map_off = next_int_off;
+      int_map >>= BytesPerInt;
+    } else if (next_int_off > this_int_off + BytesPerInt) {
+      // We passed the current and next int.
+      return this_int_off + BytesPerInt;
+    }
+  }
+
+  return -1;
+}
+
+
+// Called when the associated AllocateNode is expanded into CFG.
+// At this point, we may perform additional optimizations.
+// Linearize the stores by ascending offset, to make memory
+// activity as coherent as possible.
+Node* InitializeNode::complete_stores(Node* rawctl, Node* rawmem, Node* rawptr,
+                                      intptr_t header_size,
+                                      Node* size_in_bytes,
+                                      PhaseGVN* phase) {
+  assert(!is_complete(), "not already complete");
+  assert(stores_are_sane(phase), "");
+  assert(allocation() != NULL, "must be present");
+
+  remove_extra_zeroes();
+
+  if (ReduceFieldZeroing || ReduceBulkZeroing)
+    // reduce instruction count for common initialization patterns
+    coalesce_subword_stores(header_size, size_in_bytes, phase);
+
+  Node* zmem = zero_memory();   // initially zero memory state
+  Node* inits = zmem;           // accumulating a linearized chain of inits
+  #ifdef ASSERT
+  intptr_t last_init_off = sizeof(oopDesc);  // previous init offset
+  intptr_t last_init_end = sizeof(oopDesc);  // previous init offset+size
+  intptr_t last_tile_end = sizeof(oopDesc);  // previous tile offset+size
+  #endif
+  intptr_t zeroes_done = header_size;
+
+  bool do_zeroing = true;       // we might give up if inits are very sparse
+  int  big_init_gaps = 0;       // how many large gaps have we seen?
+
+  if (ZeroTLAB)  do_zeroing = false;
+  if (!ReduceFieldZeroing && !ReduceBulkZeroing)  do_zeroing = false;
+
+  for (uint i = InitializeNode::RawStores, limit = req(); i < limit; i++) {
+    Node* st = in(i);
+    intptr_t st_off = get_store_offset(st, phase);
+    if (st_off < 0)
+      break;                    // unknown junk in the inits
+    if (st->in(MemNode::Memory) != zmem)
+      break;                    // complicated store chains somehow in list
+
+    int st_size = st->as_Store()->memory_size();
+    intptr_t next_init_off = st_off + st_size;
+
+    if (do_zeroing && zeroes_done < next_init_off) {
+      // See if this store needs a zero before it or under it.
+      intptr_t zeroes_needed = st_off;
+
+      if (st_size < BytesPerInt) {
+        // Look for subword stores which only partially initialize words.
+        // If we find some, we must lay down some word-level zeroes first,
+        // underneath the subword stores.
+        //
+        // Examples:
+        //   byte[] a = { p,q,r,s }  =>  a[0]=p,a[1]=q,a[2]=r,a[3]=s
+        //   byte[] a = { x,y,0,0 }  =>  a[0..3] = 0, a[0]=x,a[1]=y
+        //   byte[] a = { 0,0,z,0 }  =>  a[0..3] = 0, a[2]=z
+        //
+        // Note:  coalesce_subword_stores may have already done this,
+        // if it was prompted by constant non-zero subword initializers.
+        // But this case can still arise with non-constant stores.
+
+        intptr_t next_full_store = find_next_fullword_store(i, phase);
+
+        // In the examples above:
+        //   in(i)          p   q   r   s     x   y     z
+        //   st_off        12  13  14  15    12  13    14
+        //   st_size        1   1   1   1     1   1     1
+        //   next_full_s.  12  16  16  16    16  16    16
+        //   z's_done      12  16  16  16    12  16    12
+        //   z's_needed    12  16  16  16    16  16    16
+        //   zsize          0   0   0   0     4   0     4
+        if (next_full_store < 0) {
+          // Conservative tack:  Zero to end of current word.
+          zeroes_needed = align_size_up(zeroes_needed, BytesPerInt);
+        } else {
+          // Zero to beginning of next fully initialized word.
+          // Or, don't zero at all, if we are already in that word.
+          assert(next_full_store >= zeroes_needed, "must go forward");
+          assert((next_full_store & (BytesPerInt-1)) == 0, "even boundary");
+          zeroes_needed = next_full_store;
+        }
+      }
+
+      if (zeroes_needed > zeroes_done) {
+        intptr_t zsize = zeroes_needed - zeroes_done;
+        // Do some incremental zeroing on rawmem, in parallel with inits.
+        zeroes_done = align_size_down(zeroes_done, BytesPerInt);
+        rawmem = ClearArrayNode::clear_memory(rawctl, rawmem, rawptr,
+                                              zeroes_done, zeroes_needed,
+                                              phase);
+        zeroes_done = zeroes_needed;
+        if (zsize > Matcher::init_array_short_size && ++big_init_gaps > 2)
+          do_zeroing = false;   // leave the hole, next time
+      }
+    }
+
+    // Collect the store and move on:
+    st->set_req(MemNode::Memory, inits);
+    inits = st;                 // put it on the linearized chain
+    set_req(i, zmem);           // unhook from previous position
+
+    if (zeroes_done == st_off)
+      zeroes_done = next_init_off;
+
+    assert(!do_zeroing || zeroes_done >= next_init_off, "don't miss any");
+
+    #ifdef ASSERT
+    // Various order invariants.  Weaker than stores_are_sane because
+    // a large constant tile can be filled in by smaller non-constant stores.
+    assert(st_off >= last_init_off, "inits do not reverse");
+    last_init_off = st_off;
+    const Type* val = NULL;
+    if (st_size >= BytesPerInt && 
+        (val = phase->type(st->in(MemNode::ValueIn)))->singleton() &&
+        (int)val->basic_type() < (int)T_OBJECT) {
+      assert(st_off >= last_tile_end, "tiles do not overlap");
+      assert(st_off >= last_init_end, "tiles do not overwrite inits");
+      last_tile_end = MAX2(last_tile_end, next_init_off);
+    } else {
+      intptr_t st_tile_end = align_size_up(next_init_off, BytesPerLong);
+      assert(st_tile_end >= last_tile_end, "inits stay with tiles");
+      assert(st_off      >= last_init_end, "inits do not overlap");
+      last_init_end = next_init_off;  // it's a non-tile
+    }
+    #endif //ASSERT
+  }
+
+  remove_extra_zeroes();        // clear out all the zmems left over
+  add_req(inits);
+
+  if (!ZeroTLAB) {
+    // If anything remains to be zeroed, zero it all now.
+    zeroes_done = align_size_down(zeroes_done, BytesPerInt);
+    // if it is the last unused 4 bytes of an instance, forget about it
+    intptr_t size_limit = phase->find_intptr_t_con(size_in_bytes, max_jint);
+    if (zeroes_done + BytesPerLong >= size_limit) {
+      assert(allocation() != NULL, "");
+      Node* klass_node = allocation()->in(AllocateNode::KlassNode);
+      ciKlass* k = phase->type(klass_node)->is_klassptr()->klass();
+      if (zeroes_done == k->layout_helper())
+        zeroes_done = size_limit;
+    }
+    if (zeroes_done < size_limit) {
+      rawmem = ClearArrayNode::clear_memory(rawctl, rawmem, rawptr,
+                                            zeroes_done, size_in_bytes, phase);
+    }
+  }
+
+  set_complete(phase);
+  return rawmem;
+}
+
+
+#ifdef ASSERT
+bool InitializeNode::stores_are_sane(PhaseTransform* phase) {
+  if (is_complete())
+    return true;                // stores could be anything at this point
+  intptr_t last_off = sizeof(oopDesc);
+  for (uint i = InitializeNode::RawStores; i < req(); i++) {
+    Node* st = in(i);
+    intptr_t st_off = get_store_offset(st, phase);
+    if (st_off < 0)  continue;  // ignore dead garbage
+    if (last_off > st_off) {
+      tty->print_cr("*** bad store offset at %d: %d > %d", i, last_off, st_off);
+      this->dump(2);
+      assert(false, "ascending store offsets");
+      return false;
+    }
+    last_off = st_off + st->as_Store()->memory_size();
+  }
+  return true;
+}
+#endif //ASSERT
+
+
+
+
+//============================MergeMemNode=====================================
 // 
 // SEMANTICS OF MEMORY MERGES:  A MergeMem is a memory state assembled from several
 // contributing store or call operations.  Each contributor provides the memory
@@ -1880,16 +3277,16 @@ const RegMask &MergeMemNode::out_RegMask() const {
 
 //------------------------------dump_spec--------------------------------------
 #ifndef PRODUCT
-void MergeMemNode::dump_spec() const {
-  tty->print(" {");
+void MergeMemNode::dump_spec(outputStream *st) const {
+  st->print(" {");
   Node* base_mem = base_memory();
   for( uint i = Compile::AliasIdxRaw; i < req(); i++ ) {
     Node* mem = memory_at(i);
-    if (mem == base_mem) { tty->print(" -"); continue; }
-    tty->print( " N%d:", mem->_idx );
-    Compile::current()->get_adr_type(i)->dump();
+    if (mem == base_mem) { st->print(" -"); continue; }
+    st->print( " N%d:", mem->_idx );
+    Compile::current()->get_adr_type(i)->dump_on(st);
   }
-  tty->print(" }");
+  st->print(" }");
 }
 #endif // !PRODUCT
 

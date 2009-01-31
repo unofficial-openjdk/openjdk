@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)perfMemory_solaris.cpp	1.30 07/05/05 17:04:43 JVM"
+#pragma ident "@(#)perfMemory_solaris.cpp	1.31 07/09/13 11:29:50 JVM"
 #endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -979,7 +979,7 @@ void PerfMemory::delete_memory_region() {
   // to the specified file name no matter whether PerfDataSaveToFile is specified
   // or not. In other word, -XX:PerfDataSaveFile=.. overrides flag 
   // -XX:+PerfDataSaveToFile.
-  if (PerfDataSaveToFile || PerfDataSaveFile[0] != '\0') {
+  if (PerfDataSaveToFile || PerfDataSaveFile != NULL) {
     save_memory_to_file(start(), capacity());
   }
 

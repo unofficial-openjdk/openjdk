@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)os_solaris.cpp	1.395 07/05/05 17:04:41 JVM"
+#pragma ident "@(#)os_solaris.cpp	1.402 07/10/04 10:49:26 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -36,6 +36,7 @@
 # include <pthread.h>
 # include <pwd.h>
 # include <schedctl.h>
+# include <setjmp.h>
 # include <signal.h>
 # include <stdio.h>
 # include <alloca.h>
@@ -55,6 +56,7 @@
 # include <sys/time.h>
 # include <sys/times.h>
 # include <sys/types.h>
+# include <sys/wait.h>
 # include <sys/utsname.h>
 # include <thread.h>
 # include <unistd.h>
@@ -946,26 +948,6 @@ bool os::Solaris::valid_stack_address(Thread* thread, address sp) {
   return false;
 }
 
-#ifndef PRODUCT
-void os::Solaris::Event::verify() {
-  guarantee(!Universe::is_fully_initialized() ||
-	    !Universe::heap()->is_in_reserved(this),
-	    "Event must be in C heap only.");
-}
-
-void os::Solaris::OSMutex::verify() {
-  guarantee(!Universe::is_fully_initialized() ||
-            !Universe::heap()->is_in_reserved(oop(this)),
-	    "OSMutex must be in C heap only.");
-}
-
-void os::Solaris::OSMutex::verify_locked() {
-  int my_id = thr_self();
-  assert(_is_owned, "OSMutex should be locked");
-  assert(_owner == my_id, "OSMutex should be locked by me");
-}
-#endif
-
 extern "C" void breakpoint() {
   // use debugger to set breakpoint here
 }
@@ -974,7 +956,7 @@ extern "C" void breakpoint() {
 // point into the calling threads stack, and be no lower than the current stack 
 // pointer.
 address os::current_stack_pointer() {
-  int dummy;
+  volatile int dummy;
   address sp = (address)&dummy + 8;	// %%%% need to confirm if this is right
   return sp;
 }
@@ -997,6 +979,7 @@ extern "C" void* java_start(void* thread_addr) {
   OSThread* osthr = thread->osthread();
 
   osthr->set_lwp_id( _lwp_self() );  // Store lwp in case we are bound
+  thread->_schedctl = (void *) schedctl_init () ; 
 
   if (UseNUMA) {
     int lgrp_id = os::numa_get_group_id();
@@ -1051,6 +1034,7 @@ static OSThread* create_os_thread(Thread* thread, thread_t thread_id) {
   // Store info on the Solaris thread into the OSThread
   osthread->set_thread_id(thread_id);
   osthread->set_lwp_id(_lwp_self());
+  thread->_schedctl = (void *) schedctl_init () ; 
 
   if (UseNUMA) {
     int lgrp_id = os::numa_get_group_id();
@@ -2560,6 +2544,10 @@ int os::signal_wait() {
 
 static int page_size = -1;
 
+// The mmap MAP_ALIGN flag is supported on Solaris 9 and later.  init_2() will
+// clear this var if support is not available.
+static bool has_map_align = true;
+
 int os::vm_page_size() {
   assert(page_size != -1, "must call os::init");
   return page_size;
@@ -2800,15 +2788,18 @@ char* os::Solaris::mmap_chunk(char *addr, size_t size, int flags, int prot) {
   return b;
 }
 
-char* os::reserve_memory(size_t bytes, char* requested_addr) {
+char*
+os::reserve_memory(size_t bytes, char* requested_addr, size_t alignment_hint) {
   char* addr = NULL;
   int   flags;
 
+  flags = MAP_PRIVATE | MAP_NORESERVE;
   if (requested_addr != NULL) {
-      flags = MAP_FIXED | MAP_PRIVATE | MAP_NORESERVE;
+      flags |= MAP_FIXED;
       addr = requested_addr;
-  } else {
-      flags = MAP_PRIVATE | MAP_NORESERVE;
+  } else if (has_map_align && alignment_hint > (size_t) vm_page_size()) {
+    flags |= MAP_ALIGN;
+    addr = (char*) alignment_hint;
   }
 
   // Map uncommitted pages PROT_NONE so we fail early if we touch an
@@ -2993,86 +2984,72 @@ bool os::Solaris::ism_sanity_check(bool warn, size_t * page_size) {
   return true;
 }
 
+// Insertion sort for small arrays (descending order).
+static void insertion_sort_descending(size_t* array, int len) {
+  for (int i = 0; i < len; i++) {
+    size_t val = array[i];
+    for (size_t key = i; key > 0 && array[key - 1] < val; --key) {
+      size_t tmp = array[key];
+      array[key] = array[key - 1];
+      array[key - 1] = tmp;
+    }
+  }
+}
+
 bool os::Solaris::mpss_sanity_check(bool warn, size_t * page_size) {
-  getpagesizes_func_type f = CAST_TO_FN_PTR(getpagesizes_func_type,
-                                            dlsym(RTLD_DEFAULT, "getpagesizes"));
-  if (f == NULL) {
+  getpagesizes_func_type getpagesizes_func =
+    CAST_TO_FN_PTR(getpagesizes_func_type, dlsym(RTLD_DEFAULT, "getpagesizes"));
+  if (getpagesizes_func == NULL) {
     if (warn) {
       warning("MPSS is not supported by the operating system.");
     }
     return false;
   }
 
-  int nelem = f(NULL, 0);
-  assert(nelem > 0, "Solaris bug?");
-
-  size_t *pagesizes = NEW_C_HEAP_ARRAY(size_t, nelem);
-  int n = f(pagesizes, nelem);
-  assert(n == nelem, "Solaris bug?");
-
-  int i;
-  size_t largest = 0;
-  for (i = 0; i < n; i++) {
-    // Limit large page size to a maximum of 4mb on solaris.
-    //
-    // On sparc, a request which cannot be satisfied (likely if the
-    // system has been up awhile and physical memory fragmentation
-    // has occurred) will silently revert to to 8kb, resulting in
-    // performance-robbing TLB behavior.  On x86 and x64, it'll
-    // revert to 4kb, which is worse.
-    //
-    // On x86 and x64 opteron (and who knows, intel too), the next page
-    // size larger than 2m/4m is 1g, which latter we (a) don't want to
-    // use for the code cache because it's expensive and the vm currently
-    // uses the same page size for both the Java heap and code cache, and
-    // (b) don't really want to round up a 32-bit heap and code cache to
-    // a multiple of 1gb because that consumes more memory than the user
-    // probably wants.  See bug 6448978.
-    if (pagesizes[i] > largest && pagesizes[i] <= 4*M) {
-      largest = pagesizes[i];
-    }
+  const unsigned int usable_count = VM_Version::page_size_count();
+  if (usable_count == 1) {
+    return false;
   }
 
-  if (FLAG_IS_DEFAULT(LargePageSizeInBytes)) {
-    // Use default computed above
-    *page_size = largest;
-  } else {
-    // Override if the specified page size is available
-    for (i = 0; i < n; i++) {
-      if (pagesizes[i] == LargePageSizeInBytes
-#if defined(IA32) || defined(AMD64)
-          // Don't go larger than the default, even if
-          // the command line says to do so.
-          && pagesizes[i] <= largest
-#endif
-          ) {
-        break;
-      }
-    }
-    if (i < n) {
-      // found
-      *page_size = LargePageSizeInBytes;
-    } else {
-      if (warn) {
-        char msg[256];
-        jio_snprintf(msg, sizeof(msg), 
-                     "Invalid large page size (%d). Supported page sizes are:",
-                     LargePageSizeInBytes);
-        for (i = 0; i < n; i++) {
-          int l = (int)strlen(msg);
-#if defined(IA32) || defined(AMD64)
-          // Pretend page sizes larger than the default don't exist
-          if (pagesizes[i] <= largest)
-#endif
-          jio_snprintf(msg + l, sizeof(msg) - l, " %d", pagesizes[i]);
-        }
-        warning(msg);
-      }
-      *page_size = largest;
-    }
+  // Fill the array of page sizes.
+  int n = getpagesizes_func(_page_sizes, page_sizes_max);
+  assert(n > 0, "Solaris bug?");
+  if (n == page_sizes_max) {
+    // Add a sentinel value (necessary only if the array was completely filled
+    // since it is static (zeroed at initialization)).
+    _page_sizes[--n] = 0;
+    DEBUG_ONLY(warning("increase the size of the os::_page_sizes array.");)
   }
+  assert(_page_sizes[n] == 0, "missing sentinel");
 
-  FREE_C_HEAP_ARRAY(size_t, pagesizes);
+  if (n == 1) return false;	// Only one page size available.
+
+  // Skip sizes larger than 4M (or LargePageSizeInBytes if it was set) and
+  // select up to usable_count elements.  First sort the array, find the first
+  // acceptable value, then copy the usable sizes to the top of the array and
+  // trim the rest.  Make sure to include the default page size :-).
+  // 
+  // A better policy could get rid of the 4M limit by taking the sizes of the
+  // important VM memory regions (java heap and possibly the code cache) into
+  // account.
+  insertion_sort_descending(_page_sizes, n);
+  const size_t size_limit = 
+    FLAG_IS_DEFAULT(LargePageSizeInBytes) ? 4 * M : LargePageSizeInBytes;
+  int beg;
+  for (beg = 0; beg < n && _page_sizes[beg] > size_limit; ++beg) /* empty */ ;
+  const int end = MIN2((int)usable_count, n) - 1;
+  for (int cur = 0; cur < end; ++cur, ++beg) {
+    _page_sizes[cur] = _page_sizes[beg];
+  }
+  _page_sizes[end] = vm_page_size();
+  _page_sizes[end + 1] = 0;
+
+  if (_page_sizes[end] > _page_sizes[end - 1]) {
+    // Default page size is not the smallest; sort again.
+    insertion_sort_descending(_page_sizes, end + 1);
+  }
+  *page_size = _page_sizes[0];
+
   return true;
 }
 
@@ -3240,6 +3217,7 @@ size_t os::read(int fd, void *buf, unsigned int nBytes) {
 int os::sleep(Thread* thread, jlong millis, bool interruptible) {
   assert(thread == Thread::current(),  "thread consistency check");
 
+  // TODO-FIXME: this should be removed.
   // On Solaris machines (especially 2.5.1) we found that sometimes the VM gets into a live lock
   // situation with a JavaThread being starved out of a lwp. The kernel doesn't seem to generate
   // a SIGWAITING signal which would enable the threads library to create a new lwp for the starving
@@ -3247,7 +3225,8 @@ int os::sleep(Thread* thread, jlong millis, bool interruptible) {
   // is fooled into believing that the system is making progress. In the code below we block the
   // the watcher thread while safepoint is in progress so that it would not appear as though the
   // system is making progress.
-  if (thread->is_Watcher_thread() && SafepointSynchronize::is_synchronizing() && !Arguments::has_profile()) {
+  if (!Solaris::T2_libthread() && 
+      thread->is_Watcher_thread() && SafepointSynchronize::is_synchronizing() && !Arguments::has_profile()) {
     // We now try to acquire the threads lock. Since this lock is held by the VM thread during
     // the entire safepoint, the watcher thread will  line up here during the safepoint.
     Threads_lock->lock_without_safepoint_check();
@@ -3341,7 +3320,7 @@ void os::yield() {
 // other equal or higher priority threads that reside on the dispatch queues
 // of other CPUs.  
 
-void os::NakedYield() { thr_yield(); } 
+os::YieldResult os::NakedYield() { thr_yield(); return os::YIELD_UNKNOWN; } 
 
 
 // On Solaris we found that yield_all doesn't always yield to all other threads.
@@ -3817,15 +3796,20 @@ void os::interrupt(Thread* thread) {
   if (!isInterrupted) {
       osthread->set_interrupted(true);
       OrderAccess::fence();
-      osthread->interrupt_event()->unpark();
-  } 
+      // os::sleep() is implemented with either poll (NULL,0,timeout) or 
+      // by parking on _SleepEvent.  If the former, thr_kill will unwedge
+      // the sleeper by SIGINTR, otherwise the unpark() will wake the sleeper. 
+      ParkEvent * const slp = thread->_SleepEvent ; 
+      if (slp != NULL) slp->unpark() ; 
+  }
   
   // For JSR166:  unpark after setting status but before thr_kill -dl
   if (thread->is_Java_thread()) {
     ((JavaThread*)thread)->parker()->unpark();
   }
 
-  ParkEvent * ev = thread->_ParkEvent ; 
+  // Handle interruptible wait() ...
+  ParkEvent * const ev = thread->_ParkEvent ; 
   if (ev != NULL) ev->unpark() ;  
 
   // When events are used everywhere for os::sleep, then this thr_kill
@@ -3859,7 +3843,6 @@ bool os::is_interrupted(Thread* thread, bool clear_interrupted) {
   // because it hides the issue.
   if (res && clear_interrupted) {
     osthread->set_interrupted(false);
-    osthread->interrupt_event()->reset();
   }
   return res;
 }
@@ -4607,6 +4590,7 @@ void os::init(void) {
   page_size = sysconf(_SC_PAGESIZE);
   if (page_size == -1)
     fatal1("os_solaris.cpp: os::init: sysconf failed (%s)", strerror(errno));
+  init_page_sizes((size_t) page_size);
 
   Solaris::initialize_system_info();
 
@@ -4661,9 +4645,19 @@ jint os::init_2(void) {
   // try to enable extended file IO ASAP, see 6431278
   os::Solaris::try_enable_extended_io(); 
 
-  // Allocate a single page and mark it as readable for safepoint polling
-  address polling_page = (address)Solaris::mmap_chunk( NULL, page_size, MAP_PRIVATE, PROT_READ );
-  os::set_polling_page( polling_page );
+  // Allocate a single page and mark it as readable for safepoint polling.  Also
+  // use this first mmap call to check support for MAP_ALIGN.
+  address polling_page = (address)Solaris::mmap_chunk((char*)page_size,
+						      page_size,
+						      MAP_PRIVATE | MAP_ALIGN,
+						      PROT_READ);
+  if (polling_page == NULL) {
+    has_map_align = false;
+    polling_page = (address)Solaris::mmap_chunk(NULL, page_size, MAP_PRIVATE,
+						PROT_READ);
+  }
+
+  os::set_polling_page(polling_page);
 
 #ifndef PRODUCT
   if( Verbose && PrintMiscellaneous )
@@ -5289,6 +5283,13 @@ extern "C" {
   }
 }
 
+// Just to get the Kernel build to link on solaris for testing.
+
+extern "C" {
+class ASGCT_CallTrace;
+void AsyncGetCallTrace(ASGCT_CallTrace *trace, jint depth, void* ucontext)
+  KERNEL_RETURN;
+}
 
 
 // ObjectMonitor park-unpark infrastructure ...
@@ -5324,7 +5325,7 @@ extern "C" {
 // TODO-FIXME:
 // 1.  Reconcile Doug's JSR166 j.u.c park-unpark with the 
 //     objectmonitor implementation.
-// 2.  Collapse the interrupt_event, the JSR166 parker event, and the 
+// 2.  Collapse the JSR166 parker event, and the 
 //     objectmonitor ParkEvent into a single "Event" construct.
 // 3.  In park() and unpark() add:
 //     assert (Thread::current() == AssociatedWith).  
@@ -5350,10 +5351,10 @@ extern "C" {
 // value determined through experimentation
 #define ROUNDINGFIX 11  
   
-// utility to compute the abstime argument to timedwait:
+// utility to compute the abstime argument to timedwait.
+// TODO-FIXME: switch from compute_abstime() to unpackTime().  
 
-static timestruc_t* compute_abstime(timestruc_t* abstime, jlong millis) 
-{
+static timestruc_t* compute_abstime(timestruc_t* abstime, jlong millis) {
   // millis is the relative timeout time
   // abstime will be the absolute timeout time
   if (millis < 0)  millis = 0;
@@ -5393,6 +5394,17 @@ static timestruc_t* compute_abstime(timestruc_t* abstime, jlong millis)
   }
   abstime->tv_nsec = usec * 1000;
   return abstime;
+}
+
+// Test-and-clear _Event, always leaves _Event set to 0, returns immediately.
+// Conceptually TryPark() should be equivalent to park(0).  
+
+int os::PlatformEvent::TryPark() { 
+  for (;;) { 
+    const int v = _Event ; 
+    guarantee ((v == 0) || (v == 1), "invariant") ;  
+    if (Atomic::cmpxchg (0, &_Event, v) == v) return v  ; 
+  }
 }
 
 void os::PlatformEvent::park() {           // AKA: down()
@@ -5514,5 +5526,262 @@ void os::PlatformEvent::unpark() {
        status = os::Solaris::cond_signal(_cond);
        assert_status(status == 0, status, "cond_signal");
      }
+  }
+}
+
+// JSR166
+// -------------------------------------------------------
+
+/*
+ * The solaris and linux implementations of park/unpark are fairly
+ * conservative for now, but can be improved. They currently use a
+ * mutex/condvar pair, plus _counter. 
+ * Park decrements _counter if > 0, else does a condvar wait.  Unpark
+ * sets count to 1 and signals condvar.  Only one thread ever waits 
+ * on the condvar. Contention seen when trying to park implies that someone 
+ * is unparking you, so don't wait. And spurious returns are fine, so there 
+ * is no need to track notifications.
+ */
+
+#define NANOSECS_PER_SEC 1000000000
+#define NANOSECS_PER_MILLISEC 1000000
+#define MAX_SECS 100000000
+
+/*
+ * This code is common to linux and solaris and will be moved to a
+ * common place in dolphin.
+ *
+ * The passed in time value is either a relative time in nanoseconds
+ * or an absolute time in milliseconds. Either way it has to be unpacked
+ * into suitable seconds and nanoseconds components and stored in the
+ * given timespec structure. 
+ * Given time is a 64-bit value and the time_t used in the timespec is only 
+ * a signed-32-bit value (except on 64-bit Linux) we have to watch for
+ * overflow if times way in the future are given. Further on Solaris versions
+ * prior to 10 there is a restriction (see cond_timedwait) that the specified
+ * number of seconds, in abstime, is less than current_time  + 100,000,000.
+ * As it will be 28 years before "now + 100000000" will overflow we can
+ * ignore overflow and just impose a hard-limit on seconds using the value
+ * of "now + 100,000,000". This places a limit on the timeout of about 3.17
+ * years from "now".
+ */
+static void unpackTime(timespec* absTime, bool isAbsolute, jlong time) {
+  assert (time > 0, "convertTime");
+
+  struct timeval now;
+  int status = gettimeofday(&now, NULL);
+  assert(status == 0, "gettimeofday");
+
+  time_t max_secs = now.tv_sec + MAX_SECS;
+
+  if (isAbsolute) {
+    jlong secs = time / 1000;
+    if (secs > max_secs) {
+      absTime->tv_sec = max_secs;
+    }
+    else {
+      absTime->tv_sec = secs;
+    }
+    absTime->tv_nsec = (time % 1000) * NANOSECS_PER_MILLISEC;   
+  }
+  else {
+    jlong secs = time / NANOSECS_PER_SEC;
+    if (secs >= MAX_SECS) {
+      absTime->tv_sec = max_secs;
+      absTime->tv_nsec = 0;
+    }
+    else {
+      absTime->tv_sec = now.tv_sec + secs;
+      absTime->tv_nsec = (time % NANOSECS_PER_SEC) + now.tv_usec*1000;
+      if (absTime->tv_nsec >= NANOSECS_PER_SEC) {
+        absTime->tv_nsec -= NANOSECS_PER_SEC;
+        ++absTime->tv_sec; // note: this must be <= max_secs
+      }
+    }
+  }
+  assert(absTime->tv_sec >= 0, "tv_sec < 0");
+  assert(absTime->tv_sec <= max_secs, "tv_sec > max_secs");
+  assert(absTime->tv_nsec >= 0, "tv_nsec < 0");
+  assert(absTime->tv_nsec < NANOSECS_PER_SEC, "tv_nsec >= nanos_per_sec");
+}
+
+void Parker::park(bool isAbsolute, jlong time) {
+
+  // Optional fast-path check:
+  // Return immediately if a permit is available.
+  if (_counter > 0) { 
+      _counter = 0 ; 
+      return ; 
+  }
+
+  // Optional fast-exit: Check interrupt before trying to wait
+  Thread* thread = Thread::current();
+  assert(thread->is_Java_thread(), "Must be JavaThread");
+  JavaThread *jt = (JavaThread *)thread;
+  if (Thread::is_interrupted(thread, false)) {
+    return;
+  }
+
+  // First, demultiplex/decode time arguments
+  timespec absTime;  
+  if (time < 0) { // don't wait at all
+    return; 
+  }
+  if (time > 0) {
+    // Warning: this code might be exposed to the old Solaris time
+    // round-down bugs.  Grep "roundingFix" for details.  
+    unpackTime(&absTime, isAbsolute, time);
+  }
+
+  // Enter safepoint region
+  // Beware of deadlocks such as 6317397. 
+  // The per-thread Parker:: _mutex is a classic leaf-lock.
+  // In particular a thread must never block on the Threads_lock while
+  // holding the Parker:: mutex.  If safepoints are pending both the
+  // the ThreadBlockInVM() CTOR and DTOR may grab Threads_lock.  
+  ThreadBlockInVM tbivm(jt);
+
+  // Don't wait if cannot get lock since interference arises from
+  // unblocking.  Also. check interrupt before trying wait
+  if (Thread::is_interrupted(thread, false) || 
+      os::Solaris::mutex_trylock(_mutex) != 0) {
+    return;
+  }
+
+  int status ; 
+
+  if (_counter > 0)  { // no wait needed
+    _counter = 0;
+    status = os::Solaris::mutex_unlock(_mutex);
+    assert (status == 0, "invariant") ; 
+    return;
+  }
+
+#ifdef ASSERT
+  // Don't catch signals while blocked; let the running threads have the signals.
+  // (This allows a debugger to break into the running thread.)
+  sigset_t oldsigs;
+  sigset_t* allowdebug_blocked = os::Solaris::allowdebug_blocked_signals();
+  thr_sigsetmask(SIG_BLOCK, allowdebug_blocked, &oldsigs);
+#endif
+  
+  OSThreadWaitState osts(thread->osthread(), false /* not Object.wait() */);
+  jt->set_suspend_equivalent();
+  // cleared by handle_special_suspend_equivalent_condition() or java_suspend_self()
+
+  // Do this the hard way by blocking ...
+  // See http://monaco.sfbay/detail.jsf?cr=5094058.
+  // TODO-FIXME: for Solaris SPARC set fprs.FEF=0 prior to parking.  
+  // Only for SPARC >= V8PlusA
+#if defined(__sparc) && defined(COMPILER2)
+  if (ClearFPUAtPark) { _mark_fpu_nosave() ; }
+#endif
+  
+  if (time == 0) {
+    status = os::Solaris::cond_wait (_cond, _mutex) ; 
+  } else { 
+    status = os::Solaris::cond_timedwait (_cond, _mutex, &absTime); 
+  }
+  // Note that an untimed cond_wait() can sometimes return ETIME on older
+  // versions of the Solaris.  
+  assert_status(status == 0 || status == EINTR || 
+		status == ETIME || status == ETIMEDOUT, 
+		status, "cond_timedwait");
+
+#ifdef ASSERT
+  thr_sigsetmask(SIG_SETMASK, &oldsigs, NULL);
+#endif
+  _counter = 0 ; 
+  status = os::Solaris::mutex_unlock(_mutex);
+  assert_status(status == 0, status, "mutex_unlock") ; 
+
+  // If externally suspended while waiting, re-suspend
+  if (jt->handle_special_suspend_equivalent_condition()) {
+    jt->java_suspend_self();
+  }
+
+}
+
+void Parker::unpark() {
+  int s, status ; 
+  status = os::Solaris::mutex_lock (_mutex) ; 
+  assert (status == 0, "invariant") ; 
+  s = _counter;
+  _counter = 1;
+  status = os::Solaris::mutex_unlock (_mutex) ; 
+  assert (status == 0, "invariant") ; 
+
+  if (s < 1) {
+    status = os::Solaris::cond_signal (_cond) ; 
+    assert (status == 0, "invariant") ; 
+  }
+}
+
+extern char** environ;
+
+// Run the specified command in a separate process. Return its exit value,
+// or -1 on failure (e.g. can't fork a new process). 
+// Unlike system(), this function can be called from signal handler. It
+// doesn't block SIGINT et al.
+int os::fork_and_exec(char* cmd) {
+  char * argv[4];
+  argv[0] = (char *)"sh";
+  argv[1] = (char *)"-c";
+  argv[2] = cmd;
+  argv[3] = NULL;
+
+  // fork is async-safe, fork1 is not so can't use in signal handler
+  pid_t pid;
+  Thread* t = ThreadLocalStorage::get_thread_slow();
+  if (t != NULL && t->is_inside_signal_handler()) {
+    pid = fork();
+  } else {
+    pid = fork1();
+  }
+
+  if (pid < 0) {
+    // fork failed
+    warning("fork failed: %s", strerror(errno));
+    return -1;
+
+  } else if (pid == 0) {
+    // child process
+
+    // try to be consistent with system(), which uses "/usr/bin/sh" on Solaris
+    execve("/usr/bin/sh", argv, environ);
+
+    // execve failed
+    _exit(-1);
+
+  } else  {
+    // copied from J2SE ..._waitForProcessExit() in UNIXProcess_md.c; we don't
+    // care about the actual exit code, for now.
+
+    int status;
+
+    // Wait for the child process to exit.  This returns immediately if
+    // the child has already exited. */
+    while (waitpid(pid, &status, 0) < 0) {
+        switch (errno) {
+        case ECHILD: return 0;
+        case EINTR: break;
+        default: return -1;
+        }
+    }
+
+    if (WIFEXITED(status)) {
+       // The child exited normally; get its exit code.
+       return WEXITSTATUS(status);
+    } else if (WIFSIGNALED(status)) {
+       // The child exited because of a signal
+       // The best value to return is 0x80 + signal number,
+       // because that is what all Unix shells do, and because
+       // it allows callers to distinguish between process exit and
+       // process death by signal.
+       return 0x80 + WTERMSIG(status);
+    } else {
+       // Unknown exit code; pass it through
+       return status;
+    }
   }
 }

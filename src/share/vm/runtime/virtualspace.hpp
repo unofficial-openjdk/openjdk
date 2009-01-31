@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)virtualspace.hpp	1.41 07/05/05 17:07:02 JVM"
+#pragma ident "@(#)virtualspace.hpp	1.42 07/10/04 10:49:29 JVM"
 #endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -32,31 +32,62 @@ class ReservedSpace VALUE_OBJ_CLASS_SPEC {
  private:
   char*  _base;
   size_t _size;
+  size_t _alignment;
   bool   _special;
 
   // ReservedSpace
-  ReservedSpace(char* base, size_t size, bool large);
-  void initialize(size_t size, size_t forced_base_alignment,
-                  bool large,  char* requested_address = NULL);
+  ReservedSpace(char* base, size_t size, size_t alignment, bool special);
+  void initialize(size_t size, size_t alignment, bool large,
+		  char* requested_address = NULL);
+
+  // Release parts of an already-reserved memory region [addr, addr + len) to
+  // get a new region that has "compound alignment."  Return the start of the
+  // resulting region, or NULL on failure.
+  // 
+  // The region is logically divided into a prefix and a suffix.  The prefix
+  // starts at the result address, which is aligned to prefix_align.  The suffix
+  // starts at result address + prefix_size, which is aligned to suffix_align.
+  // The total size of the result region is size prefix_size + suffix_size.
+  char* align_reserved_region(char* addr, const size_t len,
+			      const size_t prefix_size,
+			      const size_t prefix_align,
+			      const size_t suffix_size,
+			      const size_t suffix_align);
+
+  // Reserve memory, call align_reserved_region() to alignment it and return the
+  // result.
+  char* reserve_and_align(const size_t reserve_size,
+			  const size_t prefix_size,
+			  const size_t prefix_align,
+			  const size_t suffix_size,
+			  const size_t suffix_align);
 
  public:
   // Constructor
   ReservedSpace(size_t size);
-  ReservedSpace(size_t size, size_t forced_base_alignment,
-                bool large, char* requested_address = NULL);
+  ReservedSpace(size_t size, size_t alignment, bool large,
+		char* requested_address = NULL);
+  ReservedSpace(const size_t prefix_size, const size_t prefix_align,
+		const size_t suffix_size, const size_t suffix_align);
 
   // Accessors
-  char*  base()   { return _base;   }
-  size_t size()   { return _size;   }
-  bool   special(){ return _special;}
+  char*  base()      const { return _base;      }
+  size_t size()      const { return _size;      }
+  size_t alignment() const { return _alignment; }
+  bool   special()   const { return _special;   }
 
-  bool is_reserved() { return _base != NULL; }
+  bool is_reserved() const { return _base != NULL; }
   void release();
 
   // Splitting
-  ReservedSpace first_part(size_t partition_size,
+  ReservedSpace first_part(size_t partition_size, size_t alignment,
                            bool split = false, bool realloc = true);
-  ReservedSpace last_part (size_t partition_size);
+  ReservedSpace last_part (size_t partition_size, size_t alignment);
+
+  // These simply call the above using the default alignment.
+  inline ReservedSpace first_part(size_t partition_size,
+				  bool split = false, bool realloc = true);
+  inline ReservedSpace last_part (size_t partition_size);
 
   // Alignment
   static size_t page_align_size_up(size_t size);
@@ -65,6 +96,16 @@ class ReservedSpace VALUE_OBJ_CLASS_SPEC {
   static size_t allocation_align_size_down(size_t size);
 };
 
+ReservedSpace
+ReservedSpace::first_part(size_t partition_size, bool split, bool realloc)
+{
+  return first_part(partition_size, alignment(), split, realloc);
+}
+
+ReservedSpace ReservedSpace::last_part(size_t partition_size)
+{
+  return last_part(partition_size, alignment());
+}
 
 // VirtualSpace is data structure for committing a previously reserved address range in smaller chunks.
 

@@ -1,8 +1,8 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)concurrentMarkSweepGeneration.cpp	1.290 07/07/17 11:49:58 JVM"
+#pragma ident "@(#)concurrentMarkSweepGeneration.cpp	1.293 08/10/30 20:45:16 JVM"
 #endif
 /*
- * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2001-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -495,7 +495,10 @@ CMSCollector::CMSCollector(ConcurrentMarkSweepGeneration* cmsGen,
                  -1 /* lock-free */, "No_lock" /* dummy */),
   _modUnionClosure(&_modUnionTable),
   _modUnionClosurePar(&_modUnionTable),
-  _is_alive_closure(&_markBitMap),
+  // Adjust my span to cover old (cms) gen and perm gen
+  _span(cmsGen->reserved()._union(permGen->reserved())),
+  // Construct the is_alive_closure with _span & markBitMap
+  _is_alive_closure(_span, &_markBitMap),
   _restart_addr(NULL),
   _overflow_list(NULL),
   _preserved_oop_stack(NULL),
@@ -546,11 +549,6 @@ CMSCollector::CMSCollector(ConcurrentMarkSweepGeneration* cmsGen,
   // For use by dirty card to oop closures.
   _cmsGen->cmsSpace()->set_collector(this);
   _permGen->cmsSpace()->set_collector(this);
-
-  // Adjust my span to cover old (cms) gen and perm gen
-  _span = _cmsGen->reserved()._union(_permGen->reserved());
-  // Initialize the span of is_alive_closure
-  _is_alive_closure.set_span(_span);
 
   // Allocate MUT and marking bit map
   {
@@ -3124,12 +3122,7 @@ ConcurrentMarkSweepGeneration::expand_and_allocate(size_t word_size,
   if (GCExpandToAllocateDelayMillis > 0) {
     os::sleep(Thread::current(), GCExpandToAllocateDelayMillis, false);
   }
-  size_t adj_word_sz = CompactibleFreeListSpace::adjustObjectSize(word_size);
-  if (parallel) {
-    return cmsSpace()->par_allocate(adj_word_sz);
-  } else {
-    return cmsSpace()->allocate(adj_word_sz);
-  }
+  return have_lock_and_allocate(word_size, tlab);
 }
 
 // YSR: All of this generation expansion/shrinking stuff is an exact copy of
@@ -3605,6 +3598,7 @@ class CMSConcMarkingTask: public YieldingFlexibleGangTask {
   CompactibleFreeListSpace*  _cms_space;
   CompactibleFreeListSpace* _perm_space;
   HeapWord*     _global_finger;
+  HeapWord*     _restart_addr;
 
   //  Exposed here for yielding support
   Mutex* const _bit_map_lock;
@@ -3635,7 +3629,7 @@ class CMSConcMarkingTask: public YieldingFlexibleGangTask {
     _term.set_task(this);
     assert(_cms_space->bottom() < _perm_space->bottom(),
            "Finger incorrectly initialized below");
-    _global_finger = _cms_space->bottom();
+    _restart_addr = _global_finger = _cms_space->bottom();
   }
 
 
@@ -3653,6 +3647,10 @@ class CMSConcMarkingTask: public YieldingFlexibleGangTask {
   bool result() { return _result; }
 
   void reset(HeapWord* ra) {
+    assert(_global_finger >= _cms_space->end(), "Postcondition of ::work(i)");
+    assert(_global_finger >= _perm_space->end(), "Postcondition of ::work(i)");
+    assert(ra < _perm_space->end(), "ra too large");
+    _restart_addr = _global_finger = ra;
     _term.reset_for_reuse();
   }
 
@@ -3797,16 +3795,24 @@ void CMSConcMarkingTask::do_scan_and_mark(int i, CompactibleFreeListSpace* sp) {
   int n_tasks = pst->n_tasks();
   // We allow that there may be no tasks to do here because
   // we are restarting after a stack overflow.
-  assert(pst->valid() || n_tasks == 0, "Uninitializd use?");
+  assert(pst->valid() || n_tasks == 0, "Uninitialized use?");
   int nth_task = 0;
 
-  HeapWord* start = sp->bottom();
+  HeapWord* aligned_start = sp->bottom();
+  if (sp->used_region().contains(_restart_addr)) {
+    // Align down to a card boundary for the start of 0th task
+    // for this space.
+    aligned_start =
+       (HeapWord*)align_size_down((uintptr_t)_restart_addr,
+                                     CardTableModRefBS::card_size);
+  }
+  
   size_t chunk_size = sp->marking_task_size();
   while (!pst->is_task_claimed(/* reference */ nth_task)) {
     // Having claimed the nth task in this space,
     // compute the chunk that it corresponds to:
-    MemRegion span = MemRegion(start + nth_task*chunk_size,
-                               start + (nth_task+1)*chunk_size);
+    MemRegion span = MemRegion(aligned_start + nth_task*chunk_size,
+                               aligned_start + (nth_task+1)*chunk_size);
     // Try and bump the global finger via a CAS;
     // note that we need to do the global finger bump
     // _before_ taking the intersection below, because
@@ -3821,26 +3827,40 @@ void CMSConcMarkingTask::do_scan_and_mark(int i, CompactibleFreeListSpace* sp) {
     // beyond the "top" address of the space.
     span = span.intersection(sp->used_region());
     if (!span.is_empty()) {  // Non-null task
-      // We want to skip the first object because
-      // the protocol is to scan any object in its entirety
-      // that _starts_ in this span; a fortiori, any
-      // object starting in an earlier span is scanned
-      // as part of an earlier claimed task.
-      // Below we use the "careful" version of block_start
-      // so we do not try to navigate uninitialized objects.
-      HeapWord* prev_obj = sp->block_start_careful(span.start());
-      // Below we use a variant of block_size that uses the
-      // Printezis bits to avoid waiting for allocated
-      // objects to become initialized/parsable.
-      while (prev_obj < span.start()) {
-        size_t sz = sp->block_size_no_stall(prev_obj, _collector);
-        if (sz > 0) {
-          prev_obj += sz;
+      HeapWord* prev_obj;
+      assert(!span.contains(_restart_addr) || nth_task == 0,
+              "Inconsistency");
+      if (nth_task == 0) {
+        // For the 0th task, we'll not need to compute a block_start.
+        if (span.contains(_restart_addr)) {
+          // In the case of a restart because of stack overflow,
+          // we might additionally skip a chunk prefix.
+          prev_obj = _restart_addr; 
         } else {
-          // In this case we may end up doing a bit of redundant
-          // scanning, but that appears unavoidable, short of
-          // locking the free list locks; see bug 6324141.
-          break;
+          prev_obj = span.start();
+        }
+      } else {
+        // We want to skip the first object because
+        // the protocol is to scan any object in its entirety
+        // that _starts_ in this span; a fortiori, any
+        // object starting in an earlier span is scanned
+        // as part of an earlier claimed task.
+        // Below we use the "careful" version of block_start
+        // so we do not try to navigate uninitialized objects.
+        prev_obj = sp->block_start_careful(span.start());
+        // Below we use a variant of block_size that uses the
+        // Printezis bits to avoid waiting for allocated
+        // objects to become initialized/parsable.
+        while (prev_obj < span.start()) {
+          size_t sz = sp->block_size_no_stall(prev_obj, _collector);
+          if (sz > 0) {
+            prev_obj += sz;
+          } else {
+            // In this case we may end up doing a bit of redundant
+            // scanning, but that appears unavoidable, short of
+            // locking the free list locks; see bug 6324141.
+            break;
+          } 
         }
       }
       if (prev_obj < span.end()) {
@@ -3891,13 +3911,15 @@ class Par_ConcMarkingClosure: public OopClosure {
   void handle_stack_overflow(HeapWord* lost);
 };
 
-// Grey object rescan during work stealing phase --
-// the salient assumption here is that stolen oops must
-// always be initialized, so we do not need to check for
-// uninitialized objects before scanning here.
+// Grey object scanning during work stealing phase --
+// the salient assumption here is that any references
+// that are in these stolen objects being scanned must
+// already have been initialized (else they would not have
+// been published), so we do not need to check for
+// uninitialized objects before pushing here. 
 void Par_ConcMarkingClosure::do_oop(oop* p) {
   oop    this_oop = *p;
-  assert(this_oop->is_oop_or_null(),
+  assert(this_oop->is_oop_or_null(true),
          "expected an oop or NULL");
   HeapWord* addr = (HeapWord*)this_oop;
   // Check if oop points into the CMS generation
@@ -3953,7 +3975,7 @@ void Par_ConcMarkingClosure::trim_queue(size_t max) {
 // in CMSCollector's _restart_address.
 void Par_ConcMarkingClosure::handle_stack_overflow(HeapWord* lost) {
   // We need to do this under a mutex to prevent other
-  // workers from interfering with the expansion below.
+  // workers from interfering with the work done below.
   MutexLockerEx ml(_overflow_stack->par_lock(),
                    Mutex::_no_safepoint_check_flag);
   // Remember the least grey address discarded
@@ -4081,7 +4103,7 @@ bool CMSCollector::do_marking_mt(bool asynch) {
   while (_restart_addr != NULL) {
     // XXX For now we do not make use of ABORTED state and have not
     // yet implemented the right abort semantics (even in the original
-    // single-threaded CMS case. That needs some more investigation
+    // single-threaded CMS case). That needs some more investigation
     // and is deferred for now; see CR# TBF. 07252005YSR. XXX
     assert(!CMSAbortSemantics || tsk.aborted(), "Inconsistency");
     // If _restart_addr is non-NULL, a marking stack overflow
@@ -4238,7 +4260,9 @@ void CMSCollector::abortable_preclean() {
       // take a short break.
       if (workdone < CMSAbortablePrecleanMinWorkPerIteration) {
         // Sleep for some time, waiting for work to accumulate
+        stopTimer();
         cmsThread()->wait_on_cms_lock(CMSAbortablePrecleanWaitMillis);
+        startTimer();
         waited++;
       }
     }
@@ -4323,8 +4347,10 @@ size_t CMSCollector::preclean_work(bool clean_refs, bool clean_survivor) {
     // the computed reachability of the referents, the
     // only properties manipulated by the precleaning
     // of these reference lists.
+    stopTimer();
     CMSTokenSyncWithLocks x(true /* is cms thread */,
                             bitMapLock());
+    startTimer();
     sample_eden();
     // The following will yield to allow foreground
     // collection to proceed promptly. XXX YSR:
@@ -4346,8 +4372,10 @@ size_t CMSCollector::preclean_work(bool clean_refs, bool clean_survivor) {
                              &_markBitMap, &_modUnionTable,
                              &_markStack, &_revisitStack,
                              true /* precleaning phase */);
+    stopTimer();
     CMSTokenSyncWithLocks ts(true /* is cms thread */,
                              bitMapLock());
+    startTimer();
     unsigned int before_count =
       GenCollectedHeap::heap()->total_collections();
     SurvivorSpacePrecleanClosure
@@ -4481,13 +4509,10 @@ size_t CMSCollector::preclean_mod_union_table(
 
     MemRegion dirtyRegion;
     {
+      stopTimer();
       CMSTokenSync ts(true);
+      startTimer();
       sample_eden();
-
-      if (PrintGCDetails) {
-        startTimer();
-      }
-
       // Get dirty region starting at nextOffset (inclusive),
       // simultaneously clearing it.
       dirtyRegion = 
@@ -4507,20 +4532,16 @@ size_t CMSCollector::preclean_mod_union_table(
     // We'll scan the cards in the dirty region (with periodic
     // yields for foreground GC as needed).
     if (!dirtyRegion.is_empty()) {
-      if (PrintGCDetails) {
-        stopTimer();
-      }
       assert(numDirtyCards > 0, "consistency check");
       HeapWord* stop_point = NULL;
       {
+        stopTimer();
         CMSTokenSyncWithLocks ts(true, gen->freelistLock(),
                                  bitMapLock());
+        startTimer();
         verify_work_stacks_empty();
         verify_overflow_empty();
         sample_eden();
-        if (PrintGCDetails) {
-          startTimer();
-        }
         stop_point =
           gen->cmsSpace()->object_iterate_careful_m(dirtyRegion, cl);
       }
@@ -4535,7 +4556,9 @@ size_t CMSCollector::preclean_mod_union_table(
                (_collectorState == AbortablePreclean && should_abort_preclean()),
                "Unparsable objects should only be in perm gen.");
 
+        stopTimer();
         CMSTokenSyncWithLocks ts(true, bitMapLock());
+        startTimer();
         _modUnionTable.mark_range(MemRegion(stop_point, dirtyRegion.end()));
         if (should_abort_preclean()) {
           break; // out of preclean loop
@@ -4545,17 +4568,11 @@ size_t CMSCollector::preclean_mod_union_table(
           lastAddr = next_card_start_after_block(stop_point);
         }
       }
-      if (PrintGCDetails) {
-        stopTimer();
-      }
     } else {
       assert(lastAddr == endAddr, "consistency check");
       assert(numDirtyCards == 0, "consistency check");
       break;
     }
-  }
-  if (PrintGCDetails) {
-    stopTimer();
   }
   verify_work_stacks_empty();
   verify_overflow_empty();
@@ -4592,13 +4609,10 @@ size_t CMSCollector::preclean_card_table(ConcurrentMarkSweepGeneration* gen,
       // See comments in "Precleaning notes" above on why we
       // do this locking. XXX Could the locking overheads be
       // too high when dirty cards are sparse? [I don't think so.]
+      stopTimer();
       CMSTokenSync x(true); // is cms thread
+      startTimer();
       sample_eden();
-
-      if (PrintGCDetails) {
-        startTimer();
-      }
-
       // Get and clear dirty region from card table
       dirtyRegion = _ct->ct_bs()->dirty_card_range_after_preclean(
                                     MemRegion(nextAddr, endAddr));
@@ -4610,16 +4624,12 @@ size_t CMSCollector::preclean_card_table(ConcurrentMarkSweepGeneration* gen,
       dirtyRegion.word_size()/CardTableModRefBS::card_size_in_words;
 
     if (!dirtyRegion.is_empty()) {
-      if (PrintGCDetails) {
-        stopTimer();
-      }
+      stopTimer();
       CMSTokenSyncWithLocks ts(true, gen->freelistLock(), bitMapLock());
+      startTimer();
       sample_eden();
       verify_work_stacks_empty();
       verify_overflow_empty();
-      if (PrintGCDetails) {
-        startTimer();
-      }
       HeapWord* stop_point =
         gen->cmsSpace()->object_iterate_careful_m(dirtyRegion, cl);
       if (stop_point != NULL) {
@@ -4638,15 +4648,9 @@ size_t CMSCollector::preclean_card_table(ConcurrentMarkSweepGeneration* gen,
           lastAddr = next_card_start_after_block(stop_point);
         }
       }
-      if (PrintGCDetails) {
-        stopTimer();
-      }
     } else {
       break;
     }
-  }
-  if (PrintGCDetails) {
-    stopTimer();
   }
   verify_work_stacks_empty();
   verify_overflow_empty();
@@ -4738,7 +4742,7 @@ void CMSCollector::checkpointRootsFinalWork(bool asynch,
     // or of an indication of whether the scavenge did indeed occur,
     // we cannot rely on TLAB's having been filled and must do
     // so here just in case a scavenge did not happen.
-      gch->ensure_parsability(false);  // fill TLAB's, but no need to retire them
+    gch->ensure_parsability(false);  // fill TLAB's, but no need to retire them
     // Update the saved marks which may affect the root scans.
     gch->save_marks();
   
@@ -5459,7 +5463,7 @@ class CMSRefProcTaskProxy: public AbstractGangTask {
   typedef AbstractRefProcTaskExecutor::ProcessTask ProcessTask;
   CMSCollector*          _collector;
   CMSBitMap*             _mark_bit_map;
-  MemRegion              _span;
+  const MemRegion        _span;
   OopTaskQueueSet*       _task_queues;
   ParallelTaskTerminator _term;
   ProcessTask&           _task;
@@ -5476,8 +5480,10 @@ public:
     _collector(collector), _span(span), _mark_bit_map(mark_bit_map),
     _task_queues(task_queues),
     _term(total_workers, task_queues)
-    { }
-
+    {
+      assert(_collector->_span.equals(_span) && !_span.is_empty(),
+             "Inconsistency in _span"); 
+    }
   OopTaskQueueSet* task_queues() { return _task_queues; }
 
   OopTaskQueue* work_queue(int i) { return task_queues()->queue(i); }
@@ -5493,11 +5499,12 @@ public:
 };
 
 void CMSRefProcTaskProxy::work(int i) {
+  assert(_collector->_span.equals(_span), "Inconsistency in _span");
   CMSParKeepAliveClosure par_keep_alive(_collector, _span,
                                         _mark_bit_map, work_queue(i));
   CMSParDrainMarkingStackClosure par_drain_stack(_collector, _span,
                                                  _mark_bit_map, work_queue(i));
-  CMSIsAliveClosure is_alive_closure(_mark_bit_map);
+  CMSIsAliveClosure is_alive_closure(_span, _mark_bit_map);
   _task.work(i, is_alive_closure, par_keep_alive, par_drain_stack);
   if (_task.marks_oops_alive()) {
     do_work_steal(i, &par_drain_stack, &par_keep_alive,
@@ -6818,11 +6825,9 @@ void MarkFromRootsClosure::do_bit(size_t offset) {
         // during the preclean or remark phase. (CMSCleanOnEnter)
         if (CMSCleanOnEnter) {
           size_t sz = _collector->block_size_using_printezis_bits(addr);
-          HeapWord* start_card_addr = (HeapWord*)round_down(
-                                         (intptr_t)addr, CardTableModRefBS::card_size);
           HeapWord* end_card_addr   = (HeapWord*)round_to(
                                          (intptr_t)(addr+sz), CardTableModRefBS::card_size);
-          MemRegion redirty_range = MemRegion(start_card_addr, end_card_addr);
+          MemRegion redirty_range = MemRegion(addr, end_card_addr);
           assert(!redirty_range.is_empty(), "Arithmetical tautology");
           // Bump _threshold to end_card_addr; note that
           // _threshold cannot possibly exceed end_card_addr, anyhow.
@@ -7240,7 +7245,8 @@ Par_PushOrMarkClosure::Par_PushOrMarkClosure(CMSCollector* collector,
   _should_remember_klasses(collector->cms_should_unload_classes())
 { }
 
-
+// Assumes thread-safe access by callers, who are
+// responsible for mutual exclusion. 
 void CMSCollector::lower_restart_addr(HeapWord* low) {
   assert(_span.contains(low), "Out of bounds addr");
   if (_restart_addr == NULL) {
@@ -7266,7 +7272,7 @@ void PushOrMarkClosure::handle_stack_overflow(HeapWord* lost) {
 // in CMSCollector's _restart_address.
 void Par_PushOrMarkClosure::handle_stack_overflow(HeapWord* lost) {
   // We need to do this under a mutex to prevent other
-  // workers from interfering with the expansion below.
+  // workers from interfering with the work done below.
   MutexLockerEx ml(_overflow_stack->par_lock(),
                    Mutex::_no_safepoint_check_flag);
   // Remember the least grey address discarded
@@ -7413,12 +7419,25 @@ void PushAndMarkClosure::do_oop(oop* p) {
     )
     if (simulate_overflow || !_mark_stack->push(this_oop)) {
       if (_concurrent_precleaning) {
-         // During precleaning we can just dirty the appropriate card
+         // During precleaning we can just dirty the appropriate card(s)
          // in the mod union table, thus ensuring that the object remains
-         // in the grey set  and continue. Note that no one can be intefering
-         // with us in this action of dirtying the mod union table, so
-         // no locking is required.
-         _mod_union_table->mark(addr);
+         // in the grey set and continue. In the case of object arrays
+         // we need to dirty all of the cards that the object spans,
+         // since the rescan of object arrays will be limited to the
+         // dirty cards.
+         // Note that no one can be intefering with us in this action
+         // of dirtying the mod union table, so no locking or atomics
+         // are required.
+         if (this_oop->is_objArray()) {
+           size_t sz = this_oop->size();
+           HeapWord* end_card_addr = (HeapWord*)round_to(
+                                         (intptr_t)(addr+sz), CardTableModRefBS::card_size);
+           MemRegion redirty_range = MemRegion(addr, end_card_addr);
+           assert(!redirty_range.is_empty(), "Arithmetical tautology");
+           _mod_union_table->mark_range(redirty_range);
+         } else {
+           _mod_union_table->mark(addr);
+         } 
          _collector->_ser_pmc_preclean_ovflw++;
       } else {
          // During the remark phase, we need to remember this oop
@@ -8362,6 +8381,7 @@ bool CMSCollector::take_from_overflow_list(size_t num, CMSMarkStack* stack) {
   for (oop next; i > 0 && cur != NULL; cur = next, i--) {
     next = oop(cur->mark());
     cur->set_mark(proto);   // until proven otherwise
+    assert(cur->is_oop(), "Should be an oop");
     bool res = stack->push(cur);
     assert(res, "Bit off more than can chew?");
     NOT_PRODUCT(n++;)
@@ -8416,6 +8436,7 @@ bool CMSCollector::par_take_from_overflow_list(size_t num,
   for (cur = prefix; cur != NULL; cur = next) {
     next = oop(cur->mark());
     cur->set_mark(proto);   // until proven otherwise
+    assert(cur->is_oop(), "Should be an oop");
     bool res = work_q->push(cur);
     assert(res, "Bit off more than we can chew?");
     NOT_PRODUCT(n++;)

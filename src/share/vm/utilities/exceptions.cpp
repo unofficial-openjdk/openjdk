@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)exceptions.cpp	1.99 07/05/05 17:07:09 JVM"
+#pragma ident "@(#)exceptions.cpp	1.100 07/09/13 11:29:49 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -376,14 +376,14 @@ ExceptionMark::~ExceptionMark() {
 #ifndef PRODUCT
 // caller frees value_string if necessary
 void Exceptions::debug_check_abort(const char *value_string) {
-  if (AbortVMOnException[0] != '\0' && value_string != NULL &&
+  if (AbortVMOnException != NULL && value_string != NULL &&
       strstr(value_string, AbortVMOnException)) {
     fatal1("Saw %s, aborting", value_string);
   }
 }
 
 void Exceptions::debug_check_abort(Handle exception) {
-  if (AbortVMOnException[0] != '\0') {
+  if (AbortVMOnException != NULL) {
     ResourceMark rm;
     debug_check_abort(instanceKlass::cast(exception()->klass())->external_name());
   }

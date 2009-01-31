@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)fprofiler.cpp	1.136 07/05/05 17:06:47 JVM"
+#pragma ident "@(#)fprofiler.cpp	1.137 07/08/31 18:44:03 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -927,16 +927,6 @@ void FlatProfilerTask::task() {
   FlatProfiler::record_thread_ticks();
 }
 
-inline bool is_valid_method(methodOop method) {
-  if (method == NULL || 
-      !method->is_perm() || 
-      oop(method)->klass() != Universe::methodKlassObj() ||
-      !method->is_method()) {
-    return false;   // doesn't look good
-  }
-  return true;      // hopefully this is a method indeed
-}
-
 void ThreadProfiler::record_interpreted_tick(frame fr, TickPosition where, int* ticks) {
   FlatProfiler::all_int_ticks++;
   if (!FlatProfiler::full_profile()) {
@@ -954,7 +944,7 @@ void ThreadProfiler::record_interpreted_tick(frame fr, TickPosition where, int* 
   if (fr.fp() != NULL) {
     method = *fr.interpreter_frame_method_addr();
   }
-  if (!is_valid_method(method)) {
+  if (!Universe::heap()->is_valid_method(method)) {
     // tick came at a bad time, stack frame not initialized correctly
     interpreter_ticks += 1;
     FlatProfiler::interpreter_ticks += 1;

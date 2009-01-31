@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)ciFlags.hpp	1.14 07/05/05 17:05:13 JVM"
+#pragma ident "@(#)ciFlags.hpp	1.15 07/09/28 10:23:24 JVM"
 #endif
 /*
  * Copyright 1999-2003 Sun Microsystems, Inc.  All Rights Reserved.
@@ -58,7 +58,7 @@ public:
   // Conversion
   jint   as_int()                      { return _flags; }
 
-  void print_klass_flags();
-  void print_member_flags();
-  void print();
+  void print_klass_flags(outputStream* st = tty);
+  void print_member_flags(outputStream* st = tty);
+  void print(outputStream* st = tty);
 };

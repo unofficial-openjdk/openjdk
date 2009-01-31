@@ -281,7 +281,7 @@ c1_LinearScan_<arch>.cpp                c1_LinearScan.hpp
 c1_LinearScan_<arch>.hpp                generate_platform_dependent_include
 
 c1_MacroAssembler.hpp                   assembler.hpp
-c1_MacroAssembler.hpp                   assembler_<arch>.inline.hpp
+c1_MacroAssembler.hpp                   assembler_<arch_model>.inline.hpp
 
 c1_MacroAssembler_<arch>.cpp            arrayOop.hpp
 c1_MacroAssembler_<arch>.cpp            biasedLocking.hpp
@@ -326,7 +326,7 @@ c1_Runtime1.cpp                         copy.hpp
 c1_Runtime1.cpp                         disassembler_<arch>.hpp
 c1_Runtime1.cpp                         events.hpp
 c1_Runtime1.cpp                         interfaceSupport.hpp
-c1_Runtime1.cpp                         interpreter_<arch>.hpp
+c1_Runtime1.cpp                         interpreter.hpp
 c1_Runtime1.cpp                         javaCalls.hpp
 c1_Runtime1.cpp                         objArrayKlass.hpp
 c1_Runtime1.cpp                         oop.inline.hpp
@@ -352,7 +352,7 @@ c1_Runtime1_<arch>.cpp                  c1_Defs.hpp
 c1_Runtime1_<arch>.cpp                  c1_MacroAssembler.hpp
 c1_Runtime1_<arch>.cpp                  c1_Runtime1.hpp
 c1_Runtime1_<arch>.cpp                  compiledICHolderOop.hpp
-c1_Runtime1_<arch>.cpp                  interpreter_<arch>.hpp
+c1_Runtime1_<arch>.cpp                  interpreter.hpp
 c1_Runtime1_<arch>.cpp                  jvmtiExport.hpp
 c1_Runtime1_<arch>.cpp                  nativeInst_<arch>.hpp
 c1_Runtime1_<arch>.cpp                  oop.inline.hpp
@@ -395,8 +395,6 @@ codeBlob.cpp                            c1_Runtime1.hpp
 
 compileBroker.cpp                       c1_Compiler.hpp
 
-fprofiler.cpp                           c1_Compiler.hpp
-
 frame.hpp                               c1_Defs.hpp
 
 frame_<arch>.cpp                        c1_Runtime1.hpp
@@ -408,7 +406,7 @@ globals.hpp                             c1_globals_<os_family>.hpp
 
 instanceKlass.cpp                       c1_Compiler.hpp
 
-interpreter_<arch>.cpp                  c1_Runtime1.hpp
+interpreter_<arch_model>.cpp            c1_Runtime1.hpp
 
 java.cpp                                c1_Compiler.hpp
 java.cpp                                c1_Runtime1.hpp
@@ -419,7 +417,7 @@ oopMap.cpp                              c1_Defs.hpp
 
 os_<os_family>.cpp                      c1_Runtime1.hpp
 
-os_<os_family>_<arch>.cpp               c1_Runtime1.hpp
+os_<os_arch>.cpp                        c1_Runtime1.hpp
 
 registerMap.hpp                         c1_Defs.hpp
 
@@ -427,12 +425,11 @@ safepoint.cpp                           c1_globals.hpp
 
 sharedRuntime.cpp                       c1_Runtime1.hpp
 
-sharedRuntime_<arch>.cpp                c1_Runtime1.hpp
+sharedRuntime_<arch_model>.cpp          c1_Runtime1.hpp
 
 thread.cpp                              c1_Compiler.hpp
 
 top.hpp                                 c1_globals.hpp
 
-vmStructs.cpp                           c1_Defs.hpp
-vmStructs.cpp                           c1_Runtime1.hpp
+vmStructs.hpp                           c1_Runtime1.hpp
 

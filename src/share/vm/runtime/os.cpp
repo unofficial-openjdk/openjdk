@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)os.cpp	1.183 07/06/19 03:53:14 JVM"
+#pragma ident "@(#)os.cpp	1.185 07/10/04 10:49:22 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -39,6 +39,8 @@ int               os::_processor_count    = 0;
 volatile jlong    os::_global_time        = 0;
 volatile int      os::_global_time_lock   = 0;
 bool              os::_use_global_time    = false;
+size_t		  os::_page_sizes[os::page_sizes_max];
+
 #ifndef PRODUCT
 int os::num_mallocs = 0;            // # of calls to malloc/realloc
 size_t os::alloc_bytes = 0;         // # of bytes allocated
@@ -1013,13 +1015,53 @@ bool os::stack_shadow_pages_available(Thread *thread, methodHandle method) {
   // handler or a println uses at least 8k stack of VM and native code
   // respectively.
   const int framesize_in_bytes =
-    AbstractInterpreter::size_top_interpreter_activation(method()) * wordSize;
+    Interpreter::size_top_interpreter_activation(method()) * wordSize;
   int reserved_area = ((StackShadowPages + StackRedPages + StackYellowPages) 
                       * vm_page_size()) + framesize_in_bytes;
   // The very lower end of the stack
   address stack_limit = thread->stack_base() - thread->stack_size();
   return (sp > (stack_limit + reserved_area));
 }
+
+size_t os::page_size_for_region(size_t region_min_size, size_t region_max_size,
+				uint min_pages)
+{
+  assert(min_pages > 0, "sanity");
+  if (UseLargePages) {
+    const size_t max_page_size = region_max_size / min_pages;
+
+    for (unsigned int i = 0; _page_sizes[i] != 0; ++i) {
+      const size_t sz = _page_sizes[i];
+      const size_t mask = sz - 1;
+      if ((region_min_size & mask) == 0 && (region_max_size & mask) == 0) {
+	// The largest page size with no fragmentation.
+	return sz;
+      }
+
+      if (sz <= max_page_size) {
+	// The largest page size that satisfies the min_pages requirement.
+	return sz;
+      }
+    }
+  }
+
+  return vm_page_size();
+}
+
+#ifndef PRODUCT
+void os::trace_page_sizes(const char* str, const size_t region_min_size,
+			  const size_t region_max_size, const size_t page_size,
+			  const char* base, const size_t size)
+{
+  if (TracePageSizes) {
+    tty->print_cr("%s:  min=" SIZE_FORMAT " max=" SIZE_FORMAT
+		  " pg_sz=" SIZE_FORMAT " base=" PTR_FORMAT
+		  " size=" SIZE_FORMAT,
+		  str, region_min_size, region_max_size,
+		  page_size, base, size);
+  }
+}
+#endif	// #ifndef PRODUCT
 
 // This is the working definition of a server class machine:
 // >= 2 physical CPU's and >=2GB of memory, with some fuzz 

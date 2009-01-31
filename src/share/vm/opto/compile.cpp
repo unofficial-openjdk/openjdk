@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)compile.cpp	1.631 07/05/17 15:57:33 JVM"
+#pragma ident "@(#)compile.cpp	1.633 07/09/28 10:23:11 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -313,8 +313,13 @@ CompileWrapper::CompileWrapper(Compile* compile) : _compile(compile) {
   compile->init_type_arena();
   Type::Initialize(compile);
   _compile->set_scratch_buffer_blob(NULL);
+  _compile->begin_method();
 }
 CompileWrapper::~CompileWrapper() {
+  if (_compile->failing()) {
+    _compile->print_method("Failed");
+  }
+  _compile->end_method();
   if (_compile->scratch_buffer_blob() != NULL)
     BufferBlob::free(_compile->scratch_buffer_blob());
   _compile->env()->set_compiler_data(NULL);
@@ -436,6 +441,7 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
                   _node_bundling_base(NULL),
 #ifndef PRODUCT
                   _trace_opto_output(TraceOptoOutput || method()->has_option("TraceOptoOutput")),
+                  _printer(IdealGraphPrinter::printer()),
 #endif
                   _congraph(NULL) {
   C = this;
@@ -561,6 +567,12 @@ Compile::Compile( ciEnv* ci_env, C2Compiler* compiler, ciMethod* target, int osr
 
   // Drain the list.
   Finish_Warm();
+#ifndef PRODUCT
+  if (_printer) {
+    _printer->print_inlining(this);
+  }
+#endif
+
   if (failing())  return;
   NOT_PRODUCT( verify_graph_edges(); )
 
@@ -672,6 +684,7 @@ Compile::Compile( ciEnv* ci_env,
     _node_bundling_base(NULL),
 #ifndef PRODUCT
     _trace_opto_output(TraceOptoOutput),
+    _printer(NULL),
 #endif
     _congraph(NULL) {
   C = this;
@@ -763,6 +776,7 @@ void Compile::Init(int aliaslevel) {
   set_root(new (this, 3) RootNode());
   // Now that you have a Root to point to, create the real TOP
   set_cached_top_node( new (this, 1) ConNode(Type::TOP) );
+  set_recent_alloc(NULL, NULL);
 
   // Create Debug Information Recorder to record scopes, oopmaps, etc.
   env()->set_oop_recorder(new OopRecorder(comp_arena()));
@@ -1177,7 +1191,7 @@ void Compile::AliasType::print_on(outputStream* st) {
         st->print(" +any");
   else  st->print(" +%-3d", offset);
   st->print(" in ");
-  adr_type()->dump();
+  adr_type()->dump_on(st);
   const TypeOopPtr* tjp = adr_type()->isa_oopptr();
   if (field() != NULL && tjp) {
     if (tjp->klass()  != field()->holder() ||
@@ -1447,6 +1461,8 @@ void Compile::Optimize() {
 
   NOT_PRODUCT( verify_graph_edges(); )
 
+  print_method("Start");
+
  {
   // Iterative Global Value Numbering, including ideal transforms
   // Initialize IterGVN with types and values from parse-time GVN
@@ -1455,6 +1471,9 @@ void Compile::Optimize() {
     NOT_PRODUCT( TracePhase t2("iterGVN", &_t_iterGVN, TimeCompiler); )
     igvn.optimize();
   }
+
+  print_method("Iter GVN 1", 2);
+  
   if (failing())  return;
 
   // get rid of the connection graph since it's information is not
@@ -1472,6 +1491,7 @@ void Compile::Optimize() {
       TracePhase t2("idealLoop", &_t_idealLoop, true);
       PhaseIdealLoop ideal_loop( igvn, NULL, true );
       loop_opts_cnt--;
+      if (major_progress()) print_method("PhaseIdealLoop 1", 2);
       if (failing())  return;
     }
     // Loop opts pass if partial peeling occurred in previous pass
@@ -1479,6 +1499,7 @@ void Compile::Optimize() {
       TracePhase t3("idealLoop", &_t_idealLoop, true);
       PhaseIdealLoop ideal_loop( igvn, NULL, false );
       loop_opts_cnt--;
+      if (major_progress()) print_method("PhaseIdealLoop 2", 2);
       if (failing())  return;
     }
     // Loop opts pass for loop-unrolling before CCP
@@ -1486,6 +1507,7 @@ void Compile::Optimize() {
       TracePhase t4("idealLoop", &_t_idealLoop, true);
       PhaseIdealLoop ideal_loop( igvn, NULL, false );
       loop_opts_cnt--;
+      if (major_progress()) print_method("PhaseIdealLoop 3", 2);
     }
   }
   if (failing())  return;
@@ -1497,14 +1519,19 @@ void Compile::Optimize() {
     TracePhase t2("ccp", &_t_ccp, true);
     ccp.do_transform();
   }
+  print_method("PhaseCPP 1", 2);
+
   assert( true, "Break here to ccp.dump_old2new_map()");
-    
+
   // Iterative Global Value Numbering, including ideal transforms
   {
     NOT_PRODUCT( TracePhase t2("iterGVN2", &_t_iterGVN2, TimeCompiler); )
     igvn = ccp;
     igvn.optimize();
   }
+
+  print_method("Iter GVN 2", 2);
+  
   if (failing())  return;
 
   // Loop transforms on the ideal graph.  Range Check Elimination,
@@ -1516,6 +1543,7 @@ void Compile::Optimize() {
       assert( cnt++ < 40, "infinite cycle in loop optimization" );
       PhaseIdealLoop ideal_loop( igvn, NULL, true );
       loop_opts_cnt--;
+      if (major_progress()) print_method("PhaseIdealLoop iterations", 2);
       if (failing())  return;
     }
   }
@@ -1538,6 +1566,8 @@ void Compile::Optimize() {
       return;
     }
   }
+
+  print_method("Optimize finished", 2);
 }
 
 
@@ -1583,6 +1613,9 @@ void Compile::Code_Gen() {
 
     cfg.Estimate_Block_Frequency();
     cfg.GlobalCodeMotion(m,unique(),proj_list);
+
+    print_method("Global code motion", 2);
+
     if (failing())  return;
     NOT_PRODUCT( verify_graph_edges(); )
 
@@ -1634,6 +1667,8 @@ void Compile::Code_Gen() {
     NOT_PRODUCT( TraceTime t2b(NULL, &_t_codeGeneration, TimeCompiler, false); )
     Output();
   }
+
+  print_method("End");
 
   // He's dead, Jim.
   _cfg     = (PhaseCFG*)0xdeadbeef;
@@ -1703,7 +1738,7 @@ void Compile::dump_asm(int *pcs, uint pc_limit) {
         tty->print(" %c ", starts_bundle);
         starts_bundle = ' ';
         tty->print("\t");
-        n->format(_regalloc);
+        n->format(_regalloc, tty);
         tty->cr();
       }
 
@@ -1720,7 +1755,7 @@ void Compile::dump_asm(int *pcs, uint pc_limit) {
         tty->print(" %c ", starts_bundle);
         starts_bundle = ' ';
         tty->print("\t");
-        delay->format(_regalloc);
+        delay->format(_regalloc, tty);
         tty->print_cr("");
         delay = NULL;
       }
@@ -2123,15 +2158,26 @@ bool Compile::final_graph_reshaping() {
           CallNode *call = n->in(0)->in(0)->as_Call();
           if (call->entry_point() == OptoRuntime::rethrow_stub()) {
             expected_kids--;      // Rethrow always has 1 less kid
-          } else if (call->req() > TypeFunc::Parms) {
+          } else if (call->req() > TypeFunc::Parms &&
+                     call->is_CallDynamicJava()) {
             // Check for null receiver. In such case, the optimizer has 
             // detected that the virtual call will always result in a null 
             // pointer exception. The fall-through projection of this CatchNode 
             // will not be populated.
             Node *arg0 = call->in(TypeFunc::Parms);
-            if (call->is_CallDynamicJava() &&
-                arg0->is_Type() &&
+            if (arg0->is_Type() &&
                 arg0->as_Type()->type()->higher_equal(TypePtr::NULL_PTR)) { 
+              expected_kids--;
+            }
+          } else if (call->entry_point() == OptoRuntime::new_array_Java() &&
+                     call->req() > TypeFunc::Parms+1 &&
+                     call->is_CallStaticJava()) {
+            // Check for negative array length. In such case, the optimizer has 
+            // detected that the allocation attempt will always result in an
+            // exception. There is no fall-through projection of this CatchNode .
+            Node *arg1 = call->in(TypeFunc::Parms+1);
+            if (arg1->is_Type() &&
+                arg1->as_Type()->type()->join(TypeInt::POS)->empty()) {
               expected_kids--;
             }
           }

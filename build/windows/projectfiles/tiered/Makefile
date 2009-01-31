@@ -24,6 +24,6 @@
 
 Variant=tiered
 !include local.make
-AdditionalTargets=incls/ad_$(ARCH).cpp incls/dfa_$(ARCH).cpp
+AdditionalTargets=incls/ad_$(Platform_arch_model).cpp incls/dfa_$(Platform_arch_model).cpp
 
 !include $(HOTSPOTWORKSPACE)/build/windows/projectfiles/common/Makefile

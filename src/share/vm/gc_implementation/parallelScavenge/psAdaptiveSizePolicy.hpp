@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)psAdaptiveSizePolicy.hpp	1.63 07/05/05 17:05:27 JVM"
+#pragma ident "@(#)psAdaptiveSizePolicy.hpp	1.64 07/10/04 10:49:35 JVM"
 #endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -86,7 +86,6 @@ class PSAdaptiveSizePolicy : public AdaptiveSizePolicy {
   // for making ergonomic decisions.
   double _latest_major_mutator_interval_seconds;
 
-  const size_t _generation_alignment;       // alignment for generations
   const size_t _intra_generation_alignment; // alignment for eden, survivors
 
   const double _gc_minor_pause_goal_sec;    // goal for maximum minor gc pause
@@ -222,7 +221,6 @@ class PSAdaptiveSizePolicy : public AdaptiveSizePolicy {
   PSAdaptiveSizePolicy(size_t init_eden_size, 
 		       size_t init_promo_size, 
 		       size_t init_survivor_size, 
-		       size_t generation_alignment,
 		       size_t intra_generation_alignment,
 		       double gc_pause_goal_sec,
 		       double gc_minor_pause_goal_sec,

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)vframe.cpp	1.162 07/05/17 16:07:02 JVM"
+#pragma ident "@(#)vframe.cpp	1.163 07/08/29 13:42:30 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -547,7 +547,8 @@ void javaVFrame::print() {
 void javaVFrame::print_value() const {
   methodOop  m = method();
   klassOop   k = m->method_holder();
-  tty->print_cr("frame( sp=" INTPTR_FORMAT ", fp=" INTPTR_FORMAT ", pc=" INTPTR_FORMAT ")", _fr.sp(), _fr.fp(), _fr.pc());
+  tty->print_cr("frame( sp=" INTPTR_FORMAT ", unextended_sp=" INTPTR_FORMAT ", fp=" INTPTR_FORMAT ", pc=" INTPTR_FORMAT ")",
+                _fr.sp(),  _fr.unextended_sp(), _fr.fp(), _fr.pc());
   tty->print("%s.%s", Klass::cast(k)->internal_name(), m->name()->as_C_string());
 
   if (!m->is_native()) {

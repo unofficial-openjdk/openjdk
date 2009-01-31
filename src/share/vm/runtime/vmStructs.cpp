@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)vmStructs.cpp	1.186 07/08/20 18:05:45 JVM"
+#pragma ident "@(#)vmStructs.cpp	1.189 08/04/09 19:20:08 JVM"
 #endif
 /*
  * Copyright 2000-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -244,6 +244,7 @@ static inline uint64_t cast_uint64_t(size_t x)
      static_field(Universe,                    _constantPoolCacheKlassObj,                    klassOop)                              \
      static_field(Universe,                    _compiledICHolderKlassObj,                     klassOop)                              \
      static_field(Universe,                    _systemObjArrayKlassObj,                       klassOop)                              \
+     static_field(Universe,                    _mirrors[0],                                   oop)                                  \
      static_field(Universe,                    _main_thread_group,                            oop)                                   \
      static_field(Universe,                    _system_thread_group,                          oop)                                   \
      static_field(Universe,                    _the_empty_byte_array,                         typeArrayOop)                          \
@@ -289,11 +290,12 @@ static inline uint64_t cast_uint64_t(size_t x)
   nonstatic_field(CardGeneration,              _rs,                                           GenRemSet*)                            \
   nonstatic_field(CardGeneration,              _bts,                                          BlockOffsetSharedArray*)               \
                                                                                                                                      \
-  nonstatic_field(CardTableModRefBS,           _whole_heap,                                   MemRegion)                             \
+  nonstatic_field(CardTableModRefBS,           _whole_heap,                                   const MemRegion)                       \
+  nonstatic_field(CardTableModRefBS,           _guard_index,                                  const size_t)                          \
+  nonstatic_field(CardTableModRefBS,           _last_valid_index,                             const size_t)                          \
+  nonstatic_field(CardTableModRefBS,           _page_size,                                    const size_t)                          \
+  nonstatic_field(CardTableModRefBS,           _byte_map_size,                                const size_t)                          \
   nonstatic_field(CardTableModRefBS,           _byte_map,                                     jbyte*)                                \
-  nonstatic_field(CardTableModRefBS,           _byte_map_size,                                size_t)                                \
-  nonstatic_field(CardTableModRefBS,           _last_valid_index,                             size_t)                                \
-  nonstatic_field(CardTableModRefBS,           _guard_index,                                  size_t)                                \
   nonstatic_field(CardTableModRefBS,           _cur_covered_regions,                          int)                                   \
   nonstatic_field(CardTableModRefBS,           _covered,                                      MemRegion*)                            \
   nonstatic_field(CardTableModRefBS,           _committed,                                    MemRegion*)                            \
@@ -488,7 +490,6 @@ static inline uint64_t cast_uint64_t(size_t x)
       static_field(SystemDictionary,            _vector_klass,                                 klassOop)                             \
       static_field(SystemDictionary,            _hashtable_klass,                              klassOop)                             \
       static_field(SystemDictionary,            _box_klasses[0],                               klassOop)                             \
-      static_field(SystemDictionary,            _mirrors[0],                                   oop)                                  \
       static_field(SystemDictionary,            _java_system_loader,                           oop)                                  \
                                                                                                                                      \
   /*******************/                                                                                                              \
@@ -895,6 +896,7 @@ static inline uint64_t cast_uint64_t(size_t x)
   /*******************************************************************/   \
                                                                           \
   declare_unsigned_integer_type(size_t)                                   \
+  declare_integer_type(ssize_t)                                           \
   declare_unsigned_integer_type(const size_t)                             \
   declare_integer_type(intx)                                              \
   declare_integer_type(intptr_t)                                          \
@@ -1007,6 +1009,7 @@ static inline uint64_t cast_uint64_t(size_t x)
   declare_toplevel_type(GenerationSpec)                                   \
   declare_toplevel_type(HeapWord)                                         \
   declare_toplevel_type(MemRegion)                                        \
+  declare_toplevel_type(const MemRegion)                                  \
   declare_toplevel_type(PermanentGenerationSpec)                          \
   declare_toplevel_type(ThreadLocalAllocBuffer)                           \
   declare_toplevel_type(VirtualSpace)                                     \

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)dictionary.cpp	1.27 08/06/19 10:32:36 JVM"
+#pragma ident "@(#)dictionary.cpp	1.28 08/11/24 12:21:02 JVM"
 #endif
 /*
  * Copyright 2003-2007 Sun Microsystems, Inc.  All Rights Reserved.

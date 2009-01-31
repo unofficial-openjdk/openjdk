@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)parOopClosures.hpp	1.1 07/05/16 10:51:44 JVM"
+#pragma ident "@(#)parOopClosures.hpp	1.2 07/06/22 16:49:48 JVM"
 #endif
 /*
  * Copyright (c) 2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -29,7 +29,8 @@
 
 class ParScanThreadState;
 class ParNewGeneration;
-typedef class OopTaskQueueSet ObjToScanQueueSet;
+template<class E> class GenericTaskQueueSet;
+typedef GenericTaskQueueSet<oop> ObjToScanQueueSet;
 class ParallelTaskTerminator;
 
 class ParScanClosure: public OopsInGenClosure {

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)ciObject.cpp	1.28 07/05/17 15:49:59 JVM"
+#pragma ident "@(#)ciObject.cpp	1.29 07/09/28 10:23:21 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -195,10 +195,10 @@ bool ciObject::has_encoding() {
 //
 // Implementation note: dispatch to the virtual print_impl behavior
 // for this ciObject.
-void ciObject::print() {
-  tty->print("<%s", type_string());
-  GUARDED_VM_ENTRY(print_impl();)
-  tty->print(" ident=%d %s address=0x%x>", ident(),
+void ciObject::print(outputStream* st) {
+  st->print("<%s", type_string());
+  GUARDED_VM_ENTRY(print_impl(st);)
+  st->print(" ident=%d %s address=0x%x>", ident(),
         is_perm() ? "PERM" : "",
         (address)this);
 }
@@ -207,13 +207,13 @@ void ciObject::print() {
 // ciObject::print_oop
 //
 // Print debugging output about the oop this ciObject represents.
-void ciObject::print_oop() {
+void ciObject::print_oop(outputStream* st) {
   if (is_null_object()) {
-    tty->print_cr("NULL");
+    st->print_cr("NULL");
   } else if (!is_loaded()) {
-    tty->print_cr("UNLOADED");
+    st->print_cr("UNLOADED");
   } else {
-    GUARDED_VM_ENTRY(get_oop()->print();)
+    GUARDED_VM_ENTRY(get_oop()->print_on(st);)
   }
 }
 

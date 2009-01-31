@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)debugInfo.hpp	1.34 07/05/05 17:05:20 JVM"
+#pragma ident "@(#)debugInfo.hpp	1.35 07/07/27 16:10:59 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -37,6 +37,7 @@ class ScopeValue: public ResourceObj {
  public:
   // Testers
   virtual bool is_location() const { return false; }
+  virtual bool is_object() const { return false; }
   virtual bool is_constant_int() const { return false; }
   virtual bool is_constant_double() const { return false; }
   virtual bool is_constant_long() const { return false; }
@@ -67,6 +68,57 @@ class LocationValue: public ScopeValue {
   // Printing
   void print_on(outputStream* st) const;
 };
+
+
+// An ObjectValue describes an object eliminated by escape analysis.
+
+class ObjectValue: public ScopeValue {
+ private:
+  int                        _id;
+  ScopeValue*                _klass;
+  GrowableArray<ScopeValue*> _field_values;
+  Handle                     _value;
+  bool                       _visited;
+
+ public:
+  ObjectValue(int id, ScopeValue* klass)
+     : _id(id)
+     , _klass(klass)
+     , _field_values()
+     , _value()
+     , _visited(false) {
+    assert(klass->is_constant_oop(), "should be constant klass oop");
+  }
+
+  ObjectValue(int id)
+     : _id(id)
+     , _klass(NULL)
+     , _field_values()
+     , _value()
+     , _visited(false) {}
+
+  // Accessors
+  bool                        is_object() const         { return true; }
+  int                         id() const                { return _id; }
+  ScopeValue*                 klass() const             { return _klass; }
+  GrowableArray<ScopeValue*>* field_values()            { return &_field_values; }
+  ScopeValue*                 field_at(int i) const     { return _field_values.at(i); }
+  int                         field_size()              { return _field_values.length(); }
+  Handle                      value() const             { return _value; }
+  bool                        is_visited() const        { return _visited; }
+
+  void                        set_value(oop value)      { _value = Handle(value); }
+  void                        set_visited(bool visited) { _visited = false; }
+
+  // Serialization of debugging information
+  void read_object(DebugInfoReadStream* stream);
+  void write_on(DebugInfoWriteStream* stream);
+
+  // Printing
+  void print_on(outputStream* st) const;
+  void print_fields_on(outputStream* st) const;
+};
+  
 
 // A ConstantIntValue describes a constant int; i.e., the corresponding logical entity
 // is either a source constant or its computation has been constant-folded.
@@ -166,13 +218,15 @@ class MonitorValue: public ResourceObj {
  private:
   ScopeValue* _owner;
   Location    _basic_lock;
+  bool        _eliminated;
  public:
   // Constructor
-  MonitorValue(ScopeValue* owner, Location basic_lock);
+  MonitorValue(ScopeValue* owner, Location basic_lock, bool eliminated = false);
 
   // Accessors
   ScopeValue*  owner()      const { return _owner; }
   Location     basic_lock() const { return _basic_lock;  }
+  bool         eliminated() const { return _eliminated; }
 
   // Serialization of debugging information
   MonitorValue(DebugInfoReadStream* stream);
@@ -189,15 +243,20 @@ class DebugInfoReadStream : public CompressedReadStream {
  private:
   const nmethod* _code;
   const nmethod* code() const { return _code; }
+  GrowableArray<ScopeValue*>* _obj_pool;
  public:
-  DebugInfoReadStream(const nmethod* code, int offset) :
-    CompressedReadStream(code->scopes_data_begin(), offset) { 
-    _code = code; 
+  DebugInfoReadStream(const nmethod* code, int offset, GrowableArray<ScopeValue*>* obj_pool = NULL) :
+    CompressedReadStream(code->scopes_data_begin(), offset) {
+    _code = code;
+    _obj_pool = obj_pool;
+
   } ;
 
   oop read_oop() { 
     return code()->oop_at(read_int()); 
   } 
+  ScopeValue* read_object_value();
+  ScopeValue* get_cached_object();
   // BCI encoding is mostly unsigned, but -1 is a distinguished value
   int read_bci() { return read_int() + InvocationEntryBci; }
 };

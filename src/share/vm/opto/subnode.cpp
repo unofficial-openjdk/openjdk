@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)subnode.cpp	1.159 07/05/05 17:06:27 JVM"
+#pragma ident "@(#)subnode.cpp	1.162 07/09/28 10:33:21 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -78,7 +78,7 @@ const Type *SubNode::Value( PhaseTransform *phase ) const {
 
   // Not correct for SubFnode and AddFNode (must check for infinity)
   // Equal?  Subtract is zero
-  if( phase->eqv(in1, in2) ) return add_id();
+  if (phase->eqv_uncast(in1, in2))  return add_id();
 
   // Either input is BOTTOM ==> the result is the local BOTTOM
   if( t1 == Type::BOTTOM || t2 == Type::BOTTOM ) 
@@ -89,6 +89,31 @@ const Type *SubNode::Value( PhaseTransform *phase ) const {
 }
 
 //=============================================================================
+
+//------------------------------Helper function--------------------------------
+static bool ok_to_convert(Node* inc, Node* iv) {
+    // Do not collapse (x+c0)-y if "+" is a loop increment, because the
+    // "-" is loop invariant and collapsing extends the live-range of "x"
+    // to overlap with the "+", forcing another register to be used in
+    // the loop.
+    // This test will be clearer with '&&' (apply DeMorgan's rule)
+    // but I like the early cutouts that happen here.
+    const PhiNode *phi;
+    if( ( !inc->in(1)->is_Phi() ||
+          !(phi=inc->in(1)->as_Phi()) ||
+          phi->is_copy() ||
+          !phi->region()->is_CountedLoop() ||
+          inc != phi->region()->as_CountedLoop()->incr() )
+       &&
+        // Do not collapse (x+c0)-iv if "iv" is a loop induction variable,
+        // because "x" maybe invariant.
+        ( !iv->is_loop_iv() )
+      ) { 
+      return true;
+    } else {
+      return false;
+    }
+}
 //------------------------------Ideal------------------------------------------
 Node *SubINode::Ideal(PhaseGVN *phase, bool can_reshape){
   Node *in1 = in(1);
@@ -115,33 +140,27 @@ Node *SubINode::Ideal(PhaseGVN *phase, bool can_reshape){
   }
 
   // Convert "(x+c0) - y" into (x-y) + c0"
-  if( op1 == Op_AddI ) {
-    // Do not collapse (x+y)-y if "+" is a loop increment, because the
-    // "-" is loop invariant and collapsing extends the live-range of "x"
-    // to overlap with the "+", forcing another register to be used in
-    // the loop.
-    const PhiNode *phi;
-    // This test will be clearer with '&&' (apply DeMorgan's rule)
-    // but I like the early cutouts that happen here.
-    if( ( !in1->in(1)->is_Phi() ||
-          !(phi=in1->in(1)->as_Phi()) ||
-          phi->is_copy() ||
-          !phi->region()->is_CountedLoop() ||
-          in1 != phi->region()->as_CountedLoop()->incr() )
-       &&
-        // Do not collapse (x+c0)-iv if "iv" is a loop induction variable,
-        // because "x" maybe invariant.
-        ( !in2->is_Phi() ||
-          !(phi=in2->as_Phi()) ||
-          phi->is_copy() ||
-          !phi->region()->is_CountedLoop() ||
-          (Node*)phi != phi->region()->as_CountedLoop()->phi() )
-      ) { 
-      const Type *tadd = phase->type( in1->in(2) );
-      if( tadd->singleton() && tadd != Type::TOP ) {
-        Node *sub2 = phase->transform( new (phase->C, 3) SubINode( in1->in(1), in2 ));
-        return new (phase->C, 3) AddINode( sub2, in1->in(2) );
-      }
+  // Do not collapse (x+c0)-y if "+" is a loop increment or 
+  // if "y" is a loop induction variable.
+  if( op1 == Op_AddI && ok_to_convert(in1, in2) ) {
+    const Type *tadd = phase->type( in1->in(2) );
+    if( tadd->singleton() && tadd != Type::TOP ) {
+      Node *sub2 = phase->transform( new (phase->C, 3) SubINode( in1->in(1), in2 ));
+      return new (phase->C, 3) AddINode( sub2, in1->in(2) );
+    }
+  }
+
+
+  // Convert "x - (y+c0)" into "(x-y) - c0"
+  // Need the same check as in above optimization but reversed.
+  if (op2 == Op_AddI && ok_to_convert(in2, in1)) {
+    Node* in21 = in2->in(1);
+    Node* in22 = in2->in(2);
+    const TypeInt* tcon = phase->type(in22)->isa_int();
+    if (tcon != NULL && tcon->is_con()) {
+      Node* sub2 = phase->transform( new (phase->C, 3) SubINode(in1, in21) );
+      Node* neg_c0 = phase->intcon(- tcon->get_con());
+      return new (phase->C, 3) AddINode(sub2, neg_c0);
     }
   }
 
@@ -241,22 +260,27 @@ Node *SubLNode::Ideal(PhaseGVN *phase, bool can_reshape) {
     return new (phase->C, 3) AddLNode(in1, phase->longcon(-i->get_con()));
 
   // Convert "(x+c0) - y" into (x-y) + c0"
-  if( op1 == Op_AddL ) {
-    // Do not collapse (x+y)-y if "+" is a loop increment, because the
-    // "-" is loop invariant and collapsing extends the live-range of "x"
-    // to overlap with the "+", forcing another register to be used in
-    // the loop.
+  // Do not collapse (x+c0)-y if "+" is a loop increment or 
+  // if "y" is a loop induction variable.
+  if( op1 == Op_AddL && ok_to_convert(in1, in2) ) {
     Node *in11 = in1->in(1);
-    const PhiNode *phi = in11->is_Phi() ? in11->as_Phi() : NULL;
-    if( phi == NULL ||
-        phi->is_copy() ||
-        !phi->region()->is_CountedLoop() ||
-        in1 != phi->region()->as_CountedLoop()->incr() ) {
-      const Type *tadd = phase->type( in1->in(2) );
-      if( tadd->singleton() && tadd != Type::TOP ) {
-        Node *sub2 = phase->transform( new (phase->C, 3) SubLNode( in11, in2 ));
-        return new (phase->C, 3) AddLNode( sub2, in1->in(2) );
-      }
+    const Type *tadd = phase->type( in1->in(2) );
+    if( tadd->singleton() && tadd != Type::TOP ) {
+      Node *sub2 = phase->transform( new (phase->C, 3) SubLNode( in11, in2 ));
+      return new (phase->C, 3) AddLNode( sub2, in1->in(2) );
+    }
+  }
+
+  // Convert "x - (y+c0)" into "(x-y) - c0"
+  // Need the same check as in above optimization but reversed.
+  if (op2 == Op_AddL && ok_to_convert(in2, in1)) {
+    Node* in21 = in2->in(1);
+    Node* in22 = in2->in(2);
+    const TypeLong* tcon = phase->type(in22)->isa_long();
+    if (tcon != NULL && tcon->is_con()) {
+      Node* sub2 = phase->transform( new (phase->C, 3) SubLNode(in1, in21) );
+      Node* neg_c0 = phase->longcon(- tcon->get_con());
+      return new (phase->C, 3) AddLNode(sub2, neg_c0);
     }
   }
                        
@@ -837,9 +861,9 @@ const Type *BoolTest::cc2logical( const Type *CC ) const {
 //------------------------------dump_spec-------------------------------------
 // Print special per-node info
 #ifndef PRODUCT
-void BoolTest::dump() const {
+void BoolTest::dump_on(outputStream *st) const {
   const char *msg[] = {"eq","gt","??","lt","ne","le","??","ge"};
-  tty->print(msg[_test]);
+  st->print(msg[_test]);
 }
 #endif
 
@@ -1048,10 +1072,10 @@ const Type *BoolNode::Value( PhaseTransform *phase ) const {
 //------------------------------dump_spec--------------------------------------
 // Dump special per-node info
 #ifndef PRODUCT
-void BoolNode::dump_spec() const {
-  tty->print("[");
-  _test.dump();
-  tty->print("]");
+void BoolNode::dump_spec(outputStream *st) const {
+  st->print("[");
+  _test.dump_on(st);
+  st->print("]");
 }
 #endif
 

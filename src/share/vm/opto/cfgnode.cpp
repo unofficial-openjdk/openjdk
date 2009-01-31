@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)cfgnode.cpp	1.261 08/06/22 00:57:20 JVM"
+#pragma ident "@(#)cfgnode.cpp	1.262 08/11/24 12:22:57 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -536,9 +536,16 @@ Node *RegionNode::Ideal(PhaseGVN *phase, bool can_reshape) {
         } 
         else if( n->is_Region() ) { // Update all incoming edges
           assert( !igvn->eqv(n, this), "Must be removed from DefUse edges");
-          for( uint k=1; k < n->req(); k++ ) 
-            if( n->in(k) == this ) 
+          uint uses_found = 0;
+          for( uint k=1; k < n->req(); k++ ) {
+            if( n->in(k) == this ) {
               n->set_req(k, parent_ctrl);
+              uses_found++;
+            }
+          }
+          if( uses_found > 1 ) { // (--i) done at the end of the loop.
+            i -= (uses_found - 1);
+          }
         }
         else {
           assert( igvn->eqv(n->in(0), this), "Expect RegionNode to be control parent");
@@ -1692,12 +1699,12 @@ const RegMask &PhiNode::out_RegMask() const {
 }
 
 #ifndef PRODUCT
-void PhiNode::dump_spec() const { 
-  TypeNode::dump_spec();
+void PhiNode::dump_spec(outputStream *st) const { 
+  TypeNode::dump_spec(st);
   if (in(0) != NULL &&
       in(0)->is_CountedLoop() &&
       in(0)->as_CountedLoop()->phi() == this) {
-    tty->print(" #tripcount");
+    st->print(" #tripcount");
   }
 }
 #endif
@@ -1774,9 +1781,9 @@ uint JumpProjNode::cmp( const Node &n ) const {
 }
 
 #ifndef PRODUCT
-void JumpProjNode::dump_spec() const { 
-  ProjNode::dump_spec();
-   tty->print("@bci %d ",_dest_bci);
+void JumpProjNode::dump_spec(outputStream *st) const { 
+  ProjNode::dump_spec(st);
+   st->print("@bci %d ",_dest_bci);
 }
 #endif
 
@@ -1862,9 +1869,9 @@ Node *CatchProjNode::Identity( PhaseTransform *phase ) {
 
 
 #ifndef PRODUCT
-void CatchProjNode::dump_spec() const { 
-  ProjNode::dump_spec();
-  tty->print("@bci %d ",_handler_bci);
+void CatchProjNode::dump_spec(outputStream *st) const { 
+  ProjNode::dump_spec(st);
+  st->print("@bci %d ",_handler_bci);
 }
 #endif
 
@@ -1886,8 +1893,8 @@ Node *CreateExNode::Identity( PhaseTransform *phase ) {
 
 //=============================================================================
 #ifndef PRODUCT
-void NeverBranchNode::format( PhaseRegAlloc *ra_ ) const {
-  tty->print("%s", Name());
+void NeverBranchNode::format( PhaseRegAlloc *ra_, outputStream *st) const {
+  st->print("%s", Name());
 }
 #endif
 

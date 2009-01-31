@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)bytecodeTracer.cpp	1.52 07/06/08 15:21:46 JVM"
+#pragma ident "@(#)bytecodeTracer.cpp	1.53 07/09/28 10:23:17 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -56,9 +56,9 @@ class BytecodePrinter: public BytecodeClosure {
   bool      is_wide()                { return _is_wide; }
 
 
-  void      print_constant(int i);
-  void      print_attributes(Bytecodes::Code code, int bci);
-  void      bytecode_epilog(int bci);
+  void      print_constant(int i, outputStream* st = tty);
+  void      print_attributes(Bytecodes::Code code, int bci, outputStream* st = tty);
+  void      bytecode_epilog(int bci, outputStream* st = tty);
 
  public:
   BytecodePrinter() {
@@ -67,7 +67,7 @@ class BytecodePrinter: public BytecodeClosure {
 
   // This method is called while executing the raw bytecodes, so none of
   // the adjustments that BytecodeStream performs applies.
-  void trace(methodHandle method, address bcp, uintptr_t tos, uintptr_t tos2) {
+  void trace(methodHandle method, address bcp, uintptr_t tos, uintptr_t tos2, outputStream* st) {
     ResourceMark rm;
     if (_current_method != method()) {
       // Note 1: This code will not work as expected with true MT/MP.
@@ -76,10 +76,10 @@ class BytecodePrinter: public BytecodeClosure {
       // _current_method pointer happens to have the same bits as
       // the incoming method.  We could lose a line of trace output.
       // This is acceptable in a debug-only feature.
-      tty->cr();
-      tty->print("[%d] ", (int) Thread::current()->osthread()->thread_id());
-      method->print_name(tty);
-      tty->cr();
+      st->cr();
+      st->print("[%d] ", (int) Thread::current()->osthread()->thread_id());
+      method->print_name(st);
+      st->cr();
       _current_method = method();
     }
     Bytecodes::Code code;
@@ -90,12 +90,12 @@ class BytecodePrinter: public BytecodeClosure {
       code = Bytecodes::code_at(bcp);
     }
     int bci = bcp - method->code_base();
-    tty->print("[%d] ", (int) Thread::current()->osthread()->thread_id());
+    st->print("[%d] ", (int) Thread::current()->osthread()->thread_id());
     if (Verbose) {
-      tty->print("%8d  %4d  " INTPTR_FORMAT " " INTPTR_FORMAT " %s", 
+      st->print("%8d  %4d  " INTPTR_FORMAT " " INTPTR_FORMAT " %s", 
 	   BytecodeCounter::counter_value(), bci, tos, tos2, Bytecodes::name(code));
     } else {
-      tty->print("%8d  %4d  %s", 
+      st->print("%8d  %4d  %s", 
 	   BytecodeCounter::counter_value(), bci, Bytecodes::name(code));
     }
     _next_pc = is_wide() ? bcp+2 : bcp+1;
@@ -107,7 +107,7 @@ class BytecodePrinter: public BytecodeClosure {
 
   // Used for methodOop::print_codes().  The input bcp comes from
   // BytecodeStream, which will skip wide bytecodes.
-  void trace(methodHandle method, address bcp) {
+  void trace(methodHandle method, address bcp, outputStream* st) {
     _current_method = method();
     ResourceMark rm;
     Bytecodes::Code code = Bytecodes::code_at(bcp);
@@ -119,13 +119,13 @@ class BytecodePrinter: public BytecodeClosure {
     int bci = bcp - method->code_base();
     // Print bytecode index and name
     if (is_wide()) {
-      tty->print("%d %s_w", bci, Bytecodes::name(code));
+      st->print("%d %s_w", bci, Bytecodes::name(code));
     } else {
-      tty->print("%d %s", bci, Bytecodes::name(code));
+      st->print("%d %s", bci, Bytecodes::name(code));
     }
     _next_pc = is_wide() ? bcp+2 : bcp+1;
-    print_attributes(code, bci);
-    bytecode_epilog(bci);
+    print_attributes(code, bci, st);
+    bytecode_epilog(bci, st);
   }
 };
 
@@ -146,7 +146,7 @@ BytecodeClosure* BytecodeTracer::std_closure() {
 }
 
 
-void BytecodeTracer::trace(methodHandle method, address bcp, uintptr_t tos, uintptr_t tos2 ) {
+void BytecodeTracer::trace(methodHandle method, address bcp, uintptr_t tos, uintptr_t tos2, outputStream* st) {
   if (TraceBytecodes && BytecodeCounter::counter_value() >= TraceBytecodesAt) {
     ttyLocker ttyl;  // 5065316: keep the following output coherent
     // The ttyLocker also prevents races between two threads
@@ -161,81 +161,81 @@ void BytecodeTracer::trace(methodHandle method, address bcp, uintptr_t tos, uint
     // We put the locker on the static trace method, not the
     // virtual one, because the clients of this module go through
     // the static method.
-    _closure->trace(method, bcp, tos, tos2);
+    _closure->trace(method, bcp, tos, tos2, st);
   }
 }
 
-void BytecodeTracer::trace(methodHandle method, address bcp) {
+void BytecodeTracer::trace(methodHandle method, address bcp, outputStream* st) {
   ttyLocker ttyl;  // 5065316: keep the following output coherent
-  _closure->trace(method, bcp);
+  _closure->trace(method, bcp, st);
 }
 
-void print_oop(oop value) {
+void print_oop(oop value, outputStream* st) {
   if (value == NULL) {
-    tty->print_cr(" NULL");
+    st->print_cr(" NULL");
   } else {
     EXCEPTION_MARK;
     Handle h_value (THREAD, value);
     symbolHandle sym = java_lang_String::as_symbol(h_value, CATCH);
     if (sym->utf8_length() > 32) {
-      tty->print_cr(" ....");
+      st->print_cr(" ....");
     } else {
-      sym->print(); tty->cr();
+      sym->print_on(st); st->cr();
     }
   }
 }
 
-void BytecodePrinter::print_constant(int i) {
+void BytecodePrinter::print_constant(int i, outputStream* st) {
   constantPoolOop constants = method()->constants();
   constantTag tag = constants->tag_at(i);
 
   if (tag.is_int()) { 
-    tty->print_cr(" " INT32_FORMAT, constants->int_at(i));
+    st->print_cr(" " INT32_FORMAT, constants->int_at(i));
   } else if (tag.is_long()) {
-    tty->print_cr(" " INT64_FORMAT, constants->long_at(i));
+    st->print_cr(" " INT64_FORMAT, constants->long_at(i));
   } else if (tag.is_float()) { 
-    tty->print_cr(" %f", constants->float_at(i));
+    st->print_cr(" %f", constants->float_at(i));
   } else if (tag.is_double()) {
-    tty->print_cr(" %f", constants->double_at(i));
+    st->print_cr(" %f", constants->double_at(i));
   } else if (tag.is_string()) { 
     oop string = constants->resolved_string_at(i);
-    print_oop(string);
+    print_oop(string, st);
   } else if (tag.is_unresolved_string()) { 
-    tty->print_cr(" <unresolved string at %d>", i);  
+    st->print_cr(" <unresolved string at %d>", i);  
   } else if (tag.is_klass()) { 
-    tty->print_cr(" %s", constants->resolved_klass_at(i)->klass_part()->external_name());
+    st->print_cr(" %s", constants->resolved_klass_at(i)->klass_part()->external_name());
   } else if (tag.is_unresolved_klass()) { 
-    tty->print_cr(" <unresolved klass at %d>", i);  
+    st->print_cr(" <unresolved klass at %d>", i);  
   } else ShouldNotReachHere();  
 }
 
 
-void BytecodePrinter::print_attributes(Bytecodes::Code code, int bci) {
+void BytecodePrinter::print_attributes(Bytecodes::Code code, int bci, outputStream* st) {
   // Show attributes of pre-rewritten codes
   code = Bytecodes::java_code(code);
   // If the code doesn't have any fields there's nothing to print.
   // note this is ==1 because the tableswitch and lookupswitch are
   // zero size (for some reason) and we want to print stuff out for them.
   if (Bytecodes::length_for(code) == 1) {
-    tty->cr();
+    st->cr();
     return;
   }
 
   switch(code) {
     // Java specific bytecodes only matter.
     case Bytecodes::_bipush:
-      tty->print_cr(" " INT32_FORMAT, get_byte());
+      st->print_cr(" " INT32_FORMAT, get_byte());
       break;
     case Bytecodes::_sipush: 
-      tty->print_cr(" " INT32_FORMAT, get_short());
+      st->print_cr(" " INT32_FORMAT, get_short());
       break;
     case Bytecodes::_ldc:
-      print_constant(get_index());
+      print_constant(get_index(), st);
       break;
 
     case Bytecodes::_ldc_w:
     case Bytecodes::_ldc2_w:
-      print_constant(get_big_index());
+      print_constant(get_big_index(), st);
       break;
 
     case Bytecodes::_iload:
@@ -248,13 +248,13 @@ void BytecodePrinter::print_attributes(Bytecodes::Code code, int bci) {
     case Bytecodes::_fstore:
     case Bytecodes::_dstore:
     case Bytecodes::_astore:
-      tty->print_cr(" #%d", get_index_special());
+      st->print_cr(" #%d", get_index_special());
       break;
 
     case Bytecodes::_iinc:
       { int index = get_index_special();
         jint offset = is_wide() ? get_short(): get_byte();    
-        tty->print_cr(" #%d " INT32_FORMAT, index, offset);
+        st->print_cr(" #%d " INT32_FORMAT, index, offset);
       }
       break;    
 
@@ -264,14 +264,14 @@ void BytecodePrinter::print_attributes(Bytecodes::Code code, int bci) {
         if (str == NULL || atype == T_OBJECT || atype == T_ARRAY) {
           assert(false, "Unidentified basic type");
         }
-        tty->print_cr(" %s", str);
+        st->print_cr(" %s", str);
       }
       break;
     case Bytecodes::_anewarray: {
         int klass_index = get_big_index();
         constantPoolOop constants = method()->constants();
         symbolOop name = constants->klass_name_at(klass_index);
-        tty->print_cr(" %s ", name->as_C_string());
+        st->print_cr(" %s ", name->as_C_string());
       }
       break;
     case Bytecodes::_multianewarray: {
@@ -279,7 +279,7 @@ void BytecodePrinter::print_attributes(Bytecodes::Code code, int bci) {
         int nof_dims = get_index();
         constantPoolOop constants = method()->constants();
         symbolOop name = constants->klass_name_at(klass_index);
-        tty->print_cr(" %s %d", name->as_C_string(), nof_dims);
+        st->print_cr(" %s %d", name->as_C_string(), nof_dims);
       }
       break;
 
@@ -301,15 +301,15 @@ void BytecodePrinter::print_attributes(Bytecodes::Code code, int bci) {
     case Bytecodes::_if_acmpne:
     case Bytecodes::_goto:
     case Bytecodes::_jsr:
-      tty->print_cr(" %d", bci + get_short());
+      st->print_cr(" %d", bci + get_short());
       break;
 
     case Bytecodes::_goto_w:
     case Bytecodes::_jsr_w:
-      tty->print_cr(" %d", bci + get_int());
+      st->print_cr(" %d", bci + get_int());
       break;
 
-    case Bytecodes::_ret: tty->print_cr(" %d", get_index_special()); break;
+    case Bytecodes::_ret: st->print_cr(" %d", get_index_special()); break;
 
     case Bytecodes::_tableswitch:
       { align();
@@ -321,16 +321,16 @@ void BytecodePrinter::print_attributes(Bytecodes::Code code, int bci) {
         for (int i = 0; i < len; i++) {
           dest[i] = bci + get_int();
         }
-        tty->print(" %d " INT32_FORMAT " " INT32_FORMAT " ",
+        st->print(" %d " INT32_FORMAT " " INT32_FORMAT " ",
                       default_dest, lo, hi); 
         int first = true;
         for (int ll = lo; ll <= hi; ll++, first = false)  {
           int idx = ll - lo;
           const char *format = first ? " %d:" INT32_FORMAT " (delta: %d)" :
                                        ", %d:" INT32_FORMAT " (delta: %d)";
-          tty->print(format, ll, dest[idx], dest[idx]-bci);
+          st->print(format, ll, dest[idx], dest[idx]-bci);
         }
-        tty->cr();
+        st->cr();
       }
       break;
     case Bytecodes::_lookupswitch:
@@ -343,14 +343,14 @@ void BytecodePrinter::print_attributes(Bytecodes::Code code, int bci) {
           key [i] = get_int();
           dest[i] = bci + get_int();
         };
-        tty->print(" %d %d ", default_dest, len); 
+        st->print(" %d %d ", default_dest, len); 
         bool first = true;
         for (int ll = 0; ll < len; ll++, first = false)  {
           const char *format = first ? " " INT32_FORMAT ":" INT32_FORMAT :
                                        ", " INT32_FORMAT ":" INT32_FORMAT ;
-          tty->print(format, key[ll], dest[ll]);
+          st->print(format, key[ll], dest[ll]);
         }
-        tty->cr();
+        st->cr();
       }
       break;
 
@@ -361,7 +361,7 @@ void BytecodePrinter::print_attributes(Bytecodes::Code code, int bci) {
         int i = get_big_index();
         constantPoolOop constants = method()->constants();
         symbolOop field = constants->name_ref_at(i);
-        tty->print_cr(" %d <%s>", i, field->as_C_string()); 
+        st->print_cr(" %d <%s>", i, field->as_C_string()); 
       }
       break;
 
@@ -372,7 +372,7 @@ void BytecodePrinter::print_attributes(Bytecodes::Code code, int bci) {
         constantPoolOop constants = method()->constants();
         symbolOop name = constants->name_ref_at(i);
         symbolOop signature = constants->signature_ref_at(i);
-        tty->print_cr(" %d <%s> <%s> ", i, name->as_C_string(), signature->as_C_string()); 
+        st->print_cr(" %d <%s> <%s> ", i, name->as_C_string(), signature->as_C_string()); 
       }
       break;
 
@@ -383,7 +383,7 @@ void BytecodePrinter::print_attributes(Bytecodes::Code code, int bci) {
         constantPoolOop constants = method()->constants();
         symbolOop name = constants->name_ref_at(i);
         symbolOop signature = constants->signature_ref_at(i);
-        tty->print_cr(" %d <%s> <%s> %d", i, name->as_C_string(), signature->as_C_string(), n);
+        st->print_cr(" %d <%s> <%s> %d", i, name->as_C_string(), signature->as_C_string(), n);
       }
       break;
 
@@ -393,7 +393,7 @@ void BytecodePrinter::print_attributes(Bytecodes::Code code, int bci) {
       { int i = get_big_index();
         constantPoolOop constants = method()->constants();
         symbolOop name = constants->klass_name_at(i);
-        tty->print_cr(" %d <%s>", i, name->as_C_string()); 
+        st->print_cr(" %d <%s>", i, name->as_C_string()); 
       }
       break;
 
@@ -408,14 +408,14 @@ void BytecodePrinter::print_attributes(Bytecodes::Code code, int bci) {
 }
 
 
-void BytecodePrinter::bytecode_epilog(int bci) {
+void BytecodePrinter::bytecode_epilog(int bci, outputStream* st) {
   methodDataOop mdo = method()->method_data();
   if (mdo != NULL) {
     ProfileData* data = mdo->bci_to_data(bci);
     if (data != NULL) {
-      tty->print("  %d", mdo->dp_to_di(data->dp()));
-      tty->fill_to(6);
-      data->print_data_on(tty);
+      st->print("  %d", mdo->dp_to_di(data->dp()));
+      st->fill_to(6);
+      data->print_data_on(st);
     }
   }
 }

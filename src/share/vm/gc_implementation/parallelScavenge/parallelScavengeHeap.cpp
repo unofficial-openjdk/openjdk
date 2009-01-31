@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)parallelScavengeHeap.cpp	1.94 07/05/17 15:52:49 JVM"
+#pragma ident "@(#)parallelScavengeHeap.cpp	1.95 07/10/04 10:49:31 JVM"
 #endif
 /*
  * Copyright 2001-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -36,59 +36,100 @@ PSGCAdaptivePolicyCounters* ParallelScavengeHeap::_gc_policy_counters = NULL;
 ParallelScavengeHeap* ParallelScavengeHeap::_psh = NULL;
 GCTaskManager* ParallelScavengeHeap::_gc_task_manager = NULL;
 
+static void trace_gen_sizes(const char* const str,
+			    size_t pg_min, size_t pg_max,
+			    size_t og_min, size_t og_max,
+			    size_t yg_min, size_t yg_max)
+{
+  if (TracePageSizes) {
+    tty->print_cr("%s:  " SIZE_FORMAT "," SIZE_FORMAT " "
+		  SIZE_FORMAT "," SIZE_FORMAT " "
+		  SIZE_FORMAT "," SIZE_FORMAT " "
+		  SIZE_FORMAT,
+		  str, pg_min / K, pg_max / K,
+		  og_min / K, og_max / K,
+		  yg_min / K, yg_max / K,
+		  (pg_max + og_max + yg_max) / K);
+  }
+}
+
 jint ParallelScavengeHeap::initialize() {
   // Cannot be initialized until after the flags are parsed
   GenerationSizer flag_parser;
 
-  size_t max_young_size = flag_parser.max_young_gen_size();
-  size_t max_old_size = flag_parser.max_old_gen_size();
-  if (UseLargePages && 
-      (max_young_size + max_old_size) >= LargePageHeapSizeThreshold) {
-    adjust_generation_alignment_for_page_size(os::large_page_size());
-  }
-  const size_t alignment = generation_alignment();
+  size_t yg_min_size = flag_parser.min_young_gen_size();
+  size_t yg_max_size = flag_parser.max_young_gen_size();
+  size_t og_min_size = flag_parser.min_old_gen_size();
+  size_t og_max_size = flag_parser.max_old_gen_size();
+  // Why isn't there a min_perm_gen_size()?
+  size_t pg_min_size = flag_parser.perm_gen_size();
+  size_t pg_max_size = flag_parser.max_perm_gen_size();
 
-  // Check alignments
-// NEEDS_CLEANUP   The default TwoGenerationCollectorPolicy uses
-//   NewRatio;  it should check UseAdaptiveSizePolicy. Changes from
-//   generationSizer could move to the common code.
-  size_t min_young_size = 
-    align_size_up(flag_parser.min_young_gen_size(), alignment);
-  size_t young_size = align_size_up(flag_parser.young_gen_size(), alignment);
-  max_young_size = align_size_up(max_young_size, alignment);
+  trace_gen_sizes("ps heap raw",
+		  pg_min_size, pg_max_size,
+		  og_min_size, og_max_size,
+		  yg_min_size, yg_max_size);
 
-  size_t min_old_size = 
-    align_size_up(flag_parser.min_old_gen_size(), alignment);
-  size_t old_size = align_size_up(flag_parser.old_gen_size(), alignment);
-  old_size = MAX2(old_size, min_old_size);
-  max_old_size = align_size_up(max_old_size, alignment);
+  // The ReservedSpace ctor used below requires that the page size for the perm
+  // gen is <= the page size for the rest of the heap (young + old gens).
+  const size_t og_page_sz = os::page_size_for_region(yg_min_size + og_min_size,
+						     yg_max_size + og_max_size,
+						     8);
+  const size_t pg_page_sz = MIN2(os::page_size_for_region(pg_min_size,
+							  pg_max_size, 16),
+				 og_page_sz);
 
-  size_t perm_size = align_size_up(flag_parser.perm_gen_size(), alignment);
-  size_t max_perm_size = align_size_up(flag_parser.max_perm_gen_size(), 
-                                                                  alignment);
+  const size_t pg_align = set_alignment(_perm_gen_alignment,  pg_page_sz);
+  const size_t og_align = set_alignment(_old_gen_alignment,   og_page_sz);
+  const size_t yg_align = set_alignment(_young_gen_alignment, og_page_sz);
 
-  // Calculate the total size.
-  size_t total_reserved = max_young_size + max_old_size + max_perm_size;
+  // Update sizes to reflect the selected page size(s).
+  // 
+  // NEEDS_CLEANUP.  The default TwoGenerationCollectorPolicy uses NewRatio; it
+  // should check UseAdaptiveSizePolicy.  Changes from generationSizer could
+  // move to the common code.
+  yg_min_size = align_size_up(yg_min_size, yg_align);
+  yg_max_size = align_size_up(yg_max_size, yg_align);
+  size_t yg_cur_size = align_size_up(flag_parser.young_gen_size(), yg_align);
+  yg_cur_size = MAX2(yg_cur_size, yg_min_size);
 
-  if (UseLargePages) {
-    total_reserved = round_to(total_reserved, os::large_page_size());
-  }
+  og_min_size = align_size_up(og_min_size, og_align);
+  og_max_size = align_size_up(og_max_size, og_align);
+  size_t og_cur_size = align_size_up(flag_parser.old_gen_size(), og_align);
+  og_cur_size = MAX2(og_cur_size, og_min_size);
 
-  ReservedSpace heap_rs(total_reserved, alignment, UseLargePages);
+  pg_min_size = align_size_up(pg_min_size, pg_align);
+  pg_max_size = align_size_up(pg_max_size, pg_align);
+  size_t pg_cur_size = pg_min_size;
+
+  trace_gen_sizes("ps heap rnd",
+		  pg_min_size, pg_max_size,
+		  og_min_size, og_max_size,
+		  yg_min_size, yg_max_size);
+
+  // The main part of the heap (old gen + young gen) can often use a larger page
+  // size than is needed or wanted for the perm gen.  Use the "compound
+  // alignment" ReservedSpace ctor to avoid having to use the same page size for
+  // all gens.
+  ReservedSpace heap_rs(pg_max_size, pg_align, og_max_size + yg_max_size,
+			og_align);
+  os::trace_page_sizes("ps perm", pg_min_size, pg_max_size, pg_page_sz,
+		       heap_rs.base(), pg_max_size);
+  os::trace_page_sizes("ps main", og_min_size + yg_min_size,
+		       og_max_size + yg_max_size, og_page_sz,
+		       heap_rs.base() + pg_max_size,
+		       heap_rs.size() - pg_max_size);
   if (!heap_rs.is_reserved()) {
     vm_shutdown_during_initialization(
       "Could not reserve enough space for object heap");
     return JNI_ENOMEM;
   }
 
-  _reserved_byte_size = heap_rs.size();
   _reserved = MemRegion((HeapWord*)heap_rs.base(),
 			(HeapWord*)(heap_rs.base() + heap_rs.size()));
 
-  HeapWord* boundary = (HeapWord*)(heap_rs.base() + max_young_size);
-  CardTableExtension* card_table_barrier_set = new CardTableExtension(_reserved, 3);
-  _barrier_set = card_table_barrier_set;
-
+  CardTableExtension* const barrier_set = new CardTableExtension(_reserved, 3);
+  _barrier_set = barrier_set;
   oopDesc::set_bs(_barrier_set);
   if (_barrier_set == NULL) {
     vm_shutdown_during_initialization(
@@ -97,17 +138,15 @@ jint ParallelScavengeHeap::initialize() {
   }
 
   // Initial young gen size is 4 Mb
-  size_t init_young_size = align_size_up(4 * M, alignment);
-  init_young_size = MAX2(MIN2(init_young_size, max_young_size), young_size);
+  // 
+  // XXX - what about flag_parser.young_gen_size()?
+  const size_t init_young_size = align_size_up(4 * M, yg_align);
+  yg_cur_size = MAX2(MIN2(init_young_size, yg_max_size), yg_cur_size);
 
-  // Divide up the reserved space: perm, old, young
-  ReservedSpace perm_rs  = heap_rs.first_part(max_perm_size);
-  ReservedSpace old_young_rs                
-			 = heap_rs.last_part(max_perm_size);
-  ReservedSpace old_rs   = old_young_rs.first_part(max_old_size);
-  heap_rs                = old_young_rs.last_part(max_old_size);
-  ReservedSpace young_rs = heap_rs.first_part(max_young_size);
-  assert(young_rs.size() == heap_rs.size(), "Didn't reserve all of the heap");
+  // Split the reserved space into perm gen and the main heap (everything else).
+  // The main heap uses a different alignment.
+  ReservedSpace perm_rs = heap_rs.first_part(pg_max_size);
+  ReservedSpace main_rs = heap_rs.last_part(pg_max_size, og_align);
 
   // Make up the generations
   // Calculate the maximum size that a generation can grow.  This
@@ -118,14 +157,14 @@ jint ParallelScavengeHeap::initialize() {
   double max_gc_pause_sec = ((double) MaxGCPauseMillis)/1000.0;
   double max_gc_minor_pause_sec = ((double) MaxGCMinorPauseMillis)/1000.0;
 
-  _gens = new AdjoiningGenerations(old_young_rs,
-  				   old_size,
-		                   min_old_size,
-		                   max_old_size,
-		                   init_young_size,
-		                   min_young_size,
-		                   max_young_size,
-				   alignment);
+  _gens = new AdjoiningGenerations(main_rs,
+  				   og_cur_size,
+		                   og_min_size,
+		                   og_max_size,
+		                   yg_cur_size,
+		                   yg_min_size,
+		                   yg_max_size,
+				   yg_align);
 
   _old_gen = _gens->old_gen();
   _young_gen = _gens->young_gen();
@@ -137,7 +176,6 @@ jint ParallelScavengeHeap::initialize() {
     new PSAdaptiveSizePolicy(eden_capacity,
 			     initial_promo_size,
 			     young_gen()->to_space()->capacity_in_bytes(),
-			     generation_alignment(),
 			     intra_generation_alignment(),
 			     max_gc_pause_sec,
 			     max_gc_minor_pause_sec,
@@ -145,10 +183,10 @@ jint ParallelScavengeHeap::initialize() {
 			     );
 
   _perm_gen = new PSPermGen(perm_rs,
-			    alignment,
-                            perm_size,
-                            perm_size,
-                            max_perm_size,
+			    pg_align,
+                            pg_cur_size,
+                            pg_cur_size,
+                            pg_max_size,
                             "perm", 2);
 
   assert(!UseAdaptiveGCBoundary ||
@@ -168,22 +206,6 @@ jint ParallelScavengeHeap::initialize() {
   }
 
   return JNI_OK;
-}
-
-// Set the alignment of the generation so it would be aligned
-// to both page_size and to intra_generation_alignment.
-// This would require that we align to
-// LCM(page_size, intra_generation_alignment), where LCM is
-// "least common multiple". However, when page_size and
-// intra_generation_alignment are both powers of 2, then
-// round_to() below computes the same result; hence the
-// assert below.
-void ParallelScavengeHeap::adjust_generation_alignment_for_page_size(
-  size_t page_size) {
-  assert(is_power_of_2(page_size), 
-    "Should not use round_to() if page size is not a power of 2");
-  // round_to() checks that its second parameter is a power of 2
-  set_generation_alignment(round_to(page_size, intra_generation_alignment()));
 }
 
 void ParallelScavengeHeap::post_initialize() {

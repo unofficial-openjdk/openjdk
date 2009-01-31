@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)matcher.cpp	1.386 07/05/05 17:06:19 JVM"
+#pragma ident "@(#)matcher.cpp	1.388 07/09/28 10:33:13 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -271,6 +271,8 @@ void Matcher::match( ) {
   // can be a valid interior of some tree.
   find_shared( C->root() );
   find_shared( C->top() );
+
+  C->print_method("Before Matching", 2);
 
   // Swap out to old-space; emptying new-space 
   Arena *old = C->node_arena()->move_contents(C->old_arena());
@@ -1803,6 +1805,16 @@ void Matcher::find_shared( Node *n ) {
                   shift->in(2)->get_int() <= 3 ) { 
                 set_visited(shift);  // Flag as visited now
                 mstack.push(shift->in(2), Visit);
+#ifdef _LP64
+                // Allow Matcher to match the rule which bypass
+                // ConvI2L operation for an array index on LP64 
+                // if the index value is positive.
+                if( shift->in(1)->Opcode() == Op_ConvI2L &&
+                    shift->in(1)->as_Type()->type()->is_long()->_lo >= 0 ) {
+                  set_visited(shift->in(1));  // Flag as visited now
+                  mstack.push(shift->in(1)->in(1), Pre_Visit);
+                } else
+#endif
                 mstack.push(shift->in(1), Pre_Visit);
               } else {
                 mstack.push(shift, Pre_Visit);

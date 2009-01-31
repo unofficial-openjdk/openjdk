@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)osThread_solaris.cpp	1.58 07/05/05 17:04:41 JVM"
+#pragma ident "@(#)osThread_solaris.cpp	1.59 07/06/29 04:03:46 JVM"
 #endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -29,17 +29,6 @@
 # include "incls/_osThread_solaris.cpp.incl"
 # include <signal.h>
 
-// Events associated with threads via "interrupt_event" must
-// reside in a TSM (type-stable memory) pool.  See objectMonitor_solaris.cpp:exit().  
-// The relationship between the interrupt_event and a thread
-// must be stable for the lifetime of the thread.  
-//
-// A slightly better implementation would be to subclass Event
-// with a "TSMEvent" that added the FreeNext field.  
-
-static os::Solaris::Event * EventFreeList = NULL ; 	
-static mutex_t EventFreeLock [1] ; 
-
  // ***************************************************************
  // Platform dependent initialization and cleanup
  // ***************************************************************
@@ -53,37 +42,10 @@ void OSThread::pd_initialize() {
                     : new Mutex(Mutex::suspend_resume, "Callback_lock", true);
 
   _saved_interrupt_thread_state      = _thread_new;
-
-  // Try to allocate an Event from the global free list otherwise "new".  
-  _lwp_mutex_lock (EventFreeLock) ; 
-  os::Solaris::Event * ie = EventFreeList ; 
-  if (ie != NULL) { 
-     EventFreeList = ie->FreeNext ; 
-     ie->reset() ; 
-  }
-  _lwp_mutex_unlock (EventFreeLock) ; 
-  if (ie == NULL) {
-     ie = new os::Solaris::Event();
-  }
-  ie->FreeNext = (os::Solaris::Event *) 0xBAD ; 
-  ie->Immortal = 1 ; 
-  _interrupt_event = ie ; 
-
-  assert(_interrupt_event != NULL, "check");
   _vm_created_thread                 = false;
 }
 
 void OSThread::pd_destroy() {
-  // Transfer the Event referenced by _interrupt_event to the 
-  // global free list.  It's now immortal.  
-  os::Solaris::Event * ie = _interrupt_event ; 
-  guarantee (ie != NULL, "invariant") ; 
-  guarantee (ie->Immortal, "invariant") ;  
-  _interrupt_event = NULL ; 
-  _lwp_mutex_lock (EventFreeLock) ; 
-  ie->FreeNext = EventFreeList ; 
-  EventFreeList = ie ; 
-  _lwp_mutex_unlock (EventFreeLock) ; 
 }
 
 // Synchronous interrupt support

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)os_solaris.inline.hpp	1.62 07/05/05 17:04:43 JVM"
+#pragma ident "@(#)os_solaris.inline.hpp	1.63 07/06/29 04:05:41 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.

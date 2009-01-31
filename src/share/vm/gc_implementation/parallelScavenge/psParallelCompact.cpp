@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)psParallelCompact.cpp	1.61 07/06/08 23:12:00 JVM"
+#pragma ident "@(#)psParallelCompact.cpp	1.64 08/06/19 15:33:02 JVM"
 #endif
 /*
  * Copyright 2005-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -47,11 +47,23 @@ const size_t ParallelCompactData::BlockMask       = ~BlockOffsetMask;
 
 const size_t ParallelCompactData::BlocksPerChunk = ChunkSize / BlockSize;
 
-// The values for Claimed and Completed were chosen simply to make decrementing
-// them to another valid value 'unlikely.'
-const size_t ParallelCompactData::ChunkData::Available = 0;
-const size_t ParallelCompactData::ChunkData::Claimed   = 0x0ffff;
-const size_t ParallelCompactData::ChunkData::Completed = 0xfffff;
+const ParallelCompactData::ChunkData::chunk_sz_t
+ParallelCompactData::ChunkData::dc_shift = 27;
+
+const ParallelCompactData::ChunkData::chunk_sz_t
+ParallelCompactData::ChunkData::dc_mask = ~0U << dc_shift;
+
+const ParallelCompactData::ChunkData::chunk_sz_t
+ParallelCompactData::ChunkData::dc_one = 0x1U << dc_shift;
+
+const ParallelCompactData::ChunkData::chunk_sz_t
+ParallelCompactData::ChunkData::los_mask = ~dc_mask;
+
+const ParallelCompactData::ChunkData::chunk_sz_t
+ParallelCompactData::ChunkData::dc_claimed = 0x8U << dc_shift;
+
+const ParallelCompactData::ChunkData::chunk_sz_t
+ParallelCompactData::ChunkData::dc_completed = 0xcU << dc_shift;
 
 #ifdef ASSERT
 short	ParallelCompactData::BlockData::_cur_phase = 0;
@@ -397,11 +409,17 @@ bool ParallelCompactData::initialize(MemRegion covered_region)
 PSVirtualSpace*
 ParallelCompactData::create_vspace(size_t count, size_t element_size)
 {
+  const size_t raw_bytes = count * element_size;
+  const size_t page_sz = os::page_size_for_region(raw_bytes, raw_bytes, 10);
   const size_t granularity = os::vm_allocation_granularity();
-  const size_t bytes = align_size_up(count * element_size, granularity);
+  const size_t bytes = align_size_up(raw_bytes, MAX2(page_sz, granularity));
 
-  ReservedSpace rs(bytes);
-  PSVirtualSpace* vspace = new PSVirtualSpace(rs, os::vm_page_size());
+  const size_t rs_align = page_sz == (size_t) os::vm_page_size() ? 0 :
+    MAX2(page_sz, granularity);
+  ReservedSpace rs(bytes, rs_align, false);
+  os::trace_page_sizes("par compact", raw_bytes, raw_bytes, page_sz, rs.base(),
+		       rs.size());
+  PSVirtualSpace* vspace = new PSVirtualSpace(rs, page_sz);
   if (vspace != 0) {
     if (vspace->expand_by(bytes)) {
       return vspace;
@@ -517,14 +535,13 @@ ParallelCompactData::summarize_dense_prefix(HeapWord* beg, HeapWord* end)
   HeapWord* addr = beg;
   while (cur_chunk < end_chunk) {
     _chunk_data[cur_chunk].set_destination(addr);
-    _chunk_data[cur_chunk].set_destination_count(ChunkData::Available);
+    _chunk_data[cur_chunk].set_destination_count(0);
     _chunk_data[cur_chunk].set_source_chunk(cur_chunk);
     _chunk_data[cur_chunk].set_data_location(addr);
 
     // Update live_obj_size so the chunk appears completely full.
     size_t live_size = ChunkSize - _chunk_data[cur_chunk].partial_obj_size();
     _chunk_data[cur_chunk].set_live_obj_size(live_size);
-    _chunk_data[cur_chunk].set_obj_not_updated(NULL);
 
     ++cur_chunk;
     addr += ChunkSize;
@@ -590,7 +607,7 @@ bool ParallelCompactData::summarize(HeapWord* target_beg, HeapWord* target_end,
       // adjust the value below if necessary.  Under this assumption, if
       // cur_chunk == dest_chunk_2, then cur_chunk will be compacted completely
       // into itself.
-      size_t destination_count = cur_chunk == dest_chunk_2 ? 0 : 1;
+      uint destination_count = cur_chunk == dest_chunk_2 ? 0 : 1;
       if (dest_chunk_1 != dest_chunk_2) {
 	// Destination chunks differ; adjust destination_count.
 	destination_count += 1;
@@ -606,7 +623,7 @@ bool ParallelCompactData::summarize(HeapWord* target_beg, HeapWord* target_end,
       // adjust the value below if necessary.  Under this assumption, if
       // cur_chunk == dest_chunk2, then cur_chunk will be compacted partially
       // into dest_chunk_1 and partially into itself.
-      size_t destination_count = cur_chunk == dest_chunk_2 ? 1 : 2;
+      uint destination_count = cur_chunk == dest_chunk_2 ? 1 : 2;
       if (dest_chunk_1 != dest_chunk_2) {
 	// Data from cur_chunk will be copied to the start of dest_chunk_2.
 	_chunk_data[dest_chunk_2].set_source_chunk(cur_chunk);
@@ -633,11 +650,6 @@ bool ParallelCompactData::summarize(HeapWord* target_beg, HeapWord* target_end,
   return true;
 }
 
-void ParallelCompactData::set_obj_not_updated(HeapWord* moved_obj) {
-  size_t chunk_index = addr_to_chunk_idx(moved_obj);
-  chunk(chunk_index)->set_obj_not_updated(moved_obj);
-}
-
 bool ParallelCompactData::partial_obj_ends_in_block(size_t block_index) {
   HeapWord* block_addr = block_to_addr(block_index);
   HeapWord* block_end_addr = block_addr + BlockSize;
@@ -653,39 +665,6 @@ bool ParallelCompactData::partial_obj_ends_in_block(size_t block_index) {
   }
 
   return false;
-}
-
-HeapWord*
-ParallelCompactData::first_live_or_end_in_chunk_range(size_t chunk_index_start,
-						      size_t chunk_index_end) {
-  HeapWord* const end_addr = chunk_to_addr(chunk_index_end);
-
-  // A live object may entend into the chunk; skip over it.
-  HeapWord* poe_addr = partial_obj_end(chunk_index_start);
-  if (poe_addr >= end_addr) {
-    return end_addr;
-  }
-
-  // Search the bitmap for the next object.
-  typedef ParMarkBitMap::idx_t idx_t;
-  ParMarkBitMap* bitmap = PSParallelCompact::mark_bitmap();
-  const idx_t beg_bit = bitmap->addr_to_bit(poe_addr);
-  const idx_t end_bit = bitmap->addr_to_bit(end_addr);
-  const idx_t res_bit = bitmap->find_obj_beg(beg_bit, end_bit);
-  return res_bit < end_bit ? bitmap->bit_to_addr(res_bit) : end_addr;
-}
-
-HeapWord* ParallelCompactData::first_live_or_end_in_chunk(size_t chunk_index) {
-  // Has the first live for the chunk already been found once?
-  HeapWord* result = NULL;
-  HeapWord* first_addr = chunk_to_addr(chunk_index);
-  if (chunk(chunk_index)->first_live_obj() >= first_addr) {
-    result = chunk(chunk_index)->first_live_obj();
-  } else {
-    result = first_live_or_end_in_chunk_range(chunk_index, chunk_index + 1);
-    chunk(chunk_index)->set_first_live_obj(result);
-  }
-  return result;
 }
 
 HeapWord* ParallelCompactData::calc_new_pointer(HeapWord* addr) {
@@ -1051,6 +1030,9 @@ void PSParallelCompact::pre_compact(PreGCValues* pre_gc_values)
 
   DEBUG_ONLY(mark_bitmap()->verify_clear();)
   DEBUG_ONLY(summary_data().verify_clear();)
+
+  // Have worker threads release resources the next time they run a task.
+  gc_task_manager()->release_all_resources();
 }
 
 void PSParallelCompact::post_compact()
@@ -1996,12 +1978,6 @@ void PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
   TimeStamp compaction_start;
   TimeStamp collection_exit;
 
-  // "serial_CM" is needed until the parallel implementation
-  // of the move and update is done.
-  ParCompactionManager* serial_CM = new ParCompactionManager();
-  // Don't initialize more than once.
-  // serial_CM->initialize(&summary_data(), mark_bitmap());
-
   ParallelScavengeHeap* heap = gc_heap();
   GCCause::Cause gc_cause = heap->gc_cause();
   PSYoungGen* young_gen = heap->young_gen();
@@ -2015,6 +1991,10 @@ void PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
   // miscellaneous bookkeeping.
   PreGCValues pre_gc_values;
   pre_compact(&pre_gc_values);
+
+  // Get the compaction manager reserved for the VM thread.
+  ParCompactionManager* const vmthread_cm =
+    ParCompactionManager::manager_array(gc_task_manager()->workers());
 
   // Place after pre_compact() where the number of invocations is incremented.
   AdaptiveSizePolicyOutput(size_policy, heap->total_collections());
@@ -2055,7 +2035,7 @@ void PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
     bool marked_for_unloading = false;
 
     marking_start.update();
-    marking_phase(serial_CM, maximum_heap_compaction);
+    marking_phase(vmthread_cm, maximum_heap_compaction);
 
 #ifndef PRODUCT
     if (TraceParallelOldGCMarkingPhase) {
@@ -2086,7 +2066,7 @@ void PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
 #endif
 
     bool max_on_system_gc = UseMaximumCompactionOnSystemGC && is_system_gc;
-    summary_phase(serial_CM, maximum_heap_compaction || max_on_system_gc);    
+    summary_phase(vmthread_cm, maximum_heap_compaction || max_on_system_gc);
 
 #ifdef ASSERT
     if (VerifyParallelOldWithMarkSweep &&
@@ -2114,13 +2094,13 @@ void PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
       // code can use the the forwarding pointers to
       // check the new pointer calculation.  The restore_marks()
       // has to be done before the real compact.
-      serial_CM->set_action(ParCompactionManager::VerifyUpdate);
-      compact_perm(serial_CM);
-      compact_serial(serial_CM);
-      serial_CM->set_action(ParCompactionManager::ResetObjects);
-      compact_perm(serial_CM);
-      compact_serial(serial_CM);
-      serial_CM->set_action(ParCompactionManager::UpdateAndCopy);
+      vmthread_cm->set_action(ParCompactionManager::VerifyUpdate);
+      compact_perm(vmthread_cm);
+      compact_serial(vmthread_cm);
+      vmthread_cm->set_action(ParCompactionManager::ResetObjects);
+      compact_perm(vmthread_cm);
+      compact_serial(vmthread_cm);
+      vmthread_cm->set_action(ParCompactionManager::UpdateAndCopy);
 
       // For debugging only
       PSMarkSweep::restore_marks();
@@ -2131,15 +2111,13 @@ void PSParallelCompact::invoke_no_policy(bool maximum_heap_compaction) {
     compaction_start.update();
     // Does the perm gen always have to be done serially because
     // klasses are used in the update of an object?
-    compact_perm(serial_CM);
+    compact_perm(vmthread_cm);
 
     if (UseParallelOldGCCompacting) {
       compact();
     } else {
-      compact_serial(serial_CM);
+      compact_serial(vmthread_cm);
     }
-
-    delete serial_CM;
 
     // Reset the mark bitmap, summary data, and do other bookkeeping.  Must be
     // done before resizing.
@@ -2372,7 +2350,7 @@ void PSParallelCompact::marking_phase(ParCompactionManager* cm,
 
   ParallelScavengeHeap* heap = gc_heap();
   uint parallel_gc_threads = heap->gc_task_manager()->workers();
-  GenTaskQueueSet* qset = ParCompactionManager::chunk_array()->task_queue_set();
+  TaskQueueSetSuper* qset = ParCompactionManager::chunk_array();
   ParallelTaskTerminator terminator(parallel_gc_threads, qset);
 
   PSParallelCompact::MarkAndPushClosure mark_and_push_closure(cm);
@@ -2677,7 +2655,7 @@ void PSParallelCompact::compact() {
   PSOldGen* old_gen = heap->old_gen();
   old_gen->start_array()->reset();
   uint parallel_gc_threads = heap->gc_task_manager()->workers();
-  GenTaskQueueSet* qset = ParCompactionManager::chunk_array()->task_queue_set();
+  TaskQueueSetSuper* qset = ParCompactionManager::chunk_array();
   ParallelTaskTerminator terminator(parallel_gc_threads, qset);
 
   GCTaskQueue* q = GCTaskQueue::create();
@@ -3045,8 +3023,10 @@ PSParallelCompact::update_and_deadwood_in_dense_prefix(ParCompactionManager* cm,
   }
 
   // Mark the chunks as filled.
-  for (size_t done_chunk = beg_chunk; done_chunk < end_chunk; ++done_chunk) {
-    sd.chunk(done_chunk)->set_completed();
+  ChunkData* const beg_cp = sd.chunk(beg_chunk);
+  ChunkData* const end_cp = sd.chunk(end_chunk);
+  for (ChunkData* cp = beg_cp; cp < end_cp; ++cp) {
+    cp->set_completed();
   }
 }
 
@@ -3083,7 +3063,7 @@ void PSParallelCompact::update_deferred_objects(ParCompactionManager* cm,
   const ChunkData* const end_chunk = sd.addr_to_chunk_ptr(end_addr);
   const ChunkData* cur_chunk;
   for (cur_chunk = beg_chunk; cur_chunk < end_chunk; ++cur_chunk) {
-    HeapWord* const addr = cur_chunk->obj_not_updated();
+    HeapWord* const addr = cur_chunk->deferred_obj_addr();
     if (addr != NULL) {
       if (start_array != NULL) {
 	start_array->allocate_block(addr);
@@ -3312,6 +3292,7 @@ void PSParallelCompact::fill_chunk(ParCompactionManager* cm, size_t chunk_idx)
     closure.copy_partial_obj();
     if (closure.is_full()) {
       decrement_destination_counts(cm, src_chunk_idx, closure.source());
+      chunk_ptr->set_deferred_obj_addr(NULL);
       chunk_ptr->set_completed();
       return;
     }
@@ -3355,12 +3336,17 @@ void PSParallelCompact::fill_chunk(ParCompactionManager* cm, size_t chunk_idx)
     if (status == ParMarkBitMap::would_overflow) {
       // The last object did not fit.  Note that interior oop updates were
       // deferred, then copy enough of the object to fill the chunk.
-      chunk_ptr->set_obj_not_updated(closure.destination());
+      chunk_ptr->set_deferred_obj_addr(closure.destination());
       status = closure.copy_until_full(); // copies from closure.source()
+
+      decrement_destination_counts(cm, src_chunk_idx, closure.source());
+      chunk_ptr->set_completed();
+      return;
     }
 
     if (status == ParMarkBitMap::full) {
       decrement_destination_counts(cm, src_chunk_idx, closure.source());
+      chunk_ptr->set_deferred_obj_addr(NULL);
       chunk_ptr->set_completed();
       return;
     }

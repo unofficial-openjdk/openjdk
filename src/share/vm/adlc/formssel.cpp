@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)formssel.cpp	1.183 07/09/06 15:24:29 JVM"
+#pragma ident "@(#)formssel.cpp	1.185 07/09/28 10:23:26 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -236,22 +236,57 @@ int InstructForm::is_ideal_copy() const {
   return _matrule ? _matrule->is_ideal_copy() : 0;
 }
 
-// Return 'true' if this instruction matches an ideal 'CosD' node
+// Return 'true' if this instruction is too complex to rematerialize.
 int InstructForm::is_expensive() const {
-  if (_matrule == NULL)  return 0;
   // We can prove it is cheap if it has an empty encoding.
   // This helps with platform-specific nops like ThreadLocal and RoundFloat.
+  if (is_empty_encoding())
+    return 0;
+
+  if (is_tls_instruction())
+    return 1;
+
+  if (_matrule == NULL)  return 0;
+
+  return _matrule->is_expensive();
+}
+
+// Has an empty encoding if _size is a constant zero or there
+// are no ins_encode tokens.
+int InstructForm::is_empty_encoding() const {
   if (_insencode != NULL) {
     _insencode->reset();
     if (_insencode->encode_class_iter() == NULL) {
-      return 0;
+      return 1;
     }
   }
   if (_size != NULL && strcmp(_size, "0") == 0) {
-    return 0;
+    return 1;
   }
-  return _matrule->is_expensive();
+  return 0;
 }
+
+int InstructForm::is_tls_instruction() const {
+  if (_ident != NULL &&
+      ( ! strcmp( _ident,"tlsLoadP") ||
+        ! strncmp(_ident,"tlsLoadP_",9)) ) {
+    return 1;
+  }
+
+  if (_matrule != NULL && _insencode != NULL) {
+    const char* opType = _matrule->_opType;
+    if (strcmp(opType, "Set")==0)
+      opType = _matrule->_rChild->_opType;
+    if (strcmp(opType,"ThreadLocal")==0) {
+      fprintf(stderr, "Warning: ThreadLocal instruction %s should be named 'tlsLoadP_*'\n",
+              (_ident == NULL ? "NULL" : _ident));
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
 
 // Return 'true' if this instruction matches an ideal 'Copy*' node
 bool InstructForm::is_ideal_unlock() const {
@@ -490,6 +525,10 @@ bool InstructForm::rematerialize(FormDict &globals, RegisterForm *registers ) {
 
   // Constants
   if( _components.count() == 1 && _components[0]->is(Component::USE_DEF) ) 
+    rematerialize = true;
+
+  // Pseudo-constants (values easily available to the runtime)
+  if (is_empty_encoding() && is_tls_instruction())
     rematerialize = true;
 
   // 1-input, 1-output, such as copies or increments.
@@ -1171,9 +1210,9 @@ void InstructForm::rep_var_format(FILE *fp, const char *rep_var) {
     // Output the format call for this operand
     fprintf(fp,"opnd_array(%d)->",idx);
     if (idx == 0) 
-      fprintf(fp,"int_format(ra, this); // %s\n", rep_var);
+      fprintf(fp,"int_format(ra, this, st); // %s\n", rep_var);
     else
-      fprintf(fp,"ext_format(ra, this,idx%d); // %s\n", idx, rep_var );
+      fprintf(fp,"ext_format(ra, this,idx%d, st); // %s\n", idx, rep_var );
   }
 }
 
@@ -2329,11 +2368,11 @@ void  OperandForm::ext_format(FILE *fp, FormDict &globals, uint index) {
 
 void OperandForm::format_constant(FILE *fp, uint const_index, uint const_type) {
   switch(const_type) {
-  case Form::idealI: fprintf(fp,"tty->print(\"#%%d\", _c%d);\n", const_index); break;
-  case Form::idealP: fprintf(fp,"_c%d->dump();\n",               const_index); break;
-  case Form::idealL: fprintf(fp,"tty->print(\"#%%lld\", _c%d);\n", const_index); break;
-  case Form::idealF: fprintf(fp,"tty->print(\"#%%f\", _c%d);\n", const_index); break;
-  case Form::idealD: fprintf(fp,"tty->print(\"#%%f\", _c%d);\n", const_index); break;
+  case Form::idealI: fprintf(fp,"st->print(\"#%%d\", _c%d);\n", const_index); break;
+  case Form::idealP: fprintf(fp,"_c%d->dump_on(st);\n",         const_index); break;
+  case Form::idealL: fprintf(fp,"st->print(\"#%%lld\", _c%d);\n", const_index); break;
+  case Form::idealF: fprintf(fp,"st->print(\"#%%f\", _c%d);\n", const_index); break;
+  case Form::idealD: fprintf(fp,"st->print(\"#%%f\", _c%d);\n", const_index); break;
   default:
     assert( false, "ShouldNotReachHere()");
   }
@@ -3725,6 +3764,17 @@ bool MatchRule::is_chain_rule(FormDict &globals) const {
 int MatchRule::is_ideal_copy() const {
   if( _rChild ) {
     const char  *opType = _rChild->_opType;
+    if( strcmp(opType,"CastII")==0 )
+      return 1;
+    // Do not treat *CastPP this way, because it
+    // may transfer a raw pointer to an oop.
+    // If the register allocator were to coalesce this
+    // into a single LRG, the GC maps would be incorrect.
+    //if( strcmp(opType,"CastPP")==0 )
+    //  return 1;
+    //if( strcmp(opType,"CheckCastPP")==0 )
+    //  return 1;
+    // 
     // Do not treat CastX2P or CastP2X this way, because
     // raw pointers and int types are treated differently
     // when saving local & stack info for safepoints in 
@@ -3773,7 +3823,6 @@ int MatchRule::is_expensive() const {
         strcmp(opType,"ConvL2I")==0 ||
         strcmp(opType,"RoundDouble")==0 ||
         strcmp(opType,"RoundFloat")==0 ||
-        strcmp(opType,"ThreadLocal")==0 ||
         strcmp(opType,"ReverseBytesI")==0 ||
         strcmp(opType,"ReverseBytesL")==0 ||
         strcmp(opType,"Replicate16B")==0 ||

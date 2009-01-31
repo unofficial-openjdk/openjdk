@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)parseHelper.cpp	1.196 07/05/23 17:37:28 JVM"
+#pragma ident "@(#)parseHelper.cpp	1.197 07/08/14 16:13:24 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -347,7 +347,7 @@ void Parse::set_md_flag_at(ciMethodData* md, ciProfileData* data, int flag_const
 }
 
 //----------------------------profile_taken_branch-----------------------------
-void Parse::profile_taken_branch(int target_bci) {
+void Parse::profile_taken_branch(int target_bci, bool force_update) {
   // This is a potential osr_site if we have a backedge.
   int cur_bci = bci();
   bool osr_site = 
@@ -359,14 +359,21 @@ void Parse::profile_taken_branch(int target_bci) {
   // To do: factor out the the limit calculations below. These duplicate
   // the similar limit calculations in the interpreter.
 
-  if (method_data_update()) {
+  if (method_data_update() || force_update) {
     ciMethodData* md = method()->method_data();
     assert(md != NULL, "expected valid ciMethodData");
     ciProfileData* data = md->bci_to_data(cur_bci);
     assert(data->is_JumpData(), "need JumpData for taken branch");
     increment_md_counter_at(md, data, JumpData::taken_offset());
+  }
     
+  // In the new tiered system this is all we need to do. In the old
+  // (c2 based) tiered sytem we must do the code below.
+#ifndef TIERED
+  if (method_data_update()) {
+    ciMethodData* md = method()->method_data();
     if (osr_site) {
+      ciProfileData* data = md->bci_to_data(cur_bci);
       int limit = (CompileThreshold 
                    * (OnStackReplacePercentage - InterpreterProfilePercentage)) / 100;
       test_for_osr_md_counter_at(md, data, JumpData::taken_offset(), limit);
@@ -379,20 +386,23 @@ void Parse::profile_taken_branch(int target_bci) {
       increment_and_test_invocation_counter(limit);
     }
   }
+#endif // TIERED
 
   // Restore the original bytecode.
   set_bci(cur_bci);
 }
 
 //--------------------------profile_not_taken_branch---------------------------
-void Parse::profile_not_taken_branch() {
-  if (!method_data_update()) return;
+void Parse::profile_not_taken_branch(bool force_update) {
 
-  ciMethodData* md = method()->method_data();
-  assert(md != NULL, "expected valid ciMethodData");
-  ciProfileData* data = md->bci_to_data(bci());
-  assert(data->is_BranchData(), "need BranchData for not taken branch");
-  increment_md_counter_at(md, data, BranchData::not_taken_offset());
+  if (method_data_update() || force_update) {
+    ciMethodData* md = method()->method_data();
+    assert(md != NULL, "expected valid ciMethodData");
+    ciProfileData* data = md->bci_to_data(bci());
+    assert(data->is_BranchData(), "need BranchData for not taken branch");
+    increment_md_counter_at(md, data, BranchData::not_taken_offset());
+  }
+
 }
 
 //---------------------------------profile_call--------------------------------

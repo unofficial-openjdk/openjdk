@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)psAdaptiveSizePolicy.cpp	1.81 07/05/05 17:05:29 JVM"
+#pragma ident "@(#)psAdaptiveSizePolicy.cpp	1.82 07/10/04 10:49:34 JVM"
 #endif
 /*
  * Copyright 2002-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -33,7 +33,6 @@
 PSAdaptiveSizePolicy::PSAdaptiveSizePolicy(size_t init_eden_size,
 					   size_t init_promo_size,
 					   size_t init_survivor_size,
-					   size_t generation_alignment,
 					   size_t intra_generation_alignment,
 					   double gc_pause_goal_sec,
 					   double gc_minor_pause_goal_sec,
@@ -45,18 +44,13 @@ PSAdaptiveSizePolicy::PSAdaptiveSizePolicy(size_t init_eden_size,
 			gc_cost_ratio),
      _collection_cost_margin_fraction(AdaptiveSizePolicyCollectionCostMargin/
        100.0),
-     _generation_alignment(generation_alignment),
      _intra_generation_alignment(intra_generation_alignment),
      _live_at_last_full_gc(init_promo_size),
      _gc_minor_pause_goal_sec(gc_minor_pause_goal_sec),
      _latest_major_mutator_interval_seconds(0),
      _young_gen_change_for_major_pause_count(0)
 {
-   assert(generation_alignment >= intra_generation_alignment,
-     "generation alignment is too small")
-
   // Sizing policy statistics
-    
   _avg_major_pause    = 
     new AdaptivePaddedAverage(AdaptiveTimeWeight, PausePadding);
   _avg_minor_interval = new AdaptiveWeightedAverage(AdaptiveTimeWeight);

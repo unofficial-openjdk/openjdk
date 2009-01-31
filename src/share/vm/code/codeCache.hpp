@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)codeCache.hpp	1.67 07/05/05 17:05:18 JVM"
+#pragma ident "@(#)codeCache.hpp	1.68 07/09/01 18:01:02 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -35,6 +35,7 @@
 //     locating a method given a addess of an instruction.
 
 class OopClosure;
+class DepChange;
 
 class CodeCache : AllStatic {
   friend class VMStructs;
@@ -116,7 +117,7 @@ class CodeCache : AllStatic {
   static void clear_inline_caches();             // clear all inline caches
 
   // Deoptimization
-  static int  mark_for_deoptimization(klassOop dependee);
+  static int  mark_for_deoptimization(DepChange& changes);
 #ifdef HOTSWAP
   static int  mark_for_evol_deoptimization(instanceKlassHandle dependee);
 #endif // HOTSWAP

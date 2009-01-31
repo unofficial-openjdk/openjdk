@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)ciNullObject.hpp	1.12 07/05/05 17:05:14 JVM"
+#pragma ident "@(#)ciNullObject.hpp	1.13 07/09/28 10:23:21 JVM"
 #endif
 /*
  * Copyright 1999-2000 Sun Microsystems, Inc.  All Rights Reserved.
@@ -36,7 +36,7 @@ private:
 
   const char* type_string() { return "ciNullObject"; }
 
-  void print_impl();
+  void print_impl(outputStream* st);
 
 public:
   // Is this ciObject a Java Language Object?  That is,

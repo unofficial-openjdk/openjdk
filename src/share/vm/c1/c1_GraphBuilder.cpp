@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)c1_GraphBuilder.cpp	1.255 07/05/17 15:49:34 JVM"
+#pragma ident "@(#)c1_GraphBuilder.cpp	1.256 07/06/18 14:25:23 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -88,8 +88,8 @@ BlockListBuilder::BlockListBuilder(Compilation* compilation, IRScope* scope, int
  , _blocks(16)
  , _bci2block(new BlockList(scope->method()->code_size(), NULL))
  , _next_block_number(0)
- , _active(NULL, 0)         // size not known yet
- , _visited(NULL, 0)        // size not known yet
+ , _active()         // size not known yet
+ , _visited()        // size not known yet
  , _next_loop_index(0)
  , _loop_map() // size not known yet
 {
@@ -413,7 +413,7 @@ int BlockListBuilder::mark_loops(BlockBegin* block, bool in_subroutine) {
 
   if (block->is_set(BlockBegin::parser_loop_header_flag)) {
     int header_loop_state = _loop_map.at(block_id);
-    assert(is_power_of_2(header_loop_state), "exactly one bit must be set");
+    assert(is_power_of_2((unsigned)header_loop_state), "exactly one bit must be set");
 
     // If the highest bit is set (i.e. when integer value is negative), the method 
     // has 32 or more loops. This bit is never cleared because it is used for multiple loops
@@ -3666,12 +3666,14 @@ void GraphBuilder::pop_scope_for_jsr() {
   _scope_data = scope_data()->parent();
 }
 
-
 bool GraphBuilder::append_unsafe_get_obj(ciMethod* callee, BasicType t, bool is_volatile) {
   if (InlineUnsafeOps) {
     Values* args = state()->pop_arguments(callee->arg_size());
     null_check(args->at(0));
-    Instruction* offset = append(new Convert(Bytecodes::_l2i, args->at(2), as_ValueType(T_INT)));
+    Instruction* offset = args->at(2);
+#ifndef _LP64
+    offset = append(new Convert(Bytecodes::_l2i, offset, as_ValueType(T_INT)));
+#endif
     Instruction* op = append(new UnsafeGetObject(t, args->at(1), offset, is_volatile));
     push(op->type(), op);
     compilation()->set_has_unsafe_access(true);
@@ -3684,7 +3686,10 @@ bool GraphBuilder::append_unsafe_put_obj(ciMethod* callee, BasicType t, bool is_
   if (InlineUnsafeOps) {
     Values* args = state()->pop_arguments(callee->arg_size());
     null_check(args->at(0));
-    Instruction* offset = append(new Convert(Bytecodes::_l2i, args->at(2), as_ValueType(T_INT)));
+    Instruction* offset = args->at(2);
+#ifndef _LP64
+    offset = append(new Convert(Bytecodes::_l2i, offset, as_ValueType(T_INT)));
+#endif
     Instruction* op = append(new UnsafePutObject(t, args->at(1), offset, args->at(3), is_volatile));
     compilation()->set_has_unsafe_access(true);
     kill_all();
@@ -3725,7 +3730,10 @@ bool GraphBuilder::append_unsafe_prefetch(ciMethod* callee, bool is_static, bool
     } else {
       null_check(args->at(0));
     }
-    Instruction* offset = append(new Convert(Bytecodes::_l2i, args->at(obj_arg_index + 1), as_ValueType(T_INT)));
+    Instruction* offset = args->at(obj_arg_index + 1);
+#ifndef _LP64
+    offset = append(new Convert(Bytecodes::_l2i, offset, as_ValueType(T_INT)));
+#endif
     Instruction* op = is_store ? append(new UnsafePrefetchWrite(args->at(obj_arg_index), offset))
                                : append(new UnsafePrefetchRead (args->at(obj_arg_index), offset));
     compilation()->set_has_unsafe_access(true);
@@ -3742,7 +3750,7 @@ void GraphBuilder::append_unsafe_CAS(ciMethod* callee) {
   // Pop off some args to speically handle, then push back
   Value newval = args->pop();
   Value cmpval = args->pop();
-  Value long_offset = args->pop();
+  Value offset = args->pop();
   Value src = args->pop();
   Value unsafe_obj = args->pop();
 
@@ -3750,7 +3758,9 @@ void GraphBuilder::append_unsafe_CAS(ciMethod* callee) {
   // generation, but must be null checked
   null_check(unsafe_obj);
 
-  Instruction* offset = append(new Convert(Bytecodes::_l2i, long_offset, as_ValueType(T_INT)));
+#ifndef _LP64
+  offset = append(new Convert(Bytecodes::_l2i, offset, as_ValueType(T_INT)));
+#endif
 
   args->push(src);
   args->push(offset);

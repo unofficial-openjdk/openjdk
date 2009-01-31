@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)systemDictionary.cpp	1.361 07/09/01 18:23:02 JVM"
+#pragma ident "@(#)systemDictionary.cpp	1.367 08/01/17 09:41:11 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -95,6 +95,7 @@ klassOop    SystemDictionary::_stackTraceElement_klass    =  NULL;
 klassOop    SystemDictionary::_java_nio_Buffer_klass      =  NULL;
 
 klassOop    SystemDictionary::_sun_misc_AtomicLongCSImpl_klass = NULL;
+klassOop    SystemDictionary::_sun_jkernel_DownloadManager_klass  = NULL;
 
 klassOop    SystemDictionary::_boolean_klass              =  NULL;
 klassOop    SystemDictionary::_char_klass                 =  NULL;
@@ -105,17 +106,6 @@ klassOop    SystemDictionary::_short_klass                =  NULL;
 klassOop    SystemDictionary::_int_klass                  =  NULL;
 klassOop    SystemDictionary::_long_klass                 =  NULL;
 klassOop    SystemDictionary::_box_klasses[T_VOID+1]      =  { NULL /*, NULL...*/ };
-
-oop         SystemDictionary::_int_mirror                 =  NULL;
-oop         SystemDictionary::_float_mirror               =  NULL;
-oop         SystemDictionary::_double_mirror              =  NULL;
-oop         SystemDictionary::_byte_mirror                =  NULL;
-oop         SystemDictionary::_bool_mirror                =  NULL;
-oop         SystemDictionary::_char_mirror                =  NULL;
-oop         SystemDictionary::_long_mirror                =  NULL;
-oop         SystemDictionary::_short_mirror               =  NULL;
-oop         SystemDictionary::_void_mirror                =  NULL;
-oop         SystemDictionary::_mirrors[T_VOID+1]          =  { NULL /*, NULL...*/ };
 
 oop         SystemDictionary::_java_system_loader         =  NULL;
 
@@ -765,7 +755,7 @@ klassOop SystemDictionary::resolve_instance_class_or_null(symbolHandle class_nam
         // Klass is already loaded, so just return it
           k = instanceKlassHandle(THREAD, check);
           class_has_been_loaded = true;
-          newprobe->remove_seen_thread(THREAD, PlaceholderTable::LOAD_INSTANCE);
+	  newprobe->remove_seen_thread(THREAD, PlaceholderTable::LOAD_INSTANCE); 
         }
       }
     }
@@ -1215,6 +1205,65 @@ instanceKlassHandle SystemDictionary::load_shared_class(
   return ik;
 }
 
+#ifdef KERNEL
+// Some classes on the bootstrap class path haven't been installed on the
+// system yet.  Call the DownloadManager method to make them appear in the
+// bootstrap class path and try again to load the named class.
+// Note that with delegation class loaders all classes in another loader will
+// first try to call this so it'd better be fast!!
+static instanceKlassHandle download_and_retry_class_load(
+                                                    symbolHandle class_name,
+                                                    TRAPS) {
+
+  klassOop dlm = SystemDictionary::sun_jkernel_DownloadManager_klass();
+  instanceKlassHandle nk;
+
+  // If download manager class isn't loaded just return.
+  if (dlm == NULL) return nk;
+
+  { HandleMark hm(THREAD);
+    ResourceMark rm(THREAD);
+    Handle s = java_lang_String::create_from_symbol(class_name, CHECK_(nk));
+    Handle class_string = java_lang_String::externalize_classname(s, CHECK_(nk));
+
+    // return value
+    JavaValue result(T_OBJECT);
+
+    // Call the DownloadManager.  We assume that it has a lock because
+    // multiple classes could be not found and downloaded at the same time.
+    // class sun.misc.DownloadManager;
+    // public static String getBootClassPathEntryForClass(String className);
+    JavaCalls::call_static(&result,
+                       KlassHandle(THREAD, dlm),
+                       vmSymbolHandles::getBootClassPathEntryForClass_name(),
+                       vmSymbolHandles::string_string_signature(),
+                       class_string,
+                       CHECK_(nk));
+
+    // Get result.string and add to bootclasspath
+    assert(result.get_type() == T_OBJECT, "just checking");
+    oop obj = (oop) result.get_jobject();
+    if (obj == NULL) { return nk; }
+
+    Handle h_obj(THREAD, obj);
+    char* new_class_name = java_lang_String::as_platform_dependent_str(h_obj, 
+                                                                  CHECK_(nk));
+
+    // lock the loader 
+    // we use this lock because JVMTI does.
+    Handle loader_lock(THREAD, SystemDictionary::system_loader_lock());
+
+    ObjectLocker ol(loader_lock, THREAD);
+    // add the file to the bootclasspath
+    ClassLoader::update_class_path_entry_list(new_class_name, true);
+  } // end HandleMark
+
+  if (TraceClassLoading) {
+    ClassLoader::print_bootclasspath();
+  }
+  return ClassLoader::load_classfile(class_name, CHECK_(nk));
+}
+#endif // KERNEL
 
 
 instanceKlassHandle SystemDictionary::load_instance_class(symbolHandle class_name, Handle class_loader, TRAPS) {
@@ -1229,6 +1278,15 @@ instanceKlassHandle SystemDictionary::load_instance_class(symbolHandle class_nam
       // Use VM class loader
       k = ClassLoader::load_classfile(class_name, CHECK_(nh));
     }
+
+#ifdef KERNEL
+    // If the VM class loader has failed to load the class, call the
+    // DownloadManager class to make it magically appear on the classpath
+    // and try again.  This is only configured with the Kernel VM.
+    if (k.is_null()) {
+      k = download_and_retry_class_load(class_name, CHECK_(nh));
+    }
+#endif // KERNEL
 
     // find_or_define_instance_class may return a different k
     if (!k.is_null()) {
@@ -1605,7 +1663,7 @@ bool SystemDictionary::do_unloading(BoolObjectClosure* is_alive) {
 
 // The mirrors are scanned by shared_oops_do() which is
 // not called by oops_do().  In order to process oops in
-// a necessary order, shared_oops_do() is called by
+// a necessary order, shared_oops_do() is call by
 // Universe::oops_do().
 void SystemDictionary::oops_do(OopClosure* f) {
   // Adjust preloaded classes and system loader object
@@ -1684,6 +1742,7 @@ void SystemDictionary::preloaded_oops_do(OopClosure* f) {
   f->do_oop((oop*) &_java_nio_Buffer_klass);
 
   f->do_oop((oop*) &_sun_misc_AtomicLongCSImpl_klass);
+  f->do_oop((oop*) &_sun_jkernel_DownloadManager_klass);
 
   f->do_oop((oop*) &_boolean_klass);
   f->do_oop((oop*) &_char_klass);
@@ -1708,29 +1767,6 @@ void SystemDictionary::preloaded_oops_do(OopClosure* f) {
 
   f->do_oop((oop*) &_system_loader_lock_obj); 
   FilteredFieldsMap::klasses_oops_do(f); 
-}
-
-// These *_mirror objects in the system dictionary need to be processed
-// early on when class data sharing is enabled, and are therefore treated
-// as part of Universe::oops_do()  rather than in SystemDictionary::oops_do()
-// as one would normally expect.
-void SystemDictionary::shared_oops_do(OopClosure* f) {
-  f->do_oop((oop*) &_int_mirror);
-  f->do_oop((oop*) &_float_mirror);
-  f->do_oop((oop*) &_double_mirror);
-  f->do_oop((oop*) &_byte_mirror);
-  f->do_oop((oop*) &_bool_mirror);
-  f->do_oop((oop*) &_char_mirror);
-  f->do_oop((oop*) &_long_mirror);
-  f->do_oop((oop*) &_short_mirror);
-  f->do_oop((oop*) &_void_mirror);
-
-  // It's important to iterate over these guys even if they are null,
-  // since that's how shared heaps are restored.
-  for (int i = T_BOOLEAN; i < T_VOID+1; i++) {
-    f->do_oop((oop*) &_mirrors[i]);
-  }
-  assert(_mirrors[0] == NULL && _mirrors[T_BOOLEAN - 1] == NULL, "checking");
 }
 
 void SystemDictionary::lazily_loaded_oops_do(OopClosure* f) {
@@ -1816,9 +1852,12 @@ void SystemDictionary::initialize_preloaded_classes(TRAPS) {
   _string_klass            = resolve_or_fail(vmSymbolHandles::java_lang_String(),                true, CHECK);  
   _class_klass             = resolve_or_fail(vmSymbolHandles::java_lang_Class(),                 true, CHECK);
   debug_only(instanceKlass::verify_class_klass_nonstatic_oop_maps(_class_klass));
-
-  // Fixup mirrors for classes loaded before java.lang.Class
-  initialize_basic_type_mirrors(CHECK);
+  // Fixup mirrors for classes loaded before java.lang.Class.
+  // These calls iterate over the objects currently in the perm gen
+  // so calling them at this point is matters (not before when there
+  // are fewer objects and not later after there are more objects
+  // in the perm gen.
+  Universe::initialize_basic_type_mirrors(CHECK);
   Universe::fixup_mirrors(CHECK);
 
   _cloneable_klass         = resolve_or_fail(vmSymbolHandles::java_lang_Cloneable(),             true, CHECK);
@@ -1887,6 +1926,12 @@ void SystemDictionary::initialize_preloaded_classes(TRAPS) {
 
   // If this class isn't present, it won't be referenced.
   _sun_misc_AtomicLongCSImpl_klass = resolve_or_null(vmSymbolHandles::sun_misc_AtomicLongCSImpl(),     CHECK);
+#ifdef KERNEL
+  _sun_jkernel_DownloadManager_klass = resolve_or_null(vmSymbolHandles::sun_jkernel_DownloadManager(),     CHECK);
+  if (_sun_jkernel_DownloadManager_klass == NULL) {
+    warning("Cannot find sun/jkernel/DownloadManager");
+  }
+#endif // KERNEL
 
   // Preload boxing klasses
   _boolean_klass           = resolve_or_fail(vmSymbolHandles::java_lang_Boolean(),               true, CHECK);
@@ -1919,39 +1964,6 @@ void SystemDictionary::initialize_preloaded_classes(TRAPS) {
     _has_checkPackageAccess = (method != NULL); 
   }
 }
-
-void SystemDictionary::initialize_basic_type_mirrors(TRAPS) { 
-  if (UseSharedSpaces) {
-    assert(_int_mirror != NULL, "already loaded");
-    assert(_void_mirror == _mirrors[T_VOID], "consistently loaded");
-    return;
-  }
-
-  assert(_int_mirror==NULL, "basic type mirrors already initialized");
-
-  _int_mirror     = java_lang_Class::create_basic_type_mirror("int",    T_INT,     CHECK);
-  _float_mirror   = java_lang_Class::create_basic_type_mirror("float",  T_FLOAT,   CHECK);
-  _double_mirror  = java_lang_Class::create_basic_type_mirror("double", T_DOUBLE,  CHECK);
-  _byte_mirror    = java_lang_Class::create_basic_type_mirror("byte",   T_BYTE,    CHECK);
-  _bool_mirror    = java_lang_Class::create_basic_type_mirror("boolean",T_BOOLEAN, CHECK);
-  _char_mirror    = java_lang_Class::create_basic_type_mirror("char",   T_CHAR,    CHECK);
-  _long_mirror    = java_lang_Class::create_basic_type_mirror("long",   T_LONG,    CHECK);
-  _short_mirror   = java_lang_Class::create_basic_type_mirror("short",  T_SHORT,   CHECK);
-  _void_mirror    = java_lang_Class::create_basic_type_mirror("void",   T_VOID,    CHECK);
-
-  _mirrors[T_INT]     = _int_mirror;
-  _mirrors[T_FLOAT]   = _float_mirror;
-  _mirrors[T_DOUBLE]  = _double_mirror;
-  _mirrors[T_BYTE]    = _byte_mirror;
-  _mirrors[T_BOOLEAN] = _bool_mirror;
-  _mirrors[T_CHAR]    = _char_mirror;
-  _mirrors[T_LONG]    = _long_mirror;
-  _mirrors[T_SHORT]   = _short_mirror;
-  _mirrors[T_VOID]    = _void_mirror;
-  //_mirrors[T_OBJECT]  = instanceKlass::cast(_object_klass)->java_mirror();
-  //_mirrors[T_ARRAY]   = instanceKlass::cast(_object_klass)->java_mirror();
-}
-
 
 // Tells if a given klass is a box (wrapper class, such as java.lang.Integer).
 // If so, returns the basic type it holds.  If not, returns T_OBJECT.

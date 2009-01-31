@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)chaitin.hpp	1.159 07/05/05 17:06:09 JVM"
+#pragma ident "@(#)chaitin.hpp	1.161 08/03/26 10:13:00 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -159,6 +159,8 @@ public:
 
   // Alive if non-zero, dead if zero
   bool alive() const { return _def != NULL; }
+  bool is_multidef() const { return _def == NodeSentinel; }
+  bool is_singledef() const { return _def != NodeSentinel; }
 
 #ifndef PRODUCT
   void dump( ) const;
@@ -295,7 +297,6 @@ class PhaseChaitin : public PhaseRegAlloc {
   VectorSet _spilled_twice;     // Nodes that have been spilled twice
 
   LRG_List _names;              // Map from Nodes to Live RanGes
-  uint n2lidx( const Node *n ) const { return _names[n->_idx]; }
 
   // Union-find map.  Declared as a short for speed.
   // Indexed by live-range number, it returns the compacted live-range number
@@ -324,7 +325,8 @@ class PhaseChaitin : public PhaseRegAlloc {
   uint split_DEF( Node *def, Block *b, int loc, uint max, Node **Reachblock, Node **debug_defs, GrowableArray<uint> splits, int slidx );
   uint split_USE( Node *def, Block *b, Node *use, uint useidx, uint max, bool def_down, bool cisc_sp, GrowableArray<uint> splits, int slidx );
   int clone_projs( Block *b, uint idx, Node *con, Node *copy, uint &maxlrg );
-  Node *split_Rematerialize( Node *def, Block *b, uint insidx, uint &maxlrg, GrowableArray<uint> splits, int slidx, uint *lrg2reach, Node **Reachblock, bool walkThru );
+  Node *split_Rematerialize(Node *def, Block *b, uint insidx, uint &maxlrg, GrowableArray<uint> splits,
+                            int slidx, uint *lrg2reach, Node **Reachblock, bool walkThru);
   // True if lidx is used before any real register is def'd in the block
   bool prompt_use( Block *b, uint lidx );
   Node *get_spillcopy_wide( Node *def, Node *use, uint uidx );
@@ -358,6 +360,8 @@ public:
 
   // Do all the real work of allocate
   void Register_Allocate();
+
+  uint n2lidx( const Node *n ) const { return _names[n->_idx]; }
 
 #ifndef PRODUCT
   bool trace_spilling() const { return _trace_spilling; }
@@ -459,7 +463,8 @@ private:
   bool may_be_copy_of_callee( Node *def ) const;
 
   // If nreg already contains the same constant as val then eliminate it
-  bool eliminate_copy_of_constant(Node* val, Block *current_block, Node_List& value, Node_List &regnd,
+  bool eliminate_copy_of_constant(Node* val, Node* n,
+                                  Block *current_block, Node_List& value, Node_List &regnd,
                                   OptoReg::Name nreg, OptoReg::Name nreg2);
   // Extend the node to LRG mapping
   void add_reference( const Node *node, const Node *old_node);

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)os_solaris.hpp	1.120 07/05/05 17:04:41 JVM"
+#pragma ident "@(#)os_solaris.hpp	1.121 07/06/29 04:05:00 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -322,339 +322,6 @@ class Solaris {
 
   // none present 
 
-  // An event is a condition variable with associated mutex.
-  // (A cond_t is only usable in combination with a mutex_t.)
-  class Event : public CHeapObj {
-   private:
-    #ifndef PRODUCT
-    debug_only(unsigned _owner;)
-    #endif
-    volatile int  _count;
-    volatile int _nParked ; 	// # of threads blocked on the _cond
-    double CachePad [4] ;	// increase odds that _mutex is sole occupant of cache line
-    mutex_t _mutex[1];
-    cond_t  _cond[1];
-   public:
-    Event * FreeNext ;          // TSM free list linkage
-    int Immortal ;	        // Resides in TSM pool
-
-   public:
-    Event() {
-      verify();
-      int status;
-      status = os::Solaris::cond_init(_cond);
-      assert_status(status == 0, status, "cond_init");
-      status = os::Solaris::mutex_init(_mutex);
-      assert_status(status == 0, status, "mutex_init");
-      #ifndef PRODUCT
-      debug_only(_owner = 0;)
-      #endif
-      _count = 0;
-      _nParked = 0 ; 
-      FreeNext = NULL ; 
-      Immortal = 0 ; 
-    }
-    ~Event() {
-      int status;
-      guarantee (Immortal == 0, "invariant") ; 
-      guarantee (_nParked == 0, "invariant") ; 	  
-      status = os::Solaris::cond_destroy(_cond);
-      assert_status(status == 0, status, "cond_destroy");
-      status = os::Solaris::mutex_destroy(_mutex);
-      assert_status(status == 0, status, "mutex_destroy");
-    }
-    // for use in critical sections:
-    void lock() {
-      verify();
-      int status = os::Solaris::mutex_lock(_mutex);
-      assert_status(status == 0, status, "mutex_lock");
-      #ifndef PRODUCT
-      debug_only(_owner = thr_self();)
-      #endif
-    }
-    bool trylock() {
-      verify();
-      int status = os::Solaris::mutex_trylock(_mutex);
-      if (status == EBUSY)
-	return false;
-      assert_status(status == 0, status, "mutex_lock");
-      #ifndef PRODUCT
-      debug_only(_owner = thr_self();)
-      #endif
-      return true;
-    }
-    void unlock() {
-      verify();
-      int status = os::Solaris::mutex_unlock(_mutex);
-      assert_status(status == 0, status, "mutex_unlock");
-      #ifndef PRODUCT
-      debug_only(_owner = 0;)
-      #endif
-    }
-    int timedwait(timestruc_t* abstime) {
-      verify();
-	  ++_nParked ; 
-      int status = os::Solaris::cond_timedwait(_cond, _mutex, abstime);
-      --_nParked ; 
-      assert_status(status == 0 || status == EINTR || 
-		    status == ETIME || status == ETIMEDOUT, 
-		    status, "cond_timedwait");
-      return status;
-    }
-    int timedwait(jlong millis) {
-      timestruc_t abst;
-      Event::compute_abstime(&abst, millis);
-      return timedwait(&abst);
-    }
-    int wait() {
-      verify();
-      ++_nParked ; 
-      int status = os::Solaris::cond_wait(_cond, _mutex);
-	  --_nParked ; 
-      // for some reason, under 2.7 lwp_cond_wait() may return ETIME ...
-      // Treat this the same as if the wait was interrupted
-      // With usr/lib/lwp going to kernel, always handle ETIME
-      if(status == ETIME) {
-	status = EINTR;
-      }
-      assert_status(status == 0 || status == EINTR, status, "cond_wait");
-      return status;
-    }
-    void signal() {
-      verify();
-      int status = os::Solaris::cond_signal(_cond);
-      assert_status(status == 0, status, "cond_signal");
-    }
-    void broadcast() {
-      verify();
-      int status = os::Solaris::cond_broadcast(_cond);
-      assert_status(status == 0, status, "cond_broadcast");
-    }
-
-    // TODO-FIXME: Eliminate park-unpark-reset and interrupt_event.
-    // Use Self->_ParkEvent instead.  
-    // functions used to support monitor and interrupt
-    // Note: park() may wake up spuriously. Use it in a loop.
-    void park() {
-      verify();
-	  lock () ; 
-      while (_count <= 0) {
-        wait();
-      }
-      assert(_count > 0, "logic error");
-      _count--;
-      unlock();
-    }
-
-    int park(jlong millis) {
-      timestruc_t abst;
-      Event::compute_abstime(&abst, millis);
-      verify();
-      int raw ;
-      int ret = OS_TIMEOUT;
-      lock();
-
-      // Object.wait(timo) will return because of
-	  // (a) notification
-	  // (b) timeout
-	  // (c) thread.interrupt
-	  // 
-	  // Thread.interrupt and object.notify{All} both call Event::set.  	
-	  // That is, we treat thread.interrupt as a special case of notification.  
-	  // The underlying Solaris implementation, cond_timedwait, admits 
-	  // spurious/premature wakeups, but the JLS/JVM spec prevents the
-	  // JVM from making those visible to Java code.  As such, we must
-	  // filter out spurious wakeups.  We assume all ETIME returns are valid. 
-	  //
-	  // TODO: properly differentiate simultaneous notify+interrupt. 
-	  // In that case, we should propagate the notify to another waiter. 
-
-	  while (_count <= 0) { 		
-        raw = timedwait(&abst);
-		if (!FilterSpuriousWakeups) break ; 		// previous semantics
-		if (raw == ETIME || raw == ETIMEDOUT) break ; 
-		// We consume and ignore EINTR and spurious wakeups.   
-      }
-      if (_count > 0) {
-        _count--;
-        ret = OS_OK;
-      }
-      unlock();
-      return ret;
-    }
-
-    void unpark() {
-      verify();
-      lock();
-      int AnyWaiters = _nParked - _count ; 
-      _count = 1;
-
-      // note - no membars are required.
-      // Solaris' mutex primitives provide release consistency (at minimum) so
-      // we don't need to use memory barriers in conjunction with _count
-      // and _nParked.  In fact _count and _nParked don't even need to be volatile.
-      //
-      // Note that we signal() _after dropping the lock for "immortal" Events.  
-      // This is safe and avoids a common class of  futile wakeups.  In rare 
-      // circumstances this can cause a thread to return prematurely from 
-      // cond_{timed}wait() but the spurious wakeup is benign and the victim will 
-      // simply re-test the condition and re-park itself.  
-      // 
-      // Is it safe to signal _after dropping the lock?  Viz.,
-      //     ... ; unlock(); if (AnyWaiters) signal(); 
-      // From a synchronization standpoint the code fragment is safe, but
-      // are we guaranteed that the Event referenced by "this" is live at 
-      // the time we signal()? 
-      // Consider the the following scenario:
-      //
-      // Code for Thread A:
-      //     { E = new Event(); create new thread B passing E; ... ; E.unpark();}
-      // Code for Thread B:
-      //     B(E) { E.park(); delete E; ... } 
-      // 
-      // 1:  Thread A creates E and then creates a new Thread B, passing E.
-      // 2:  B calls E.park(), sets _nParked = 1 and then and parks. 
-      // 3:  A calls E.unpark(), acquires the lock, samples nParked (1), sets _count = 1. 
-      //     and then releases the lock().  
-      // 4:  B returns spuriously from cond_{timed}wait(), tests and clears
-      //     _count and returns from park().  B then deletes E. 
-      //     Note that the scenarios requires a spurious wakeup!
-      // 5:  A (still in E.unpark()) calls signal() but the Event E is defunct.
-      //     The reference to E is stale.  
-      //
-      // To avoid the problem we can restrict use signal-after-unlock to
-      // Immortal Events.  Alternately, we could keep _all events in TSM. 
-
-      if (AnyWaiters > 0) { 
-         if (Immortal) { 
-            unlock(); signal () ; 
-         } else { 
-            signal(); unlock () ; 
-         } 
-      } else { 
-         unlock () ; 
-      }	 
-    }
-
-    void reset() {
-      verify();
-      guarantee (_nParked == 0, "invariant") ; 
-      _count = 0;
-      _nParked = 0 ; 
-    }
-
-// value determined through experimentation
-#define roundingFix 11    
-    // utility to compute the abstime argument to timedwait:
-    static timestruc_t* compute_abstime(timestruc_t* abstime, jlong millis) {
-      // millis is the relative timeout time
-      // abstime will be the absolute timeout time
-      if (millis < 0)  millis = 0;
-      struct timeval now;
-      int status = gettimeofday(&now, NULL);
-      assert(status == 0, "gettimeofday");
-      jlong seconds = millis / 1000;
-      jlong max_wait_period;
-      
-      if(UseLWPSynchronization) {
-        // forward port of fix for 4275818 (not sleeping long enough)
-        // There was a bug in Solaris 6, 7 and pre-patch 5 of 8 where
-        // _lwp_cond_timedwait() used a round_down algorithm rather
-        // than a round_up. For millis less than our roundfactor 
-        // it rounded down to 0 which doesn't meet the spec.
-        // For millis > roundfactor we may return a bit sooner, but
-        // since we can not accurately identify the patch level and
-        // this has already been fixed in Solaris 9 and 8 we will
-        // leave it alone rather than always rounding down.
-
-        if (millis > 0 && millis < roundingFix) millis = roundingFix;
-	// It appears that when we go directly through Solaris _lwp_cond_timedwait()
-	// the acceptable max time threshold is smaller than for libthread on 2.5.1 and 2.6
-	max_wait_period = 21000000;  
-      }
-      else {
-	max_wait_period = 50000000;
-      }
-      millis %= 1000;
-      if (seconds > max_wait_period) {	// see man cond_timedwait(3T)
-	seconds = max_wait_period;
-      }
-      abstime->tv_sec = now.tv_sec  + seconds;
-      long       usec = now.tv_usec + millis * 1000;
-      if (usec >= 1000000) {
-	abstime->tv_sec += 1;
-	usec -= 1000000;
-      }
-      abstime->tv_nsec = usec * 1000;
-      return abstime;
-    }
-
-    // hook to check for mutex corruption:
-    void verify() PRODUCT_RETURN;
-  };
-
-  // An OSMutex is an abstraction over the different thread libraries'
-  // mutexes. NOTE that this assumes that mutex_t is identical for
-  // libthread, liblwp, and pthreads.
-  class OSMutex : public CHeapObj {
-   private:
-    #ifndef PRODUCT
-    debug_only(volatile unsigned _owner;)
-    debug_only(volatile bool      _is_owned;)
-    #endif
-    mutex_t _mutex[1];
-
-   public:
-    OSMutex() {
-      verify();
-      int status = os::Solaris::mutex_init(_mutex);
-      assert_status(status == 0, status, "mutex_init");
-      #ifndef PRODUCT
-      debug_only(_is_owned = false;)
-      #endif
-    }
-    ~OSMutex() {
-      int status = os::Solaris::mutex_destroy(_mutex);
-      assert_status(status == 0, status, "mutex_destroy");
-    }
-    // for use in critical sections:
-    void lock() {
-      verify();
-      int status = os::Solaris::mutex_lock(_mutex);
-      assert_status(status == 0, status, "mutex_lock");
-      #ifndef PRODUCT
-      assert(_is_owned == false, "mutex_lock should not have had owner");
-      debug_only(_owner = thr_self();)
-      debug_only(_is_owned = true;)
-      #endif
-    }
-    bool trylock() {
-      verify();
-      int status = os::Solaris::mutex_trylock(_mutex);
-      if (status == EBUSY)
-	return false;
-      assert_status(status == 0, status, "mutex_trylock");
-      #ifndef PRODUCT
-      debug_only(_owner = thr_self();)
-      debug_only(_is_owned = true;)
-      #endif
-      return true;
-    }
-    void unlock() {
-      verify();
-      #ifndef PRODUCT
-      debug_only(int my_id = thr_self();)
-      assert(_owner == my_id, "mutex_unlock");
-      debug_only(_is_owned = false;)
-      #endif
-      int status = os::Solaris::mutex_unlock(_mutex);
-      assert_status(status == 0, status, "mutex_unlock");
-    }
-
-    // hook to check for mutex corruption:
-    void verify() PRODUCT_RETURN;
-    void verify_locked() PRODUCT_RETURN;
-  };
 };
 
 class PlatformEvent : public CHeapObj {
@@ -667,10 +334,12 @@ class PlatformEvent : public CHeapObj {
     cond_t  _cond   [1] ;
     double PostPad  [2] ;  
 
-  public:       // TODO-FIXME: make dtor private
+  protected:
+    // Defining a protected ctor effectively gives us an abstract base class.
+    // That is, a PlatformEvent can never be instantiated "naked" but only
+    // as a part of a ParkEvent (recall that ParkEvent extends PlatformEvent).  
+    // TODO-FIXME: make dtor private
     ~PlatformEvent() { guarantee (0, "invariant") ; }
-
-  public:
     PlatformEvent() {
       int status;
       status = os::Solaris::cond_init(_cond);
@@ -682,12 +351,14 @@ class PlatformEvent : public CHeapObj {
       _pipev[0] = _pipev[1] = -1 ; 
     }
 
+  public:
     // Exercise caution using reset() and fired() -- they may require MEMBARs
     void reset() { _Event = 0 ; } 
     int  fired() { return _Event; } 
     void park () ; 
-    void unpark () ; 
     int  park (jlong millis) ; 
+    int  TryPark () ; 
+    void unpark () ; 
 } ; 
 
 class PlatformParker : public CHeapObj { 

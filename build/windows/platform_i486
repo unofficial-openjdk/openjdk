@@ -1,10 +1,14 @@
-// Platform file for win32 NT platform $Revision: 1.2 $
+// Platform file for windows platform @(#)platform_i486	1.7 07/09/17 09:41:33
 
-os_family = win32
+os_family = windows
 
-arch = i486
+arch = x86
 
-os_arch = win32_i486
+arch_model = x86_32
+
+os_arch = windows_x86
+
+os_arch_model = windows_x86_32
 
 compiler = visCPP
 

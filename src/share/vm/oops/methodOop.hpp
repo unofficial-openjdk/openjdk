@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)methodOop.hpp	1.220 08/06/19 12:45:48 JVM"
+#pragma ident "@(#)methodOop.hpp	1.221 08/11/24 12:22:56 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -368,8 +368,10 @@ class methodOopDesc : public oopDesc {
   address code_base() const           { return constMethod()->code_base(); }
   bool    contains(address bcp) const { return constMethod()->contains(bcp); }
 
-  void print_codes() const                       PRODUCT_RETURN; // prints byte codes
-  void print_codes(int from, int to) const       PRODUCT_RETURN;
+  // prints byte codes
+  void print_codes() const            { print_codes_on(tty); }
+  void print_codes_on(outputStream* st) const                      PRODUCT_RETURN;
+  void print_codes_on(int from, int to, outputStream* st) const    PRODUCT_RETURN;
 
   // checked exceptions
   int checked_exceptions_length() const
@@ -396,6 +398,7 @@ class methodOopDesc : public oopDesc {
   void compute_size_of_parameters(Thread *thread); // word size of parameters (receiver if any + arguments)
   symbolOop klass_name() const;                  // returns the name of the method holder
   BasicType result_type() const;                 // type of the method result
+  int result_type_index() const;                 // type index of the method result
   bool is_returning_oop() const                  { BasicType r = result_type(); return (r == T_OBJECT || r == T_ARRAY); }
   bool is_returning_fp() const                   { BasicType r = result_type(); return (r == T_FLOAT || r == T_DOUBLE); }
 

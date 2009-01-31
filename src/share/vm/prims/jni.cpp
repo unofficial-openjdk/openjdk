@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)jni.cpp	1.435 07/06/28 16:50:01 JVM"
+#pragma ident "@(#)jni.cpp	1.436 07/07/11 09:47:42 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -1854,7 +1854,9 @@ JNI_END
 JNI_ENTRY(jobject, jni_GetStaticObjectField(JNIEnv *env, jclass clazz, jfieldID fieldID))
   JNIWrapper("GetStaticObjectField");
   DTRACE_PROBE3(hotspot_jni, GetStaticObjectField__entry, env, clazz, fieldID);
+#ifndef JNICHECK_KERNEL
   DEBUG_ONLY(klassOop param_k = jniCheck::validate_class(thread, clazz);)
+#endif // JNICHECK_KERNEL
   JNIid* id = jfieldIDWorkaround::from_static_jfieldID(fieldID);
   assert(id->is_static_field_id(), "invalid static field id");
   // Keep JVMTI addition small and only check enabled flag here.
@@ -3145,7 +3147,11 @@ void quicken_jni_functions() {
 
 // Returns the function structure
 struct JNINativeInterface_* jni_functions() {
+#ifndef JNICHECK_KERNEL
   if (CheckJNICalls) return jni_functions_check();
+#else  // JNICHECK_KERNEL
+  if (CheckJNICalls) warning("-Xcheck:jni is not supported in kernel vm.");
+#endif // JNICHECK_KERNEL
   return &jni_NativeInterface;
 }
 

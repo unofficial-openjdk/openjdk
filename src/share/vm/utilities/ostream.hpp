@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)ostream.hpp	1.43 07/06/08 23:18:20 JVM"
+#pragma ident "@(#)ostream.hpp	1.44 07/09/28 10:22:57 JVM"
 #endif
 /*
  * Copyright 1997-2005 Sun Microsystems, Inc.  All Rights Reserved.
@@ -222,3 +222,23 @@ class bufferedStream : public outputStream {
 };
 
 #define O_BUFLEN 2000   // max size of output of individual print() methods
+
+#ifndef PRODUCT
+
+class networkStream : public bufferedStream {
+
+  private:
+    int _socket;
+
+  public:
+    networkStream();
+    ~networkStream();
+  
+    bool connect(const char *host, short port);
+    bool is_open() const { return _socket != -1; }
+    int read(char *buf, size_t len);
+    void close();
+    virtual void flush();
+};
+
+#endif

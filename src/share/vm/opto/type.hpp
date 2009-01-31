@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)type.hpp	1.156 07/05/17 16:02:31 JVM"
+#pragma ident "@(#)type.hpp	1.159 07/10/23 13:12:48 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -244,8 +244,11 @@ public:
   // Printing, statistics
   static const char * const msg[lastype]; // Printable strings  
 #ifndef PRODUCT
-  void         dump() const;
-  virtual void dump2( Dict &d, uint depth ) const;
+  void         dump_on(outputStream *st) const;
+  void         dump() const {
+    dump_on(tty);
+  }
+  virtual void dump2( Dict &d, uint depth, outputStream *st ) const;
   static  void dump_stats();
   static  void verify_lastype();          // Check that arrays match type enum
 #endif
@@ -326,7 +329,7 @@ public:
   static const TypeF *ZERO; // positive zero only
   static const TypeF *ONE;
 #ifndef PRODUCT
-  virtual void dump2(Dict &d, uint depth) const;
+  virtual void dump2( Dict &d, uint depth, outputStream *st ) const;
 #endif
 };
 
@@ -353,7 +356,7 @@ public:
   static const TypeD *ZERO; // positive zero only
   static const TypeD *ONE;
 #ifndef PRODUCT
-  virtual void dump2(Dict &d, uint depth) const;
+  virtual void dump2( Dict &d, uint depth, outputStream *st ) const;
 #endif
 };
 
@@ -407,7 +410,7 @@ public:
   static const TypeInt *INT;
   static const TypeInt *SYMINT; // symmetric range [-max_jint..max_jint]
 #ifndef PRODUCT
-  virtual void dump2(Dict &d, uint depth) const;
+  virtual void dump2( Dict &d, uint depth, outputStream *st ) const;
 #endif
 };
 
@@ -451,7 +454,7 @@ public:
   static const TypeLong *INT;    // 32-bit subrange [min_jint..max_jint]
   static const TypeLong *UINT;   // 32-bit unsigned [0..max_juint]
 #ifndef PRODUCT
-  virtual void dump2( Dict &d, uint ) const;// Specialized per-Type dumping
+  virtual void dump2( Dict &d, uint, outputStream *st  ) const;// Specialized per-Type dumping
 #endif
 };
 
@@ -503,7 +506,7 @@ public:
   static const TypeTuple *INT_PAIR;
   static const TypeTuple *LONG_PAIR;
 #ifndef PRODUCT
-  virtual void dump2( Dict &d, uint ) const; // Specialized per-Type dumping
+  virtual void dump2( Dict &d, uint, outputStream *st  ) const; // Specialized per-Type dumping
 #endif
 };
 
@@ -530,7 +533,7 @@ public:
   virtual const Type *xdual() const;    // Compute dual right now.
   bool ary_must_be_exact() const;  // true if arrays of such are never generic
 #ifndef PRODUCT
-  virtual void dump2( Dict &d, uint ) const; // Specialized per-Type dumping
+  virtual void dump2( Dict &d, uint, outputStream *st  ) const; // Specialized per-Type dumping
 #endif
 };
 
@@ -591,7 +594,7 @@ public:
   static const TypePtr *NOTNULL;
   static const TypePtr *BOTTOM;
 #ifndef PRODUCT
-  virtual void dump2( Dict &d, uint depth ) const;
+  virtual void dump2( Dict &d, uint depth, outputStream *st  ) const;
 #endif
 };
 
@@ -623,7 +626,7 @@ public:
   static const TypeRawPtr *BOTTOM;
   static const TypeRawPtr *NOTNULL;
 #ifndef PRODUCT
-  virtual void dump2( Dict &d, uint depth ) const;
+  virtual void dump2( Dict &d, uint depth, outputStream *st  ) const;
 #endif
 };
 
@@ -709,7 +712,7 @@ public:
   // Convenience common pre-built type.
   static const TypeOopPtr *BOTTOM;
 #ifndef PRODUCT
-  virtual void dump2( Dict &d, uint depth ) const;
+  virtual void dump2( Dict &d, uint depth, outputStream *st ) const;
 #endif
 };
 
@@ -780,7 +783,7 @@ class TypeInstPtr : public TypeOopPtr {
   static const TypeInstPtr *MARK;
   static const TypeInstPtr *KLASS;
 #ifndef PRODUCT
-  virtual void dump2( Dict &d, uint ) const; // Specialized per-Type dumping
+  virtual void dump2( Dict &d, uint depth, outputStream *st ) const; // Specialized per-Type dumping
 #endif
 };
 
@@ -837,8 +840,10 @@ public:
     return _array_body_type[elem];
   }
   static const TypeAryPtr *_array_body_type[T_CONFLICT+1];
+  // sharpen the type of an int which is used as an array size
+  static const TypeInt* narrow_size_type(const TypeInt* size, BasicType elem);
 #ifndef PRODUCT
-  virtual void dump2( Dict &d, uint ) const; // Specialized per-Type dumping
+  virtual void dump2( Dict &d, uint depth, outputStream *st ) const; // Specialized per-Type dumping
 #endif
 };
 
@@ -875,7 +880,7 @@ public:
   static const TypeKlassPtr* OBJECT; // Not-null object klass or below
   static const TypeKlassPtr* OBJECT_OR_NULL; // Maybe-null version of same
 #ifndef PRODUCT
-  virtual void dump2( Dict &d, uint ) const; // Specialized per-Type dumping
+  virtual void dump2( Dict &d, uint depth, outputStream *st ) const; // Specialized per-Type dumping
 #endif
 };
 
@@ -914,7 +919,7 @@ public:
   BasicType return_type() const;
 
 #ifndef PRODUCT
-  virtual void dump2( Dict &d, uint ) const; // Specialized per-Type dumping
+  virtual void dump2( Dict &d, uint depth, outputStream *st ) const; // Specialized per-Type dumping
   void print_flattened() const; // Print a 'flattened' signature
 #endif
   // Convenience common pre-built types.
@@ -1068,6 +1073,7 @@ inline bool Type::is_floatingpoint() const {
 #define LShiftXNode  LShiftLNode
 // For object size computation:
 #define AddXNode     AddLNode
+#define RShiftXNode  RShiftLNode
 // For card marks and hashcodes
 #define URShiftXNode URShiftLNode
 // Opcodes
@@ -1106,6 +1112,7 @@ inline bool Type::is_floatingpoint() const {
 #define LShiftXNode  LShiftINode
 // For object size computation:
 #define AddXNode     AddINode
+#define RShiftXNode  RShiftINode
 // For card marks and hashcodes
 #define URShiftXNode URShiftINode
 // Opcodes

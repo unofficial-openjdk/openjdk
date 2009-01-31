@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)node.cpp	1.227 07/05/21 15:45:56 JVM"
+#pragma ident "@(#)node.cpp	1.228 07/09/28 10:23:04 JVM"
 #endif
 /*
  * Copyright 1997-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -898,7 +898,7 @@ void Node::init_NodeProperty() {
 
 //------------------------------format-----------------------------------------
 // Print as assembly
-void Node::format( PhaseRegAlloc * ) const {}
+void Node::format( PhaseRegAlloc *, outputStream *st ) const {}
 //------------------------------emit-------------------------------------------
 // Emit bytes starting at parameter 'ptr'.  
 void Node::emit(CodeBuffer &cbuf, PhaseRegAlloc *ra_) const {} 
@@ -1369,7 +1369,7 @@ void Node::dump() const {
   }
 
   // Dump node-specific info
-  dump_spec();
+  dump_spec(tty);
 #ifdef ASSERT
   // Dump the non-reset _debug_idx
   if( Verbose && WizardMode ) {
@@ -1393,7 +1393,7 @@ void Node::dump() const {
     t->dump();
   } else if( t == Type::MEMORY ) {
     tty->print("  Memory:");
-    MemNode::dump_adr_type(this, adr_type());
+    MemNode::dump_adr_type(this, adr_type(), tty);
   } else if( Verbose || WizardMode ) {
     tty->print("  Type:");
     if( t ) {
@@ -1408,7 +1408,7 @@ void Node::dump() const {
     if (nn != NULL && !nn->is_clear()) {
       if (nn->jvms() != NULL) {
         tty->print(" !jvms:");
-        nn->jvms()->dump_spec();
+        nn->jvms()->dump_spec(tty);
       }
     }
   }
@@ -1901,10 +1901,10 @@ void Node_Stack::grow() {
 //=============================================================================
 uint TypeNode::size_of() const { return sizeof(*this); }
 #ifndef PRODUCT
-void TypeNode::dump_spec() const { 
+void TypeNode::dump_spec(outputStream *st) const { 
   if( !Verbose && !WizardMode ) {
     // standard dump does this in Verbose and WizardMode
-    tty->print(" #"); _type->dump();
+    st->print(" #"); _type->dump_on(st);
   }
 }
 #endif

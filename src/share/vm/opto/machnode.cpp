@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)machnode.cpp	1.199 07/05/05 17:06:21 JVM"
+#pragma ident "@(#)machnode.cpp	1.200 07/09/28 10:23:08 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -81,7 +81,7 @@ const RegMask *MachOper::in_RegMask(int index) const {
 //------------------------------dump_spec--------------------------------------
 // Print any per-operand special info
 #ifndef PRODUCT
-void MachOper::dump_spec() const { }
+void MachOper::dump_spec(outputStream *st) const { }
 #endif
 
 //------------------------------hash-------------------------------------------
@@ -444,35 +444,35 @@ bool MachNode::rematerialize() const {
 #ifndef PRODUCT
 //------------------------------dump_spec--------------------------------------
 // Print any per-operand special info
-void MachNode::dump_spec() const {
+void MachNode::dump_spec(outputStream *st) const {
   uint cnt = num_opnds();
   for( uint i=0; i<cnt; i++ )
-    _opnds[i]->dump_spec();
+    _opnds[i]->dump_spec(st);
   const TypePtr *t = adr_type();
   if( t ) {
     Compile* C = Compile::current();
     if( C->alias_type(t)->is_volatile() )
-      tty->print(" Volatile!");
+      st->print(" Volatile!");
   }
 }
 
 //------------------------------dump_format------------------------------------
 // access to virtual
-void MachNode::dump_format(PhaseRegAlloc *ra) const {
-  format(ra); // access to virtual
+void MachNode::dump_format(PhaseRegAlloc *ra, outputStream *st) const {
+  format(ra, st); // access to virtual
 }
 #endif
 
 //=============================================================================
 #ifndef PRODUCT
-void MachTypeNode::dump_spec() const {
-  _bottom_type->dump();
+void MachTypeNode::dump_spec(outputStream *st) const {
+  _bottom_type->dump_on(st);
 }
 #endif
 
 //=============================================================================
 #ifndef PRODUCT
-void MachNullCheckNode::format( PhaseRegAlloc *ra_ ) const {
+void MachNullCheckNode::format( PhaseRegAlloc *ra_, outputStream *st ) const {
   int reg = ra_->get_reg_first(in(1)->in(_vidx));
   tty->print("%s %s", Name(), Matcher::regName[reg]);
 }
@@ -517,19 +517,19 @@ const TypePtr *MachProjNode::adr_type() const {
 }
 
 #ifndef PRODUCT
-void MachProjNode::dump_spec() const {
-  ProjNode::dump_spec();
+void MachProjNode::dump_spec(outputStream *st) const {
+  ProjNode::dump_spec(st);
   switch (_ideal_reg) {
-  case unmatched_proj:  tty->print("/unmatched");                         break;
-  case fat_proj:        tty->print("/fat"); if (WizardMode) _rout.dump(); break;
+  case unmatched_proj:  st->print("/unmatched");                         break;
+  case fat_proj:        st->print("/fat"); if (WizardMode) _rout.dump(); break;
   }
 }
 #endif
 
 //=============================================================================
 #ifndef PRODUCT
-void MachIfNode::dump_spec() const {
-  tty->print("P=%f, C=%f",_prob, _fcnt);
+void MachIfNode::dump_spec(outputStream *st) const {
+  st->print("P=%f, C=%f",_prob, _fcnt);
 }
 #endif
 
@@ -575,11 +575,11 @@ const Type *MachCallNode::bottom_type() const { return tf()->range(); }
 const Type *MachCallNode::Value(PhaseTransform *phase) const { return tf()->range(); }
 
 #ifndef PRODUCT
-void MachCallNode::dump_spec() const { 
-  tty->print("# "); 
-  tf()->dump();
-  if (_cnt != COUNT_UNKNOWN)  tty->print(" C=%f",_cnt);
-  if (jvms() != NULL)  jvms()->dump_spec();
+void MachCallNode::dump_spec(outputStream *st) const { 
+  st->print("# "); 
+  tf()->dump_on(st);
+  if (_cnt != COUNT_UNKNOWN)  st->print(" C=%f",_cnt);
+  if (jvms() != NULL)  jvms()->dump_spec(st);
 }
 #endif
 
@@ -618,12 +618,12 @@ uint MachCallJavaNode::cmp( const Node &n ) const {
   return MachCallNode::cmp(call) && _method->equals(call._method); 
 }
 #ifndef PRODUCT
-void MachCallJavaNode::dump_spec() const { 
+void MachCallJavaNode::dump_spec(outputStream *st) const { 
   if( _method ) {
-    _method->print_short_name();
-    tty->print(" ");
+    _method->print_short_name(st);
+    st->print(" ");
   }
-  MachCallNode::dump_spec();
+  MachCallNode::dump_spec(st);
 }
 #endif
 
@@ -645,32 +645,32 @@ int MachCallStaticJavaNode::uncommon_trap_request() const {
 
 #ifndef PRODUCT
 // Helper for summarizing uncommon_trap arguments.
-void MachCallStaticJavaNode::dump_trap_args() const {
+void MachCallStaticJavaNode::dump_trap_args(outputStream *st) const {
   int trap_req = uncommon_trap_request();
   if (trap_req != 0) {
     char buf[100];
-    tty->print("(%s)",
+    st->print("(%s)",
                Deoptimization::format_trap_request(buf, sizeof(buf),
                                                    trap_req));
   }
 }
 
-void MachCallStaticJavaNode::dump_spec() const { 
-  tty->print("Static ");
+void MachCallStaticJavaNode::dump_spec(outputStream *st) const { 
+  st->print("Static ");
   if (_name != NULL) {
-    tty->print("wrapper for: %s", _name );
-    dump_trap_args();
-    tty->print(" ");
+    st->print("wrapper for: %s", _name );
+    dump_trap_args(st);
+    st->print(" ");
   }
-  MachCallJavaNode::dump_spec();
+  MachCallJavaNode::dump_spec(st);
 }
 #endif
 
 //=============================================================================
 #ifndef PRODUCT
-void MachCallDynamicJavaNode::dump_spec() const { 
-  tty->print("Dynamic ");
-  MachCallJavaNode::dump_spec();
+void MachCallDynamicJavaNode::dump_spec(outputStream *st) const { 
+  st->print("Dynamic ");
+  MachCallJavaNode::dump_spec(st);
 }
 #endif
 //=============================================================================
@@ -680,9 +680,9 @@ uint MachCallRuntimeNode::cmp( const Node &n ) const {
   return MachCallNode::cmp(call) && !strcmp(_name,call._name);
 }
 #ifndef PRODUCT
-void MachCallRuntimeNode::dump_spec() const { 
-  tty->print("%s ",_name);
-  MachCallNode::dump_spec();
+void MachCallRuntimeNode::dump_spec(outputStream *st) const { 
+  st->print("%s ",_name);
+  MachCallNode::dump_spec(st);
 }
 #endif
 //=============================================================================
@@ -697,14 +697,14 @@ JVMState *MachHaltNode::jvms() const {
 
 //=============================================================================
 #ifndef PRODUCT
-void labelOper::int_format(PhaseRegAlloc *ra, const MachNode *node) const {
-  tty->print("B%d", _block_num);
+void labelOper::int_format(PhaseRegAlloc *ra, const MachNode *node, outputStream *st) const {
+  st->print("B%d", _block_num);
 }
 #endif // PRODUCT
 
 //=============================================================================
 #ifndef PRODUCT
-void methodOper::int_format(PhaseRegAlloc *ra, const MachNode *node) const {
-  tty->print(INTPTR_FORMAT, _method);
+void methodOper::int_format(PhaseRegAlloc *ra, const MachNode *node, outputStream *st) const {
+  st->print(INTPTR_FORMAT, _method);
 }
 #endif // PRODUCT

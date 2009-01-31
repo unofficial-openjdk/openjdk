@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)ciMethodBlocks.cpp	1.5 07/05/05 17:05:13 JVM"
+#pragma ident "@(#)ciMethodBlocks.cpp	1.6 07/09/28 10:23:22 JVM"
 #endif
 /*
  * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -357,7 +357,7 @@ void ciBlock::print_on(outputStream* st) const {
   }
 
   if (Verbose || WizardMode) {
-    method()->print_codes(start_bci(), limit_bci());
+    method()->print_codes_on(start_bci(), limit_bci(), st);
   }
 }
 #endif

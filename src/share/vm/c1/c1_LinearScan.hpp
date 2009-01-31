@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)c1_LinearScan.hpp	1.12 07/05/05 17:05:09 JVM"
+#pragma ident "@(#)c1_LinearScan.hpp	1.13 07/08/14 16:07:30 JVM"
 #endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -890,6 +890,7 @@ class LinearScanStatistic : public StackObj {
     counter_move_reg_reg,
     counter_move_reg_stack,
     counter_move_stack_reg,
+    counter_move_stack_stack,
     counter_move_reg_mem,
     counter_move_mem_reg,
     counter_move_const_any,

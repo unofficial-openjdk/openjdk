@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)ciObjArray.hpp	1.12 07/05/05 17:05:15 JVM"
+#pragma ident "@(#)ciObjArray.hpp	1.13 07/10/23 13:12:55 JVM"
 #endif
 /*
  * Copyright 1999-2001 Sun Microsystems, Inc.  All Rights Reserved.
@@ -46,4 +46,6 @@ protected:
 public:
   // What kind of ciObject is this?
   bool is_obj_array() { return true; }
+
+  ciObject* obj_at(int index);
 };

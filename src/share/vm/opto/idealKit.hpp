@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)idealKit.hpp	1.7 07/05/05 17:06:17 JVM"
+#pragma ident "@(#)idealKit.hpp	1.8 07/06/18 14:25:26 JVM"
 #endif
 /*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -93,17 +93,23 @@ class IdealKit: public StackObj {
   PhaseGVN &_gvn;
   GrowableArray<Node*>* _pending_cvstates; // stack of cvstates
   GrowableArray<Node*>* _delay_transform;  // delay invoking gvn.transform until drain
-  Node* _cvstate;                          // current cvstate (control and variables)
+  Node* _cvstate;                          // current cvstate (control, memory and variables)
   uint _var_ct;                            // number of variables
   bool _delay_all_transforms;              // flag forcing all transforms to be delayed
   Node* _initial_ctrl;                     // saves initial control until variables declared
+  Node* _initial_memory;                   // saves initial memory  until variables declared
 
   PhaseGVN& gvn() const { return _gvn; }
   // Create a new cvstate filled with nulls
   Node* new_cvstate();                     // Create a new cvstate
   Node* cvstate() { return _cvstate; }     // current cvstate
   Node* copy_cvstate();                    // copy current cvstate
-  void set_ctrl(Node* ctrl) { _cvstate->set_req(0, ctrl); }
+  void set_ctrl(Node* ctrl) { _cvstate->set_req(TypeFunc::Control, ctrl); }
+
+  // Should this assert this is a MergeMem???
+  void set_all_memory(Node* mem){ _cvstate->set_req(TypeFunc::Memory, mem); }
+  void set_memory(Node* mem, uint alias_idx );
+  void do_memory_merge(Node* merging, Node* join);
   void clear(Node* m);                     // clear a cvstate
   void stop() { clear(_cvstate); }         // clear current cvstate
   Node* delay_transform(Node* n);          
@@ -113,22 +119,31 @@ class IdealKit: public StackObj {
     return (n->is_Phi() && n->in(0) == reg);
   }
   void declare(IdealVariable* v) { v->set_id(_var_ct++); }
-  static const uint first_var;
+  // This declares the position where vars are kept in the cvstate
+  // For some degree of consistency we use the TypeFunc enum to
+  // soak up spots in the inputs even though we only use early Control
+  // and Memory slots. (So far.)
+  static const uint first_var; // = TypeFunc::Parms + 1;
 
 #ifdef ASSERT
   enum State { NullS=0, BlockS=1, LoopS=2, IfThenS=4, ElseS=8, EndifS= 16 };
   GrowableArray<int>* _state;
   State state() { return (State)(_state->top()); }
 #endif
+
+  // Users should not care about slices only MergedMem so no access for them.
+  Node* memory(uint alias_idx);
  
  public:
-  IdealKit(PhaseGVN &gvn, Node* control, bool delay_all_transforms = false);
+  IdealKit(PhaseGVN &gvn, Node* control, Node* memory, bool delay_all_transforms = false);
   ~IdealKit() {
     stop();
     drain_delay_transform();
   }
   // Control
-  Node* ctrl()                          { return _cvstate->in(0); }
+  Node* ctrl()                          { return _cvstate->in(TypeFunc::Control); }
+  Node* top()                           { return C->top(); }
+  MergeMemNode* merged_memory()         { return _cvstate->in(TypeFunc::Memory)->as_MergeMem(); }
   void set(IdealVariable& v, Node* rhs) { _cvstate->set_req(first_var + v.id(), rhs); }
   Node* value(IdealVariable& v)         { return _cvstate->in(first_var + v.id()); }
   void dead(IdealVariable& v)           { set(v, (Node*)NULL); }
@@ -145,10 +160,14 @@ class IdealKit: public StackObj {
   void goto_(Node* lab, bool bind = false);
   void declares_done();
   void drain_delay_transform();
+
   Node* IfTrue(IfNode* iff)  { return transform(new (C,1) IfTrueNode(iff)); }
   Node* IfFalse(IfNode* iff) { return transform(new (C,1) IfFalseNode(iff)); }
+
   // Data
   Node* ConI(jint k) { return (Node*)gvn().intcon(k); }
+  Node* makecon(const Type *t)  const { return _gvn.makecon(t); }
+
   Node* AddI(Node* l, Node* r) { return transform(new (C,3) AddINode(l, r)); }
   Node* SubI(Node* l, Node* r) { return transform(new (C,3) SubINode(l, r)); }
   Node* AndI(Node* l, Node* r) { return transform(new (C,3) AndINode(l, r)); }
@@ -158,4 +177,57 @@ class IdealKit: public StackObj {
   Node* Bool(Node* cmp, BoolTest::mask relop) { return transform(new (C,2) BoolNode(cmp, relop)); }
   void  increment(IdealVariable& v, Node* j)  { set(v, AddI(value(v), j)); }
   void  decrement(IdealVariable& v, Node* j)  { set(v, SubI(value(v), j)); }
+
+  Node* CmpL(Node* l, Node* r) { return transform(new (C,3) CmpLNode(l, r)); }
+
+  // TLS
+  Node* thread()  {  return gvn().transform(new (C, 1) ThreadLocalNode()); }
+
+  // Pointers
+  Node* AddP(Node *base, Node *ptr, Node *off) { return transform(new (C,4) AddPNode(base, ptr, off)); }
+  Node* CmpP(Node* l, Node* r) { return transform(new (C,3) CmpPNode(l, r)); }
+#ifdef _LP64
+  Node* XorX(Node* l, Node* r) { return transform(new (C,3) XorLNode(l, r)); }
+#else // _LP64
+  Node* XorX(Node* l, Node* r) { return transform(new (C,3) XorINode(l, r)); }
+#endif // _LP64
+  Node* URShiftX(Node* l, Node* r) { return transform(new (C,3) URShiftXNode(l, r)); }
+  Node* ConX(jint k) { return (Node*)gvn().MakeConX(k); }
+  Node* CastPX(Node* ctl, Node* p) { return transform(new (C,2) CastP2XNode(ctl, p)); }
+  // Add a fixed offset to a pointer
+  Node* basic_plus_adr(Node* base, Node* ptr, intptr_t offset);
+
+  // Memory operations
+
+  // This is the base version which is given an alias index.
+  Node* load(Node* ctl,
+             Node* adr,
+             const Type* t,
+             BasicType bt,
+             int adr_idx,
+             bool require_atomic_access = false);
+
+  // Return the new StoreXNode
+  Node* store(Node* ctl,
+              Node* adr,
+              Node* val,
+              BasicType bt,
+              int adr_idx,
+              bool require_atomic_access = false);
+
+  // Store a card mark ordered after store_oop
+  Node* storeCM(Node* ctl,
+                Node* adr,
+                Node* val,
+                Node* oop_store,
+                BasicType bt,
+                int adr_idx);
+
+  // Trivial call
+  void make_leaf_call(const TypeFunc *slow_call_type,
+                      address slow_call,
+                      const char *leaf_name,
+                      Node* parm0,
+                      Node* parm1 = NULL,
+                      Node* parm2 = NULL);
 };

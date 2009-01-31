@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)heapInspection.hpp	1.15 07/05/05 17:05:51 JVM"
+#pragma ident "@(#)heapInspection.hpp	1.17 07/07/02 11:47:11 JVM"
 #endif
 /*
  * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -24,6 +24,9 @@
  * have any questions.
  *  
  */
+
+#ifndef SERVICES_KERNEL
+
 
 // HeapInspection
 
@@ -122,8 +125,10 @@ class KlassInfoHisto : public StackObj {
   void sort();
 };
 
+#endif // SERVICES_KERNEL
+
 class HeapInspection : public AllStatic {
  public:
-  static void heap_inspection(outputStream* st);             
-  static void find_instances_at_safepoint(klassOop k, GrowableArray<oop>* result);
+  static void heap_inspection(outputStream* st) KERNEL_RETURN;
+  static void find_instances_at_safepoint(klassOop k, GrowableArray<oop>* result) KERNEL_RETURN;
 };

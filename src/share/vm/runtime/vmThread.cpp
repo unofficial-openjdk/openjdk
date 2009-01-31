@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)vmThread.cpp	1.91 07/05/23 10:54:15 JVM"
+#pragma ident "@(#)vmThread.cpp	1.92 07/08/27 21:52:08 JVM"
 #endif
 /*
  * Copyright 1998-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -203,11 +203,6 @@ void VMThread::create() {
     _perf_accumulated_vm_operation_time =
                  PerfDataManager::create_counter(SUN_THREADS, "vmOperationTime",
                                                  PerfData::U_Ticks, CHECK);
-  }
-
-  // Initialize safepoint intrumentation buffer etc.
-  if (PrintSafepointStatistics || PrintSafepointStatisticsTimeout > 0){
-    SafepointSynchronize::initialize_stat();
   }
 }
 

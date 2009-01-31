@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)compactibleFreeListSpace.cpp	1.143 07/07/17 11:43:33 JVM"
+#pragma ident "@(#)compactibleFreeListSpace.cpp	1.144 08/09/06 09:20:55 JVM"
 #endif
 /*
  * Copyright 2001-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -2797,10 +2797,12 @@ initialize_sequential_subtasks_for_rescan(int n_threads) {
   assert(n_threads > 0, "Unexpected n_threads argument");
   const size_t task_size = rescan_task_size();
   size_t n_tasks = (used_region().word_size() + task_size - 1)/task_size;
-  assert((used_region().start() + (n_tasks - 1)*task_size <
-          used_region().end()) &&
-         (used_region().start() + n_tasks*task_size >=
-          used_region().end()), "n_task calculation incorrect");
+  assert((n_tasks == 0) == used_region().is_empty(), "n_tasks incorrect");
+  assert(n_tasks == 0 ||
+  ((used_region().start() + (n_tasks - 1)*task_size < used_region().end()) &&
+  (used_region().start() + n_tasks*task_size >= used_region().end())),
+  "n_tasks calculation incorrect"); 
+
   SequentialSubTasksDone* pst = conc_par_seq_tasks();
   assert(!pst->valid(), "Clobbering existing data?");
   pst->set_par_threads(n_threads);
@@ -2840,7 +2842,7 @@ initialize_sequential_subtasks_for_marking(int n_threads,
   assert(n_tasks == 0 ||
          ((span.start() + (n_tasks - 1)*task_size < span.end()) &&
           (span.start() + n_tasks*task_size >= span.end())),
-         "n_task calculation incorrect");
+         "n_tasks calculation incorrect");
   SequentialSubTasksDone* pst = conc_par_seq_tasks();
   assert(!pst->valid(), "Clobbering existing data?");
   pst->set_par_threads(n_threads);

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)psTasks.cpp	1.28 07/05/05 17:05:27 JVM"
+#pragma ident "@(#)psTasks.cpp	1.29 07/09/25 16:47:43 JVM"
 #endif
 /*
  * Copyright 2002-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -140,7 +140,10 @@ void StealTask::do_it(GCTaskManager* manager, uint which) {
     while(true) {
       oop* p;
       if (PSPromotionManager::steal_depth(which, &random_seed, p)) {
-	PSScavenge::copy_and_push_safe_barrier(pm, p);
+#if PS_PM_STATS
+        pm->increment_steals(p);
+#endif // PS_PM_STATS
+        pm->process_popped_location_depth(p);
 	pm->drain_stacks_depth(true);
       } else {
 	if (terminator()->offer_termination()) {
@@ -152,6 +155,9 @@ void StealTask::do_it(GCTaskManager* manager, uint which) {
     while(true) {
       oop obj;
       if (PSPromotionManager::steal_breadth(which, &random_seed, obj)) {
+#if PS_PM_STATS
+        pm->increment_steals();
+#endif // PS_PM_STATS
 	obj->copy_contents(pm);
 	pm->drain_stacks_breadth(true);
       } else {
