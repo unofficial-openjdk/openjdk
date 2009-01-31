@@ -151,14 +151,7 @@ ifdef OPENJDK
 else
   ifndef SKIP_OPENJDK_BUILD
     SKIP_OPENJDK_BUILD = false
-    # FIXUP: until freetype fixed on linux and solaris rmi build fixed
-    SKIP_OPENJDK_BUILD = true
   endif
-endif
-
-# Solaris 64 bit builds are not complete enough to ever do this
-ifeq ($(PLATFORM)$(ARCH_DATA_MODEL),solaris64)
-  SKIP_OPENJDK_BUILD = true
 endif
 
 # Many reasons why we would want to skip the comparison to previous jdk
