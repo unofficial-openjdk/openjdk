@@ -55,6 +55,10 @@ public final class LocalRMIServerSocketFactory implements RMIServerSocketFactory
                         "LocalRMIServerSocketFactory only accept connections " +
                         "from clients running on the host where the RMI " +
                         "remote objects have been exported.";
+                if (remoteAddr.isAnyLocalAddress()) {
+                    // local address: accept the connection.
+                    return socket;
+                }
                 // Retrieve all the network interfaces on this host.
                 Enumeration<NetworkInterface> nis;
                 try {
