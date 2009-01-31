@@ -439,12 +439,23 @@ else
   endif
   _POSSIBLE_OUTPUTDIR =$(_OUTPUTDIR)
 endif
+
+#
+# When signing the JCE framework and provider, we could be using built
+# bits on a read-only filesystem.  If so, this test will fail and crash
+# the build.
+#
+ifndef IGNORE_WRITABLE_OUTPUTDIR_TEST
 _create_outputdir1:=$(shell mkdir -p $(_POSSIBLE_OUTPUTDIR) > $(DEV_NULL) 2>&1)
 OUTPUTDIR:=$(call WriteDirExists,$(_POSSIBLE_OUTPUTDIR),$(_BACKUP_OUTPUTDIR))
 _create_outputdir2:=$(shell mkdir -p $(OUTPUTDIR) > $(DEV_NULL) 2>&1)
 ifeq "$(OUTPUTDIR)" "$(_BACKUP_OUTPUTDIR)"
   _outputdir_warning:=$(warning "WARNING: OUTPUTDIR '$(_POSSIBLE_OUTPUTDIR)' not writable, will use '$(_BACKUP_OUTPUTDIR)'")
 endif
+else
+OUTPUTDIR:=$(_POSSIBLE_OUTPUTDIR)
+endif
+
 OUTPUTDIR:=$(call AltCheckSpaces,OUTPUTDIR)
 OUTPUTDIR:=$(call AltCheckValue,OUTPUTDIR)
 
