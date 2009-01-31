@@ -70,6 +70,7 @@ dev-clobber:
 
 # Rules for various components
 include ./make/hotspot-rules.gmk
+include ./make/motif-rules.gmk
 include ./make/langtools-rules.gmk
 include ./make/corba-rules.gmk
 include ./make/jaxp-rules.gmk
@@ -114,6 +115,11 @@ endif
 ifeq ($(BUILD_HOTSPOT), true)
   build:: $(HOTSPOT) 
   clobber:: hotspot-clobber
+endif
+
+ifeq ($(BUILD_MOTIF), true)
+  build:: $(MOTIF)
+  clobber:: motif-clobber
 endif
 
 ifeq ($(BUILD_JDK), true)

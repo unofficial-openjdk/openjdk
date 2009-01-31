@@ -56,7 +56,8 @@
                         </ul>
                     </li>
                     <li>Linux and Solaris:
-                        <ul>
+                        <ul> 
+                            <li><a href="#motif">Motif</a> </li>
                             <li><a href="#cups">CUPS Include files</a> </li>
                         </ul>
                     </li>
@@ -300,6 +301,10 @@
             <li>gawk</li>
             <li>m4</li>
             <li>libasound2-dev</li>
+            <li>libmotif3-dev</li>
+            <ul>
+                <li>libmotif3</li>
+            </ul>
             <li>libcupsys2-dev</li>
             <ul>
                 <li>libgcrypt11-dev</li>
@@ -514,6 +519,11 @@
             Install the
             <a href="#binaryplugs">Binary Plugs</a>, set
             <tt><a href="#ALT_BINARY_PLUGS_PATH">ALT_BINARY_PLUGS_PATH</a></tt>.
+        </li>
+        <li>
+            Install the
+            <a href="#motif">Motif header files</a>, set
+            <tt><a href="#ALT_MOTIF_DIR">ALT_MOTIF_DIR</a></tt>..
         </li>
         <li>
             Install or upgrade the <a href="#freetype">FreeType development
@@ -905,7 +915,34 @@
         can be used to override the default location of the
         CUPS Header files.
     </blockquote>
+    <h4><a name="motif">Motif Headers (Solaris &amp; Linux)</a></h4>
     
+    <blockquote>
+        <p>
+        Motif headers (not libraries) are required for building the 
+        OpenJDK.
+        <p>
+        <strong>Solaris:</strong>
+        Normally these files can be found on Solaris systems
+        at /usr/include/Xm, so on Solaris systems no further downloads
+        should be needed.
+        <p>
+        <strong>Linux:</strong>
+        On Linux, your particular Linux distribution may provide a
+        "motif" development package you can install. If this package
+        installs the files into /usr/include/Xm, no further action should
+        be needed.
+        An acceptable version of these Motif header files are
+        available in the source bundle
+        <a href="http://www.openbsd.org/3.9_packages/hppa/openmotif-2.1.30.5p1.tgz-long.html">
+        openmotif-2.1.30.5p1.tgz</a>
+        from
+        <a href="http://www.openbsd.org/">www.openbsd.org</a>.
+        You would need to install the package and set the environment variable
+        <tt><a href="#ALT_MOTIF_DIR">ALT_MOTIF_DIR</a></tt>
+        to refer to the top of this installation.
+    </blockquote>
+
     <h4><a name="freetype">FreeType 2</a></h4>
 
     <blockquote>
@@ -1265,6 +1302,12 @@ document) that can impact the build are:
             <tt>/usr/include</tt>.
         </dd>
         
+        
+        <dt><a name="ALT_MOTIF_DIR"><tt>ALT_MOTIF_DIR</tt></a></dt>
+        <dd>
+            The location of the Motif 2.1 headers and libraries. 
+            See <a href="#motif">Motif</a> for details. 
+        </dd>
         
         <dt><a name="ALT_FREETYPE_LIB_PATH"><tt>ALT_FREETYPE_LIB_PATH</tt></a></dt>
         <dd>

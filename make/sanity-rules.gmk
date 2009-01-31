@@ -67,7 +67,7 @@ purge-sanity: $(ERROR_FILE) $(WARNING_FILE) $(MESSAGE_FILE)
 pre-sanity: purge-sanity 
 
 # this should be the last rule in any target's sanity rule.
-post-sanity post-sanity-hotspot post-sanity-jdk post-sanity-install post-sanity-deploy:
+post-sanity post-sanity-hotspot post-sanity-jdk post-sanity-motif post-sanity-install post-sanity-deploy:
 	@if [ -r $(MESSAGE_FILE) ]; then \
 	  $(ECHO) "" ; \
 	  $(CAT) $(MESSAGE_FILE) ; \
@@ -182,6 +182,14 @@ ifeq ($(JDK_SRC_AVAILABLE), true)
 	   "" >> $(WARNING_FILE)
   endif
 endif
+ifeq ($(JDK_SRC_AVAILABLE), true)
+  ifneq ($(BUILD_JDK), true)
+	@$(ECHO) "WARNING: You are not building JDK from\n" \
+	   "        the control build. This will result in a development-only\n" \
+	   "        build of the JDK , lacking the jdk binaries.\n" \
+	   "" >> $(WARNING_FILE)
+  endif
+endif
 ifeq ($(DEPLOY_SRC_AVAILABLE), true)
   ifneq ($(BUILD_DEPLOY), true)
 	@$(ECHO) "WARNING: You are not building the DEPLOY sources.\n" \
@@ -208,7 +216,8 @@ ifndef OPENJDK
   ifdef NO_DOCS
 	@$(ECHO) "WARNING: Your build environment has the variable NO_DOCS\n" \
 	   "        defined. This will result in a development-only\n" \
-	   "        build of the JDK, lacking the documentation.\n" \
+	   "        build of the JDK, lacking the documentation\n" \
+	   "        build.\n" \
 	   "" >> $(WARNING_FILE)
   endif
 endif
@@ -304,6 +313,9 @@ endif
 ifeq ($(JDK_SRC_AVAILABLE), true)
 	@$(ECHO) "   JDK_TOPDIR = $(JDK_TOPDIR)"  >> $(MESSAGE_FILE)
 endif
+ifeq ($(MOTIF_SRC_AVAILABLE), true)
+	@$(ECHO) "   MOTIF_TOPDIR = $(MOTIF_TOPDIR)"  >> $(MESSAGE_FILE)
+endif
 ifeq ($(DEPLOY_SRC_AVAILABLE), true)
 	@$(ECHO) "   DEPLOY_TOPDIR = $(DEPLOY_TOPDIR)"  >> $(MESSAGE_FILE)
 endif
@@ -339,6 +351,9 @@ endif
 ifeq ($(JDK_SRC_AVAILABLE), true)
 	@$(ECHO) "   BUILD_JDK    = $(BUILD_JDK) " >> $(MESSAGE_FILE)
 endif
+ifeq ($(JDK_SRC_AVAILABLE), true)
+	@$(ECHO) "   BUILD_JDK    = $(BUILD_JDK) " >> $(MESSAGE_FILE)
+endif
 ifeq ($(DEPLOY_SRC_AVAILABLE), true)
 	@$(ECHO) "   BUILD_DEPLOY  = $(BUILD_DEPLOY) " >> $(MESSAGE_FILE)
 endif
@@ -351,6 +366,6 @@ endif
 	@$(ECHO) "" >> $(MESSAGE_FILE)
 
 .PHONY: sanity settings pre-sanity insane \
-	post-sanity post-sanity-hotspot post-sanity-jdk \
+	post-sanity post-sanity-hotspot post-sanity-jdk post-sanity-motif \
 	post-sanity-install post-sanity-deploy \
 	alt_bootdir bootdir
