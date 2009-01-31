@@ -49,8 +49,7 @@ SUBDIRS =                   \
   javazic                   \
   jdwpgen                   \
   makeclasslist             \
-  strip_properties          \
-  winver
+  strip_properties
 
 all build clean clobber::
 	$(SUBDIRS-loop)
