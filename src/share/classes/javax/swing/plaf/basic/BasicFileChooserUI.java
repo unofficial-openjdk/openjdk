@@ -60,7 +60,6 @@ public class BasicFileChooserUI extends FileChooserUI {
     protected Icon homeFolderIcon = null;
     protected Icon listViewIcon = null;
     protected Icon detailsViewIcon = null;
-    protected Icon viewMenuIcon = null;
 
     protected int saveButtonMnemonic = 0;
     protected int openButtonMnemonic = 0;
@@ -257,7 +256,6 @@ public class BasicFileChooserUI extends FileChooserUI {
         homeFolderIcon   = UIManager.getIcon("FileChooser.homeFolderIcon");
         detailsViewIcon  = UIManager.getIcon("FileChooser.detailsViewIcon");
         listViewIcon     = UIManager.getIcon("FileChooser.listViewIcon");
-        viewMenuIcon     = UIManager.getIcon("FileChooser.viewMenuIcon");
     }
 
     protected void installStrings(JFileChooser fc) {
@@ -313,7 +311,6 @@ public class BasicFileChooserUI extends FileChooserUI {
         homeFolderIcon   = null;
         detailsViewIcon  = null;
         listViewIcon     = null;
-        viewMenuIcon     = null;
     }
 
     protected void uninstallStrings(JFileChooser fc) {

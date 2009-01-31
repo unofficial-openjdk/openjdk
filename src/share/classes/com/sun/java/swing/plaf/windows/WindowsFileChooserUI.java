@@ -136,6 +136,8 @@ public class WindowsFileChooserUI extends BasicFileChooserUI {
 
     private JLabel fileNameLabel;
 
+    private Icon viewMenuIcon = null;
+
     private void populateFileNameLabel() {
         if (getFileChooser().getFileSelectionMode() == JFileChooser.DIRECTORIES_ONLY) {
             fileNameLabel.setText(folderNameLabelText);
@@ -661,6 +663,16 @@ public class WindowsFileChooserUI extends BasicFileChooserUI {
             bottomPanel = new JPanel();
         }
         return bottomPanel;
+    }
+
+    protected void installIcons(JFileChooser fc) {
+        super.installIcons(fc);
+        viewMenuIcon = UIManager.getIcon("FileChooser.viewMenuIcon");
+    }
+
+    protected void uninstallIcons(JFileChooser fc) {
+        super.uninstallIcons(fc);
+        viewMenuIcon = null;
     }
 
     protected void installStrings(JFileChooser fc) {
