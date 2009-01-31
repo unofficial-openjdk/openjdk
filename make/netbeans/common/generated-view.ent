@@ -31,15 +31,8 @@
  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 
-<java-data xmlns="http://www.netbeans.org/ns/freeform-project-java/2">
-    <compilation-unit>
-        <package-root>${root}/src/share/classes</package-root>
-        <package-root>${root}/src/windows/classes</package-root>
-        <package-root>${root}/src/solaris/classes</package-root>
-        <package-root>${root}/build/${platform}-${arch}/gensrc</package-root>
-        <classpath mode="boot">${bootstrap.jdk}/jre/lib/rt.jar</classpath>
-        <built-to>${root}/build/${platform}-${arch}/classes</built-to>
-        <javadoc-built-to>${root}/build/javadoc/${name}</javadoc-built-to>
-        <source-level>1.5</source-level>
-    </compilation-unit>
-</java-data>
+<source-folder style="tree">
+    <label>Generated sources</label>
+    <location>${root}/build/${platform}-${arch}/gensrc</location>
+    <includes>${gensrc}</includes>
+</source-folder>

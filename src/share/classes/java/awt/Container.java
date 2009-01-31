@@ -709,7 +709,14 @@ public class Container extends Component {
              
              addDelicately(comp, curParent, index);
 
-             if (!peerRecreated) {
+             // If the oldZindex == -1, the component gets inserted, 
+             // rather than it changes its z-order.
+             if (!peerRecreated && oldZindex != -1) {
+                 // The new 'index' cannot be == -1.
+                 // It gets checked at the checkAdding() method.
+                 // Therefore both oldZIndex and index denote
+                 // some existing positions at this point and
+                 // this is actually a Z-order changing.
                  comp.mixOnZOrderChanging(oldZindex, index);
              }
          }

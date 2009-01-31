@@ -31,7 +31,6 @@ import java.awt.Toolkit;
 import java.io.File;
 import java.io.FileInputStream;
 
-import java.beans.ConstructorProperties;
 import java.util.Hashtable;
 import java.util.Properties;
 import java.util.StringTokenizer;
@@ -363,7 +362,6 @@ public class Cursor implements java.io.Serializable {
      * @throws IllegalArgumentException if the specified cursor type
      * is invalid
      */
-    @ConstructorProperties({"type"})
     public Cursor(int type) {
 	if (type < Cursor.DEFAULT_CURSOR || type > Cursor.MOVE_CURSOR) {
 	    throw new IllegalArgumentException("illegal cursor type");

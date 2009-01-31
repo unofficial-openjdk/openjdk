@@ -32,6 +32,7 @@
 #include <sun_awt_X11GraphicsConfig.h>
 #ifndef HEADLESS
 #include <X11/extensions/Xdbe.h>
+#include <X11/XKBlib.h>
 #include "Xrandr.h"
 #include "GLXGraphicsConfig.h"
 #endif /* !HEADLESS */
@@ -56,10 +57,6 @@ extern int awt_init_xt;
 #endif
 
 #ifndef HEADLESS
-#ifdef __linux__
-#include <X11/XKBlib.h>
-#include "Xinerama.h"
-#endif
 
 int awt_numScreens;     /* Xinerama-aware number of screens */
 
@@ -125,7 +122,18 @@ static char *x11GraphicsConfigClassName = "sun/awt/X11GraphicsConfig";
  */
 
 #define MAXFRAMEBUFFERS 16
-#ifndef __linux__ /* SOLARIS */
+#ifdef __linux__
+typedef struct {
+   int   screen_number;
+   short x_org;
+   short y_org;
+   short width;
+   short height;
+} XineramaScreenInfo;
+
+typedef XineramaScreenInfo* XineramaQueryScreensFunc(Display*, int*);
+
+#else /* SOLARIS */
 typedef Status XineramaGetInfoFunc(Display* display, int screen_number,
          XRectangle* framebuffer_rects, unsigned char* framebuffer_hints,
          int* num_framebuffers);
@@ -617,109 +625,124 @@ void checkNewXineramaScreen(JNIEnv* env, jobject peer, struct FrameData* wdata,
         /* update peer, target Comp */
         (*env)->CallVoidMethod(env, peer,
                                mWindowPeerIDs.draggedToScreenMID, largestAmtScr);
-                               
     }
 #endif /* XAWT */
 }
 #endif /* HEADLESS */
 
-/*
- * Do Xinerama-related initialization such as
- * - check if Xinerama is running
- * - if so, load and run Xinerama query functions from the appropriate library
- */
 #ifndef HEADLESS
-void xineramaInit(void) {
 #ifdef __linux__
-    char* XinExtName = "XINERAMA";
-    int32_t major_opcode, first_event, first_error;
-    Bool gotXinExt = False;
+static void xinerama_init_linux()
+{
+    void* libHandle = 0;
+    char* XineramaLibName= "libXinerama.so.1";
+    int32_t locNumScr = 0;
+    XineramaScreenInfo *xinInfo;
+    char* XineramaQueryScreensName = "XineramaQueryScreens";
+    XineramaQueryScreensFunc* XineramaQueryScreens = NULL;
+
+    /* load library */
+    libHandle = dlopen(XineramaLibName, RTLD_LAZY | RTLD_GLOBAL);
+    if (libHandle != 0) {
+        XineramaQueryScreens = (XineramaQueryScreensFunc*)
+            dlsym(libHandle, XineramaQueryScreensName);
+
+        if (XineramaQueryScreens != NULL) {
+            DTRACE_PRINTLN("calling XineramaQueryScreens func on Linux");
+            xinInfo = (*XineramaQueryScreens)(awt_display, &locNumScr);
+            if (xinInfo != NULL) {
+                int32_t idx;
+                DTRACE_PRINTLN("Enabling Xinerama support");
+                usingXinerama = True;
+                /* set global number of screens */
+                DTRACE_PRINTLN1(" num screens = %i\n", locNumScr);
+                awt_numScreens = locNumScr;
+
+                /* stuff values into fbrects */
+                for (idx = 0; idx < awt_numScreens; idx++) {
+                    DASSERT(xinInfo[idx].screen_number == idx);
+
+                    fbrects[idx].width = xinInfo[idx].width;
+                    fbrects[idx].height = xinInfo[idx].height;
+                    fbrects[idx].x = xinInfo[idx].x_org;
+                    fbrects[idx].y = xinInfo[idx].y_org;
+                }
+            } else {
+                DTRACE_PRINTLN("calling XineramaQueryScreens didn't work");
+            }
+        } else {
+            DTRACE_PRINTLN("couldn't load XineramaQueryScreens symbol");
+        }
+        dlclose(libHandle);
+    } else {
+        DTRACE_PRINTLN1("\ncouldn't open shared library: %s\n", dlerror());
+    }
+}
+#endif
+#ifndef __linux__ /* Solaris */
+static void xinerama_init_solaris()
+{
+    void* libHandle = 0;
+    char* XineramaLibName= "libXext.so";
     unsigned char fbhints[MAXFRAMEBUFFERS];
     int32_t locNumScr = 0;
-    int32_t idx;
-
-    XineramaScreenInfo *xinInfo;
-
-    gotXinExt = XQueryExtension(awt_display, XinExtName, &major_opcode,
-                                &first_event, &first_error);
-
-    if (gotXinExt) {
-        DTRACE_PRINTLN("Xinerama extension available");
-                    DTRACE_PRINTLN("calling XineramaGetInfo func on Linux");
-                    xinInfo = XineramaQueryScreens(awt_display, &locNumScr);
-                    if (xinInfo != NULL) {
-                        DTRACE_PRINTLN("Enabling Xinerama support");
-                        usingXinerama = True;
-                        /* set global number of screens */
-                        DTRACE_PRINTLN1(" num screens = %i\n", locNumScr);
-                        awt_numScreens = locNumScr;
-
-                        /* stuff values into fbrects */
-                        for (idx = 0; idx < awt_numScreens; idx++) {
-                            DASSERT(xinInfo[idx].screen_number == idx);
-
-                            fbrects[idx].width = xinInfo[idx].width;
-                            fbrects[idx].height = xinInfo[idx].height;
-                            fbrects[idx].x = xinInfo[idx].x_org;
-                            fbrects[idx].y = xinInfo[idx].y_org;
-                        }
-                    } else {
-                        DTRACE_PRINTLN("calling XineramaQueryScreens didn't work");
-                    }
-    } else {
-        DTRACE_PRINTLN("Xinerama not available");
-    }
-
-#else /* Solaris */
-
-    char* XinExtName = "XINERAMA";
-    int32_t major_opcode, first_event, first_error;
-    Bool gotXinExt = False;
-    void* libHandle = 0;
-    unsigned char fbhints[MAXFRAMEBUFFERS];
-    int locNumScr = 0;
-
-    char* XineramaLibName= "libXext.so";
+    /* load and run XineramaGetInfo */
     char* XineramaGetInfoName = "XineramaGetInfo";
     char* XineramaGetCenterHintName = "XineramaGetCenterHint";
     XineramaGetInfoFunc* XineramaSolarisFunc = NULL;
 
+    /* load library */
+    libHandle = dlopen(XineramaLibName, RTLD_LAZY | RTLD_GLOBAL);
+    if (libHandle != 0) {
+        XineramaSolarisFunc = (XineramaGetInfoFunc*)dlsym(libHandle, XineramaGetInfoName);
+        XineramaSolarisCenterFunc =
+            (XineramaGetCenterHintFunc*)dlsym(libHandle, XineramaGetCenterHintName);
+
+        if (XineramaSolarisFunc != NULL) {
+            DTRACE_PRINTLN("calling XineramaGetInfo func on Solaris");
+            if ((*XineramaSolarisFunc)(awt_display, 0, &fbrects[0],
+                                       &fbhints[0], &locNumScr) != 0)
+            {
+                DTRACE_PRINTLN("Enabling Xinerama support");
+                usingXinerama = True;
+                /* set global number of screens */
+                DTRACE_PRINTLN1(" num screens = %i\n", locNumScr);
+                awt_numScreens = locNumScr;
+            } else {
+                DTRACE_PRINTLN("calling XineramaGetInfo didn't work");
+            }
+        } else {
+            DTRACE_PRINTLN("couldn't load XineramaGetInfo symbol");
+        }
+        dlclose(libHandle);
+    } else {
+        DTRACE_PRINTLN1("\ncouldn't open shared library: %s\n", dlerror());
+    }
+}
+#endif
+
+/*
+ * Checks if Xinerama is running and perform Xinerama-related
+ * platform dependent initialization.
+ */
+static void xineramaInit(void) {
+    char* XinExtName = "XINERAMA";
+    int32_t major_opcode, first_event, first_error;
+    Bool gotXinExt = False;
+
     gotXinExt = XQueryExtension(awt_display, XinExtName, &major_opcode,
                                 &first_event, &first_error);
 
-    if (gotXinExt) {
-        DTRACE_PRINTLN("Xinerama extension available");
-
-        /* load library, load and run XineramaGetInfo */
-        libHandle = dlopen(XineramaLibName, RTLD_LAZY | RTLD_GLOBAL);
-        if (libHandle != 0) {
-            XineramaSolarisFunc = (XineramaGetInfoFunc*)dlsym(libHandle, XineramaGetInfoName);
-            XineramaSolarisCenterFunc =
-             (XineramaGetCenterHintFunc*)dlsym(libHandle,
-                                               XineramaGetCenterHintName);
-            if (XineramaSolarisFunc != NULL) {
-                DTRACE_PRINTLN("calling XineramaGetInfo func on Solaris");
-                if ((*XineramaSolarisFunc)(awt_display, 0, &fbrects[0],
-                     &fbhints[0], &locNumScr) != 0) {
-
-                    DTRACE_PRINTLN("Enabling Xinerama support");
-                    usingXinerama = True;
-                    /* set global number of screens */
-                    DTRACE_PRINTLN1(" num screens = %i\n", locNumScr);
-                    awt_numScreens = locNumScr;
-                } else {
-                    DTRACE_PRINTLN("calling XineramaGetInfo didn't work");
-                }
-            } else {
-                DTRACE_PRINTLN("couldn't load XineramaGetInfo symbol");
-            }
-            dlclose(libHandle);
-        } else {
-            DTRACE_PRINTLN1("\ncouldn't open shared library: %s\n", dlerror());
-        }
-    } else {
-        DTRACE_PRINTLN("Xinerama not available");
+    if (!gotXinExt) {
+        DTRACE_PRINTLN("Xinerama extension is not available");
+        return;
     }
+
+    DTRACE_PRINTLN("Xinerama extension is available");
+#ifdef __linux__
+    xinerama_init_linux();
+#else /* Solaris */
+    xinerama_init_solaris();
 #endif /* __linux__ */
 }
 #endif /* HEADLESS */
@@ -922,7 +945,7 @@ Java_sun_awt_X11GraphicsDevice_getDisplay(JNIEnv *env, jobject this)
 #ifdef HEADLESS
     return NULL;
 #else
-    return (jlong) awt_display;
+    return ptr_to_jlong(awt_display);
 #endif /* !HEADLESS */
 }
 

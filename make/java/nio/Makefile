@@ -602,7 +602,7 @@ $(CS_GEN)/CharsetEncoder.java: $(CS_SRC)/Charset-X-Coder.java $(GEN_CODER_SH)
 
 GEN_EX_SH = genExceptions.sh
 
-GEN_EX_CMD = NAWK=$(NAWK) $(SHELL) $(GEN_EX_SH)
+GEN_EX_CMD = NAWK=$(NAWK) SH=$(SH) $(SH) $(GEN_EX_SH)
 
 $(CH_GEN)/%Exception.java: genExceptions.sh $(CH_SRC)/exceptions
 	$(prep-target)
@@ -637,6 +637,6 @@ $(SCS_GEN)/StandardCharsets.java: genCharsetProvider.sh \
 	@$(RM) $@.temp
 	NAWK=$(NAWK) TEMPDIR=$(TEMPDIR) \
 	  HASHER="$(BOOT_JAVA_CMD) -jar $(HASHER_JARFILE)" \
-	  $(SHELL) -e genCharsetProvider.sh $(SCS_SRC)/standard-charsets $(SCS_GEN)
+	  SH=$(SH) $(SH) -e genCharsetProvider.sh $(SCS_SRC)/standard-charsets $(SCS_GEN)
 
 .PHONY: sources

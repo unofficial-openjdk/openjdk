@@ -57,9 +57,8 @@ public abstract class FormatConversionProvider {
     /**
      * Obtains the set of source format encodings from which format
      * conversion services are provided by this provider.
-     * @return array of source format encodings. If for some reason provider
-     * does not provide any conversion services, an array of length 0 is
-     * returned.
+     * @return array of source format encodings.  The array will always
+     * have a length of at least 1.
      */
     public abstract AudioFormat.Encoding[] getSourceEncodings();
 
@@ -67,9 +66,8 @@ public abstract class FormatConversionProvider {
     /**
      * Obtains the set of target format encodings to which format
      * conversion services are provided by this provider.
-     * @return array of target format encodings. If for some reason provider
-     * does not provide any conversion services, an array of length 0 is
-     * returned.
+     * @return array of target format encodings.  The array will always
+     * have a length of at least 1.
      */
     public abstract AudioFormat.Encoding[] getTargetEncodings();
 

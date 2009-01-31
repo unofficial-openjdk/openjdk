@@ -27,7 +27,6 @@ package javax.swing.border;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.Component;
-import java.beans.ConstructorProperties;
 
 /**
  * A composite Border class used to compose two Border objects
@@ -73,7 +72,6 @@ public class CompoundBorder extends AbstractBorder {
      * @param outsideBorder the outside border
      * @param insideBorder the inside border to be nested
      */
-    @ConstructorProperties({"outsideBorder", "insideBorder"})
     public CompoundBorder(Border outsideBorder, Border insideBorder) {
 	this.outsideBorder = outsideBorder;
 	this.insideBorder = insideBorder;

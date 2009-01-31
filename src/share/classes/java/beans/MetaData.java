@@ -1364,6 +1364,70 @@ class MetaData {
 
     static {
 
+// Constructors.
+
+  // beans
+
+        registerConstructor("java.beans.Statement", new String[]{"target", "methodName", "arguments"});
+        registerConstructor("java.beans.Expression", new String[]{"target", "methodName", "arguments"});
+        registerConstructor("java.beans.EventHandler", new String[]{"target", "action", "eventPropertyName", "listenerMethodName"});
+
+  // awt
+  
+        registerConstructor("java.awt.Color", new String[]{"red", "green", "blue", "alpha"});
+        registerConstructor("java.awt.Cursor", new String[]{"type"});
+        registerConstructor("java.awt.ScrollPane", new String[]{"scrollbarDisplayPolicy"});
+
+  // swing
+
+        registerConstructor("javax.swing.plaf.ColorUIResource", new String[]{"red", "green", "blue"});
+
+        registerConstructor("javax.swing.tree.DefaultTreeModel", new String[]{"root"});
+        registerConstructor("javax.swing.JTree", new String[]{"model"});
+        registerConstructor("javax.swing.tree.TreePath", new String[]{"path"});
+
+        registerConstructor("javax.swing.OverlayLayout", new String[]{"target"});
+        registerConstructor("javax.swing.BoxLayout", new String[]{"target", "axis"});
+        registerConstructor("javax.swing.Box$Filler", new String[]{"minimumSize", "preferredSize",
+                                                                   "maximumSize"});
+        registerConstructor("javax.swing.DefaultCellEditor", new String[]{"component"});
+
+        /*
+        This is required because the JSplitPane reveals a private layout class
+        called BasicSplitPaneUI$BasicVerticalLayoutManager which changes with
+        the orientation. To avoid the necessity for instantiating it we cause
+        the orientation attribute to get set before the layout manager - that
+        way the layout manager will be changed as a side effect. Unfortunately,
+        the layout property belongs to the superclass and therefore precedes
+        the orientation property. PENDING - we need to allow this kind of
+        modification. For now, put the property in the constructor.
+        */
+        registerConstructor("javax.swing.JSplitPane", new String[]{"orientation"});
+        // Try to synthesize the ImageIcon from its description.
+        registerConstructor("javax.swing.ImageIcon", new String[]{"description"});
+        // JButton's "text" and "actionCommand" properties are related,
+        // use the text as a constructor argument to ensure that it is set first.
+        // This remove the benign, but unnecessary, manipulation of actionCommand
+        // property in the common case.
+        registerConstructor("javax.swing.JButton", new String[]{"text"});
+
+        // borders
+
+        registerConstructor("javax.swing.border.BevelBorder", new String[]{"bevelType", "highlightOuterColor", "highlightInnerColor", "shadowOuterColor", "shadowInnerColor"});
+        registerConstructor("javax.swing.plaf.BorderUIResource$BevelBorderUIResource", new String[]{"bevelType", "highlightOuterColor", "highlightInnerColor", "shadowOuterColor", "shadowInnerColor"});
+        registerConstructor("javax.swing.border.CompoundBorder", new String[]{"outsideBorder", "insideBorder"});
+        registerConstructor("javax.swing.plaf.BorderUIResource$CompoundBorderUIResource", new String[]{"outsideBorder", "insideBorder"});
+        registerConstructor("javax.swing.border.EmptyBorder", new String[]{"borderInsets"});
+        registerConstructor("javax.swing.plaf.BorderUIResource$EmptyBorderUIResource", new String[]{"borderInsets"});
+        registerConstructor("javax.swing.border.EtchedBorder", new String[]{"etchType", "highlightColor", "shadowColor"});
+        registerConstructor("javax.swing.plaf.BorderUIResource$EtchedBorderUIResource", new String[]{"etchType", "highlightColor", "shadowColor"});
+        registerConstructor("javax.swing.border.LineBorder", new String[]{"lineColor", "thickness"});
+        registerConstructor("javax.swing.plaf.BorderUIResource$LineBorderUIResource", new String[]{"lineColor", "thickness"});
+        registerConstructor("javax.swing.border.SoftBevelBorder", new String[]{"bevelType", "highlightOuterColor", "highlightInnerColor", "shadowOuterColor", "shadowInnerColor"});
+        // registerConstructorWithBadEqual("javax.swing.plaf.BorderUIResource$SoftBevelBorderUIResource", new String[]{"bevelType", "highlightOuter", "highlightInner", "shadowOuter", "shadowInner"});
+        registerConstructor("javax.swing.border.TitledBorder", new String[]{"border", "title", "titleJustification", "titlePosition", "titleFont", "titleColor"});
+        registerConstructor("javax.swing.plaf.BorderUIResource$TitledBorderUIResource", new String[]{"border", "title", "titleJustification", "titlePosition", "titleFont", "titleColor"});
+
         internalPersistenceDelegates.put("java.net.URI",
                                          new PrimitivePersistenceDelegate());
 
@@ -1625,6 +1689,14 @@ class MetaData {
 
     private static Object getBeanAttribute(Class type, String attribute) {
 	return getBeanInfo(type).getBeanDescriptor().getValue(attribute);
+    }
+
+    // MetaData registration
+
+    private synchronized static void registerConstructor(String typeName, 
+                                                         String[] constructor) {
+        internalPersistenceDelegates.put(typeName, 
+                                         new DefaultPersistenceDelegate(constructor));
     }
 
     private static void removeProperty(String typeName, String property) {

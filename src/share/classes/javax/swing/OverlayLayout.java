@@ -26,7 +26,6 @@ package javax.swing;
 
 
 import java.awt.*;
-import java.beans.ConstructorProperties;
 import java.io.Serializable;
 
 /**
@@ -61,7 +60,6 @@ public class OverlayLayout implements LayoutManager2,Serializable {
      *
      * @param target  the container to do layout against
      */
-    @ConstructorProperties({"target"})
     public OverlayLayout(Container target) {
 	this.target = target;
     }

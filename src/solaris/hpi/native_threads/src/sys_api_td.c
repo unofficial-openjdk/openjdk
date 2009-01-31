@@ -70,6 +70,8 @@
  */
 #ifdef __linux__
 typedef int rlim_t ;
+#else
+#include <sys/resource.h>
 #endif
 
 

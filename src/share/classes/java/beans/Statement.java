@@ -75,7 +75,6 @@ public class Statement {
      * @param arguments The arguments of this statement. If <code>null</code> then an empty array will be used.
      *
      */
-    @ConstructorProperties({"target", "methodName", "arguments"})
     public Statement(Object target, String methodName, Object[] arguments) {
 	this.target = target;
         this.methodName = methodName;

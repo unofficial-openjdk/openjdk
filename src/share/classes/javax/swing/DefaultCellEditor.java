@@ -27,7 +27,6 @@ package javax.swing;
 
 import java.awt.Component;
 import java.awt.event.*;
-import java.beans.ConstructorProperties;
 import java.lang.Boolean;
 import javax.swing.table.*;
 import javax.swing.event.*;
@@ -82,7 +81,6 @@ public class DefaultCellEditor extends AbstractCellEditor
      *
      * @param textField  a <code>JTextField</code> object
      */
-    @ConstructorProperties({"component"})
     public DefaultCellEditor(final JTextField textField) {
         editorComponent = textField;
 	this.clickCountToStart = 2;

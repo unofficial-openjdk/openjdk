@@ -27,7 +27,6 @@ package javax.swing.tree;
 
 import java.io.*;
 import java.util.Vector;
-import java.beans.ConstructorProperties;
 
 /**
  * Represents a path to a node. A TreePath is an array of Objects that are
@@ -74,7 +73,6 @@ public class TreePath extends Object implements Serializable {
      *
      * @param path  an array of Objects representing the path to a node
      */
-    @ConstructorProperties({"path"})
     public TreePath(Object[] path) {
         if(path == null || path.length == 0)
             throw new IllegalArgumentException("path in TreePath must be non null and not empty.");

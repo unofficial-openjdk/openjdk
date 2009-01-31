@@ -28,7 +28,6 @@ package javax.swing;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.ConstructorProperties;
 import java.util.Locale;
 import java.io.Serializable;
 import javax.accessibility.*;
@@ -311,7 +310,6 @@ public class Box extends JComponent implements Accessible {
 	 * @param pref  Preferred size
 	 * @param max   Maximum size
 	 */
-        @ConstructorProperties({"minimumSize", "preferredSize", "maximumSize"})
         public Filler(Dimension min, Dimension pref, Dimension max) {
             setMinimumSize(min);
             setPreferredSize(pref);

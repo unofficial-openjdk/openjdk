@@ -29,7 +29,6 @@ import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.Color;
 import java.awt.Component;
-import java.beans.ConstructorProperties;
 
 /**
  * A class which implements a raised or lowered bevel with
@@ -81,7 +80,6 @@ public class SoftBevelBorder extends BevelBorder
      * @param shadowOuterColor the color to use for the bevel outer shadow
      * @param shadowInnerColor the color to use for the bevel inner shadow
      */
-    @ConstructorProperties({"bevelType", "highlightOuterColor", "highlightInnerColor", "shadowOuterColor", "shadowInnerColor"})
     public SoftBevelBorder(int bevelType, Color highlightOuterColor, 
                         Color highlightInnerColor, Color shadowOuterColor, 
                         Color shadowInnerColor) {

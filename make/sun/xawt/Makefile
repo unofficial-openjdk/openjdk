@@ -49,7 +49,6 @@ AUTO_JAVA_PRUNE = WrapperGenerator.java
 LDFLAGS += -L$(OPENWIN_LIB)
 
 ifeq ($(PLATFORM), linux)
-FILES_c += Xinerama.c
 LDFLAGS += -lpthread
 dummy := $(shell $(MKDIR) -p $(LIB_LOCATION))
 endif
@@ -251,8 +250,6 @@ $(SIZES): $(SIZERS)
 	    $(ECHO) COMPARING $@ and $(STORED_SIZES_TMPL_$(PLATFORM)_$(LIBARCH)); \
 	    $(DIFF) $@ $(STORED_SIZES_TMPL_$(PLATFORM)_$(LIBARCH)); \
 	fi	
-		
-
 
 $(TEMPDIR)/.gen.wrappers: $(SIZES) $(WRAPPER_GENERATOR_CLASS) $(XLIBTYPES)
 	$(BOOT_JAVA_CMD) -cp $(WRAPPER_GENERATOR_TEMPDIR) WrapperGenerator \

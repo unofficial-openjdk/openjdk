@@ -30,6 +30,28 @@ BUILDDIR=..
 PRODUCT=docs
 include $(BUILDDIR)/common/Defs.gmk
 
+#
+# Definitions for imported components
+#
+include $(BUILDDIR)/common/internal/ImportComponents.gmk
+
+IMPORT_PACKAGES := $(subst /,.,$(filter-out META-INF/% %.class, $(IMPORT_RT_PACKAGES) $(IMPORT_TOOLS_PACKAGES)))
+
+# Handle javax.rmi and javax.xml specially since they are listed as classes in 
+# $(IMPORT_RT_PACKAGES), and in both cases, they are the only source file in 
+# their package.
+IMPORT_PACKAGE_FILTER = \
+    $(IMPORT_PACKAGES) \
+    $(patsubst %,%.%, $(IMPORT_PACKAGES)) 
+
+ifneq ($(filter javax/rmi/PortableRemoteObject.class,$(IMPORT_RT_PACKAGES)),)
+    IMPORT_PACKAGE_FILTER += javax.rmi
+endif
+
+ifneq ($(filter javax/xml/XMLConstants.class,$(IMPORT_RT_PACKAGES)),)
+    IMPORT_PACKAGE_FILTER += javax.xml
+endif
+
 # We override whatever the max VM memory setting is here.
 #    NOTE: javadoc will not complete without these larger settings.
 #    WARNING: This could cause thrashing on low memory machines.
@@ -412,9 +434,6 @@ include NON_CORE_PKGS.gmk
 
 # Targets for all APIs other than the core platform APIs
 ALL_OTHER_TARGETS = \
-    mirrordocs \
-    docletapidocs \
-    tagletapidocs \
     domapidocs \
     jpdadocs \
     jaasdocs \
@@ -423,15 +442,21 @@ ALL_OTHER_TARGETS = \
     httpserverdocs  \
     mgmtdocs \
     attachdocs \
-    jconsoledocs \
-    treeapidocs
+    jconsoledocs
+
+ifdef LANGTOOLS_DIST
+    ALL_OTHER_TARGETS += \
+	mirrordocs \
+	docletapidocs \
+	tagletapidocs \
+	treeapidocs
+endif
 
 .PHONY: all docs
 all docs: coredocs otherdocs
 
 .PHONY: otherdocs
 otherdocs: ${ALL_OTHER_TARGETS}
-
 
 #################################################################
 # Production Targets -- USE THESE TARGETS WHEN:
@@ -477,7 +502,7 @@ coredocs:
 	$(JAVADOC_CMD) $(CORE_JAVADOCFLAGS)            \
                    -d $(DOCSDIR)/api                   \
                    -sourcepath $(RELEASEDOCS_SRCPATH)  \
-                   $(CORE_PKGS)
+                   $(filter-out $(IMPORT_PACKAGE_FILTER), $(CORE_PKGS))
 
 .PHONY: mirrordocs
 mirrordocs:
@@ -525,7 +550,7 @@ domapidocs:
                    -d $(DOCSDIR)/jre/api/plugin/dom            \
                    -sourcepath $(RELEASEDOCS_SRCPATH)        \
                    -linkoffline ../../../../api $(DOCSDIR)/api/ \
-                   $(DOMAPI_PKGS)
+                   $(filter-out $(IMPORT_PACKAGE_FILTER), $(DOMAPI_PKGS))
 
 .PHONY: jpdadocs
 jpdadocs: jdidocs jdwpdocs jvmtidocs
@@ -646,6 +671,11 @@ treeapidocs:
 .PHONY: echovalues
 echovalues:
 	@$(ECHO) ""
+	@$(ECHO) --------------Imports---------------------------
+	@$(ECHO) "IMPORT_PACKAGES = $(IMPORT_PACKAGES)"
+	@$(ECHO) "IMPORT_PACKAGE_FILTER = $(IMPORT_PACKAGE_FILTER)"
+	@$(ECHO) --------------Imports---------------------------
+	@$(ECHO) ""
 	@$(ECHO) --------------Shared---------------------------
 	@$(ECHO) BUILD_NUMBER = $(BUILD_NUMBER)
 	@$(ECHO) FULL_VERSION = $(FULL_VERSION)
@@ -669,7 +699,12 @@ echovalues:
 	@$(ECHO) "   SHARE_SRC/classes: $(SHARE_SRC)/classes"
 	@$(ECHO) "   PLATFORM_SRC/classes: $(PLATFORM_SRC)/classes"
 	@$(ECHO) "   GENSRCDIR: $(GENSRCDIR)"
-	@$(ECHO) "   IMPORTSRCDIR: $(IMPORTSRCDIR)"
 	@$(ECHO) "   SHARE_SRC/doc/stub: $(SHARE_SRC)/doc/stub"
+ifeq ($(CLOSED_SRC_DIR_EXISTS),true)
+	@$(ECHO) "   CLOSED_SRC/src/share/classes: $(CLOSED_SRC)/share/classes"
+endif
+	@$(ECHO) "   IMPORTSRCDIR: $(IMPORTSRCDIR)"
 	@$(ECHO) --------------common/Defs---------------------------
 	@$(ECHO) ""
+
+

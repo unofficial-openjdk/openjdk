@@ -137,27 +137,35 @@ public class ParagraphView extends javax.swing.text.ParagraphView {
 
     /**
      * Calculate the needs for the paragraph along the minor axis.
-     *
-     * <p>If size requirements are explicitly specified for the paragraph,
-     * use that requirements.  Otherwise, use the requirements of the
-     * superclass {@link javax.swing.text.ParagraphView}.</p>
-     *
-     * <p>If the {@code axis} parameter is neither {@code View.X_AXIS} nor
-     * {@code View.Y_AXIS}, {@link IllegalArgumentException} is thrown.  If the
-     * {@code r} parameter is {@code null,} a new {@code SizeRequirements}
-     * object is created, otherwise the supplied {@code SizeRequirements}
-     * object is returned.</p>
-     *
-     * @param axis  the minor axis
-     * @param r     the input {@code SizeRequirements} object 
-     * @return      the new or adjusted {@code SizeRequirements} object
-     * @throw IllegalArgumentException  if the {@code axis} parameter is invalid
+     * This implemented to use the requirements of the superclass,
+     * modified slightly to set a minimum span allowed.  Typical
+     * html rendering doesn't let the view size shrink smaller than
+     * the length of the longest word.  
      */
-    protected SizeRequirements calculateMinorAxisRequirements(
-                                                int axis, SizeRequirements r) {
+    protected SizeRequirements calculateMinorAxisRequirements(int axis, SizeRequirements r) {
 	r = super.calculateMinorAxisRequirements(axis, r);
 
-        if (BlockView.spanSetFromAttributes(axis, r, cssWidth, cssHeight)) {
+        if (!BlockView.spanSetFromAttributes(axis, r, cssWidth, cssHeight)) {
+            // PENDING(prinz) Need to make this better so it doesn't require
+            // InlineView and works with font changes within the word.
+
+            // find the longest minimum span.
+            float min = 0;
+            int n = getLayoutViewCount();
+            for (int i = 0; i < n; i++) {
+                View v = getLayoutView(i);
+                if (v instanceof InlineView) {
+                    float wordSpan = ((InlineView) v).getLongestWordSpan();
+                    min = Math.max(wordSpan, min);
+                } else {
+                    min = Math.max(v.getMinimumSpan(axis), min);
+                }
+            }
+            r.minimum = Math.max(r.minimum, (int) min);
+            r.preferred = Math.max(r.minimum,  r.preferred);
+            r.maximum = Math.max(r.preferred, r.maximum);
+        }
+        else {
             // Offset by the margins so that pref/min/max return the
             // right value.
             int margin = (axis == X_AXIS) ? getLeftInset() + getRightInset() :

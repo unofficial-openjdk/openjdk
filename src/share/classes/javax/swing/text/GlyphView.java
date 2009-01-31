@@ -28,7 +28,6 @@ import java.awt.*;
 import java.text.BreakIterator;
 import javax.swing.event.*;
 import java.util.BitSet;
-import java.util.Locale;
 
 import sun.swing.SwingUtilities2;
 
@@ -527,45 +526,6 @@ public class GlyphView extends View implements TabableView, Cloneable {
 
 	}
     }
-    
-    /**
-     * Determines the minimum span for this view along an axis.
-     * 
-     * <p>This implementation returns the longest non-breakable area within
-     * the view as a minimum span for {@code View.X_AXIS}.</p>
-     *
-     * @param axis  may be either {@code View.X_AXIS} or {@code View.Y_AXIS}
-     * @return      the minimum span the view can be rendered into
-     * @throws IllegalArgumentException if the {@code axis} parameter is invalid
-     * @see         javax.swing.text.View#getMinimumSpan
-     */
-    @Override
-    public float getMinimumSpan(int axis) {
-        switch (axis) {
-        case View.X_AXIS:
-            if (minimumSpan < 0) {
-                minimumSpan = 0;
-                int p0 = getStartOffset();
-                int p1 = getEndOffset();
-                while (p1 > p0) {
-                    int breakSpot = getBreakSpot(p0, p1);
-                    if (breakSpot == BreakIterator.DONE) {
-                        // the rest of the view is non-breakable
-                        breakSpot = p0;
-                    }
-                    minimumSpan = Math.max(minimumSpan,
-                            getPartialSpan(breakSpot, p1));
-                    // Note: getBreakSpot returns the *last* breakspot
-                    p1 = breakSpot - 1;
-                }
-            }
-            return minimumSpan;
-        case View.Y_AXIS:
-            return super.getMinimumSpan(axis);
-        default:
-            throw new IllegalArgumentException("Invalid axis: " + axis);
-        }
-    }
 
     /**
      * Determines the preferred span for this view along an
@@ -720,8 +680,20 @@ public class GlyphView extends View implements TabableView, Cloneable {
 	    checkPainter();
 	    int p0 = getStartOffset();
 	    int p1 = painter.getBoundedPosition(this, p0, pos, len);
-            return ((p1 > p0) && (getBreakSpot(p0, p1) != BreakIterator.DONE)) ?
-                    View.ExcellentBreakWeight : View.BadBreakWeight;            
+	    if (p1 == p0) {
+		// can't even fit a single character
+		return View.BadBreakWeight;	    
+	    }
+            if (getBreakSpot(p0, p1) != -1) {
+                return View.ExcellentBreakWeight;
+            }
+	    // Nothing good to break on.
+            // breaking on the View boundary is better than splitting it
+            if (p1 == getEndOffset()) {
+                return View.GoodBreakWeight;
+            } else {
+                return View.GoodBreakWeight - 1;
+            }
 	}
 	return super.getBreakWeight(axis, pos, len);
     }
@@ -769,75 +741,103 @@ public class GlyphView extends View implements TabableView, Cloneable {
     }
 
     /**
-     * Returns a location to break at in the passed in region, or 
-     * BreakIterator.DONE if there isn't a good location to break at
-     * in the specified region.
+     * Returns a location to break at in the passed in region, or -1 if
+     * there isn't a good location to break at in the specified region.
      */
     private int getBreakSpot(int p0, int p1) {
-        if (breakSpots == null) {
-            // Re-calculate breakpoints for the whole view
-            int start = getStartOffset();
-            int end = getEndOffset();
-            int[] bs = new int[end + 1 - start];
-            int ix = 0;
-            
-            // Breaker should work on the parent element because there may be
-            // a valid breakpoint at the end edge of the view (space, etc.)
-            Element parent = getElement().getParentElement();
-            int pstart = (parent == null ? start : parent.getStartOffset());
-            int pend = (parent == null ? end : parent.getEndOffset());
-            
-            Segment s = getText(pstart, pend);
-            s.first();
-            BreakIterator breaker = getBreaker();
-            breaker.setText(s);
-            
-            // Backward search should start from end+1 unless there's NO end+1
-            int startFrom = end + (pend > end ? 1 : 0);
-            for (;;) {
-                startFrom = breaker.preceding(s.offset + (startFrom - pstart))
-                          + (pstart - s.offset);
-                if (startFrom > start) {
-                    // The break spot is within the view
-                    bs[ix++] = startFrom;
-                } else {
-                    break;
-                }
-            }
-            
-            SegmentCache.releaseSharedSegment(s);
-            breakSpots = new int[ix];
-            System.arraycopy(bs, 0, breakSpots, 0, ix);
+        Document doc = getDocument();
+
+        if (doc != null && Boolean.TRUE.equals(doc.getProperty(
+                                   AbstractDocument.MultiByteProperty))) {
+            return getBreakSpotUseBreakIterator(p0, p1);
         }
-        
-        int breakSpot = BreakIterator.DONE;
-        for (int i = 0; i < breakSpots.length; i++) {
-            int bsp = breakSpots[i];
-            if (bsp <= p1) {
-                if (bsp > p0) {
-                    breakSpot = bsp;
-                }
-                break;
-            }
-        }        
-        return breakSpot;            
+        return getBreakSpotUseWhitespace(p0, p1);
     }
 
     /**
-     * Return break iterator appropriate for the current document.
-     *
-     * For non-i18n documents a fast whitespace-based break iterator is used.
+     * Returns the appropriate place to break based on the last whitespace
+     * character encountered.
      */
-    private BreakIterator getBreaker() {
-        Document doc = getDocument();
-        if ((doc != null) && Boolean.TRUE.equals(
-                    doc.getProperty(AbstractDocument.MultiByteProperty))) {
-            Container c = getContainer();
-            Locale locale = (c == null ? Locale.getDefault() : c.getLocale());
-            return BreakIterator.getLineInstance(locale);
-        } else {
-            return new WhitespaceBasedBreakIterator();
+    private int getBreakSpotUseWhitespace(int p0, int p1) {
+        Segment s = getText(p0, p1);
+
+        for (char ch = s.last(); ch != Segment.DONE; ch = s.previous()) {
+            if (Character.isWhitespace(ch)) {
+                // found whitespace
+                SegmentCache.releaseSharedSegment(s);
+                return s.getIndex() - s.getBeginIndex() + 1 + p0;
+            }
         }
+        SegmentCache.releaseSharedSegment(s);
+        return -1;
+    }
+     
+    /**
+     * Returns the appropriate place to break based on BreakIterator.
+     */
+    private int getBreakSpotUseBreakIterator(int p0, int p1) {
+        // Certain regions require context for BreakIterator, start from
+        // our parents start offset.
+        Element parent = getElement().getParentElement();
+        int parent0;
+        int parent1;
+        Container c = getContainer();
+        BreakIterator breaker;
+
+        if (parent == null) {
+            parent0 = p0;
+            parent1 = p1;
+        }
+        else {
+            parent0 = parent.getStartOffset();
+            parent1 = parent.getEndOffset();
+        }
+        if (c != null) {
+            breaker = BreakIterator.getLineInstance(c.getLocale());
+        }
+        else {
+            breaker = BreakIterator.getLineInstance();
+        }
+
+        Segment s = getText(parent0, parent1);
+        int breakPoint;
+
+        // Needed to initialize the Segment.
+        s.first();
+        breaker.setText(s);
+
+        if (p1 == parent1) {
+            // This will most likely return the end, the assumption is
+            // that if parent1 == p1, then we are the last portion of
+            // a paragraph
+            breakPoint = breaker.last();
+        }
+        else if (p1 + 1 == parent1) {
+            // assert(s.count > 1)
+            breakPoint = breaker.following(s.offset + s.count - 2);
+            if (breakPoint >= s.count + s.offset) {
+                breakPoint = breaker.preceding(s.offset + s.count - 1);
+            }
+        }
+        else {
+            breakPoint = breaker.preceding(p1 - parent0 + s.offset + 1);
+        }
+
+        int retValue = -1;
+
+        if (breakPoint != BreakIterator.DONE) {
+            breakPoint = breakPoint - s.offset + parent0;
+            if (breakPoint > p0) {
+                if (p0 == parent0 && breakPoint == p0) {
+                    retValue = -1;
+                }
+                else if (breakPoint <= p1) {
+                    retValue = breakPoint;
+                }
+            }
+        }
+        SegmentCache.releaseSharedSegment(s);
+        return retValue;
     }
 
     /**
@@ -911,8 +911,6 @@ public class GlyphView extends View implements TabableView, Cloneable {
      */
     public void insertUpdate(DocumentEvent e, Shape a, ViewFactory f) {
         justificationInfo = null;
-        breakSpots = null;
-        minimumSpan = -1;
 	syncCR();
 	preferenceChanged(null, true, false);
     }
@@ -930,8 +928,6 @@ public class GlyphView extends View implements TabableView, Cloneable {
      */
     public void removeUpdate(DocumentEvent e, Shape a, ViewFactory f) {
         justificationInfo = null;
-        breakSpots = null;
-        minimumSpan = -1;
 	syncCR();
 	preferenceChanged(null, true, false);
     }
@@ -948,7 +944,6 @@ public class GlyphView extends View implements TabableView, Cloneable {
      * @see View#changedUpdate
      */
     public void changedUpdate(DocumentEvent e, Shape a, ViewFactory f) {
-        minimumSpan = -1;
 	syncCR();
 	preferenceChanged(null, true, true);
     }
@@ -1092,12 +1087,6 @@ public class GlyphView extends View implements TabableView, Cloneable {
      */
     TabExpander expander;
 
-    /** Cached minimum x-span value  */
-    private float minimumSpan = -1;
-    
-    /** Cached breakpoints within the view  */
-    private int[] breakSpots = null;
-    
     /**
      * location for determining tab expansion against.
      */

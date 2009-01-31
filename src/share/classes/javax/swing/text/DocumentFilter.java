@@ -43,19 +43,8 @@ package javax.swing.text;
  * <code>FilterBypass</code> multiple times, or for different regions, but
  * it should not callback into the <code>FilterBypass</code> after returning
  * from the <code>remove</code> or <code>insertString</code> method.
- * <p>
- * By default, text related document mutation methods such as
- * <code>insertString</code>, <code>replace</code> and <code>remove</code>
- * in <code>AbstractDocument</code> use <code>DocumentFilter</code> when
- * available, and <code>Element</code> related mutation methods such as
- * <code>create</code>, <code>insert</code> and <code>removeElement</code> in
- * <code>DefaultStyledDocument</code> do not use <code>DocumentFilter</code>.
- * If a method doesn't follow these defaults, this must be explicitly stated
- * in the method documentation.
  *
  * @see javax.swing.text.Document
- * @see javax.swing.text.AbstractDocument
- * @see javax.swing.text.DefaultStyledDocument
  *
  * @version %I% %G%
  * @since 1.4

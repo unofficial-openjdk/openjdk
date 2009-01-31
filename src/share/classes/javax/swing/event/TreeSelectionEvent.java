@@ -127,34 +127,19 @@ public class TreeSelectionEvent extends EventObject
     }
 
     /**
-     * Returns whether the path identified by {@code getPath} was
-     * added to the selection.  A return value of {@code true}
-     * indicates the path identified by {@code getPath} was added to
-     * the selection. A return value of {@code false} indicates {@code
-     * getPath} was selected, but is no longer selected.
-     *
-     * @return {@code true} if {@code getPath} was added to the selection,
-     *         {@code false} otherwise
+     * Returns true if the first path element has been added to the
+     * selection, a return value of false means the first path has been
+     * removed from the selection.
      */
     public boolean isAddedPath() {
 	return areNew[0];
     }
 
     /**
-     * Returns whether the specified path was added to the selection.
-     * A return value of {@code true} indicates the path identified by
-     * {@code path} was added to the selection. A return value of
-     * {@code false} indicates {@code path} is no longer selected. This method
-     * is only valid for the paths returned from {@code getPaths()}; invoking
-     * with a path not included in {@code getPaths()} throws an
-     * {@code IllegalArgumentException}.
-     *
-     * @param path the path to test
-     * @return {@code true} if {@code path} was added to the selection,
-     *         {@code false} otherwise
-     * @throws IllegalArgumentException if {@code path} is not contained
-     *         in {@code getPaths}
-     * @see #getPaths
+     * Returns true if the path identified by path was added to the
+     * selection. A return value of false means the path was in the
+     * selection but is no longer in the selection. This will raise if
+     * path is not one of the paths identified by this event.
      */
     public boolean isAddedPath(TreePath path) {
 	for(int counter = paths.length - 1; counter >= 0; counter--)
@@ -164,17 +149,10 @@ public class TreeSelectionEvent extends EventObject
     }
 
     /**
-     * Returns whether the path at {@code getPaths()[index]} was added
-     * to the selection.  A return value of {@code true} indicates the
-     * path was added to the selection. A return value of {@code false}
-     * indicates the path is no longer selected.
-     *
-     * @param index the index of the path to test
-     * @return {@code true} if the path was added to the selection,
-     *         {@code false} otherwise
-     * @throws IllegalArgumentException if index is outside the range of
-     *         {@code getPaths}
-     * @see #getPaths
+     * Returns true if the path identified by <code>index</code> was added to
+     * the selection. A return value of false means the path was in the
+     * selection but is no longer in the selection. This will raise if
+     * index < 0 || >= <code>getPaths</code>.length.
      *
      * @since 1.3
      */

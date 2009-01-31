@@ -32,7 +32,6 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.io.Serializable;
 
-import java.beans.ConstructorProperties;
 import javax.swing.border.*;
 import javax.swing.Icon;
 import javax.swing.plaf.UIResource;
@@ -123,7 +122,6 @@ public class BorderUIResource implements Border, UIResource, Serializable
     }
 
     public static class CompoundBorderUIResource extends CompoundBorder implements UIResource {
-        @ConstructorProperties({"outsideBorder", "insideBorder"})
         public CompoundBorderUIResource(Border outsideBorder, Border insideBorder) {
             super(outsideBorder, insideBorder);
         }
@@ -135,7 +133,6 @@ public class BorderUIResource implements Border, UIResource, Serializable
         public EmptyBorderUIResource(int top, int left, int bottom, int right)   {
             super(top, left, bottom, right);
         }
-        @ConstructorProperties({"borderInsets"})
         public EmptyBorderUIResource(Insets insets) {
             super(insets);
         }
@@ -147,7 +144,6 @@ public class BorderUIResource implements Border, UIResource, Serializable
             super(color);
         }
 
-        @ConstructorProperties({"lineColor", "thickness"})
         public LineBorderUIResource(Color color, int thickness)  {
             super(color, thickness);
         }
@@ -164,7 +160,6 @@ public class BorderUIResource implements Border, UIResource, Serializable
             super(bevelType, highlight, shadow);
         }
 
-        @ConstructorProperties({"bevelType", "highlightOuterColor", "highlightInnerColor", "shadowOuterColor", "shadowInnerColor"})
         public BevelBorderUIResource(int bevelType, 
                                      Color highlightOuter, Color highlightInner,
                                      Color shadowOuter, Color shadowInner) {
@@ -186,7 +181,6 @@ public class BorderUIResource implements Border, UIResource, Serializable
             super(highlight, shadow);
         }
 
-        @ConstructorProperties({"etchType", "highlightColor", "shadowColor"})
         public EtchedBorderUIResource(int etchType, Color highlight, Color shadow)    {
             super(etchType, highlight, shadow);
         }
@@ -238,7 +232,6 @@ public class BorderUIResource implements Border, UIResource, Serializable
             super(border, title, titleJustification, titlePosition, titleFont);
         }
 
-        @ConstructorProperties({"border", "title", "titleJustification", "titlePosition", "titleFont", "titleColor"})
         public TitledBorderUIResource(Border border,                     
                         String title,
                         int titleJustification,

@@ -61,7 +61,6 @@ public class Expression extends Statement {
      *     
      * @see #getValue
      */
-    @ConstructorProperties({"target", "methodName", "arguments"})
     public Expression(Object target, String methodName, Object[] arguments) { 
         super(target, methodName, arguments); 
     } 

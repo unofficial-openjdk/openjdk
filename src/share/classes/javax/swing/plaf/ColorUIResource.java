@@ -26,7 +26,6 @@
 package javax.swing.plaf;
 
 import java.awt.Color;
-import java.beans.ConstructorProperties;
 
 /*
  * A subclass of Color that implements UIResource.  UI
@@ -48,7 +47,6 @@ import java.beans.ConstructorProperties;
  */
 public class ColorUIResource extends Color implements UIResource
 {
-    @ConstructorProperties({"red", "green", "blue"})
     public ColorUIResource(int r, int g, int b) {
 	super(r, g, b);
     }

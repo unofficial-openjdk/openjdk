@@ -37,6 +37,7 @@
     <!ENTITY unix-sources SYSTEM "../../common/unix-sources.ent">
     <!ENTITY windows-sources SYSTEM "../../common/windows-sources.ent">
     <!ENTITY demo-sources SYSTEM "../../common/demo-sources.ent">
+    <!ENTITY generated-sources SYSTEM "../../common/generated-sources.ent">
     <!ENTITY jtreg-sources SYSTEM "../../common/jtreg-sources.ent">
     <!ENTITY build-folder SYSTEM "../../common/build-folder.ent">
     <!ENTITY standard-bindings SYSTEM "../../common/standard-bindings.ent">
@@ -44,6 +45,7 @@
     <!ENTITY unix-view SYSTEM "../../common/unix-view.ent">
     <!ENTITY windows-view SYSTEM "../../common/windows-view.ent">
     <!ENTITY demo-view SYSTEM "../../common/demo-view.ent">
+    <!ENTITY generated-view SYSTEM "../../common/generated-view.ent">
     <!ENTITY jtreg-view SYSTEM "../../common/jtreg-view.ent">
     <!ENTITY file-view SYSTEM "../../common/file-view.ent">
     <!ENTITY standard-actions SYSTEM "../../common/standard-actions.ent">
@@ -62,6 +64,7 @@
                 &share-sources;
                 &unix-sources;
                 &windows-sources;
+                &generated-sources;
                 &demo-sources;
                 &jtreg-sources;
                 &build-folder;
@@ -80,6 +83,7 @@
                     &share-view;
                     &unix-view;
                     &windows-view;
+                    &generated-view;
                     &demo-view;
                     &jtreg-view;
                     &file-view;

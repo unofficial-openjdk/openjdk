@@ -294,9 +294,6 @@ public class VetoableChangeSupport implements Serializable {
                                                  event.getNewValue(),
                                                  event.getOldValue() );
                 for (VetoableChangeListener listener : listeners) {
-                    if (current == listener) {
-                        break;
-                    }
 		    try {
                         listener.vetoableChange(event);
 		    } catch (PropertyVetoException ex) {

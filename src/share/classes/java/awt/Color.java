@@ -25,7 +25,6 @@
 
 package java.awt;
 
-import java.beans.ConstructorProperties;
 import java.awt.image.ColorModel;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
@@ -386,7 +385,6 @@ public class Color implements Paint, java.io.Serializable {
      * @see #getAlpha
      * @see #getRGB
      */
-    @ConstructorProperties({"red", "green", "blue", "alpha"})
     public Color(int r, int g, int b, int a) {
         value = ((a & 0xFF) << 24) |
                 ((r & 0xFF) << 16) |

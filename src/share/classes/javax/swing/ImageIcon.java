@@ -26,7 +26,6 @@ package javax.swing;
 
 import java.awt.*;
 import java.awt.image.*;
-import java.beans.ConstructorProperties;
 import java.net.URL;
 
 import java.io.Serializable;
@@ -122,7 +121,6 @@ public class ImageIcon implements Icon, Serializable, Accessible {
      * @param filename a String specifying a filename or path
      * @see #getDescription
      */
-    @ConstructorProperties({"description"})
     public ImageIcon (String filename) {
         this(filename, filename);
     }

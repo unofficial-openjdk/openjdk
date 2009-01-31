@@ -33,7 +33,6 @@ import java.awt.Shape;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
-import java.beans.ConstructorProperties;
 
 /**
  * A class which implements a line border of arbitrary thickness
@@ -104,7 +103,6 @@ public class LineBorder extends AbstractBorder
      * @param roundedCorners whether or not border corners should be round
      * @since 1.3
      */
-    @ConstructorProperties({"lineColor", "thickness", "roundedCorners"})
     public LineBorder(Color color, int thickness, boolean roundedCorners)  {
         lineColor = color;
         this.thickness = thickness;

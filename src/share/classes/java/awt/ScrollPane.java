@@ -31,7 +31,6 @@ import javax.accessibility.*;
 import sun.awt.ScrollPaneWheelScroller;
 import sun.awt.SunToolkit;
 
-import java.beans.ConstructorProperties;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.IOException;
@@ -197,7 +196,6 @@ public class ScrollPane extends Container implements Accessible {
      *     returns true
      * @see java.awt.GraphicsEnvironment#isHeadless
      */
-    @ConstructorProperties({"scrollbarDisplayPolicy"})
     public ScrollPane(int scrollbarDisplayPolicy) throws HeadlessException {
         GraphicsEnvironment.checkHeadless();
 	this.layoutMgr = null;

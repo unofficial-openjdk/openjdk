@@ -888,10 +888,8 @@ public class DataFlavor implements Externalizable, Cloneable {
     }
     
     /**
-     * {@inheritDoc}
-     * <p>
-     * The equals comparison for the {@code DataFlavor} class is implemented
-     * as follows: Two <code>DataFlavor</code>s are considered equal if and
+     * Tests an arbitrary <code>Object</code> to this <code>DataFlavor</code>
+     * for equality. Two <code>DataFlavor</code>s are considered equal if and
      * only if their MIME primary type and subtype and representation class are
      * equal. Additionally, if the primary type is "text", the subtype denotes
      * a text flavor which supports the charset parameter, and the
@@ -913,9 +911,18 @@ public class DataFlavor implements Externalizable, Cloneable {
     }
 
     /**
-     * This method has the same behavior as {@link #equals(Object)}.
-     * The only difference being that it takes a {@code DataFlavor} instance
-     * as a parameter.
+     * Tests a <code>DataFlavor</code> to this <code>DataFlavor</code> for
+     * equality. Two <code>DataFlavor</code>s are considered equal if and only
+     * if their MIME primary type and subtype and representation class are
+     * equal. Additionally, if the primary type is "text", the subtype denotes
+     * a text flavor which supports the charset parameter, and the
+     * representation class is not <code>java.io.Reader</code>,
+     * <code>java.lang.String</code>, <code>java.nio.CharBuffer</code>, or
+     * <code>[C</code>, the <code>charset</code> parameter must also be equal.
+     * If a charset is not explicitly specified for one or both
+     * <code>DataFlavor</code>s, the platform default encoding is assumed. See
+     * <code>selectBestTextFlavor</code> for a list of text flavors which
+     * support the charset parameter.
      *
      * @param that the <code>DataFlavor</code> to compare with
      *        <code>this</code>
@@ -981,14 +988,12 @@ public class DataFlavor implements Externalizable, Cloneable {
      * Compares only the <code>mimeType</code> against the passed in 
      * <code>String</code> and <code>representationClass</code> is
      * not considered in the comparison.
-     *
      * If <code>representationClass</code> needs to be compared, then
      * <code>equals(new DataFlavor(s))</code> may be used.
+     *
      * @deprecated As inconsistent with <code>hashCode()</code> contract,
      *             use <code>isMimeTypeEqual(String)</code> instead.
-     * @param s the {@code mimeType} to compare.
-     * @return true if the String (MimeType) is equal; false otherwise or if
-     *         {@code s} is {@code null}
+     * @return true if the String (MimeType) is equal
      */
     @Deprecated
     public boolean equals(String s) {
@@ -1045,7 +1050,18 @@ public class DataFlavor implements Externalizable, Cloneable {
     }
 
     /**
-     * Identical to {@link #equals(DataFlavor)}.
+     * Tests a <code>DataFlavor</code> to this <code>DataFlavor</code> for
+     * equality. Two <code>DataFlavor</code>s are considered equal if and only
+     * if their MIME primary type and subtype and representation class are
+     * equal. Additionally, if the primary type is "text", the subtype denotes
+     * a text flavor which supports the charset parameter, and the
+     * representation class is not <code>java.io.Reader</code>,
+     * <code>java.lang.String</code>, <code>java.nio.CharBuffer</code>, or
+     * <code>[C</code>, the <code>charset</code> parameter must also be equal.
+     * If a charset is not explicitly specified for one or both
+     * <code>DataFlavor</code>s, the platform default encoding is assumed. See
+     * <code>selectBestTextFlavor</code> for a list of text flavors which
+     * support the charset parameter.
      *
      * @param that the <code>DataFlavor</code> to compare with
      *        <code>this</code>

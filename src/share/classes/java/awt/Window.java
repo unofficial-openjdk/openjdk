@@ -683,19 +683,12 @@ public class Window extends Container implements Accessible {
     }
 
     /**
-     * Causes this Window to be sized to fit the preferred size 
-     * and layouts of its subcomponents. The resulting width and 
-     * height of the window are automatically enlarged if either
-     * of dimensions is less than the minimum size as specified 
-     * by the previous call to the {@code setMinimumSize} method.
-     * <p>
-     * If the window and/or its owner are not displayable yet, 
-     * both of them are made displayable before calculating 
-     * the preferred size. The Window is validated after its 
-     * size is being calculated.
-     *                 
+     * Causes this Window to be sized to fit the preferred size
+     * and layouts of its subcomponents.  If the window and/or its owner
+     * are not yet displayable, both are made displayable before
+     * calculating the preferred size.  The Window will be validated
+     * after the preferredSize is calculated.
      * @see Component#isDisplayable
-     * @see #setMinimumSize
      */
     public void pack() {
         Container parent = this.parent;
@@ -726,13 +719,10 @@ public class Window extends Container implements Accessible {
      * <p>
      * If the {@code setSize} or {@code setBounds} methods
      * are called afterwards with a width or height less than
-     * that was specified by the {@code setMinimumSize} method 
-     * the window is automatically enlarged to meet 
-     * the {@code minimumSize} value. The {@code minimumSize} 
-     * value also affects the behaviour of the {@code pack} method.
-     * <p> 
-     * The default behavior is restored by setting the minimum size 
-     * parameter to the {@code null} value.
+     * that specified by {@code setMinimumSize} the window
+     * is automatically enlarged to honor the {@code minimumSize}
+     * value. Setting the minimum size to {@code null} restores
+     * the default behavior.
      * <p>
      * Resizing operation may be restricted if the user tries
      * to resize window below the {@code minimumSize} value.
@@ -743,7 +733,6 @@ public class Window extends Container implements Accessible {
      * @see #getMinimumSize
      * @see #isMinimumSizeSet
      * @see #setSize(Dimension)
-     * @see #pack
      * @since 1.6
      */
     public void setMinimumSize(Dimension minimumSize) {
@@ -2885,49 +2874,18 @@ public class Window extends Container implements Accessible {
 
     /**
      * Sets the location of the window relative to the specified
-     * component according to the following scenarios.
-     * <p>
-     * The target screen mentioned below is a screen to which
-     * the window should be placed after the setLocationRelativeTo
-     * method is called.
-     * <ul>
-     * <li>If the component is {@code null}, or the {@code
-     * GraphicsConfiguration} associated with this component is
-     * {@code null}, the window is placed in the center of the
-     * screen. The center point can be obtained with the {@link
-     * GraphicsEnvironment#getCenterPoint
-     * GraphicsEnvironment.getCenterPoint} method.
-     * <li>If the component is not {@code null}, but it is not
-     * currently showing, the window is placed in the center of
-     * the target screen defined by the {@code
-     * GraphicsConfiguration} associated with this component.
-     * <li>If the component is not {@code null} and is shown on
-     * the screen, then the window is located in such a way that
-     * the center of the window coincides with the center of the
      * component.
-     * </ul>
      * <p>
-     * If the screens configuration does not allow the window to
-     * be moved from one screen to another, then the window is
-     * only placed at the location determined according to the
-     * above conditions and its {@code GraphicsConfiguration} is
-     * not changed.
+     * If the component is not currently showing, or <code>c</code>
+     * is <code>null</code>, the window is placed at the center of
+     * the screen. The center point can be determined with {@link 
+     * GraphicsEnvironment#getCenterPoint GraphicsEnvironment.getCenterPoint}
      * <p>
-     * <b>Note</b>: If the lower edge of the window is out of the screen,
-     * then the window is placed to the side of the <code>Component</code>
-     * that is closest to the center of the screen. So if the
-     * component is on the right part of the screen, the window
-     * is placed to its left, and vice versa. 
-     * <p>
-     * If after the window location has been calculated, the upper,
-     * left, or right edge of the window is out of the screen,
-     * then the window is located in such a way that the upper,
-     * left, or right edge of the window coincides with the
-     * corresponding edge of the screen. If both left and right
-     * edges of the window are out of the screen, the window is
-     * placed at the left side of the screen. The similar placement
-     * will occur if both top and bottom edges are out of the screen.
-     * In that case, the window is placed at the top side of the screen.
+     * If the bottom of the component is offscreen, the window is
+     * placed to the side of the <code>Component</code> that is
+     * closest to the center of the screen.  So if the <code>Component</code>
+     * is on the right part of the screen, the <code>Window</code>
+     * is placed to its left, and vice versa.
      *
      * @param c  the component in relation to which the window's location
      *           is determined
@@ -2935,66 +2893,59 @@ public class Window extends Container implements Accessible {
      * @since 1.4
      */
     public void setLocationRelativeTo(Component c) {
-        // target location
-        int dx = 0, dy = 0;
-        // target GC
-        GraphicsConfiguration gc = this.graphicsConfig;
-        Rectangle gcBounds = gc.getBounds();
-
-        Dimension windowSize = getSize();
-
-        // search a top-level of c
-        Window componentWindow = Component.getContainingWindow(c);
-        if ((c == null) || (componentWindow == null)) {
-            GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-            gc = ge.getDefaultScreenDevice().getDefaultConfiguration();
-            gcBounds = gc.getBounds();
-            Point centerPoint = ge.getCenterPoint();
-            dx = centerPoint.x - windowSize.width / 2;
-            dy = centerPoint.y - windowSize.height / 2;
-        } else if (!c.isShowing()) {
-            gc = componentWindow.getGraphicsConfiguration();
-            gcBounds = gc.getBounds();
-            dx = gcBounds.x + (gcBounds.width - windowSize.width) / 2;
-            dy = gcBounds.y + (gcBounds.height - windowSize.height) / 2;
-        } else {
-            gc = componentWindow.getGraphicsConfiguration();
-            gcBounds = gc.getBounds();
-            Dimension compSize = c.getSize();
-            Point compLocation = c.getLocationOnScreen();
-            dx = compLocation.x + ((compSize.width - windowSize.width) / 2);
-            dy = compLocation.y + ((compSize.height - windowSize.height) / 2);
-
-            // Adjust for bottom edge being offscreen
-            if (dy + windowSize.height > gcBounds.y + gcBounds.height) {
-                dy = gcBounds.y + gcBounds.height - windowSize.height;
-                if (compLocation.x - gcBounds.x + compSize.width / 2 < gcBounds.width / 2) {
-                    dx = compLocation.x + compSize.width;
-                } else {
-                    dx = compLocation.x - windowSize.width;
+        Container root=null;
+ 
+        if (c != null) {
+            if (c instanceof Window || c instanceof Applet) {
+                root = (Container)c;
+            } else {
+                Container parent;
+                for(parent = c.getParent() ; parent != null ; parent = parent.getParent()) {
+                    if (parent instanceof Window || parent instanceof Applet) {
+                        root = parent;
+                        break;
+                    }
                 }
             }
         }
-
-        // Avoid being placed off the edge of the screen:
-        // bottom
-        if (dy + windowSize.height > gcBounds.y + gcBounds.height) {
-            dy = gcBounds.y + gcBounds.height - windowSize.height;
+ 
+        if((c != null && !c.isShowing()) || root == null ||
+           !root.isShowing()) {
+            Dimension         paneSize = getSize();
+ 
+            Point centerPoint = GraphicsEnvironment.getLocalGraphicsEnvironment().getCenterPoint();
+            setLocation(centerPoint.x - paneSize.width / 2,
+                        centerPoint.y - paneSize.height / 2);
+        } else {
+            Dimension invokerSize = c.getSize();
+            Point invokerScreenLocation = c.getLocationOnScreen();
+ 
+            Rectangle  windowBounds = getBounds();
+            int        dx = invokerScreenLocation.x+((invokerSize.width-windowBounds.width)>>1);
+            int        dy = invokerScreenLocation.y+((invokerSize.height - windowBounds.height)>>1);
+            Rectangle ss = root.getGraphicsConfiguration().getBounds();
+  
+            // Adjust for bottom edge being offscreen
+            if (dy+windowBounds.height>ss.y+ss.height) {
+                dy = ss.y + ss.height-windowBounds.height;
+                if (invokerScreenLocation.x - ss.x + invokerSize.width / 2 <
+                    ss.width / 2) {
+                    dx = invokerScreenLocation.x+invokerSize.width;
+                }
+                else {
+                    dx = invokerScreenLocation.x-windowBounds.width;
+                }
+            }
+ 
+            // Avoid being placed off the edge of the screen
+            if (dx+windowBounds.width > ss.x + ss.width) {
+                dx = ss.x + ss.width - windowBounds.width;
+            }
+            if (dx < ss.x) dx = ss.x;
+            if (dy < ss.y) dy = ss.y;
+  
+            setLocation(dx, dy);
         }
-        // top
-        if (dy < gcBounds.y) {
-            dy = gcBounds.y;
-        }
-        // right
-        if (dx + windowSize.width > gcBounds.x + gcBounds.width) {
-            dx = gcBounds.x + gcBounds.width - windowSize.width;
-        }
-        // left
-        if (dx < gcBounds.x) {
-            dx = gcBounds.x;
-        }
-
-        setLocation(dx, dy);
     }
     
     /**

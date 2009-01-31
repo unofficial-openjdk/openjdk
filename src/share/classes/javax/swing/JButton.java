@@ -24,8 +24,6 @@
  */
 package javax.swing;
 
-import java.beans.ConstructorProperties;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
@@ -105,7 +103,6 @@ public class JButton extends AbstractButton implements Accessible {
      *
      * @param text  the text of the button
      */
-    @ConstructorProperties({"text"})
     public JButton(String text) {
         this(text, null);
     }
