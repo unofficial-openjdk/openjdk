@@ -191,38 +191,38 @@ public class Paths {
         return file.equals(bootClassPathRtJar);
     }
 
-    private static class PathIterator implements Iterable<String> {
-        private int pos = 0;
-        private final String path;
-        private final String emptyPathDefault;
+    /**
+     * Split a path into its elements. Empty path elements will be ignored.
+     * @param path The path to be split
+     * @return The elements of the path
+     */
+    private static Iterable<File> getPathEntries(String path) {
+        return getPathEntries(path, null);
+    }
 
-        public PathIterator(String path, String emptyPathDefault) {
-            this.path = path;
-            this.emptyPathDefault = emptyPathDefault;
+    /**
+     * Split a path into its elements. If emptyPathDefault is not null, all
+     * empty elements in the path, including empty elements at either end of
+     * the path, will be replaced with the value of emptyPathDefault.
+     * @param path The path to be split
+     * @param emptyPathDefault The value to substitute for empty path elements,
+     *  or null, to ignore empty path elements
+     * @return The elements of the path
+     */
+    private static Iterable<File> getPathEntries(String path, File emptyPathDefault) {
+        ListBuffer<File> entries = new ListBuffer<File>();
+        int start = 0;
+        while (start <= path.length()) {
+            int sep = path.indexOf(File.pathSeparatorChar, start);
+            if (sep == -1)
+                sep = path.length();
+            if (start < sep)
+                entries.append(new File(path.substring(start, sep)));
+            else if (emptyPathDefault != null)
+                entries.append(emptyPathDefault);
+            start = sep + 1;
         }
-        public PathIterator(String path) { this(path, null); }
-        public Iterator<String> iterator() {
-            return new Iterator<String>() {
-                public boolean hasNext() {
-                    return pos <= path.length();
-                }
-                public String next() {
-                    int beg = pos;
-                    int end = path.indexOf(File.pathSeparator, beg);
-                    if (end == -1)
-                        end = path.length();
-                    pos = end + 1;
-
-                    if (beg == end && emptyPathDefault != null)
-                        return emptyPathDefault;
-                    else
-                        return path.substring(beg, end);
-                }
-                public void remove() {
-                    throw new UnsupportedOperationException();
-                }
-            };
-        }
+        return entries;
     }
 
     private class Path extends LinkedHashSet<File> {
@@ -237,9 +237,9 @@ public class Paths {
         }
 
         /** What to use when path element is the empty string */
-        private String emptyPathDefault = null;
+        private File emptyPathDefault = null;
 
-        public Path emptyPathDefault(String x) {
+        public Path emptyPathDefault(File x) {
             emptyPathDefault = x;
             return this;
         }
@@ -248,7 +248,7 @@ public class Paths {
 
         public Path addDirectories(String dirs, boolean warn) {
             if (dirs != null)
-                for (String dir : new PathIterator(dirs))
+                for (File dir : getPathEntries(dirs))
                     addDirectory(dir, warn);
             return this;
         }
@@ -257,14 +257,14 @@ public class Paths {
             return addDirectories(dirs, warn);
         }
 
-        private void addDirectory(String dir, boolean warn) {
-            if (! new File(dir).isDirectory()) {
+        private void addDirectory(File dir, boolean warn) {
+            if (!dir.isDirectory()) {
                 if (warn)
                     log.warning("dir.path.element.not.found", dir);
                 return;
             }
 
-            File[] files = new File(dir).listFiles();
+            File[] files = dir.listFiles();
             if (files == null)
                 return;
 
@@ -276,18 +276,13 @@ public class Paths {
 
         public Path addFiles(String files, boolean warn) {
             if (files != null)
-                for (String file : new PathIterator(files, emptyPathDefault))
+                for (File file : getPathEntries(files, emptyPathDefault))
                     addFile(file, warn);
             return this;
         }
 
         public Path addFiles(String files) {
             return addFiles(files, warn);
-        }
-
-        public Path addFile(String file, boolean warn) {
-            addFile(new File(file), warn);
-            return this;
         }
 
         public void addFile(File file, boolean warn) {
@@ -447,10 +442,9 @@ public class Paths {
             String files = System.getProperty("sun.boot.class.path");
             path.addFiles(files, false);
             File rt_jar = new File("rt.jar");
-            for (String file : new PathIterator(files, null)) {
-                File f = new File(file);
-                if (new File(f.getName()).equals(rt_jar))
-                    bootClassPathRtJar = f;
+            for (File file : getPathEntries(files)) {
+                if (new File(file.getName()).equals(rt_jar))
+                    bootClassPathRtJar = file;
             }
         }
 
@@ -482,8 +476,8 @@ public class Paths {
         if (cp == null) cp = ".";
 
         return new Path()
-            .expandJarClassPaths(true) // Only search user jars for Class-Paths
-            .emptyPathDefault(".")     // Empty path elt ==> current directory
+            .expandJarClassPaths(true)        // Only search user jars for Class-Paths
+            .emptyPathDefault(new File("."))  // Empty path elt ==> current directory
             .addFiles(cp);
     }
 

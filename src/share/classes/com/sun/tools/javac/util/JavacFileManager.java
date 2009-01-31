@@ -909,6 +909,8 @@ public class JavacFileManager implements StandardJavaFileManager {
             for (File dir: path) {
                 //System.err.println("dir: " + dir);
                 String dPath = dir.getPath();
+                if (dPath.length() == 0)
+                    dPath = System.getProperty("user.dir");
                 if (!dPath.endsWith(File.separator))
                     dPath += File.separator;
                 if (rPath.regionMatches(true, 0, dPath, 0, dPath.length())
