@@ -69,7 +69,7 @@ else
   endif
 endif
 
-# Note: j2se/make/common/Defs.gmk uses LANGUAGE_VERSION (-source NN)
+# Note: jdk/make/common/Defs.gmk uses LANGUAGE_VERSION (-source NN)
 # and the somewhat misnamed CLASS_VERSION (-target NN)
 ifdef TARGET_CLASS_VERSION
   ANT_OPTIONS += -Djavac.target=$(TARGET_CLASS_VERSION)
