@@ -400,21 +400,21 @@ final class DOMValidatorHelper implements ValidatorHelper, EntityState {
         final String localName = node.getLocalName();
         final String rawName = node.getNodeName();
         final String namespace = node.getNamespaceURI();
-
+        
         toFill.uri = (namespace != null && namespace.length() > 0) ? fSymbolTable.addSymbol(namespace) : null;
-        toFill.rawname = (rawName != null) ? fSymbolTable.addSymbol(rawName) : XMLSymbols.EMPTY_STRING;
-
+        toFill.rawname = (rawName != null) ? fSymbolTable.addSymbol(rawName) : XMLSymbols.EMPTY_STRING;  
+        
         // Is this a DOM level1 document?
         if (localName == null) {
             int k = rawName.indexOf(':');
             if (k > 0) {
                 toFill.prefix = fSymbolTable.addSymbol(rawName.substring(0, k));
-                toFill.localpart = fSymbolTable.addSymbol(rawName.substring(k + 1));
+                toFill.localpart = fSymbolTable.addSymbol(rawName.substring(k + 1));                
             }
             else {
                 toFill.prefix = XMLSymbols.EMPTY_STRING;
                 toFill.localpart = toFill.rawname;
-            }
+            }            
         }
         else {
             toFill.prefix = (prefix != null) ? fSymbolTable.addSymbol(prefix) : XMLSymbols.EMPTY_STRING;

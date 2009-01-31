@@ -148,16 +148,15 @@ public class EntityImpl
      * @exception DOMException
      *   <br>NO_MODIFICATION_ALLOWED_ERR: Raised if this node is readonly.
      */
-
     public void setPrefix(String prefix)
         throws DOMException
     {
         if (ownerDocument.errorChecking && isReadOnly()) {
-            throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR,
-                  DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN,
+            throw new DOMException(DOMException.NO_MODIFICATION_ALLOWED_ERR, 
+                  DOMMessageFormatter.formatMessage(DOMMessageFormatter.DOM_DOMAIN, 
                     "NO_MODIFICATION_ALLOWED_ERR", null));
         }
-    }
+    }    
     /** Clone node. */
     public Node cloneNode(boolean deep) {
         EntityImpl newentity = (EntityImpl)super.cloneNode(deep);

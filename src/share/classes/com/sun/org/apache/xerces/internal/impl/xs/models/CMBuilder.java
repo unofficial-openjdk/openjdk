@@ -231,7 +231,7 @@ public class CMBuilder {
             //one or more
             nodeRet = fNodeFactory.getCMUniOpNode(XSParticleDecl.PARTICLE_ONE_OR_MORE, node);
         }
-        else if (optimize && node.type() == XSParticleDecl.PARTICLE_ELEMENT ||
+        else if (optimize && node.type() == XSParticleDecl.PARTICLE_ELEMENT ||        
                  node.type() == XSParticleDecl.PARTICLE_WILDCARD) {
             // Only for elements and wildcards, subsume e{n,m} and e{n,unbounded} to e*
             // or e+ and, once the DFA reaches a final state, check if the actual number

@@ -147,9 +147,9 @@ public class StAXStream2SAX implements XMLReader, Locator {
                 if (event != XMLStreamConstants.START_ELEMENT) {
                     throw new IllegalStateException("The current event is " +
                             "not START_ELEMENT\n but" + event);
-                }
+                }            
             }
-
+            
             handleStartDocument();
 
             do {

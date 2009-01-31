@@ -36,11 +36,11 @@ import javax.xml.stream.events.XMLEvent;
 
 /**
  *
- * @author Joe Wang:
- * This is a rewrite of the original class. The focus is on removing caching, and make the filtered
- * stream reader more compatible with those in other implementations. Note however, that this version
- * will not solve all the issues related to the undefined condition in the spec. The priority is
- * to pass the TCK. Issues arising due to the requirement, that is, (1) should it initiate at BEGIN_DOCUMENT
+ * @author Joe Wang: 
+ * This is a rewrite of the original class. The focus is on removing caching, and make the filtered 
+ * stream reader more compatible with those in other implementations. Note however, that this version 
+ * will not solve all the issues related to the undefined condition in the spec. The priority is 
+ * to pass the TCK. Issues arising due to the requirement, that is, (1) should it initiate at BEGIN_DOCUMENT 
  * or an accepted event; (2) should hasNext() advance the underlining stream in order to find an acceptable
  * event, would have to wait until 1.1 of StAX in which the filtered stream reader would be defined more clearly.
  */
@@ -52,18 +52,17 @@ public class XMLStreamFilterImpl implements javax.xml.stream.XMLStreamReader {
     private int fCurrentEvent;
     private boolean fEventAccepted = false;
 
-    /**the very issue around a long discussion. but since we must pass the TCK, we have to allow
+    /**the very issue around a long discussion. but since we must pass the TCK, we have to allow 
      * hasNext() to advance the underlining stream in order to find the next acceptable event
      */
     private boolean fStreamAdvancedByHasNext = false;
-
     /** Creates a new instance of XMLStreamFilterImpl */
 
     public XMLStreamFilterImpl(XMLStreamReader reader,StreamFilter filter){
         fStreamReader = reader;
         this.fStreamFilter = filter;
-
-        //this is debatable to initiate at an acceptable event,
+        
+        //this is debatable to initiate at an acceptable event, 
         //but it's neccessary in order to pass the TCK and yet avoid skipping element
         try {
             if (fStreamFilter.accept(fStreamReader)) {
@@ -98,7 +97,7 @@ public class XMLStreamFilterImpl implements javax.xml.stream.XMLStreamReader {
         if (event != -1) {
             return event;
         }
-
+        
         throw new IllegalStateException("The stream reader has reached the end of the document, or there are no more "+
                                     " items to return");
     }
@@ -108,12 +107,12 @@ public class XMLStreamFilterImpl implements javax.xml.stream.XMLStreamReader {
      * @return
      */
     public int nextTag() throws XMLStreamException {
-        if (fStreamAdvancedByHasNext && fEventAccepted &&
+        if (fStreamAdvancedByHasNext && fEventAccepted && 
                 (fCurrentEvent == XMLEvent.START_ELEMENT || fCurrentEvent == XMLEvent.START_ELEMENT)) {
             fStreamAdvancedByHasNext = false;
             return fCurrentEvent;
         }
-
+        
         int event = findNextTag();
         if (event != -1) {
             return event;
@@ -151,7 +150,7 @@ public class XMLStreamFilterImpl implements javax.xml.stream.XMLStreamReader {
             }
         }
         //although it seems that IllegalStateException should be thrown when next() is called
-        //on a stream that has no more items, we have to assume END_DOCUMENT is always accepted
+        //on a stream that has no more items, we have to assume END_DOCUMENT is always accepted 
         //in order to pass the TCK
         if (fCurrentEvent == XMLEvent.END_DOCUMENT)
             return fCurrentEvent;
@@ -436,7 +435,6 @@ public class XMLStreamFilterImpl implements javax.xml.stream.XMLStreamReader {
      */
     public String getVersion() {
         return fStreamReader.getVersion();
-
     }
 
     /**
@@ -504,7 +502,7 @@ public class XMLStreamFilterImpl implements javax.xml.stream.XMLStreamReader {
         return fStreamReader.isWhiteSpace();
     }
 
-
+        
     /**
      *
      * @param type
@@ -532,5 +530,4 @@ public class XMLStreamFilterImpl implements javax.xml.stream.XMLStreamReader {
     public String getAttributeLocalName(int index){
         return fStreamReader.getAttributeLocalName(index);
     }
-
 }

@@ -62,6 +62,7 @@ import com.sun.org.apache.xerces.internal.xni.parser.XMLDocumentScanner;
  * @author Arnaud  Le Hors, IBM
  * @author Eric Ye, IBM
  * @author Sunitha Reddy, Sun Microsystems
+ *
  * Refer to the table in unit-test javax.xml.stream.XMLStreamReaderTest.SupportDTD for changes
  * related to property SupportDTD.
  * @author Joe Wang, Sun Microsystems
@@ -548,7 +549,7 @@ public class XMLDocumentScannerImpl
 
         //register current document scanner as a listener for XMLEntityScanner
         fEntityScanner.registerListener(this);
-
+        
         // prepare to look for a TextDecl if external general entity
         if (!name.equals("[xml]") && fEntityScanner.isExternal()) {
             // Don't do this if we're skipping the entity!
@@ -936,7 +937,6 @@ public class XMLDocumentScannerImpl
                             reportFatalError("AlreadySeenDoctype", null);
                         }
                         fSeenDoctypeDecl = true;
-
                         // scanDoctypeDecl() sends XNI doctypeDecl event that
                         // in SAX is converted to startDTD() event.
                         if (scanDoctypeDecl(fDisallowDoctype)) {
@@ -967,11 +967,10 @@ public class XMLDocumentScannerImpl
                         if (fDoctypeSystemId != null) {
                             if (((fValidation || fLoadExternalDTD)
                                 && (fValidationManager == null || !fValidationManager.isCachedDTD()))) {
-                                if (!fDisallowDoctype) {
+                                if (!fDisallowDoctype)
                                     setScannerState(SCANNER_STATE_DTD_EXTERNAL);
-                                } else {
+                                else
                                     setScannerState(SCANNER_STATE_PROLOG);
-                                }
                                 setDriver(fContentDriver);
                                 if(fDTDDriver == null)
                                     fDTDDriver = new DTDDriver();
@@ -985,11 +984,10 @@ public class XMLDocumentScannerImpl
                                 // This handles the case of a DOCTYPE that had neither an internal subset or an external subset.
                                 fDTDScanner.setInputSource(fExternalSubsetSource);
                                 fExternalSubsetSource = null;
-                                if (!fDisallowDoctype) {
+                                if (!fDisallowDoctype)
                                     setScannerState(SCANNER_STATE_DTD_EXTERNAL_DECLS);
-                                } else {
+                                else
                                     setScannerState(SCANNER_STATE_PROLOG);
-                                }
                                 setDriver(fContentDriver);
                                 if(fDTDDriver == null)
                                     fDTDDriver = new DTDDriver();
@@ -1144,8 +1142,8 @@ public class XMLDocumentScannerImpl
                                         break;
                                     }
                                 }
-                                setEndDTDScanState();
 
+                                setEndDTDScanState();
                                 return true;
                             }
                             break;

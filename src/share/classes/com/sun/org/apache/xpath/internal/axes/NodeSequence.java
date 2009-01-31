@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 /*
- * $Id: NodeSequence.java,v 1.2.4.2 2005/09/14 19:45:19 jeffsuttor Exp $
+ * $Id: NodeSequence.java,v 1.6 2007/01/12 19:26:42 spericas Exp $
  */
 package com.sun.org.apache.xpath.internal.axes;
 
@@ -211,12 +211,12 @@ public class NodeSequence extends XObject
   public void setRoot(int nodeHandle, Object environment)
   {
         // If root is DTM.NULL, then something's wrong with the context
-        if (nodeHandle == DTM.NULL)
+        if (nodeHandle == DTM.NULL) 
         {
             throw new RuntimeException("Unable to evaluate expression using " +
                     "this context");
         }
-
+        
         if(null != m_iter)
         {
                 XPathContext xctxt = (XPathContext)environment;

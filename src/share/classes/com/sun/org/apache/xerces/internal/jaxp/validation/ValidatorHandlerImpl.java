@@ -89,7 +89,7 @@ import org.xml.sax.ext.EntityResolver2;
  *
  * @author Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  * @author Michael Glavassevich, IBM
- *
+ * 
  */
 final class ValidatorHandlerImpl extends ValidatorHandler implements
     DTDHandler, EntityState, PSVIProvider, ValidatorHelper, XMLDocumentHandler {
@@ -807,7 +807,7 @@ final class ValidatorHandlerImpl extends ValidatorHandler implements
 
         /** In end element. **/
         private boolean fInEndElement = false;
-
+        
         /** Initializes the TypeInfoProvider with type information for the current element. **/
         void beginStartElement(Augmentations elementAugs, XMLAttributes attributes) {
             fInStartElement = true;
