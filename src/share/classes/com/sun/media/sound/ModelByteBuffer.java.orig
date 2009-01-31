@@ -44,7 +44,7 @@ public class ModelByteBuffer {
     private long fileoffset;
     private byte[] buffer;
     private long offset;
-    private final long len;
+    private long len;
 
     private class RandomFileInputStream extends InputStream {
 
@@ -106,12 +106,11 @@ public class ModelByteBuffer {
         }
 
         public int read(byte[] b) throws IOException {
-            int len = b.length;
             if (len > left)
                 len = (int)left;
             if (left == 0)
                 return -1;
-            len = raf.read(b, 0, len);
+            int len = raf.read(b);
             if (len == -1)
                 return -1;
             left -= len;
@@ -119,12 +118,12 @@ public class ModelByteBuffer {
         }
 
         public int read() throws IOException {
-            if (left == 0)
+            if (len == 0)
                 return -1;
             int b = raf.read();
             if (b == -1)
                 return -1;
-            left--;
+            len--;
             return b;
         }
 
@@ -137,15 +136,15 @@ public class ModelByteBuffer {
             long beginIndex, long endIndex, boolean independent) {
         this.root = parent.root;
         this.offset = 0;
-        long parent_len = parent.len;
+        this.len = parent.len;
         if (beginIndex < 0)
             beginIndex = 0;
-        if (beginIndex > parent_len)
-            beginIndex = parent_len;
+        if (beginIndex > len)
+            beginIndex = len;
         if (endIndex < 0)
             endIndex = 0;
-        if (endIndex > parent_len)
-            endIndex = parent_len;
+        if (endIndex > len)
+            endIndex = len;
         if (beginIndex > endIndex)
             beginIndex = endIndex;
         offset = beginIndex;

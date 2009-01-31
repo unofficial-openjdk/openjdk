@@ -88,10 +88,10 @@ public abstract class ModelInstrument extends Instrument {
     // This information is generated from ModelPerformer.getName()
     // returned from getPerformers().
     public String[] getKeys() {
-        String[] keys = new String[127];
+        String[] keys = new String[128];
         for (ModelPerformer performer : getPerformers()) {
             for (int k = performer.getKeyFrom(); k <= performer.getKeyTo(); k++) {
-                if (keys[k] == null) {
+                if (k >= 0 && k < 128 && keys[k] == null) {
                     String name = performer.getName();
                     if (name == null)
                         name = "untitled";
