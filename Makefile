@@ -42,6 +42,17 @@ ifndef CONTROL_TOPDIR
     fi)
 endif
 
+# Openjdk sources (only used if SKIP_OPENJDK_BUILD!=true)
+OPENJDK_SOURCETREE=$(TOPDIR)/openjdk
+OPENJDK_BUILDDIR:=$(shell \
+  if [ -r $(OPENJDK_SOURCETREE)/control/make/Makefile ]; then \
+    echo "$(OPENJDK_SOURCETREE)/control/make"; \
+  elif [ -r $(OPENJDK_SOURCETREE)/Makefile ]; then \
+    echo "$(OPENJDK_SOURCETREE)"; \
+  else \
+    echo "."; \
+  fi)
+
 ifndef JDK_TOPDIR
   JDK_TOPDIR=$(TOPDIR)/jdk
 endif
@@ -82,11 +93,27 @@ include ./make/deploy-rules.gmk
 
 all:: setup build
 
-setup:
+setup: openjdk_check
 	$(MKDIR) -p $(OUTPUTDIR)/j2sdk-image
 	$(MKDIR) -p $(ABS_OUTPUTDIR)/j2sdk-image
 	$(MKDIR) -p $(OUTPUTDIR)-fastdebug/j2sdk-image
 	$(MKDIR) -p $(ABS_OUTPUTDIR)-fastdebug/j2sdk-image
+
+# Check on whether we really can build the openjdk, need source etc.
+openjdk_check:
+ifneq ($(SKIP_OPENJDK_BUILD), true)
+	@$(ECHO) " "
+	@$(ECHO) "================================================="
+	@if [ ! -r $(OPENJDK_BUILDDIR)/Makefile ] ; then \
+	    $(ECHO) "ERROR: No openjdk source tree available at: $(OPENJDK_BUILDDIR)"; \
+	    exit 1; \
+	else \
+	    $(ECHO) "OpenJDK will be built after JDK is built"; \
+	    $(ECHO) "  OPENJDK_BUILDDIR=$(OPENJDK_BUILDDIR)"; \
+	fi
+	@$(ECHO) "================================================="
+	@$(ECHO) " "
+endif
 
 build:: sanity 
 
@@ -212,7 +239,6 @@ ifneq ($(SKIP_OPENJDK_BUILD), true)
   ifeq ($(BUILD_JDK), true)
     ifeq ($(BUNDLE_RULES_AVAILABLE), true)
 
-OPENJDK_BUILDDIR=.
 OPENJDK_PLUGS=$(ABS_OUTPUTDIR)/$(OPENJDK_BINARY_PLUGS_INAME)
 OPENJDK_OUTPUTDIR=$(ABS_OUTPUTDIR)/open-output
 OPENJDK_BUILD_NAME \
@@ -248,6 +274,12 @@ openjdk_build:
 	( $(CD) $(OPENJDK_OUTPUTDIR)/j2sdk-image && \
 	  $(ZIPEXE) -q -r $(OPENJDK_BUILD_BINARY_ZIP) .)
 	$(RM) -r $(OPENJDK_OUTPUTDIR)
+	@$(ECHO) " "
+	@$(ECHO) "================================================="
+	@$(ECHO) "Finished openjdk build"
+	@$(ECHO) " Binary Bundle: $(OPENJDK_BUILD_BINARY_ZIP)"
+	@$(ECHO) "================================================="
+	@$(ECHO) " "
     
     endif
   endif
