@@ -251,6 +251,12 @@ public class Color implements Paint, java.io.Serializable {
      */
     private ColorSpace cs = null;
 
+    /**
+     * The <code>PaintContext</code> for this solid color.
+     * @see #createContext
+     */
+    private transient ColorPaintContext context;
+
     /*
      * JDK 1.1 serialVersionUID
      */
@@ -1205,7 +1211,12 @@ public class Color implements Paint, java.io.Serializable {
                                                    Rectangle2D r2d,
                                                    AffineTransform xform,
                                                    RenderingHints hints) {
-        return new ColorPaintContext(getRGB(), cm);
+      if (context == null || 
+          context.getRGB() != getRGB())
+      {
+          context = new ColorPaintContext(getRGB(), cm);
+      }
+      return context;
     }
 
     /**
