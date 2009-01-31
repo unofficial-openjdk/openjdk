@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)parse3.cpp	1.266 07/05/05 17:06:22 JVM"
+#pragma ident "@(#)parse3.cpp	1.267 07/11/21 11:31:54 JVM"
 #endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -406,6 +406,7 @@ void Parse::do_multianewarray() {
   for (int i = 0; i < ndimensions; i++) {
     const Type* count_type = TypeInt::POS;
     TypePtr::PTR ptr = TypePtr::BotPTR;
+    bool    is_exact = false;
     // For the outermost dimension, try to get a better type than POS for the
     // size.  We don't do this for inner dimmensions because we lack the 
     // support to invalidate the refined type when the base array is modified
@@ -417,10 +418,14 @@ void Parse::do_multianewarray() {
         count_type = count_range_type;
         ptr = TypePtr::NotNull;
       }
+      // Only the outermost type is exact (4957832, 6587132),
+      // since rows of the array can be either nulled out or replaced
+      // by subarrays of sharper types.
+      is_exact = true;
     } 
     assert(count_type->is_int(), "must be integer");
     const TypeAry* arr0 = TypeAry::make(prev_type, (TypeInt*)count_type);
-    prev_type = TypeAryPtr::make(ptr, arr0, prev_array, true, 0);
+    prev_type = TypeAryPtr::make(ptr, arr0, prev_array, is_exact, 0);
     prev_array = NULL; // array klasses can be lazy, except the first
   }
   const TypeAryPtr* arr = (const TypeAryPtr*)prev_type;
