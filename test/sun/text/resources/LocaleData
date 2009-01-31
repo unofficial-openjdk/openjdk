@@ -5468,12 +5468,12 @@ LocaleNames/fr/GF=Guyane fran\u00e7aise
 LocaleNames/fr/GY=Guyana
 
 # bug 4225362
-FormatData/fr/DateTimePatternChars=GaMjkHmsSEDFwWahKzZ
-FormatData/fr_BE/DateTimePatternChars=GaMjkHmsSEDFwWahKzZ
-FormatData/fr_CA/DateTimePatternChars=GaMjkHmsSEDFwWahKzZ
-FormatData/fr_CH/DateTimePatternChars=GaMjkHmsSEDFwWahKzZ
-FormatData/fr_FR/DateTimePatternChars=GaMjkHmsSEDFwWahKzZ
-FormatData/fr_LU/DateTimePatternChars=GaMjkHmsSEDFwWahKzZ
+FormatData/fr/DateTimePatternChars=GaMjkHmsSEDFwWxhKzZ
+FormatData/fr_BE/DateTimePatternChars=GaMjkHmsSEDFwWxhKzZ
+FormatData/fr_CA/DateTimePatternChars=GaMjkHmsSEDFwWxhKzZ
+FormatData/fr_CH/DateTimePatternChars=GaMjkHmsSEDFwWxhKzZ
+FormatData/fr_FR/DateTimePatternChars=GaMjkHmsSEDFwWxhKzZ
+FormatData/fr_LU/DateTimePatternChars=GaMjkHmsSEDFwWxhKzZ
 
 # bug 6547501
 FormatData/fr/NumberPatterns/2=#,##0 %
@@ -5516,4 +5516,41 @@ FormatData/is_IS/NumberPatterns/1=#,##0. \u00A4;-#,##0. \u00A4
 
 # bug 6573250
 CurrencyNames/en_CA/USD=US$
+
+#bug 6450945
+CalendarData/ro/firstDayOfWeek=2
+CalendarData/ro/minimalDaysInFirstWeek=1
+FormatData/ro/DayNames/6=s\u00e2mb\u0103t\u0103
+
+#bug 6509039
+FormatData/sv/AmPmMarkers/0=fm
+FormatData/sv/AmPmMarkers/1=em
+
+#bug 6610748
+FormatData/fi/AmPmMarkers/0=ap.
+FormatData/fi/AmPmMarkers/1=ip.
+
+#bug 6645268
+LocaleNames/fi/fr=ranska
+LocaleNames/fi/FR=Ranska
+LocaleNames/fi_FI/fr=ranska
+LocaleNames/fi_FI/FR=Ranska
+
+#bug 6645405
+FormatData/hu_HU/NumberPatterns/1=#,##0.## \u00A4;-#,##0.## \u00A4
+
+#bug 6650730
+FormatData/lt/NumberElements/1=\u00a0
+FormatData/lt/DateTimePatterns/6=yyyy-MM-dd
+
+#bug 6609737
+FormatData/de/DateTimePatterns/0=HH:mm' Uhr 'z
+TimeZoneNames/de/CET/1=Mitteleurop\u00e4ische Zeit
+TimeZoneNames/de/CET/2=MEZ
+TimeZoneNames/de/CET/3=Mitteleurop\u00e4ische Sommerzeit
+TimeZoneNames/de/CET/4=MESZ
+TimeZoneNames/de/EET/2=OEZ
+TimeZoneNames/de/EET/4=OESZ
+TimeZoneNames/de/WET/2=WEZ
+TimeZoneNames/de/WET/4=WESZ
 

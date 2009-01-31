@@ -77,7 +77,7 @@ import sun.management.Agent;
 import sun.management.AgentConfigurationError;
 import static sun.management.AgentConfigurationError.*;
 import sun.management.FileSystem;
-import sun.management.snmp.util.MibLogger;
+import com.sun.jmx.remote.util.ClassLogger;
 
 import com.sun.jmx.remote.internal.RMIExporter;
 import com.sun.jmx.remote.security.JMXPluggableAuthenticator;
@@ -359,7 +359,7 @@ public final class ConnectorBootstrap {
             checkAccessFile(accessFileName);
         }
 
-        if (log.isDebugOn()) {
+        if (log.debugOn()) {
             log.debug("initialize",
                     Agent.getText("jmxremote.ConnectorBootstrap.initialize") +
                     "\n\t" + PropertyNames.PORT + "=" + port +
@@ -723,8 +723,8 @@ public final class ConnectorBootstrap {
     private ConnectorBootstrap() {
     }
 
-    // XXX Revisit: should probably clone this MibLogger....
-    private static final MibLogger log =
-            new MibLogger(ConnectorBootstrap.class);
+    private static final ClassLogger log =
+        new ClassLogger(ConnectorBootstrap.class.getPackage().getName(),
+                        "ConnectorBootstrap");
 
 }

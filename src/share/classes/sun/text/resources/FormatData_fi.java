@@ -104,6 +104,12 @@ public class FormatData_fi extends ListResourceBundle {
                     "la" // abb Saturday
                 }
             },
+            { "AmPmMarkers",
+                new String[] {
+                    "ap.", // am marker
+                    "ip." // pm marker
+                }
+            },
             { "NumberElements",
                 new String[] {
                     ",", // decimal separator
