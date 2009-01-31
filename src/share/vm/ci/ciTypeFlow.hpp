@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)ciTypeFlow.hpp	1.24 07/05/05 17:05:17 JVM"
+#pragma ident "@(#)ciTypeFlow.hpp      1.25 08/08/26 13:38:43 JVM"
 #endif
 /*
  * Copyright 2000-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -130,7 +130,7 @@ public:
 
   // Used as a combined index for locals and temps
   enum Cell {
-    Cell_0
+    Cell_0, Cell_max = INT_MAX
   };
 
   // A StateVector summarizes the type information at some
