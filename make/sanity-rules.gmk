@@ -351,9 +351,6 @@ endif
 ifeq ($(JDK_SRC_AVAILABLE), true)
 	@$(ECHO) "   BUILD_JDK    = $(BUILD_JDK) " >> $(MESSAGE_FILE)
 endif
-ifeq ($(JDK_SRC_AVAILABLE), true)
-	@$(ECHO) "   BUILD_JDK    = $(BUILD_JDK) " >> $(MESSAGE_FILE)
-endif
 ifeq ($(DEPLOY_SRC_AVAILABLE), true)
 	@$(ECHO) "   BUILD_DEPLOY  = $(BUILD_DEPLOY) " >> $(MESSAGE_FILE)
 endif
