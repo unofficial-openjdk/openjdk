@@ -54,23 +54,6 @@ include FILES_c.gmk
 AUTO_FILES_JAVA_DIRS = javax/sound com/sun/media/sound
 
 #
-# Specific to OpenJDK building
-#
-ifdef OPENJDK
-
-  # skip closed lib if the flag is set
-  ifeq ($(IMPORT_BINARY_PLUGS),true)
-
-# copy closed .class files
-build: import-binary-plug-sound-classes
-
-include $(BUILDDIR)/common/internal/BinaryPlugs.gmk
-
-  endif # IMPORT_BINARY_PLUGS
-
-endif # OPENJDK
-
-#
 # Files that just need cp.
 #
 SERVICEDIR = $(CLASSBINDIR)/META-INF/services
@@ -84,13 +67,11 @@ FILES_copy = \
 	$(SERVICEDIR)/javax.sound.sampled.spi.AudioFileReader \
 	$(SERVICEDIR)/javax.sound.sampled.spi.FormatConversionProvider \
 	$(SERVICEDIR)/javax.sound.sampled.spi.MixerProvider \
-	$(LIBDIR)/audio/soundbank.gm \
 	$(LIBDIR)/sound.properties
 
 FILES_mkdirs = \
 	$(CLASSBINDIR)/META-INF \
-	$(CLASSBINDIR)/META-INF/services \
-	$(LIBDIR)/audio
+	$(CLASSBINDIR)/META-INF/services
 
 FILES_copydirs = \
 	$(CLASSBINDIR) \
@@ -99,17 +80,6 @@ FILES_copydirs = \
 
 FILES_c += $(FILES_$(PLATFORM))
 
-
-#
-# add "closed" library
-#
-ifdef OPENJDK
-  ifeq ($(IMPORT_BINARY_PLUGS),true)
-    SUBDIRS += jsoundhs
-  endif # IMPORT_BINARY_PLUGS
-else
-  SUBDIRS += jsoundhs
-endif # OPENJDK
 
 #
 # system dependent flags

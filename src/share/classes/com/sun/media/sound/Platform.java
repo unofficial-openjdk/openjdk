@@ -42,8 +42,6 @@ class Platform {
 
     // native library we need to load
     private static final String libNameMain     = "jsound";
-    private static final String libNameMain2    = "jsoundhs";
-
     private static final String libNameALSA     = "jsoundalsa";
     private static final String libNameDSound   = "jsoundds";
 
@@ -162,16 +160,9 @@ class Platform {
             JSSecurityManager.loadLibrary(libNameMain);
             // just for the heck of it...
             loadedLibs |= LIB_MAIN;
-            // load "closed" library
-            JSSecurityManager.loadLibrary(libNameMain2);
         } catch (SecurityException e) {
             if(Printer.err)Printer.err("Security exception loading main native library.  JavaSound requires access to these resources.");
             throw(e);
-        } catch (UnsatisfiedLinkError e) {
-            // libNameMain2 may be absent!
-            if ((loadedLibs & LIB_MAIN) != LIB_MAIN) {
-                throw(e);
-            }
         }
 
         // now try to load extra libs. They are defined at compile time in the Makefile
