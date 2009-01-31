@@ -304,15 +304,20 @@ class SSLServerSocketImpl extends SSLServerSocket
                          enabledCipherSuites, doClientAuth,
                          enableSessionCreation, enabledProtocols);
 
-            ServerHandshaker handshaker = tmp.getServerHandshaker();
+            try {
+                ServerHandshaker handshaker = tmp.getServerHandshaker();
 
-            for (Iterator t = enabledCipherSuites.iterator(); t.hasNext(); ) {
-                CipherSuite suite = (CipherSuite)t.next();
-                if (handshaker.trySetCipherSuite(suite)) {
-                    checkedEnabled = true;
-                    return;
+                for (Iterator t = enabledCipherSuites.iterator(); t.hasNext(); ) {
+                    CipherSuite suite = (CipherSuite)t.next();
+                    if (handshaker.trySetCipherSuite(suite)) {
+                        checkedEnabled = true;
+                        return;
+                    }
                 }
+            } finally {
+                tmp.closeSocket();
             }
+
 
             //
             // diagnostic text here is currently appropriate
