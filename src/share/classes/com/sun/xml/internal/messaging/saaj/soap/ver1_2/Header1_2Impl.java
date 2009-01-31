@@ -1,9 +1,5 @@
 /*
- * $Id: Header1_2Impl.java,v 1.36 2006/01/27 12:49:48 vj135062 Exp $
- */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +22,11 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: Header1_2Impl.java,v 1.36 2006/01/27 12:49:48 vj135062 Exp $
+ */
+
+
 
 /**
 *
@@ -51,12 +52,12 @@ import com.sun.xml.internal.messaging.saaj.util.LogDomainConstants;
 
 
 public class Header1_2Impl extends HeaderImpl {
-
+    
     protected static Logger log =
         Logger.getLogger(
             LogDomainConstants.SOAP_VER1_2_DOMAIN,
             "com.sun.xml.internal.messaging.saaj.soap.ver1_2.LocalStrings");
-
+        
     public Header1_2Impl(SOAPDocumentImpl ownerDocument, String prefix) {
         super(ownerDocument, NameImpl.createHeader1_2Name(prefix));
     }
@@ -115,7 +116,7 @@ public class Header1_2Impl extends HeaderImpl {
     protected SOAPHeaderElement createHeaderElement(Name name)
         throws SOAPException {
         String uri = name.getURI();
-        if (uri == null || uri.equals("")) {
+        if (uri == null || uri.equals("")) {          
             log.severe("SAAJ0413.ver1_2.header.elems.must.be.ns.qualified");
             throw new SOAPExceptionImpl("SOAP 1.2 header elements must be namespace qualified");
         }
@@ -127,7 +128,7 @@ public class Header1_2Impl extends HeaderImpl {
     protected SOAPHeaderElement createHeaderElement(QName name)
         throws SOAPException {
         String uri = name.getNamespaceURI();
-        if (uri == null || uri.equals("")) {
+        if (uri == null || uri.equals("")) {          
             log.severe("SAAJ0413.ver1_2.header.elems.must.be.ns.qualified");
             throw new SOAPExceptionImpl("SOAP 1.2 header elements must be namespace qualified");
         }

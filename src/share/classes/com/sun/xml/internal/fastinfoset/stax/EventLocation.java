@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,34 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
- *
- * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
- *
- */
+ 
 
 package com.sun.xml.internal.fastinfoset.stax;
 
@@ -64,10 +37,10 @@ public class EventLocation implements Location{
     int _column = -1;
     int _line = -1;
     int _charOffset = -1;
-
+    
     EventLocation() {
     }
-
+    
     //explicitly create a nil location
     public static Location getNilLocation() {
         return new EventLocation();
@@ -88,19 +61,19 @@ public class EventLocation implements Location{
     public int getColumnNumber() {
         return _column;
     }
-
+    
   /**
    * Return the byte or character offset into the input source this location
-   * is pointing to. If the input source is a file or a byte stream then
-   * this is the byte offset into that stream, but if the input source is
-   * a character media then the offset is the character offset.
+   * is pointing to. If the input source is a file or a byte stream then 
+   * this is the byte offset into that stream, but if the input source is 
+   * a character media then the offset is the character offset. 
    * Returns -1 if there is no offset available.
    * @return the current offset
    */
     public int getCharacterOffset(){
         return _charOffset;
     }
-
+    
     /**
     * Returns the public ID of the XML
     * @return the public ID, or null if not available
@@ -108,7 +81,7 @@ public class EventLocation implements Location{
     public String getPublicId(){
         return _publicId;
     }
-
+    
   /**
    * Returns the system ID of the XML
    * @return the system ID, or null if not available
@@ -116,7 +89,7 @@ public class EventLocation implements Location{
     public String getSystemId(){
         return _systemId;
     }
-
+    
     public void setLineNumber(int line) {
         _line = line;
     }
@@ -132,7 +105,7 @@ public class EventLocation implements Location{
     public void setSystemId(String id) {
         _systemId = id;
     }
-
+    
     public String toString(){
         StringBuffer sbuffer = new StringBuffer() ;
         sbuffer.append("Line number = " + _line);
@@ -147,5 +120,6 @@ public class EventLocation implements Location{
         sbuffer.append("\n") ;
         return sbuffer.toString();
     }
-
+    
 }
+

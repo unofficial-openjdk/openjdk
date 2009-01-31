@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.bind.v2.runtime.unmarshaller;
 
 import java.util.Iterator;
@@ -50,6 +49,7 @@ import org.xml.sax.helpers.AttributesImpl;
  * parser technologies.
  *
  * @author Ryan.Shoemaker@Sun.COM
+ * @version 1.0
  */
 final class StAXEventConnector extends StAXConnector {
 
@@ -75,7 +75,7 @@ final class StAXEventConnector extends StAXConnector {
     /**
      * Construct a new StAX to SAX adapter that will convert a StAX event
      * stream into a SAX event stream.
-     *
+     * 
      * @param staxCore
      *                StAX event source
      * @param visitor
@@ -276,7 +276,7 @@ final class StAXEventConnector extends StAXConnector {
                 qName = prefix + ':' + localName;
             String type = staxAttr.getDTDType();
             String value = staxAttr.getValue();
-
+            
             attrs.addAttribute(uri, localName, qName, type, value);
         }
 

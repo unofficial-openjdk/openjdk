@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.rngom.binary;
 
 public class PatternBuilder {
@@ -80,7 +79,7 @@ public class PatternBuilder {
     if (p2 instanceof InterleavePattern) {
       InterleavePattern ip = (InterleavePattern)p2;
       if (p1.hashCode() > ip.p1.hashCode())
-        return makeInterleave(ip.p1, makeInterleave(p1, ip.p2));
+	return makeInterleave(ip.p1, makeInterleave(p1, ip.p2));
     }
     else if (p1.hashCode() > p2.hashCode())
       return makeInterleave(p2, p1);
@@ -100,8 +99,8 @@ public class PatternBuilder {
 
   Pattern makeOneOrMore(Pattern p) {
     if (p == empty
-        || p == notAllowed
-        || p instanceof OneOrMorePattern)
+	|| p == notAllowed
+	|| p instanceof OneOrMorePattern)
       return p;
     Pattern p1 = new OneOrMorePattern(p);
     return interner.intern(p1);

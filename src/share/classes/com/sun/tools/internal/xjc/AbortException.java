@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,10 +34,11 @@ package com.sun.tools.internal.xjc;
  * <p>
  * This exception should be only thrown from {@link ErrorReceiver}
  * for the consistent error handling.
- *
+ * 
  * @author Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public class AbortException extends RuntimeException {
     public AbortException() {
     }
 }
+    

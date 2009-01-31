@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.codemodel.internal.writer;
 
 import java.io.File;
@@ -37,9 +36,9 @@ import com.sun.codemodel.internal.JPackage;
 /**
  * Filter CodeWriter that writes a progress message to the specified
  * PrintStream.
- *
+ * 
  * @author
- *      Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
+ * 	Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public class ProgressCodeWriter extends FilterCodeWriter {
     public ProgressCodeWriter( CodeWriter output, PrintStream progress ) {
@@ -50,7 +49,7 @@ public class ProgressCodeWriter extends FilterCodeWriter {
     }
 
     private final PrintStream progress;
-
+    
     public OutputStream openBinary(JPackage pkg, String fileName) throws IOException {
         report(pkg, fileName);
         return super.openBinary(pkg,fileName);
@@ -60,7 +59,7 @@ public class ProgressCodeWriter extends FilterCodeWriter {
         report(pkg, fileName);
         return super.openSource(pkg,fileName);
     }
-
+    
     private void report(JPackage pkg, String fileName) {
         if(pkg.isUnnamed()) progress.println(fileName);
         else

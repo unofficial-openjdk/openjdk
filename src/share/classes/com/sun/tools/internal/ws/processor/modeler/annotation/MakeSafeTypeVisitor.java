@@ -1,5 +1,5 @@
 /*
- * Portions Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,28 +25,13 @@
 
 package com.sun.tools.internal.ws.processor.modeler.annotation;
 
-import com.sun.mirror.apt.AnnotationProcessorEnvironment;
-
-
 import com.sun.istack.internal.tools.APTTypeVisitor;
-
+import com.sun.mirror.apt.AnnotationProcessorEnvironment;
 import com.sun.mirror.declaration.TypeDeclaration;
-import com.sun.mirror.type.ArrayType;
-import com.sun.mirror.type.ClassType;
-import com.sun.mirror.type.DeclaredType;
-import com.sun.mirror.type.InterfaceType;
-import com.sun.mirror.type.PrimitiveType;
-import com.sun.mirror.type.ReferenceType;
-import com.sun.mirror.type.TypeMirror;
-import com.sun.mirror.type.TypeVariable;
-import com.sun.mirror.type.VoidType;
-import com.sun.mirror.type.WildcardType;
+import com.sun.mirror.type.*;
 import com.sun.mirror.util.Types;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 /**
  *
@@ -60,26 +45,26 @@ public class MakeSafeTypeVisitor extends APTTypeVisitor<TypeMirror, Types> imple
      * Creates a new instance of MakeSafeTypeVisitor
      */
     public MakeSafeTypeVisitor(AnnotationProcessorEnvironment apEnv) {
-        collectionDecl = apEnv.getTypeDeclaration(COLLECTION_CLASSNAME);
+        collectionDecl = apEnv.getTypeDeclaration(COLLECTION_CLASSNAME);        
         mapDecl = apEnv.getTypeDeclaration(MAP_CLASSNAME);
     }
-
+    
     protected TypeMirror onArrayType(ArrayType type, Types apTypes) {
-        return apTypes.getErasure(type);
+        return apTypes.getErasure(type);   
     }
-
+    
     protected TypeMirror onPrimitiveType(PrimitiveType type, Types apTypes) {
-        return apTypes.getErasure(type);
+        return apTypes.getErasure(type);   
     }
-
+     
     protected TypeMirror onClassType(ClassType type, Types apTypes) {
         return processDeclaredType(type, apTypes);
     }
-
+    
     protected TypeMirror onInterfaceType(InterfaceType type, Types apTypes) {
-        return processDeclaredType(type, apTypes);
+        return processDeclaredType(type, apTypes);        
     }
-
+    
     private TypeMirror processDeclaredType(DeclaredType type, Types apTypes) {
         if (TypeModeler.isSubtype(type.getDeclaration(), collectionDecl) ||
             TypeModeler.isSubtype(type.getDeclaration(), mapDecl)) {
@@ -87,22 +72,22 @@ public class MakeSafeTypeVisitor extends APTTypeVisitor<TypeMirror, Types> imple
             TypeMirror[] safeArgs = new TypeMirror[args.size()];
             int i = 0;
             for (TypeMirror arg : args) {
-                safeArgs[i++]= apply(arg, apTypes);
+                safeArgs[i++]= apply(arg, apTypes);                    
             }
             return apTypes.getDeclaredType(type.getDeclaration(), safeArgs);
         }
         return apTypes.getErasure(type);
     }
-
+    
     protected TypeMirror onTypeVariable(TypeVariable type, Types apTypes) {
-        return apTypes.getErasure(type);
+        return apTypes.getErasure(type);        
     }
-
+    
     protected TypeMirror onVoidType(VoidType type, Types apTypes) {
-        return type;
+        return type;        
     }
 
     protected TypeMirror onWildcard(WildcardType type, Types apTypes) {
-        return apTypes.getErasure(type);
+        return apTypes.getErasure(type);   
     }
 }

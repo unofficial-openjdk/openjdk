@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,10 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * @(#)$Id: WhitespaceStripper.java,v 1.2 2005/04/29 19:56:57 kohsuke Exp $
+ */
+
 
 package com.sun.tools.internal.xjc.reader.internalizer;
 
@@ -37,21 +41,21 @@ import org.xml.sax.helpers.XMLFilterImpl;
 
 /**
  * Strips ignorable whitespace from SAX event stream.
- *
+ * 
  * <p>
  * This filter works only when the event stream doesn't
  * contain any mixed content.
- *
+ * 
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 class WhitespaceStripper extends XMLFilterImpl {
 
     private int state = 0;
-
+    
     private char[] buf = new char[1024];
     private int bufLen = 0;
-
+    
     private static final int AFTER_START_ELEMENT = 1;
     private static final int AFTER_END_ELEMENT = 2;
 
@@ -106,7 +110,7 @@ class WhitespaceStripper extends XMLFilterImpl {
         super.endElement(uri, localName, qName);
         state = AFTER_END_ELEMENT;
     }
-
+    
     /**
      * Forwars the buffered characters if it contains any non-whitespace
      * character.
@@ -120,7 +124,7 @@ class WhitespaceStripper extends XMLFilterImpl {
                }
         }
     }
-
+    
     public void ignorableWhitespace(char[] ch, int start, int length) throws SAXException {
         // ignore completely.
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.bind.v2.model.core;
 
 import javax.xml.bind.annotation.XmlList;
@@ -71,7 +70,7 @@ public final class Ref<T,C> {
     public Ref(ModelBuilder<T,C,?,?> builder, T type, XmlJavaTypeAdapter xjta, XmlList xl ) {
         this(builder.reader,builder.nav,type,xjta,xl);
     }
-
+    
     public Ref(AnnotationReader<T,C,?,?> reader,
                Navigator<T,C,?,?> nav,
                T type, XmlJavaTypeAdapter xjta, XmlList xl ) {

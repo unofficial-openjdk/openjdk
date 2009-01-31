@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,34 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
- *
- * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
- *
- */
+ 
 
 
 package com.sun.xml.internal.fastinfoset.tools;
@@ -67,27 +40,27 @@ import org.xml.sax.helpers.AttributesImpl;
 import com.sun.xml.internal.fastinfoset.CommonResourceBundle;
 
 public class StAX2SAXReader {
-
+    
     /**
      * Content handler where events are pushed.
      */
     ContentHandler _handler;
-
+    
     /**
      * Lexical handler to report lexical events.
      */
     LexicalHandler _lexicalHandler;
-
+    
     /**
      * XML stream reader where events are pulled.
      */
     XMLStreamReader _reader;
-
+    
     public StAX2SAXReader(XMLStreamReader reader, ContentHandler handler) {
         _handler = handler;
         _reader = reader;
     }
-
+    
     public StAX2SAXReader(XMLStreamReader reader) {
         _reader = reader;
     }
@@ -99,7 +72,7 @@ public class StAX2SAXReader {
     public void setLexicalHandler(LexicalHandler lexicalHandler) {
         _lexicalHandler = lexicalHandler;
     }
-
+        
     public void adapt() throws XMLStreamException, SAXException {
         QName qname;
         String prefix, localPart;
@@ -107,11 +80,11 @@ public class StAX2SAXReader {
         char[] buffer;
         int nsc;
         int nat;
-
+        
         _handler.startDocument();
-
+        
         try {
-
+            
             while (_reader.hasNext()) {
                 int event = _reader.next();
 
@@ -121,7 +94,7 @@ public class StAX2SAXReader {
                     // Report namespace events first
                     nsc = _reader.getNamespaceCount();
                     for (int i = 0; i < nsc; i++) {
-                        _handler.startPrefixMapping(_reader.getNamespacePrefix(i),
+                        _handler.startPrefixMapping(_reader.getNamespacePrefix(i), 
                             _reader.getNamespaceURI(i));
                     }
 
@@ -139,7 +112,7 @@ public class StAX2SAXReader {
                         attrs.addAttribute(_reader.getAttributeNamespace(i),
                                            q.getLocalPart(),
                                            qName,
-                                           _reader.getAttributeType(i),
+                                           _reader.getAttributeType(i), 
                                            _reader.getAttributeValue(i));
                     }
 
@@ -149,9 +122,9 @@ public class StAX2SAXReader {
                     localPart = qname.getLocalPart();
 
                     _handler.startElement(_reader.getNamespaceURI(),
-                                          localPart,
-                                          (prefix.length() > 0) ?
-                                              (prefix + ":" + localPart) : localPart,
+                                          localPart, 
+                                          (prefix.length() > 0) ? 
+                                              (prefix + ":" + localPart) : localPart, 
                                           attrs);
                     break;
                 }
@@ -162,9 +135,9 @@ public class StAX2SAXReader {
                     localPart = qname.getLocalPart();
 
                     _handler.endElement(_reader.getNamespaceURI(),
-                                        localPart,
+                                        localPart, 
                                         (prefix.length() > 0) ?
-                                            (prefix + ":" + localPart) : localPart);
+                                            (prefix + ":" + localPart) : localPart); 
 
                     // Report end namespace events
                     nsc = _reader.getNamespaceCount();
@@ -185,7 +158,7 @@ public class StAX2SAXReader {
                 case XMLStreamConstants.END_DOCUMENT:
                     break;
                 default:
-                    throw new RuntimeException(CommonResourceBundle.getInstance().getString("message.StAX2SAXReader", new Object[]{new Integer(event)}));
+                    throw new RuntimeException(CommonResourceBundle.getInstance().getString("message.StAX2SAXReader", new Object[]{Integer.valueOf(event)}));
                 } // switch
             }
         }
@@ -193,8 +166,9 @@ public class StAX2SAXReader {
             _handler.endDocument();     // flush whatever we have
             throw e;
         }
-
+        
         _handler.endDocument();
     }
 
 }
+

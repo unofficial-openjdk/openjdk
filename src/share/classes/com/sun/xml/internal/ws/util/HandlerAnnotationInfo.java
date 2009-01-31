@@ -1,5 +1,5 @@
 /*
- * Portions Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,10 +40,10 @@ import javax.xml.ws.handler.Handler;
  * @author JAX-WS Development Team
  */
 public class HandlerAnnotationInfo {
-
+    
     private List<Handler> handlers;
     private Set<String> roles;
-
+    
     /**
      * Return the handlers specified by the handler chain descriptor.
      *
@@ -52,7 +52,7 @@ public class HandlerAnnotationInfo {
     public List<Handler> getHandlers() {
         return handlers;
     }
-
+    
     /**
      * This method should only be called by HandlerAnnotationProcessor.
      *
@@ -61,7 +61,7 @@ public class HandlerAnnotationInfo {
     public void setHandlers(List<Handler> handlers) {
         this.handlers = handlers;
     }
-
+    
     /**
      * Return the roles contained in the handler chain descriptor.
      *
@@ -70,7 +70,7 @@ public class HandlerAnnotationInfo {
     public Set<String> getRoles() {
         return roles;
     }
-
+    
     /**
      * This method should only be called by HandlerAnnotationProcessor.
      *
@@ -79,5 +79,5 @@ public class HandlerAnnotationInfo {
     public void setRoles(Set<String> roles) {
         this.roles = roles;
     }
-
+    
 }

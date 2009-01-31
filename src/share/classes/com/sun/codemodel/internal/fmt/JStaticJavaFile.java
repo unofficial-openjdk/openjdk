@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.codemodel.internal.fmt;
 
 import java.io.BufferedReader;
@@ -45,7 +44,7 @@ import com.sun.codemodel.internal.JTypeVar;
 
 /**
  * Statically generated Java soruce file.
- *
+ * 
  * <p>
  * This {@link JResourceFile} implementation will generate a Java source
  * file by copying the source code from a resource.
@@ -60,24 +59,24 @@ import com.sun.codemodel.internal.JTypeVar;
  * <p>
  * Note that because we don't parse the static Java source code,
  * the returned {@link JClass} object doesn't respond to methods like
- * "isInterface" or "_extends",
- *
+ * "isInterface" or "_extends",  
+ * 
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public final class JStaticJavaFile extends JResourceFile {
-
+    
     private final JPackage pkg;
     private final String className;
     private final URL source;
     private final JStaticClass clazz;
     private final LineFilter filter;
-
+    
     public JStaticJavaFile(JPackage _pkg, String className, String _resourceName) {
         this( _pkg, className,
             JStaticJavaFile.class.getClassLoader().getResource(_resourceName), null );
     }
-
+    
     public JStaticJavaFile(JPackage _pkg, String _className, URL _source, LineFilter _filter ) {
         super(_className+".java");
         if(_source==null)   throw new NullPointerException();
@@ -87,9 +86,9 @@ public final class JStaticJavaFile extends JResourceFile {
         this.source = _source;
         this.filter = _filter;
     }
-
+    
     /**
-     * Returns a class object that represents a statically generated code.
+     * Returns a class object that represents a statically generated code. 
      */
     public final JClass getJClass() {
         return clazz;
@@ -101,12 +100,12 @@ public final class JStaticJavaFile extends JResourceFile {
 
     protected  void build(OutputStream os) throws IOException {
         InputStream is = source.openStream();
-
+        
         BufferedReader r = new BufferedReader(new InputStreamReader(is));
         PrintWriter w = new PrintWriter(new BufferedWriter(new OutputStreamWriter(os)));
         LineFilter filter = createLineFilter();
         int lineNumber=1;
-
+        
         try {
             String line;
             while((line=r.readLine())!=null) {
@@ -118,11 +117,11 @@ public final class JStaticJavaFile extends JResourceFile {
         } catch( ParseException e ) {
             throw new IOException("unable to process "+source+" line:"+lineNumber+"\n"+e.getMessage());
         }
-
+        
         w.close();
         r.close();
     }
-
+    
     /**
      * Creates a {@link LineFilter}.
      * <p>
@@ -134,7 +133,7 @@ public final class JStaticJavaFile extends JResourceFile {
         LineFilter f = new LineFilter() {
             public String process(String line) {
                 if(!line.startsWith("package ")) return line;
-
+                
                 // replace package decl
                 if( pkg.isUnnamed() )
                     return null;
@@ -147,7 +146,7 @@ public final class JStaticJavaFile extends JResourceFile {
         else
             return f;
     }
-
+    
     /**
      * Filter that alters the Java source code.
      * <p>
@@ -163,13 +162,13 @@ public final class JStaticJavaFile extends JResourceFile {
          *      null to strip the line off. Otherwise the returned
          *      String will be written out. Do not add '\n' at the end
          *      of this string.
-         *
+         * 
          * @exception ParseException
          *      when for some reason there's an error in the line.
          */
         String process(String line) throws ParseException;
     }
-
+    
     /**
      * A {@link LineFilter} that combines two {@link LineFilter}s.
      */
@@ -185,12 +184,12 @@ public final class JStaticJavaFile extends JResourceFile {
             return second.process(line);
         }
     }
-
-
+    
+    
     private class JStaticClass extends JClass {
 
         private final JTypeVar[] typeParams;
-
+        
         JStaticClass() {
             super(pkg.owner());
             // TODO: allow those to be specified
@@ -200,7 +199,7 @@ public final class JStaticJavaFile extends JResourceFile {
         public String name() {
             return className;
         }
-
+        
         public String fullName() {
             if(pkg.isUnnamed())
                 return className;

@@ -1,5 +1,5 @@
 /*
- * Portions Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -78,7 +78,7 @@ public class AnnotationProcessorFactoryImpl implements AnnotationProcessorFactor
         types.add("javax.xml.ws.WebServiceClient");
         types.add("javax.xml.ws.WebServiceProvider");
         types.add("javax.xml.ws.WebServiceRef");
-
+        
         types.add("javax.xml.ws.security.MessageSecurity");
         supportedAnnotations = Collections.unmodifiableCollection(types);
     }
@@ -86,27 +86,31 @@ public class AnnotationProcessorFactoryImpl implements AnnotationProcessorFactor
     public AnnotationProcessorFactoryImpl() {
     }
 
-
+    
     public Collection<String> supportedOptions() {
         return supportedOptions;
     }
 
-    public Collection<String> supportedAnnotationTypes() {
+    public Collection<String> supportedAnnotationTypes() { 
         return supportedAnnotations;
     }
-
+    
     /*
      * Return an instance of the {@link com.sun.istack.internal.ws.WSAP WSAP} AnnotationProcesor.
      */
     public AnnotationProcessor getProcessorFor(Set<AnnotationTypeDeclaration> atds,
-                                        AnnotationProcessorEnvironment apEnv) {
-
+					AnnotationProcessorEnvironment apEnv) {
+                                            
         if (wsAP == null) {
             AnnotationProcessorContext context = new AnnotationProcessorContext();
-            wsAP = new WebServiceAP(null, null, null, context);
+            wsAP = new WebServiceAP(null, context, null, null);
 
         }
         wsAP.init(apEnv);
         return wsAP;
     }
 }
+
+
+
+

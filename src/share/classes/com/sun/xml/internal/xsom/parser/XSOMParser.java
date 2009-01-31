@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.xsom.parser;
 
 import java.io.File;
@@ -49,7 +48,7 @@ import com.sun.xml.internal.xsom.impl.parser.state.Schema;
 /**
  * Parses possibly multiple W3C XML Schema files and compose
  * them into one grammar.
- *
+ * 
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -57,22 +56,22 @@ public final class XSOMParser {
 
     private EntityResolver entityResolver;
     private ErrorHandler userErrorHandler;
-
+    
     private AnnotationParserFactory apFactory;
-
+    
     private final ParserContext context;
-
+    
     /**
     * Creates a new XSOMParser by using a SAX parser from JAXP.
     */
    public XSOMParser() {
        this(new JAXPParser());
    }
-
+    
    /**
     * Creates a new XSOMParser that uses the given SAXParserFactory
     * for creating new SAX parsers.
-    *
+    * 
     * The caller needs to configure
     * it properly. Don't forget to call <code>setNamespaceAware(true)</code>
     * or you'll see some strange errors.
@@ -80,14 +79,14 @@ public final class XSOMParser {
    public XSOMParser( SAXParserFactory factory ) {
        this( new JAXPParser(factory) );
    }
-
+    
    /**
     * Creates a new XSOMParser that reads XML Schema from non-standard
     * inputs.
-    *
+    * 
     * By implementing the {@link XMLParser} interface, XML Schema
     * can be read from something other than XML.
-    *
+    * 
     * @param   parser
     *      This parser will be called to parse XML Schema documents.
     */
@@ -127,21 +126,21 @@ public final class XSOMParser {
     public void parse( File schema ) throws SAXException, IOException {
         parse(schema.toURL());
     }
-
+    
     /**
      * Parses a new XML Schema document.
      */
     public void parse( URL url ) throws SAXException {
         parse( url.toExternalForm() );
     }
-
+    
     /**
      * Parses a new XML Schema document.
      */
     public void parse( String systemId ) throws SAXException {
         parse(new InputSource(systemId));
     }
-
+    
     /**
      * Parses a new XML Schema document.
      *
@@ -152,22 +151,22 @@ public final class XSOMParser {
     public void parse( InputSource source ) throws SAXException {
         context.parse(source);
     }
-
-
-
+    
+    
+    
     /**
      * Gets the parser implemented as a ContentHandler.
-     *
+     * 
      * One can feed XML Schema as SAX events to this interface to
      * parse a schema. To parse multiple schema files, feed multiple
      * sets of events.
-     *
+     * 
      * <p>
      * If you don't send a complete event sequence from a startDocument
      * event to an endDocument event, the state of XSOMParser can become
      * unstable. This sometimes happen when you encounter an error while
      * generating SAX events. Don't call the getResult method in that case.
-     *
+     * 
      * <p>
      * This way of reading XML Schema can be useful when XML Schema is
      * not available as a stand-alone XML document.
@@ -179,11 +178,11 @@ public final class XSOMParser {
         runtime.setRootHandler(s);
         return runtime;
     }
-
+    
     /**
      * Gets the parsed result. Don't call this method until
      * you parse all the schemas.
-     *
+     * 
      * @return
      *      If there was any parse error, this method returns null.
      *      To receive error information, specify your error handler
@@ -206,7 +205,7 @@ public final class XSOMParser {
     public Set<SchemaDocument> getDocuments() {
         return new HashSet<SchemaDocument>(context.parsedDocuments.keySet());
     }
-
+    
     public EntityResolver getEntityResolver() {
         return entityResolver;
     }
@@ -230,10 +229,10 @@ public final class XSOMParser {
 
     /**
      * Sets the annotation parser.
-     *
+     * 
      * Annotation parser can be used to parse application-specific
      * annotations inside a schema.
-     *
+     * 
      * <p>
      * For each annotation, new instance of this class will be
      * created and used to parse &lt;xs:annotation>.
@@ -254,7 +253,7 @@ public final class XSOMParser {
 
     /**
      * Sets the annotation parser factory.
-     *
+     * 
      * <p>
      * The specified factory will be used to create AnnotationParsers.
      */

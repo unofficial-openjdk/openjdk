@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.tools.internal.xjc.reader.dtd.bindinfo;
 
 import java.io.IOException;
@@ -49,8 +48,6 @@ import com.sun.tools.internal.xjc.model.CAdapter;
 import com.sun.tools.internal.xjc.model.CBuiltinLeafInfo;
 import com.sun.tools.internal.xjc.model.TypeUse;
 import com.sun.tools.internal.xjc.model.TypeUseFactory;
-import com.sun.tools.internal.xjc.reader.Ring;
-import com.sun.tools.internal.xjc.reader.xmlschema.ClassSelector;
 
 import org.w3c.dom.Element;
 import org.xml.sax.InputSource;
@@ -70,11 +67,11 @@ public class BIUserConversion implements BIConversion
         this.owner = bi;
         this.e = _e;
     }
-
+    
     private static void add( Map<String,BIConversion> m, BIConversion c ) {
         m.put( c.name(), c );
     }
-
+    
     /** Adds all built-in conversions into the given map. */
     static void addBuiltinConversions( BindInfo bi, Map<String,BIConversion> m ) {
         add( m, new BIUserConversion( bi, parse("<conversion name='boolean' type='java.lang.Boolean' parse='getBoolean' />")));
@@ -104,7 +101,7 @@ public class BIUserConversion implements BIConversion
 
     /** The owner {@link BindInfo} object to which this object belongs. */
     private final BindInfo owner;
-
+    
     /** &lt;conversion> element which this object is wrapping. */
     private final Element e;
 
@@ -112,15 +109,15 @@ public class BIUserConversion implements BIConversion
 
     /** Gets the location where this declaration is declared. */
     public Locator getSourceLocation() {
-        return DOM4JLocator.getLocationInfo(e);
+        return DOMLocator.getLocationInfo(e);
     }
-
+    
     /** Gets the conversion name. */
     public String name() { return DOMUtil.getAttribute(e,"name"); }
-
+    
     /** Gets a transducer for this conversion. */
     public TypeUse getTransducer() {
-
+        
         String ws = DOMUtil.getAttribute(e,"whitespace");
         if(ws==null)    ws = "collapse";
 
@@ -153,7 +150,7 @@ public class BIUserConversion implements BIConversion
         if(parse==null)  parse="new";
 
         String print = DOMUtil.getAttribute(e,"print");
-        if(print==null)  parse="toString";
+        if(print==null)  print="toString";
 
         JDefinedClass adapter = generateAdapter(owner.codeModel, parse, print, t.boxify());
 
@@ -168,7 +165,7 @@ public class BIUserConversion implements BIConversion
         int id = 1;
         while(adapter==null) {
             try {
-                JPackage pkg = Ring.get(ClassSelector.class).getClassScope().getOwnerPackage();
+                JPackage pkg = owner.getTargetPackage();
                 adapter = pkg._class("Adapter"+id);
             } catch (JClassAlreadyExistsException e) {
                 // try another name in search for an unique name.

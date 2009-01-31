@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.tools.internal.xjc.reader;
 
 import java.util.ArrayList;
@@ -45,16 +44,16 @@ import org.xml.sax.SAXParseException;
 
 /**
  * Type-related utility methods.
- *
+ * 
  * @author
  *    <a href="mailto:kohsuke.kawaguchi@sun.com">Kohsuke KAWAGUCHI</a>
  */
 public class TypeUtil {
-
-
+    
+    
     /**
      * Computes the common base type of two types.
-     *
+     * 
      * @param types
      *      set of {@link JType} objects.
      */
@@ -64,11 +63,11 @@ public class TypeUtil {
 
     /**
      * Computes the common base type of types.
-     *
+     * 
      * TODO: this is a very interesting problem. Since one type has possibly
      * multiple base types, it's not an easy problem.
      * The current implementation is very naive.
-     *
+     * 
      * To make the result deterministic across differente JVMs, we have to
      * use a Set whose ordering is deterministic.
      */
@@ -211,7 +210,7 @@ public class TypeUtil {
     /**
      * Returns the set of all classes/interfaces that a given type
      * implements/extends, including itself.
-     *
+     * 
      * For example, if you pass java.io.FilterInputStream, then the returned
      * set will contain java.lang.Object, java.lang.InputStream, and
      * java.lang.FilterInputStream.
@@ -228,7 +227,7 @@ public class TypeUtil {
         JClass _super = t._extends();
         if(_super!=null)
             getAssignableTypes(_super,s);
-
+        
         // recursively process all implemented interfaces
         Iterator<JClass> itr = t._implements();
         while(itr.hasNext())
@@ -255,7 +254,7 @@ public class TypeUtil {
             return codeModel.directClass(typeName);
         }
     }
-
+    
     /**
      * Compares {@link JType} objects by their names.
      */

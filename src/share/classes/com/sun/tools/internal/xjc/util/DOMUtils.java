@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,6 @@
  * have any questions.
  */
 
-
 /*
  * DOMUtils.java
  *
@@ -44,8 +43,9 @@ import org.w3c.dom.NodeList;
 
 
 /**
- *
+ * 
  * @author  Vivek Pandey
+ * @version 1.0
  *
  */
 public class DOMUtils {
@@ -55,14 +55,14 @@ public class DOMUtils {
         for( int i=0; i<children.getLength(); i++ ) {
             Node item = children.item(i);
             if(!(item instanceof Element ))     continue;
-
+            
             if(nsUri.equals(item.getNamespaceURI())
             && localPart.equals(item.getLocalName()) )
                 return (Element)item;
         }
         return null;
     }
-
+    
     /** Gets the child elements of the given name. */
     public static Element[] getChildElements(Element parent, String nsUri, String localPart ) {
         ArrayList a = new ArrayList();
@@ -70,14 +70,14 @@ public class DOMUtils {
         for( int i=0; i<children.getLength(); i++ ) {
             Node item = children.item(i);
             if(!(item instanceof Element ))     continue;
-
+            
             if(nsUri.equals(item.getNamespaceURI())
             && localPart.equals(item.getLocalName()) )
                 a.add(item);
         }
         return (Element[]) a.toArray(new Element[a.size()]);
     }
-
+    
     /** Gets all the child elements. */
     public static Element[] getChildElements( Element parent ) {
         ArrayList a = new ArrayList();
@@ -85,18 +85,18 @@ public class DOMUtils {
         for( int i=0; i<children.getLength(); i++ ) {
             Node item = children.item(i);
             if(!(item instanceof Element ))     continue;
-
+            
             a.add(item);
         }
         return (Element[]) a.toArray(new Element[a.size()]);
     }
-
-
+    
+    
   public static String getElementText(Element element) throws DOMException{
     for (Node child = element.getFirstChild(); child != null;
      child = child.getNextSibling()) {
       if(child.getNodeType() == Node.TEXT_NODE)
-    return child.getNodeValue();
+    return child.getNodeValue();      
     }
     return element.getNodeValue();
   }
@@ -115,7 +115,7 @@ public class DOMUtils {
     return null;
   }
 
-  public static Element getElement(Document parent, String namespaceURI,
+  public static Element getElement(Document parent, String namespaceURI, 
                        String localName) {
     NodeList children = parent.getElementsByTagNameNS(namespaceURI, localName);
     if(children.getLength() >= 1)
@@ -131,7 +131,7 @@ public class DOMUtils {
 //    return getElements(children);
 //  }
 //
-//  public static Element[] getChildElements(Element parent, String namespaceURI,
+//  public static Element[] getChildElements(Element parent, String namespaceURI, 
 //                       String localName) {
 //    NodeList children = parent.getElementsByTagNameNS(namespaceURI, localName);
 //    return getElements(children);
@@ -141,7 +141,7 @@ public class DOMUtils {
 //    NodeList children = parent.getElementsByTagName(name);
 //    return getElements(children);
 //  }
-
+  
     public static Element[] getElements(NodeList children) {
         Element[] elements = null;
         int len = 0;

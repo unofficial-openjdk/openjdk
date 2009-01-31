@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.xsom.util;
 
 import java.util.Locale;
@@ -50,10 +49,10 @@ import com.sun.xml.internal.xsom.visitor.XSFunction;
 
 /**
  * Gets the human-readable name of a schema component.
- *
+ * 
  * <p>
  * This is a function object that returns {@link String}.
- *
+ * 
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -65,15 +64,15 @@ public class NameGetter implements XSFunction<String> {
     public NameGetter( Locale _locale ) {
         this.locale = _locale;
     }
-
+    
     private final Locale locale;
-
+    
     /**
      * An instance that gets names in the default locale.
      * This instance is provided just for convenience.
      */
     public final static XSFunction theInstance = new NameGetter(null);
-
+    
     /**
      * Gets the name of the specified component in the default locale.
      * This method is just a wrapper.
@@ -81,8 +80,8 @@ public class NameGetter implements XSFunction<String> {
     public static String get( XSComponent comp ) {
         return (String)comp.apply(theInstance);
     }
-
-
+    
+    
     public String annotation(XSAnnotation ann) {
         return localize("annotation");
     }
@@ -138,7 +137,7 @@ public class NameGetter implements XSFunction<String> {
     public String elementDecl(XSElementDecl decl) {
         return localize("elementDecl");
     }
-
+    
     public String notation( XSNotation n ) {
         return localize("notation");
     }
@@ -153,12 +152,12 @@ public class NameGetter implements XSFunction<String> {
 
     private String localize( String key ) {
         ResourceBundle rb;
-
+        
         if(locale==null)
             rb = ResourceBundle.getBundle(NameGetter.class.getName());
         else
             rb = ResourceBundle.getBundle(NameGetter.class.getName(),locale);
-
+        
         return rb.getString(key);
     }
 }

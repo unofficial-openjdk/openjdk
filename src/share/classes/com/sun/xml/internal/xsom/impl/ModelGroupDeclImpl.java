@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.xsom.impl;
 
 import com.sun.xml.internal.xsom.XSElementDecl;
@@ -44,26 +43,26 @@ public class ModelGroupDeclImpl extends DeclarationImpl implements XSModelGroupD
         AnnotationImpl _annon, Locator _loc, ForeignAttributesImpl _fa,
         String _targetNamespace, String _name,
         ModelGroupImpl _modelGroup ) {
-
+        
         super(owner,_annon,_loc,_fa,_targetNamespace,_name,false);
         this.modelGroup = _modelGroup;
-
+        
         if(modelGroup==null)
             throw new IllegalArgumentException();
     }
-
+    
     private final ModelGroupImpl modelGroup;
     public XSModelGroup getModelGroup() { return modelGroup; }
-
+    
     /**
      * This component is a redefinition of "oldMG". Fix up the internal state
-     * as such.
+     * as such. 
      */
     public void redefine( ModelGroupDeclImpl oldMG ) {
         modelGroup.redefine(oldMG);
     }
-
-
+    
+    
     public void visit( XSVisitor visitor ) {
         visitor.modelGroupDecl(this);
     }

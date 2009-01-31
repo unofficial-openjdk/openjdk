@@ -1,10 +1,4 @@
 /*
- * $Id: FactoryFinder.java,v 1.5 2004/04/02 01:24:17 ofung Exp $
- * $Revision: 1.5 $
- * $Date: 2004/04/02 01:24:17 $
- */
-
-/*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -28,6 +22,13 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: FactoryFinder.java,v 1.6 2005/04/05 22:28:12 mk125090 Exp $
+ * $Revision: 1.6 $
+ * $Date: 2005/04/05 22:28:12 $
+ */
+
+
 
 package javax.xml.soap;
 
@@ -38,7 +39,7 @@ import java.util.Properties;
 class FactoryFinder {
 
     /**
-     * Creates an instance of the specified class using the specified
+     * Creates an instance of the specified class using the specified 
      * <code>ClassLoader</code> object.
      *
      * @exception SOAPException if the given class could not be found
@@ -123,11 +124,11 @@ class FactoryFinder {
             } else {
                 is=classLoader.getResourceAsStream(serviceId);
             }
-
+        
             if( is!=null ) {
                 BufferedReader rd =
                     new BufferedReader(new InputStreamReader(is, "UTF-8"));
-
+        
                 String factoryClassName = rd.readLine();
                 rd.close();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,34 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
- *
- * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
- *
- */
+ 
 
 package com.sun.xml.internal.fastinfoset.stax.events;
 
@@ -65,22 +38,22 @@ public class EntityDeclarationImpl extends EventBase implements EntityDeclaratio
     private String _entityName;
     private String _replacement;
     private String _notationName;
-
+    
     /** Creates a new instance of EntityDeclarationImpl */
     public EntityDeclarationImpl() {
         init();
     }
-
+    
     public EntityDeclarationImpl(String entityName , String replacement){
         init();
         _entityName = entityName;
         _replacement = replacement;
     }
-
+    
     /**
     * The entity's public identifier, or null if none was given
     * @return the public ID for this declaration or null
-    */
+    */    
     public String getPublicId(){
         return _publicId;
     }
@@ -91,7 +64,7 @@ public class EntityDeclarationImpl extends EventBase implements EntityDeclaratio
     */
     public String getSystemId(){
         return _systemId;
-    }
+    }    
 
     /**
     * The entity's name
@@ -100,7 +73,7 @@ public class EntityDeclarationImpl extends EventBase implements EntityDeclaratio
     public String getName(){
         return _entityName;
     }
-
+    
     /**
     * The name of the associated notation.
     * @return the notation name
@@ -128,18 +101,30 @@ public class EntityDeclarationImpl extends EventBase implements EntityDeclaratio
         return _baseURI;
     }
 
+    public void setPublicId(String publicId) {
+        _publicId = publicId;
+    }
+    
+    public void setSystemId(String systemId) {
+        _systemId = systemId;
+    }
+    
+    public void setBaseURI(String baseURI) {
+        _baseURI = baseURI;
+    }
+    
     public void setName(String entityName){
         _entityName = entityName;
-    }
-
+    }    
+    
     public void setReplacementText(String replacement){
         _replacement = replacement;
     }
-
+        
     public void setNotationName(String notationName){
         _notationName = notationName;
     }
-
+        
     protected void init(){
         setEventType(ENTITY_DECLARATION);
     }

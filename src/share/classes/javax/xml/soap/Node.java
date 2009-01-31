@@ -1,10 +1,4 @@
 /*
- * $Id: Node.java,v 1.12 2004/04/02 01:24:17 ofung Exp $
- * $Revision: 1.12 $
- * $Date: 2004/04/02 01:24:17 $
- */
-
-/*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -28,44 +22,51 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: Node.java,v 1.13 2005/04/05 20:49:49 mk125090 Exp $
+ * $Revision: 1.13 $
+ * $Date: 2005/04/05 20:49:49 $
+ */
+
+
 package javax.xml.soap;
 
 /**
  * A representation of a node (element) in an XML document.
- * This interface extnends the standard DOM Node interface with methods for
+ * This interface extnends the standard DOM Node interface with methods for 
  * getting and setting the value of a node, for
  * getting and setting the parent of a node, and for removing a node.
  */
-public interface Node extends org.w3c.dom.Node {
+public interface Node extends org.w3c.dom.Node {    
     /**
      * Returns the value of this node if this is a <code>Text</code> node or the
      * value of the immediate child of this node otherwise.
-     * If there is an immediate child of this <code>Node</code> that it is a
+     * If there is an immediate child of this <code>Node</code> that it is a 
      * <code>Text</code> node then it's value will be returned. If there is
-     * more than one <code>Text</code> node then the value of the first
+     * more than one <code>Text</code> node then the value of the first 
      * <code>Text</code> Node will be returned.
      * Otherwise <code>null</code> is returned.
      *
      * @return a <code>String</code> with the text of this node if this is a
-     *          <code>Text</code> node or the text contained by the first
-     *          immediate child of this <code>Node</code> object that is a
+     *          <code>Text</code> node or the text contained by the first 
+     *          immediate child of this <code>Node</code> object that is a 
      *          <code>Text</code> object if such a child exists;
      *          <code>null</code> otherwise.
      */
     public String getValue();
-
+    
     /**
-     * If this is a Text node then this method will set its value,
+     * If this is a Text node then this method will set its value, 
      * otherwise it sets the value of  the immediate (Text) child of this node.
      * The value of the immediate child of this node can be set only if, there is
      * one child node and that node is a <code>Text</code> node, or if
-     * there are no children in which case a child <code>Text</code> node will be
+     * there are no children in which case a child <code>Text</code> node will be 
      * created.
-     *
+     * 
      * @exception IllegalStateException if the node is not a <code>Text</code>
-     *              node and either has more than one child node or has a child
+     *              node and either has more than one child node or has a child 
      *              node that is not a <code>Text</code> node.
-     *
+     * 
      * @since SAAJ 1.2
      */
     public void setValue(String value);

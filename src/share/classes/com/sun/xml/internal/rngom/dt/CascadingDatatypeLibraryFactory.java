@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,15 +22,14 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.rngom.dt;
 
 import org.relaxng.datatype.DatatypeLibrary;
 import org.relaxng.datatype.DatatypeLibraryFactory;
 
 /**
- *
- *
+ * 
+ * 
  * @author
  *      Kohsuke Kawaguchi (kk@kohsuke.org)
  */
@@ -42,7 +41,7 @@ public class CascadingDatatypeLibraryFactory implements DatatypeLibraryFactory {
         this.factory1 = factory1;
         this.factory2 = factory2;
     }
-
+    
     public DatatypeLibrary createDatatypeLibrary(String namespaceURI) {
         DatatypeLibrary lib = factory1.createDatatypeLibrary(namespaceURI);
         if(lib==null)

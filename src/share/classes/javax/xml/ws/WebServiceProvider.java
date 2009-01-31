@@ -44,13 +44,13 @@ public @interface WebServiceProvider {
     /**
      * Location of the WSDL description for the service.
      */
-    String wsdlLocation() default "";
-
+    String wsdlLocation() default "";    
+    
     /**
      * Service name.
      */
     String serviceName() default "";
-
+    
     /**
      * Target namespace for the service
      */

@@ -1,11 +1,5 @@
 /*
- * $Id: TextImpl.java,v 1.19 2006/01/27 12:49:36 vj135062 Exp $
- * $Revision: 1.19 $
- * $Date: 2006/01/27 12:49:36 $
- */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +22,13 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: TextImpl.java,v 1.19 2006/01/27 12:49:36 vj135062 Exp $
+ * $Revision: 1.19 $
+ * $Date: 2006/01/27 12:49:36 $
+ */
+
+
 package com.sun.xml.internal.messaging.saaj.soap.impl;
 
 import java.util.logging.Logger;
@@ -45,7 +46,7 @@ public class TextImpl
     protected static Logger log =
         Logger.getLogger(LogDomainConstants.SOAP_IMPL_DOMAIN,
                          "com.sun.xml.internal.messaging.saaj.soap.impl.LocalStrings");
-
+    
     public TextImpl(SOAPDocumentImpl ownerDoc, String text) {
         super(ownerDoc, text);
     }
@@ -54,7 +55,7 @@ public class TextImpl
         String nodeValue = getNodeValue();
         return (nodeValue.equals("") ? null : nodeValue);
     }
-
+    
     public void setValue(String text) {
         setNodeValue(text);
     }

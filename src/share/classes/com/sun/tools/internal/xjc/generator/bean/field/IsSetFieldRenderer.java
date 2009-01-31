@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.tools.internal.xjc.generator.bean.field;
 
 import com.sun.tools.internal.xjc.generator.bean.ClassOutlineImpl;
@@ -32,12 +31,12 @@ import com.sun.tools.internal.xjc.outline.FieldOutline;
 /**
  * FieldRenderer that wraps another field generator
  * and produces isSetXXX unsetXXX methods.
- *
+ * 
  * <p>
  * This follows the decorator design pattern so that
  * the caller of FieldRenderer can forget about details
  * of the method generation.
- *
+ * 
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -45,11 +44,11 @@ public class IsSetFieldRenderer implements FieldRenderer {
     private final FieldRenderer core;
     private final boolean generateUnSetMethod;
     private final boolean generateIsSetMethod;
-
-    public IsSetFieldRenderer(
+    
+    public IsSetFieldRenderer( 
         FieldRenderer core,
         boolean generateUnSetMethod, boolean generateIsSetMethod ) {
-
+        
         this.core = core;
         this.generateUnSetMethod = generateUnSetMethod;
         this.generateIsSetMethod = generateIsSetMethod;

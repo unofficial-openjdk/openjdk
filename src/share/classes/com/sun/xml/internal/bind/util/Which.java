@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,10 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * @(#)$Id: Which.java,v 1.1 2005/04/15 20:03:51 kohsuke Exp $
+ */
+
 
 package com.sun.xml.internal.bind.util;
 
@@ -29,7 +33,7 @@ import java.net.URL;
 
 /**
  * Finds out where a class file is loaded from.
- *
+ * 
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -53,7 +57,7 @@ public class Which {
         if(loader == null) {
             loader = ClassLoader.getSystemClassLoader();
         }
-
+        
         URL it = loader.getResource(classnameAsResource);
         if (it != null) {
             return it.toString();

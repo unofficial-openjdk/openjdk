@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,8 +35,7 @@ import com.sun.xml.internal.xsom.XSType;
 import com.sun.xml.internal.xsom.XSWildcard;
 import com.sun.xml.internal.xsom.impl.parser.DelayedRef;
 import com.sun.xml.internal.xsom.impl.parser.SchemaDocumentImpl;
-import com.sun.xml.internal.xsom.impl.util.ConcatIterator;
-import com.sun.xml.internal.xsom.impl.util.FilterIterator;
+import com.sun.xml.internal.xsom.impl.scd.Iterators;
 import com.sun.xml.internal.xsom.visitor.XSFunction;
 import com.sun.xml.internal.xsom.visitor.XSVisitor;
 import org.xml.sax.Locator;
@@ -48,15 +47,15 @@ public class ComplexTypeImpl extends AttributesHolder implements XSComplexType, 
     public ComplexTypeImpl( SchemaDocumentImpl _parent,
         AnnotationImpl _annon, Locator _loc, ForeignAttributesImpl _fa,
         String _name, boolean _anonymous,
-
+        
         boolean _abstract, int _derivationMethod,
         Ref.Type _base, int _final, int _block, boolean _mixed ) {
-
+        
         super(_parent,_annon,_loc,_fa,_name,_anonymous);
-
+        
         if(_base==null)
             throw new IllegalArgumentException();
-
+            
         this._abstract = _abstract;
         this.derivationMethod = _derivationMethod;
         this.baseType = _base;
@@ -64,7 +63,7 @@ public class ComplexTypeImpl extends AttributesHolder implements XSComplexType, 
         this.blockValue = _block;
         this.mixed = _mixed;
     }
-
+    
     public XSComplexType asComplexType(){ return this; }
 
     public boolean isDerivedFrom(XSType t) {
@@ -82,10 +81,10 @@ public class ComplexTypeImpl extends AttributesHolder implements XSComplexType, 
     public XSSimpleType  asSimpleType()    { return null; }
     public final boolean isSimpleType() { return false; }
     public final boolean isComplexType(){ return true; }
-
+    
     private int derivationMethod;
     public int getDerivationMethod() { return derivationMethod; }
-
+    
     private Ref.Type baseType;
     public XSType getBaseType() { return baseType.getType(); }
 
@@ -126,7 +125,7 @@ public class ComplexTypeImpl extends AttributesHolder implements XSComplexType, 
 
     private final boolean _abstract;
     public boolean isAbstract() { return _abstract; }
-
+    
     private WildcardImpl localAttWildcard;
     /**
      * Set the local attribute wildcard.
@@ -136,13 +135,13 @@ public class ComplexTypeImpl extends AttributesHolder implements XSComplexType, 
     }
     public XSWildcard getAttributeWildcard() {
         WildcardImpl complete = localAttWildcard;
-
+        
         Iterator itr = iterateAttGroups();
         while( itr.hasNext() ) {
             WildcardImpl w = (WildcardImpl)((XSAttGroupDecl)itr.next()).getAttributeWildcard();
-
+            
             if(w==null)     continue;
-
+            
             if(complete==null)
                 complete = w;
             else
@@ -150,17 +149,17 @@ public class ComplexTypeImpl extends AttributesHolder implements XSComplexType, 
                 // but I think it has to be union.
                 complete = complete.union(ownerDocument,w);
         }
-
+        
         if( getDerivationMethod()==RESTRICTION )    return complete;
-
+        
         WildcardImpl base=null;
         XSType baseType = getBaseType();
         if(baseType.asComplexType()!=null)
             base = (WildcardImpl)baseType.asComplexType().getAttributeWildcard();
-
+        
         if(complete==null)  return base;
         if(base==null)      return complete;
-
+        
         return complete.union(ownerDocument,base);
     }
 
@@ -168,23 +167,23 @@ public class ComplexTypeImpl extends AttributesHolder implements XSComplexType, 
     public boolean isFinal( int derivationMethod ) {
         return (finalValue&derivationMethod)!=0;
     }
-
+    
     private final int blockValue;
     public boolean isSubstitutionProhibited( int method ) {
         return (blockValue&method)!=0;
     }
-
-
+    
+    
     private Ref.ContentType contentType;
     public void setContentType( Ref.ContentType v ) { contentType = v; }
     public XSContentType getContentType() { return contentType.getContentType(); }
-
+    
     private XSContentType explicitContent;
     public void setExplicitContent( XSContentType v ) {
         this.explicitContent = v;
     }
     public XSContentType getExplicitContent() { return explicitContent; }
-
+    
     private final boolean mixed;
     public boolean isMixed() { return mixed; }
 
@@ -193,49 +192,49 @@ public class ComplexTypeImpl extends AttributesHolder implements XSComplexType, 
 
     public XSAttributeUse getAttributeUse( String nsURI, String localName ) {
         UName name = new UName(nsURI,localName);
-
+        
         if(prohibitedAtts.contains(name))       return null;
-
+        
         XSAttributeUse o = attributes.get(name);
-
-
+        
+        
         if(o==null) {
             Iterator itr = iterateAttGroups();
             while(itr.hasNext() && o==null)
                 o = ((XSAttGroupDecl)itr.next()).getAttributeUse(nsURI,localName);
         }
-
+        
         if(o==null) {
             XSType base = getBaseType();
             if(base.asComplexType()!=null)
                 o = base.asComplexType().getAttributeUse(nsURI,localName);
         }
-
+        
         return o;
     }
 
-    public Iterator iterateAttributeUses() {
-
+    public Iterator<XSAttributeUse> iterateAttributeUses() {
+        
         XSComplexType baseType = getBaseType().asComplexType();
-
+        
         if( baseType==null )    return super.iterateAttributeUses();
-
-        return new ConcatIterator(
-            new FilterIterator(baseType.iterateAttributeUses()) {
-                protected boolean allows( Object o ) {
-                    XSAttributeDecl u = ((XSAttributeUse)o).getDecl();
+        
+        return new Iterators.Union<XSAttributeUse>(
+            new Iterators.Filter<XSAttributeUse>(baseType.iterateAttributeUses()) {
+                protected boolean matches(XSAttributeUse value) {
+                    XSAttributeDecl u = value.getDecl();
                     UName n = new UName(u.getTargetNamespace(),u.getName());
                     return !prohibitedAtts.contains(n);
                 }
             },
             super.iterateAttributeUses() );
     }
-
-
+    
+    
     public XSType[] listSubstitutables() {
         return Util.listSubstitutables(this);
     }
-
+    
 
 
     public void visit( XSVisitor visitor ) {

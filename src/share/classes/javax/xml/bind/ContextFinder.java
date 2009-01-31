@@ -39,18 +39,21 @@ import java.util.StringTokenizer;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 
 import static javax.xml.bind.JAXBContext.JAXB_CONTEXT_FACTORY;
 
 //import java.lang.reflect.InvocationTargetException;
 
 /**
- * This class is package private and therefore is not exposed as part of the
+ * This class is package private and therefore is not exposed as part of the 
  * JAXB API.
  *
  * This code is designed to implement the JAXB 1.0 spec pluggability feature
  *
  * @author <ul><li>Ryan Shoemaker, Sun Microsystems, Inc.</li></ul>
+ * @version $Revision$
  * @see JAXBContext
  */
 class ContextFinder {
@@ -58,7 +61,7 @@ class ContextFinder {
     static {
         logger = Logger.getLogger("javax.xml.bind");
         try {
-            if (System.getProperty("jaxb.debug", null) != null) {
+            if (AccessController.doPrivileged(new GetPropertyAction("jaxb.debug")) != null) {
                 // disconnect the logger from a bigger framework (if any)
                 // and take the matters into our own hands
                 logger.setUseParentHandlers(false);
@@ -105,24 +108,23 @@ class ContextFinder {
      *          The Class object of the type being cast
      * @param targetType
      *          The Class object of the type that is being cast to
-     * @throws JAXBException
-     *          If the cast would fail
+     * @return JAXBException to be thrown.
      */
-    private static void handleClassCastException(Class originalType, Class targetType) throws JAXBException {
+    private static JAXBException handleClassCastException(Class originalType, Class targetType) {
         final URL targetTypeURL = which(targetType);
 
-        throw new JAXBException(Messages.format(Messages.ILLEGAL_CAST,
+        return new JAXBException(Messages.format(Messages.ILLEGAL_CAST,
                 // we don't care where the impl class is, we want to know where JAXBContext lives in the impl
                 // class' ClassLoader
-                originalType.getClass().getClassLoader().getResource("javax/xml/bind/JAXBContext.class").toString(),
-                targetTypeURL.toString()));
+                originalType.getClassLoader().getResource("javax/xml/bind/JAXBContext.class"),
+                targetTypeURL));
     }
 
     /**
      * Create an instance of a class using the specified ClassLoader
      */
     static JAXBContext newInstance( String contextPath,
-                               String className,
+                               String className, 
                                ClassLoader classLoader,
                                Map properties )
         throws JAXBException
@@ -150,7 +152,7 @@ class ContextFinder {
                 // any failure in invoking this method would be considered fatal
                 context = m.invoke(null,contextPath,classLoader,properties);
             } catch (NoSuchMethodException e) {
-                ; // it's not an error for the provider not to have this method.
+                // it's not an error for the provider not to have this method.
             }
 
             if(context==null) {
@@ -229,7 +231,7 @@ class ContextFinder {
             Object context = m.invoke(null, classes, properties);
             if(!(context instanceof JAXBContext)) {
                 // the cast would fail, so generate an exception with a nice message
-                handleClassCastException(context.getClass(), JAXBContext.class);
+                throw handleClassCastException(context.getClass(), JAXBContext.class);
             }
             return (JAXBContext)context;
         } catch (IllegalAccessException e) {
@@ -270,9 +272,7 @@ class ContextFinder {
              propFileName = new StringBuilder().append(packageName).append("/jaxb.properties");
 
             Properties props = loadJAXBProperties( classLoader, propFileName.toString() );
-            if (props == null) {
-                continue;
-            } else {
+            if (props != null) {
                 if (props.containsKey(factoryId)) {
                     factoryClassName = props.getProperty(factoryId);
                     return newInstance( contextPath, factoryClassName, classLoader, properties );
@@ -285,7 +285,7 @@ class ContextFinder {
         logger.fine("Searching the system property");
 
         // search for a system property second (javax.xml.bind.JAXBContext)
-        factoryClassName = System.getProperty(jaxbContextFQCN, null);
+        factoryClassName = AccessController.doPrivileged(new GetPropertyAction(jaxbContextFQCN));
         if(  factoryClassName != null ) {
             return newInstance( contextPath, factoryClassName, classLoader, properties );
         }
@@ -298,10 +298,11 @@ class ContextFinder {
             final StringBuilder resource = new StringBuilder().append("META-INF/services/").append(jaxbContextFQCN);
             final InputStream resourceStream =
                     classLoader.getResourceAsStream(resource.toString());
-
+            
             if (resourceStream != null) {
                 r = new BufferedReader(new InputStreamReader(resourceStream, "UTF-8"));
                 factoryClassName = r.readLine().trim();
+                r.close();
                 return newInstance(contextPath, factoryClassName, classLoader, properties);
             } else {
                 logger.fine("Unable to load:" + resource.toString());
@@ -327,8 +328,13 @@ class ContextFinder {
         String factoryClassName;
 
         // search for jaxb.properties in the class loader of each class first
-        for (Class c : classes) {
-            ClassLoader classLoader = c.getClassLoader();
+        for (final Class c : classes) {
+            // this classloader is used only to load jaxb.properties, so doing this should be safe.
+            ClassLoader classLoader = AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
+                public ClassLoader run() {
+                    return c.getClassLoader();
+                }
+            });
             Package pkg = c.getPackage();
             if(pkg==null)
                 continue;       // this is possible for primitives, arrays, and classes that are loaded by poorly implemented ClassLoaders
@@ -346,7 +352,6 @@ class ContextFinder {
             Properties props = loadJAXBProperties(classLoader, resourceName);
             if (props == null) {
                 logger.fine("  not found");
-                continue;
             } else {
                 logger.fine("  found");
                 if (props.containsKey(JAXB_CONTEXT_FACTORY)) {
@@ -361,7 +366,7 @@ class ContextFinder {
 
         // search for a system property second (javax.xml.bind.JAXBContext)
         logger.fine("Checking system property "+jaxbContextFQCN);
-        factoryClassName = System.getProperty(jaxbContextFQCN, null);
+        factoryClassName = AccessController.doPrivileged(new GetPropertyAction(jaxbContextFQCN));
         if(  factoryClassName != null ) {
             logger.fine("  found "+factoryClassName);
             return newInstance( classes, properties, factoryClassName );
@@ -402,11 +407,11 @@ class ContextFinder {
 
 
     private static Properties loadJAXBProperties( ClassLoader classLoader,
-                                                  String propFileName )
+                                                  String propFileName ) 
         throws JAXBException {
-
+                                            
         Properties props = null;
-
+                                                    
         try {
             URL url;
             if(classLoader==null)
@@ -420,12 +425,12 @@ class ContextFinder {
                 InputStream is = url.openStream();
                 props.load( is );
                 is.close();
-            }
+            } 
         } catch( IOException ioe ) {
             logger.log(Level.FINE,"Unable to load "+propFileName,ioe);
             throw new JAXBException( ioe.toString(), ioe );
         }
-
+        
         return props;
     }
 

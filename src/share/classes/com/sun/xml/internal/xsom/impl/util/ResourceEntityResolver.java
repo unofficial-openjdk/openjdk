@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,9 +31,9 @@ public class ResourceEntityResolver implements EntityResolver {
     public ResourceEntityResolver( Class _base ) {
         this.base = _base;
     }
-
+    
     private final Class base;
-
+    
     public InputSource resolveEntity( String publicId, String systemId ) {
         return new InputSource(base.getResourceAsStream(systemId));
     }

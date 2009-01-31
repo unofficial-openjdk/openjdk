@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,34 +23,6 @@
  * have any questions.
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
- */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
- *
- * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
- *
  */
 
 
@@ -73,92 +45,92 @@ public class DoubleEncodingAlgorithm extends IEEE754FloatingPointEncodingAlgorit
     public final int getPrimtiveLengthFromOctetLength(int octetLength) throws EncodingAlgorithmException {
         if (octetLength % DOUBLE_SIZE != 0) {
             throw new EncodingAlgorithmException(CommonResourceBundle.getInstance().
-                    getString("message.lengthIsNotMultipleOfDouble", new Object[]{new Integer(DOUBLE_SIZE)}));
+                    getString("message.lengthIsNotMultipleOfDouble", new Object[]{Integer.valueOf(DOUBLE_SIZE)}));
         }
-
+        
         return octetLength / DOUBLE_SIZE;
     }
-
+    
     public int getOctetLengthFromPrimitiveLength(int primitiveLength) {
         return primitiveLength * DOUBLE_SIZE;
     }
-
+   
     public final Object decodeFromBytes(byte[] b, int start, int length) throws EncodingAlgorithmException {
         double[] data = new double[getPrimtiveLengthFromOctetLength(length)];
         decodeFromBytesToDoubleArray(data, 0, b, start, length);
-
+        
         return data;
     }
-
+    
     public final Object decodeFromInputStream(InputStream s) throws IOException {
         return decodeFromInputStreamToDoubleArray(s);
     }
-
-
+    
+    
     public void encodeToOutputStream(Object data, OutputStream s) throws IOException {
         if (!(data instanceof double[])) {
             throw new IllegalArgumentException(CommonResourceBundle.getInstance().getString("message.dataNotDouble"));
         }
-
+        
         final double[] fdata = (double[])data;
-
+        
         encodeToOutputStreamFromDoubleArray(fdata, s);
     }
-
+    
     public final Object convertFromCharacters(char[] ch, int start, int length) {
         final CharBuffer cb = CharBuffer.wrap(ch, start, length);
         final List doubleList = new ArrayList();
-
+        
         matchWhiteSpaceDelimnatedWords(cb,
                 new WordListener() {
             public void word(int start, int end) {
                 String fStringValue = cb.subSequence(start, end).toString();
-                doubleList.add(Float.valueOf(fStringValue));
+                doubleList.add(Double.valueOf(fStringValue));
             }
         }
         );
-
+        
         return generateArrayFromList(doubleList);
     }
-
+    
     public final void convertToCharacters(Object data, StringBuffer s) {
         if (!(data instanceof double[])) {
             throw new IllegalArgumentException(CommonResourceBundle.getInstance().getString("message.dataNotDouble"));
         }
-
+        
         final double[] fdata = (double[])data;
-
+        
         convertToCharactersFromDoubleArray(fdata, s);
     }
-
-
+    
+    
     public final void decodeFromBytesToDoubleArray(double[] data, int fstart, byte[] b, int start, int length) {
         final int size = length / DOUBLE_SIZE;
         for (int i = 0; i < size; i++) {
             final long bits =
-                    ((long)(b[start++] & 0xFF) << 56) |
-                    ((long)(b[start++] & 0xFF) << 48) |
-                    ((long)(b[start++] & 0xFF) << 40) |
-                    ((long)(b[start++] & 0xFF) << 32) |
-                    ((long)(b[start++] & 0xFF) << 24) |
-                    ((long)(b[start++] & 0xFF) << 16) |
-                    ((long)(b[start++] & 0xFF) << 8) |
+                    ((long)(b[start++] & 0xFF) << 56) | 
+                    ((long)(b[start++] & 0xFF) << 48) | 
+                    ((long)(b[start++] & 0xFF) << 40) | 
+                    ((long)(b[start++] & 0xFF) << 32) | 
+                    ((long)(b[start++] & 0xFF) << 24) | 
+                    ((long)(b[start++] & 0xFF) << 16) | 
+                    ((long)(b[start++] & 0xFF) << 8) | 
                     (long)(b[start++] & 0xFF);
             data[fstart++] = Double.longBitsToDouble(bits);
         }
     }
-
+    
     public final double[] decodeFromInputStreamToDoubleArray(InputStream s) throws IOException {
         final List doubleList = new ArrayList();
         final byte[] b = new byte[DOUBLE_SIZE];
-
+        
         while (true) {
             int n = s.read(b);
             if (n != DOUBLE_SIZE) {
                 if (n == -1) {
                     break;
                 }
-
+                
                 while(n != DOUBLE_SIZE) {
                     final int m = s.read(b, n, DOUBLE_SIZE - n);
                     if (m == -1) {
@@ -167,24 +139,24 @@ public class DoubleEncodingAlgorithm extends IEEE754FloatingPointEncodingAlgorit
                     n += m;
                 }
             }
-
-            final int bits =
-                    ((b[0] & 0xFF) << 56) |
-                    ((b[1] & 0xFF) << 48) |
-                    ((b[2] & 0xFF) << 40) |
-                    ((b[3] & 0xFF) << 32) |
-                    ((b[4] & 0xFF) << 24) |
-                    ((b[5] & 0xFF) << 16) |
-                    ((b[6] & 0xFF) << 8) |
+            
+            final long bits = 
+                    ((long)(b[0] & 0xFF) << 56) | 
+                    ((long)(b[1] & 0xFF) << 48) | 
+                    ((long)(b[2] & 0xFF) << 40) | 
+                    ((long)(b[3] & 0xFF) << 32) | 
+                    ((b[4] & 0xFF) << 24) | 
+                    ((b[5] & 0xFF) << 16) | 
+                    ((b[6] & 0xFF) << 8) | 
                     (b[7] & 0xFF);
-
-            doubleList.add(new Double(Double.longBitsToDouble(bits)));
+            
+            doubleList.add(Double.valueOf(Double.longBitsToDouble(bits)));
         }
-
+        
         return generateArrayFromList(doubleList);
     }
-
-
+    
+    
     public final void encodeToOutputStreamFromDoubleArray(double[] fdata, OutputStream s) throws IOException {
         for (int i = 0; i < fdata.length; i++) {
             final long bits = Double.doubleToLongBits(fdata[i]);
@@ -198,11 +170,11 @@ public class DoubleEncodingAlgorithm extends IEEE754FloatingPointEncodingAlgorit
             s.write((int)(bits & 0xFF));
         }
     }
-
+    
     public final void encodeToBytes(Object array, int astart, int alength, byte[] b, int start) {
         encodeToBytesFromDoubleArray((double[])array, astart, alength, b, start);
     }
-
+    
     public final void encodeToBytesFromDoubleArray(double[] fdata, int fstart, int flength, byte[] b, int start) {
         final int fend = fstart + flength;
         for (int i = fstart; i < fend; i++) {
@@ -217,8 +189,8 @@ public class DoubleEncodingAlgorithm extends IEEE754FloatingPointEncodingAlgorit
             b[start++] = (byte)(bits & 0xFF);
         }
     }
-
-
+    
+    
     public final void convertToCharactersFromDoubleArray(double[] fdata, StringBuffer s) {
         final int end = fdata.length - 1;
         for (int i = 0; i <= end; i++) {
@@ -228,15 +200,15 @@ public class DoubleEncodingAlgorithm extends IEEE754FloatingPointEncodingAlgorit
             }
         }
     }
-
-
+    
+    
     public final double[] generateArrayFromList(List array) {
         double[] fdata = new double[array.size()];
         for (int i = 0; i < fdata.length; i++) {
             fdata[i] = ((Double)array.get(i)).doubleValue();
         }
-
+        
         return fdata;
     }
-
+    
 }

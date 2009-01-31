@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,11 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * @(#)ContentType.java       1.7 02/03/27
+ */
+
+
 
 package com.sun.xml.internal.messaging.saaj.packaging.mime.internet;
 
@@ -31,13 +36,14 @@ package com.sun.xml.internal.messaging.saaj.packaging.mime.internet;
  * methods to parse a ContentType string into individual components
  * and to generate a MIME style ContentType string.
  *
+ * @version 1.7, 02/03/27
  * @author  John Mani
  */
 public final class ContentType {
 
-    private String primaryType; // primary type
-    private String subType;     // subtype
-    private ParameterList list; // parameter list
+    private String primaryType;	// primary type
+    private String subType;	// subtype
+    private ParameterList list;	// parameter list
 
     /**
      * No-arg Constructor.
@@ -47,9 +53,9 @@ public final class ContentType {
     /**
      * Constructor.
      *
-     * @param   primaryType     primary type
-     * @param   subType subType
-     * @param   list    ParameterList
+     * @param	primaryType	primary type
+     * @param	subType	subType
+     * @param	list	ParameterList
      */
     public ContentType(String primaryType, String subType,
                        ParameterList list) {
@@ -63,36 +69,36 @@ public final class ContentType {
     /**
      * Constructor that takes a Content-Type string. The String
      * is parsed into its constituents: primaryType, subType
-     * and parameters. A ParseException is thrown if the parse fails.
+     * and parameters. A ParseException is thrown if the parse fails. 
      *
-     * @param   s       the Content-Type string.
-     * @exception       ParseException if the parse fails.
+     * @param	s	the Content-Type string.
+     * @exception	ParseException if the parse fails.
      */
     public ContentType(String s) throws ParseException {
-        HeaderTokenizer h = new HeaderTokenizer(s, HeaderTokenizer.MIME);
-        HeaderTokenizer.Token tk;
+	HeaderTokenizer h = new HeaderTokenizer(s, HeaderTokenizer.MIME);
+	HeaderTokenizer.Token tk;
 
-        // First "type" ..
-        tk = h.next();
-        if (tk.getType() != HeaderTokenizer.Token.ATOM)
-            throw new ParseException();
-        primaryType = tk.getValue();
+	// First "type" ..
+	tk = h.next();
+	if (tk.getType() != HeaderTokenizer.Token.ATOM)
+	    throw new ParseException();
+	primaryType = tk.getValue();
 
-        // The '/' separator ..
-        tk = h.next();
-        if ((char)tk.getType() != '/')
-            throw new ParseException();
+	// The '/' separator ..
+	tk = h.next();
+	if ((char)tk.getType() != '/')
+	    throw new ParseException();
 
-        // Then "subType" ..
-        tk = h.next();
-        if (tk.getType() != HeaderTokenizer.Token.ATOM)
-            throw new ParseException();
-        subType = tk.getValue();
+	// Then "subType" ..
+	tk = h.next();
+	if (tk.getType() != HeaderTokenizer.Token.ATOM)
+	    throw new ParseException();
+	subType = tk.getValue();
 
-        // Finally parameters ..
-        String rem = h.getRemainder();
-        if (rem != null)
-            list = new ParameterList(rem);
+	// Finally parameters ..
+	String rem = h.getRemainder();
+	if (rem != null)
+	    list = new ParameterList(rem);
     }
 
     public ContentType copy() {
@@ -104,7 +110,7 @@ public final class ContentType {
      * @return the primary type
      */
     public String getPrimaryType() {
-        return primaryType;
+	return primaryType;
     }
 
     /**
@@ -112,7 +118,7 @@ public final class ContentType {
      * @return the subType
      */
     public String getSubType() {
-        return subType;
+	return subType;
     }
 
     /**
@@ -123,67 +129,67 @@ public final class ContentType {
      * @return the type
      */
     public String getBaseType() {
-        return primaryType + '/' + subType;
+	return primaryType + '/' + subType;
     }
 
     /**
      * Return the specified parameter value. Returns <code>null</code>
      * if this parameter is absent.
-     * @return  parameter value
+     * @return	parameter value
      */
     public String getParameter(String name) {
-        if (list == null)
-            return null;
+	if (list == null)
+	    return null;
 
-        return list.get(name);
+	return list.get(name);
     }
 
     /**
-     * Return a ParameterList object that holds all the available
+     * Return a ParameterList object that holds all the available 
      * parameters. Returns null if no parameters are available.
      *
-     * @return  ParameterList
+     * @return	ParameterList
      */
     public ParameterList getParameterList() {
-        return list;
+	return list;
     }
 
     /**
      * Set the primary type. Overrides existing primary type.
-     * @param   primaryType     primary type
+     * @param	primaryType	primary type
      */
     public void setPrimaryType(String primaryType) {
-        this.primaryType = primaryType;
+	this.primaryType = primaryType;
     }
 
     /**
      * Set the subType. Overrides existing subType
-     * @param   subType subType
+     * @param	subType	subType
      */
     public void setSubType(String subType) {
-        this.subType = subType;
+	this.subType = subType;
     }
 
     /**
      * Set the specified parameter. If this parameter already exists,
      * it is replaced by this new value.
      *
-     * @param   name    parameter name
-     * @param   value   parameter value
+     * @param	name	parameter name
+     * @param	value	parameter value
      */
     public void setParameter(String name, String value) {
-        if (list == null)
-            list = new ParameterList();
+	if (list == null)
+	    list = new ParameterList();
 
-        list.set(name, value);
+	list.set(name, value);
     }
 
     /**
      * Set a new ParameterList.
-     * @param   list    ParameterList
+     * @param	list	ParameterList
      */
     public void setParameterList(ParameterList list) {
-        this.list = list;
+	this.list = list;
     }
 
     /**
@@ -191,26 +197,26 @@ public final class ContentType {
      * this Content-Type. Returns <code>null</code> if
      * the conversion failed.
      *
-     * @return  RFC2045 style string
+     * @return	RFC2045 style string
      */
     public String toString() {
-        if (primaryType == null || subType == null) // need both
-            return null;
+	if (primaryType == null || subType == null) // need both
+	    return null;
 
-        StringBuffer sb = new StringBuffer();
-        sb.append(primaryType).append('/').append(subType);
-        if (list != null)
+	StringBuffer sb = new StringBuffer();
+	sb.append(primaryType).append('/').append(subType);
+	if (list != null)
         // Http Binding section of the "SOAP with attachments" specification says,
         // "SOAP message senders should send Content-Type headers on a single long line."
         // (http://www.w3.org/TR/SOAP-attachments#HTTPBinding)
             sb.append(list.toString());
-
-        return sb.toString();
+        
+	return sb.toString();
     }
 
     /**
      * Match with the specified ContentType object. This method
-     * compares <strong>only the <code>primaryType</code> and
+     * compares <strong>only the <code>primaryType</code> and 
      * <code>subType</code> </strong>. The parameters of both operands
      * are ignored. <p>
      *
@@ -219,34 +225,34 @@ public final class ContentType {
      * and <strong>"text/plain; charset=foobar"</strong>.
      *
      * If the <code>subType</code> of either operand is the special
-     * character '*', then the subtype is ignored during the match.
-     * For example, this method will return <code>true</code> when
-     * comparing the ContentTypes for <strong>"text/plain"</strong>
+     * character '*', then the subtype is ignored during the match. 
+     * For example, this method will return <code>true</code> when 
+     * comparing the ContentTypes for <strong>"text/plain"</strong> 
      * and <strong>"text/*" </strong>
      *
      * @param   cType to compare this against
      */
     public boolean match(ContentType cType) {
-        // Match primaryType
-        if (!primaryType.equalsIgnoreCase(cType.getPrimaryType()))
-            return false;
+	// Match primaryType
+	if (!primaryType.equalsIgnoreCase(cType.getPrimaryType()))
+	    return false;
+	
+	String sType = cType.getSubType();
 
-        String sType = cType.getSubType();
+	// If either one of the subTypes is wildcarded, return true
+	if ((subType.charAt(0) == '*') || (sType.charAt(0) == '*'))
+	    return true;
+	
+	// Match subType
+	if (!subType.equalsIgnoreCase(sType))
+	    return false;
 
-        // If either one of the subTypes is wildcarded, return true
-        if ((subType.charAt(0) == '*') || (sType.charAt(0) == '*'))
-            return true;
-
-        // Match subType
-        if (!subType.equalsIgnoreCase(sType))
-            return false;
-
-        return true;
+	return true;
     }
 
     /**
      * Match with the specified content-type string. This method
-     * compares <strong>only the <code>primaryType</code> and
+     * compares <strong>only the <code>primaryType</code> and 
      * <code>subType</code> </strong>.
      * The parameters of both operands are ignored. <p>
      *
@@ -254,17 +260,17 @@ public final class ContentType {
      * comparing the ContentType for <strong>"text/plain"</strong>
      * with <strong>"text/plain; charset=foobar"</strong>.
      *
-     * If the <code>subType</code> of either operand is the special
-     * character '*', then the subtype is ignored during the match.
-     * For example, this method will return <code>true</code> when
-     * comparing the ContentType for <strong>"text/plain"</strong>
+     * If the <code>subType</code> of either operand is the special 
+     * character '*', then the subtype is ignored during the match. 
+     * For example, this method will return <code>true</code> when 
+     * comparing the ContentType for <strong>"text/plain"</strong> 
      * with <strong>"text/*" </strong>
      */
     public boolean match(String s) {
-        try {
-            return match(new ContentType(s));
-        } catch (ParseException pex) {
-            return false;
-        }
+	try {
+	    return match(new ContentType(s));
+	} catch (ParseException pex) {
+	    return false;
+	}
     }
 }

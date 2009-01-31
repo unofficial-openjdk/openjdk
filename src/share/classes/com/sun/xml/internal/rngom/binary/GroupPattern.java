@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.rngom.binary;
 
 import com.sun.xml.internal.rngom.binary.visitor.*;
@@ -30,9 +29,9 @@ import com.sun.xml.internal.rngom.binary.visitor.*;
 public class GroupPattern extends BinaryPattern {
   GroupPattern(Pattern p1, Pattern p2) {
     super(p1.isNullable() && p2.isNullable(),
-          combineHashCode(GROUP_HASH_CODE, p1.hashCode(), p2.hashCode()),
-          p1,
-          p2);
+	  combineHashCode(GROUP_HASH_CODE, p1.hashCode(), p2.hashCode()),
+	  p1,
+	  p2);
   }
 
   Pattern expand(SchemaPatternBuilder b) {
@@ -52,12 +51,12 @@ public class GroupPattern extends BinaryPattern {
       throw new RestrictionViolationException("data_except_contains_group");
     }
     super.checkRestrictions(context == ELEMENT_REPEAT_CONTEXT
-                            ? ELEMENT_REPEAT_GROUP_CONTEXT
-                            : context,
-                            dad,
-                            alpha);
+			    ? ELEMENT_REPEAT_GROUP_CONTEXT
+			    : context,
+			    dad,
+			    alpha);
     if (context != LIST_CONTEXT
-        && !contentTypeGroupable(p1.getContentType(), p2.getContentType()))
+	&& !contentTypeGroupable(p1.getContentType(), p2.getContentType()))
       throw new RestrictionViolationException("group_string");
   }
 

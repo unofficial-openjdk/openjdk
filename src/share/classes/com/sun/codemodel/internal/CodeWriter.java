@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.codemodel.internal;
 
 import java.io.IOException;
@@ -36,21 +35,21 @@ import com.sun.codemodel.internal.util.UnicodeEscapeWriter;
 
 /**
  * Receives generated code and writes to the appropriate storage.
- *
+ * 
  * @author
- *      Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
+ * 	Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public abstract class CodeWriter {
-
+    
     /**
      * Called by CodeModel to store the specified file.
      * The callee must allocate a storage to store the specified file.
-     *
+     * 
      * <p>
      * The returned stream will be closed before the next file is
      * stored. So the callee can assume that only one OutputStream
      * is active at any given time.
-     *
+     * 
      * @param   pkg
      *      The package of the file to be written.
      * @param   fileName

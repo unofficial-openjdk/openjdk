@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,18 +22,17 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.tools.internal.xjc.generator.util;
 
 import com.sun.codemodel.internal.JBlock;
 
 /**
  * Holds a reference to a {@link JBlock} object.
- *
+ * 
  * <p>
  * This interface is usually used when one wants to create
  * a new JBlock object lazily.
- *
+ * 
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -41,7 +40,7 @@ public interface BlockReference {
     /**
      * @param create
      *      If false, the method will return null if the block is
-     *      not yet created.
+     *      not yet created.  
      */
     JBlock get(boolean create);
 }

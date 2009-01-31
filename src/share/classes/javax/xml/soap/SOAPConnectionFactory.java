@@ -1,10 +1,4 @@
 /*
- * $Id: SOAPConnectionFactory.java,v 1.4 2004/04/02 01:24:17 ofung Exp $
- * $Revision: 1.4 $
- * $Date: 2004/04/02 01:24:17 $
- */
-
-/*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -28,11 +22,18 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: SOAPConnectionFactory.java,v 1.5 2005/04/05 21:03:23 mk125090 Exp $
+ * $Revision: 1.5 $
+ * $Date: 2005/04/05 21:03:23 $
+ */
+
+
 package javax.xml.soap;
 
 /**
  * A factory for creating <code>SOAPConnection</code> objects. Implementation of this class
- * is optional. If <code>SOAPConnectionFactory.newInstance()</code> throws an
+ * is optional. If <code>SOAPConnectionFactory.newInstance()</code> throws an 
  * UnsupportedOperationException then the implementation does not support the
  * SAAJ communication infrastructure. Otherwise {@link SOAPConnection} objects
  * can be created by calling <code>createConnection()</code> on the newly
@@ -89,3 +90,4 @@ public abstract class SOAPConnectionFactory {
     public abstract SOAPConnection createConnection()
         throws SOAPException;
 }
+

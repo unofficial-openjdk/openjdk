@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.rngom.binary;
 
 import com.sun.xml.internal.rngom.binary.visitor.PatternFunction;
@@ -56,7 +55,7 @@ public class RefPattern extends Pattern {
   Pattern getPattern() {
     return p;
   }
-
+  
   void setPattern(Pattern p) {
     this.p = p;
   }
@@ -64,11 +63,11 @@ public class RefPattern extends Pattern {
   Locator getRefLocator() {
     return refLoc;
   }
-
+  
   void setRefLocator(Locator loc) {
     this.refLoc = loc;
   }
-
+  
   void checkRecursion(int depth) throws SAXException {
     if (checkRecursionDepth == -1) {
       checkRecursionDepth = depth;
@@ -78,7 +77,7 @@ public class RefPattern extends Pattern {
     else if (depth == checkRecursionDepth)
       // XXX try to recover from this?
       throw new SAXParseException(SchemaBuilderImpl.localizer.message("recursive_reference", name),
-                                  refLoc);
+				  refLoc);
   }
 
   Pattern expand(SchemaPatternBuilder b) {
@@ -104,7 +103,7 @@ public class RefPattern extends Pattern {
   byte getReplacementStatus() {
     return replacementStatus;
   }
-
+  
   void setReplacementStatus(byte replacementStatus) {
     this.replacementStatus = replacementStatus;
   }
@@ -129,3 +128,4 @@ public class RefPattern extends Pattern {
     return name;
   }
 }
+

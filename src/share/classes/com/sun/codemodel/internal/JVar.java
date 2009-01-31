@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -197,12 +197,12 @@ public class JVar extends JExpressionImpl implements JDeclaration, JAssignmentTa
         f.id(name);
     }
 
-
+	
     public JExpression assign(JExpression rhs) {
-                return JExpr.assign(this,rhs);
+		return JExpr.assign(this,rhs);
     }
     public JExpression assignPlus(JExpression rhs) {
-                return JExpr.assignPlus(this,rhs);
+		return JExpr.assignPlus(this,rhs);
     }
-
+	
 }

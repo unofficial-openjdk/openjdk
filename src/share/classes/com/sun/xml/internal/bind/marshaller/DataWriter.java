@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 //@@3RD PARTY CODE@@
 
 // DataWriter.java - XML writer for data-oriented files.
@@ -93,13 +92,14 @@ import org.xml.sax.SAXException;
  *
  * @since 1.0
  * @author David Megginson, david@megginson.com
+ * @version 0.2
  * @see XMLWriter
  */
 public class DataWriter extends XMLWriter
 {
 
 
-
+
     ////////////////////////////////////////////////////////////////////
     // Constructors.
     ////////////////////////////////////////////////////////////////////
@@ -110,7 +110,7 @@ public class DataWriter extends XMLWriter
      *
      * @param writer The character stream where the XML document
      *        will be written.
-     * @param encoding
+     * @param encoding 
      *      If non-null string is specified, it is written as a part
      *      of the XML declaration.
      */
@@ -121,11 +121,11 @@ public class DataWriter extends XMLWriter
 
 
     public DataWriter (Writer writer, String encoding ) {
-        this( writer, encoding, DumbEscapeHandler.theInstance );
+        this( writer, encoding, DumbEscapeHandler.theInstance ); 
     }
 
 
-
+
     ////////////////////////////////////////////////////////////////////
     // Accessors and setters.
     ////////////////////////////////////////////////////////////////////
@@ -141,7 +141,7 @@ public class DataWriter extends XMLWriter
      * @return The number of spaces in each indentation step,
      *         or 0 or less for no indentation.
      * @see #setIndentStep(int)
-     *
+     * 
      * @deprecated
      *      Only return the length of the indent string.
      */
@@ -157,7 +157,7 @@ public class DataWriter extends XMLWriter
      * @param indentStep The new indent step (0 or less for no
      *        indentation).
      * @see #getIndentStep()
-     *
+     * 
      * @deprecated
      *      Should use the version that takes string.
      */
@@ -168,13 +168,13 @@ public class DataWriter extends XMLWriter
             buf.append(' ');
         setIndentStep(buf.toString());
     }
-
+    
     public void setIndentStep(String s) {
         this.indentStep = s;
     }
 
 
-
+
     ////////////////////////////////////////////////////////////////////
     // Override methods from XMLWriter.
     ////////////////////////////////////////////////////////////////////
@@ -326,7 +326,7 @@ public class DataWriter extends XMLWriter
     }
 
 
-
+
     ////////////////////////////////////////////////////////////////////
     // Internal methods.
     ////////////////////////////////////////////////////////////////////
@@ -350,7 +350,7 @@ public class DataWriter extends XMLWriter
     }
 
 
-
+
     ////////////////////////////////////////////////////////////////////
     // Constants.
     ////////////////////////////////////////////////////////////////////
@@ -360,7 +360,7 @@ public class DataWriter extends XMLWriter
     private final static Object SEEN_DATA = new Object();
 
 
-
+
     ////////////////////////////////////////////////////////////////////
     // Internal state.
     ////////////////////////////////////////////////////////////////////

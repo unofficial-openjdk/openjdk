@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.bind.api;
 
 /**
@@ -36,7 +35,7 @@ package com.sun.xml.internal.bind.api;
  * <p>
  * This object allows you to treat multiple unrelated JAXB beans as a single tree.
  * This in turn allows you to marshal this tree in one marshal method invocation,
- * which is faster than multiple invocations of the marshal method.
+ * which is faster than multiple invocations of the marshal method. 
  *
  * <p>
  * The binding of this class is always known to {@link JAXBRIContext}, so it can be

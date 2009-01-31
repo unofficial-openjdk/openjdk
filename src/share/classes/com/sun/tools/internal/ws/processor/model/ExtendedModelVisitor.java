@@ -1,5 +1,5 @@
 /*
- * Portions Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,7 @@ public class ExtendedModelVisitor {
             for (Port port : service.getPorts()) {
                 preVisit(port);
                 if (shouldVisit(port)) {
-                    for (Operation operation : port.getOperations()) {
+                    for (Operation operation : port.getOperations()) {                        
                         preVisit(operation);
                         Request request = operation.getRequest();
                         if (request != null) {

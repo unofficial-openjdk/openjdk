@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ class Messages
         String text = ResourceBundle.getBundle(Messages.class.getPackage().getName() + ".MessageBundle").getString(property);
         return MessageFormat.format(text,args);
     }
-
+    
 
     public static final String ERR_NO_ROOT_ELEMENT = // arg:0
         "TDTDReader.NoRootElement";
@@ -54,11 +54,11 @@ class Messages
 
     public static final String ERR_CONTENT_PROPERTY_DECLARATION_TOO_SHORT = // arg:1
         "TDTDReader.ContentProperty.DeclarationTooShort";
-
+    
     public static final String ERR_BINDINFO_NON_EXISTENT_ELEMENT_DECLARATION = // arg:1
         "TDTDReader.BindInfo.NonExistentElementDeclaration";
 
     public static final String ERR_BINDINFO_NON_EXISTENT_INTERFACE_MEMBER = // arg:1
         "TDTDReader.BindInfo.NonExistentInterfaceMember";
-
+        
 }

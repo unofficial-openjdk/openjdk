@@ -1,5 +1,5 @@
 /*
- * Portions Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,11 +26,11 @@
 /**
  *
  * <P>This document describes the {@link com.sun.mirror.apt.AnnotationProcessor AnnotationProcessor}
- * included with JAX-WS 2.0.
+ * included with JAX-WS 2.0.1.
  *
  * <p>The {@link com.sun.istack.internal.ws.AnnotationProcessorFactoryImpl AnnoatationnProcessorFactoryImpl} class
  * tells the <a href="http://java.sun.com/j2se/1.5.0/docs/tooldocs/share/apt.html">APT</a>
- * framework that there exists an {@com.sun.mirror.apt.AnnotationProcessor AnnotationProcessor}
+ * framework that there exists an {@com.sun.mirror.apt.AnnotationProcessor AnnotationProcessor} 
  * ({@link com.sun.istak.ws.WSAP WSAP}) for for processing javax.jws.*, javax.jws.soap.*,
  *  and javax.xml.ws.* annotations.
  *

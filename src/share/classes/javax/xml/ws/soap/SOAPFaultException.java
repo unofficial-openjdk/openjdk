@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,9 +51,9 @@ import javax.xml.soap.SOAPFault;
  *  @since JAX-WS 2.0
  **/
 public class SOAPFaultException extends javax.xml.ws.ProtocolException  {
-
+    
     private SOAPFault fault;
-
+    
     /** Constructor for SOAPFaultException
      *  @param fault   <code>SOAPFault</code> representing the fault
      *
@@ -63,7 +63,7 @@ public class SOAPFaultException extends javax.xml.ws.ProtocolException  {
         super(fault.getFaultString());
         this.fault = fault;
     }
-
+    
     /** Gets the embedded <code>SOAPFault</code> instance.
      *
      *  @return <code>javax.xml.soap.SOAPFault</code> SOAP

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.rngom.xml.sax;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -34,18 +33,18 @@ import org.xml.sax.XMLReader;
 /**
  * {@link XMLReaderCreator} that uses JAXP to create
  * {@link XMLReader}s.
- *
+ * 
  * @author
  *      Kohsuke Kawaguchi (kk@kohsuke.org)
  */
 public class JAXPXMLReaderCreator implements XMLReaderCreator {
 
     private final SAXParserFactory spf;
-
+    
     public JAXPXMLReaderCreator( SAXParserFactory spf ) {
         this.spf = spf;
     }
-
+    
     /**
      * Creates a {@link JAXPXMLReaderCreator} by using
      * {@link SAXParserFactory#newInstance()}.
@@ -54,7 +53,7 @@ public class JAXPXMLReaderCreator implements XMLReaderCreator {
         spf = SAXParserFactory.newInstance();
         spf.setNamespaceAware(true);
     }
-
+    
     /**
      * @see com.sun.xml.internal.rngom.xml.sax.XMLReaderCreator#createXMLReader()
      */

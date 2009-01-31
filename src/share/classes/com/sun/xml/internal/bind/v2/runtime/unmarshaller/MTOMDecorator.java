@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.bind.v2.runtime.unmarshaller;
 
 import javax.activation.DataHandler;
@@ -60,7 +59,7 @@ final class MTOMDecorator implements XmlVisitor {
      *
      * This happens twice; once before &lt;/xop:Include>, another
      * after &lt;/xop:Include>. The spec guarantees that
-     * no valid pcdata can follow &lt;/xop:Include>.
+     * no valid pcdata can follow &lt;/xop:Include>. 
      */
     private boolean followXop;
 

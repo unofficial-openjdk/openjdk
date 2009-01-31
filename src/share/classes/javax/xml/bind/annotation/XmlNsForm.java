@@ -26,12 +26,12 @@
 package javax.xml.bind.annotation;
 
 /**
- * Enumeration of XML Schema namespace qualifications.
+ * Enumeration of XML Schema namespace qualifications. 
  *
  * <p>See "Package Specification" in javax.xml.bind.package javadoc for
  * additional common information.</p>
  *
- * <p><b>Usage</b>
+ * <p><b>Usage</b>  
  * <p>
  * The namespace qualification values are used in the annotations
  * defined in this packge. The enumeration values are mapped as follows:
@@ -40,10 +40,10 @@ package javax.xml.bind.annotation;
  * <table border="1" cellpadding="4" cellspacing="3">
  *   <tbody>
  *     <tr>
- *       <td><b>Enum Value</b></td>
- *       <td><b>XML Schema Value</b></td>
+ *       <td><b>Enum Value<b></td>
+ *       <td><b>XML Schema Value<b></td>
  *     </tr>
- *
+ * 
  *     <tr valign="top">
  *       <td>UNQUALIFIED</td>
  *       <td>unqualified</td>
@@ -59,8 +59,12 @@ package javax.xml.bind.annotation;
  *     </tr>
  *   </tbody>
  * </table>
- *
+ * 
  * @author Sekhar Vajjhala, Sun Microsystems, Inc.
  * @since JAXB2.0
+ * @version $Revision: 1.1 $
  */
 public enum XmlNsForm {UNQUALIFIED, QUALIFIED, UNSET}
+
+
+

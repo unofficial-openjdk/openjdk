@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -166,9 +166,9 @@ public class SchemaWriter implements XSVisitor, XSSimpleTypeVisitor {
         println(MessageFormat.format("<attGroup name=\"{0}\">",
             new Object[]{ decl.getName() }));
         indent++;
-
+        
         // TODO: wildcard
-
+        
         itr = decl.iterateAttGroups();
         while(itr.hasNext())
             dumpRef( (XSAttGroupDecl)itr.next() );
@@ -354,9 +354,9 @@ public class SchemaWriter implements XSVisitor, XSSimpleTypeVisitor {
                 type.isLocal()?"":" name=\""+type.getName()+'\"'
             }));
         indent++;
-
+        
         // TODO: wildcard
-
+        
         if(type.getContentType().asSimpleType()!=null) {
             // simple content
             println("<simpleContent>");
@@ -480,9 +480,9 @@ public class SchemaWriter implements XSVisitor, XSSimpleTypeVisitor {
     }
     private void elementDecl( XSElementDecl decl, String extraAtts ) {
         XSType type = decl.getType();
-
-        // TODO: various other attributes
-
+        
+        // TODO: various other attributes 
+        
         println(MessageFormat.format("<element name=\"{0}\"{1}{2}{3}>",
             new Object[]{
                 decl.getName(),

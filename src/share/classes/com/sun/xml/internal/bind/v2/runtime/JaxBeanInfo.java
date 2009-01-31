@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.bind.v2.runtime;
 
 import java.io.IOException;
@@ -53,16 +52,16 @@ import org.xml.sax.SAXException;
 /**
  * Encapsulates various JAXB operations on objects bound by JAXB.
  * Immutable and thread-safe.
- *
+ * 
  * <p>
  * Each JAXB-bound class has a corresponding {@link JaxBeanInfo} object,
  * which performs all the JAXB related operations on behalf of
  * the JAXB-bound object.
- *
+ * 
  * <p>
  * Given a class, the corresponding {@link JaxBeanInfo} can be located
  * via {@link JAXBContextImpl#getBeanInfo(Class,boolean)}.
- *
+ * 
  * <p>
  * Typically, {@link JaxBeanInfo} implementations should be generated
  * by XJC/JXC. Those impl classes will register themselves to their
@@ -155,7 +154,7 @@ public abstract class JaxBeanInfo<BeanT> {
     /**
      * Gets the JAXB bound class type that this {@link JaxBeanInfo}
      * handles.
-     *
+     * 
      * <p>
      * IOW, when a bean info object is requested for T,
      * sometimes the bean info for one of its base classes might be
@@ -165,7 +164,7 @@ public abstract class JaxBeanInfo<BeanT> {
 
     /**
      * Returns true if the bean is mapped to/from an XML element.
-     *
+     * 
      * <p>
      * When this method returns true, {@link #getElementNamespaceURI(Object)}
      * and {@link #getElementLocalName(Object)} returns the element name of
@@ -201,7 +200,7 @@ public abstract class JaxBeanInfo<BeanT> {
      * <p>
      * Should be considered immutable, though I can't mark it final
      * because it cannot be computed in this constructor.
-     */
+     */ 
     protected final void hasElementOnlyContentModel(boolean value) {
         if(value)
             flag |= FLAG_HAS_ELEMENT_ONLY_CONTENTMODEL;
@@ -224,17 +223,17 @@ public abstract class JaxBeanInfo<BeanT> {
      * Returns the namespace URI portion of the element name,
      * if the bean that this class represents is mapped from/to
      * an XML element.
-     *
+     * 
      * @throws UnsupportedOperationException
      *      if {@link #isElement} is false.
      */
     public abstract String getElementNamespaceURI(BeanT o);
-
+    
     /**
      * Returns the local name portion of the element name,
      * if the bean that this class represents is mapped from/to
      * an XML element.
-     *
+     * 
      * @throws UnsupportedOperationException
      *      if {@link #isElement} is false.
      */
@@ -250,7 +249,7 @@ public abstract class JaxBeanInfo<BeanT> {
     /**
      * Returns XML Schema type names if the bean is mapped from
      * a complex/simple type of XML Schema.
-     *
+     * 
      * <p>
      * This is an ugly necessity to correctly handle
      * the type substitution semantics of XML Schema.
@@ -299,7 +298,7 @@ public abstract class JaxBeanInfo<BeanT> {
     /**
      * Resets the object to the initial state, as if the object
      * is created fresh.
-     *
+     * 
      * <p>
      * This is used to reuse an existing object for unmarshalling.
      *
@@ -318,18 +317,18 @@ public abstract class JaxBeanInfo<BeanT> {
      *      as a result of reporting an error, the context may throw a {@link SAXException}.
      */
     public abstract boolean reset( BeanT o, UnmarshallingContext context ) throws SAXException;
-
+    
     /**
      * Gets the ID value of the given bean, if it has an ID value.
      * Otherwise return null.
      */
     public abstract String getId(BeanT o, XMLSerializer target) throws SAXException;
-
+    
     /**
      * Serializes child elements and texts into the specified target.
      */
     public abstract void serializeBody( BeanT o, XMLSerializer target ) throws SAXException, IOException, XMLStreamException;
-
+    
     /**
      * Serializes attributes into the specified target.
      */
@@ -362,7 +361,7 @@ public abstract class JaxBeanInfo<BeanT> {
      * its top-level scope into the specified target.
      */
     public abstract void serializeURIs( BeanT o, XMLSerializer target ) throws SAXException;
-
+    
     /**
      * Gets the {@link Loader} that will unmarshall the given object.
      *
@@ -415,45 +414,38 @@ public abstract class JaxBeanInfo<BeanT> {
      */
     protected final void setLifecycleFlags() {
         try {
-            Method m;
-
-            // beforeUnmarshal
-            try {
-                m = jaxbType.getDeclaredMethod("beforeUnmarshal", unmarshalEventParams);
-                cacheLifecycleMethod(m, FLAG_HAS_BEFORE_UNMARSHAL_METHOD);
-            } catch (NoSuchMethodException e) {
-                // no-op, look for the next method
-            }
-
-            // afterUnmarshal
-            try {
-                m = jaxbType.getDeclaredMethod("afterUnmarshal", unmarshalEventParams);
-                cacheLifecycleMethod(m, FLAG_HAS_AFTER_UNMARSHAL_METHOD);
-            } catch (NoSuchMethodException e) {
-                // no-op, look for the next method
-            }
-
-            // beforeMarshal
-            try {
-                m = jaxbType.getDeclaredMethod("beforeMarshal", marshalEventParams);
-                cacheLifecycleMethod(m, FLAG_HAS_BEFORE_MARSHAL_METHOD);
-            } catch (NoSuchMethodException e) {
-                // no-op, look for the next method
-            }
-
-            // afterMarshal
-            try {
-                m = jaxbType.getDeclaredMethod("afterMarshal", marshalEventParams);
-                cacheLifecycleMethod(m, FLAG_HAS_AFTER_MARSHAL_METHOD);
-            } catch (NoSuchMethodException e) {
-                // no-op
+            for( Method m : jaxbType.getDeclaredMethods() ) {
+                String name = m.getName();
+                if(name.equals("beforeUnmarshal")) {
+                    if(match(m,unmarshalEventParams)) {
+                        cacheLifecycleMethod(m, FLAG_HAS_BEFORE_UNMARSHAL_METHOD);
+                    }
+                } else
+                if(name.equals("afterUnmarshal")) {
+                    if(match(m,unmarshalEventParams)) {
+                        cacheLifecycleMethod(m, FLAG_HAS_AFTER_UNMARSHAL_METHOD);
+                    }
+                } else
+                if(name.equals("beforeMarshal")) {
+                    if(match(m,marshalEventParams)) {
+                        cacheLifecycleMethod(m, FLAG_HAS_BEFORE_MARSHAL_METHOD);
+                    }
+                } else
+                if(name.equals("afterMarshal")) {
+                    if(match(m,marshalEventParams)) {
+                        cacheLifecycleMethod(m, FLAG_HAS_AFTER_MARSHAL_METHOD);
+                    }
+                }
             }
         } catch(SecurityException e) {
             // this happens when we don't have enough permission.
             logger.log( Level.WARNING, Messages.UNABLE_TO_DISCOVER_EVENTHANDLER.format(
-                jaxbType.getName(),
-                e ));
+                jaxbType.getName(), e ));
         }
+    }
+
+    private boolean match(Method m, Class[] params) {
+        return Arrays.equals(m.getParameterTypes(),params);
     }
 
     /**
@@ -477,16 +469,16 @@ public abstract class JaxBeanInfo<BeanT> {
 
         switch (lifecycleFlag) {
         case FLAG_HAS_BEFORE_UNMARSHAL_METHOD:
-            lcm.setBeforeUnmarshal(m);
+            lcm.beforeUnmarshal = m;
             break;
         case FLAG_HAS_AFTER_UNMARSHAL_METHOD:
-            lcm.setAfterUnmarshal(m);
+            lcm.afterUnmarshal = m;
             break;
         case FLAG_HAS_BEFORE_MARSHAL_METHOD:
-            lcm.setBeforeMarshal(m);
+            lcm.beforeMarshal = m;
             break;
         case FLAG_HAS_AFTER_MARSHAL_METHOD:
-            lcm.setAfterMarshal(m);
+            lcm.afterMarshal = m;
             break;
         }
     }
@@ -504,7 +496,7 @@ public abstract class JaxBeanInfo<BeanT> {
      * Invokes the beforeUnmarshal method if applicable.
      */
     public final void invokeBeforeUnmarshalMethod(UnmarshallerImpl unm, Object child, Object parent) throws SAXException {
-        Method m = getLifecycleMethods().getBeforeUnmarshal();
+        Method m = getLifecycleMethods().beforeUnmarshal;
         invokeUnmarshallCallback(m, child, unm, parent);
     }
 
@@ -512,7 +504,7 @@ public abstract class JaxBeanInfo<BeanT> {
      * Invokes the afterUnmarshal method if applicable.
      */
     public final void invokeAfterUnmarshalMethod(UnmarshallerImpl unm, Object child, Object parent) throws SAXException {
-        Method m = getLifecycleMethods().getAfterUnmarshal();
+        Method m = getLifecycleMethods().afterUnmarshal;
         invokeUnmarshallCallback(m, child, unm, parent);
     }
 

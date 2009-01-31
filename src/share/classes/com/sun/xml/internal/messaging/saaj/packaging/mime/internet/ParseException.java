@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +22,18 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * @(#)ParseException.java    1.3 02/03/27
+ */
+
+
 
 package com.sun.xml.internal.messaging.saaj.packaging.mime.internet;
 
 import com.sun.xml.internal.messaging.saaj.packaging.mime.MessagingException;
 
 /**
- * The exception thrown due to an error in parsing RFC822
+ * The exception thrown due to an error in parsing RFC822 
  * or MIME headers
  *
  * @author John Mani
@@ -40,14 +45,14 @@ public class ParseException extends MessagingException {
      * Constructs a ParseException with no detail message.
      */
     public ParseException() {
-        super();
+	super();
     }
 
     /**
      * Constructs a ParseException with the specified detail message.
-     * @param s         the detail message
+     * @param s		the detail message
      */
     public ParseException(String s) {
-        super(s);
+	super(s);
     }
 }

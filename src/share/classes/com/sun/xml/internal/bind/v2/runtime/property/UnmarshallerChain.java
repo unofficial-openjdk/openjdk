@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,9 @@
  * have any questions.
  */
 
+/*
+ * @(#)$Id:
+ */
 package com.sun.xml.internal.bind.v2.runtime.property;
 
 import com.sun.xml.internal.bind.v2.runtime.JAXBContextImpl;
@@ -38,7 +41,7 @@ import com.sun.xml.internal.bind.v2.runtime.unmarshaller.Scope;
  * <p>
  * A ticket dispenser also maintains the offset for handlers
  * to access state slots. A handler records this value when it's created.
- *
+ * 
  *
  */
 public final class UnmarshallerChain {
@@ -67,3 +70,4 @@ public final class UnmarshallerChain {
         return offset;
     }
 }
+

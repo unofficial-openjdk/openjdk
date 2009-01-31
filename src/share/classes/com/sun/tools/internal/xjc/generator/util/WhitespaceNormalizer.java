@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.tools.internal.xjc.generator.util;
 
 import com.sun.codemodel.internal.JCodeModel;
@@ -39,42 +38,42 @@ public abstract class WhitespaceNormalizer
     /**
      * Generates the expression that normalizes
      * the given expression (which evaluates to java.lang.String).
-     *
+     * 
      * @param codeModel
      *      The owner code model object under which a new expression
-     *      will be created.
+     *      will be created. 
      */
     public abstract JExpression generate( JCodeModel codeModel, JExpression literal );
-
+    
     /**
      * Parses "preserve","replace" or "collapse" into
      * the corresponding WhitespaceNormalizer object.
-     *
+     * 
      * @param method
      *      Either "preserve", "replace", or "collapse"
-     *
+     * 
      * @exception    IllegalArgumentException
      *        when the specified method is invalid.
      */
     public static WhitespaceNormalizer parse( String method ) {
         if( method.equals("preserve") )
             return PRESERVE;
-
+        
         if( method.equals("replace") )
             return REPLACE;
-
+        
         if( method.equals("collapse") )
             return COLLAPSE;
-
+        
         throw new IllegalArgumentException(method);
     }
-
+    
     public static final WhitespaceNormalizer PRESERVE = new WhitespaceNormalizer() {
         public JExpression generate( JCodeModel codeModel, JExpression literal ) {
             return literal;
         }
     };
-
+    
     public static final WhitespaceNormalizer REPLACE = new WhitespaceNormalizer() {
         public JExpression generate( JCodeModel codeModel, JExpression literal ) {
             // WhitespaceProcessor.replace(<literal>);
@@ -86,7 +85,7 @@ public abstract class WhitespaceNormalizer
                     .staticInvoke("replace").arg(literal);
         }
     };
-
+    
     public static final WhitespaceNormalizer COLLAPSE = new WhitespaceNormalizer() {
         public JExpression generate( JCodeModel codeModel, JExpression literal ) {
             // WhitespaceProcessor.replace(<literal>);

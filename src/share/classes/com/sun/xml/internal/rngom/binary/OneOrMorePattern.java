@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.rngom.binary;
 
 import com.sun.xml.internal.rngom.binary.visitor.PatternFunction;
@@ -34,8 +33,8 @@ public class OneOrMorePattern extends Pattern {
 
   OneOrMorePattern(Pattern p) {
     super(p.isNullable(),
-          p.getContentType(),
-          combineHashCode(ONE_OR_MORE_HASH_CODE, p.hashCode()));
+	  p.getContentType(),
+	  combineHashCode(ONE_OR_MORE_HASH_CODE, p.hashCode()));
     this.p = p;
   }
 
@@ -59,20 +58,20 @@ public class OneOrMorePattern extends Pattern {
     case DATA_EXCEPT_CONTEXT:
       throw new RestrictionViolationException("data_except_contains_one_or_more");
     }
-
+    
     p.checkRestrictions(context == ELEMENT_CONTEXT
-                        ? ELEMENT_REPEAT_CONTEXT
-                        : context,
-                        dad,
-                        alpha);
+			? ELEMENT_REPEAT_CONTEXT
+			: context,
+			dad,
+			alpha);
     if (context != LIST_CONTEXT
-        && !contentTypeGroupable(p.getContentType(), p.getContentType()))
+	&& !contentTypeGroupable(p.getContentType(), p.getContentType()))
       throw new RestrictionViolationException("one_or_more_string");
   }
 
   boolean samePattern(Pattern other) {
     return (other instanceof OneOrMorePattern
-            && p == ((OneOrMorePattern)other).p);
+	    && p == ((OneOrMorePattern)other).p);
   }
 
   public void accept(PatternVisitor visitor) {

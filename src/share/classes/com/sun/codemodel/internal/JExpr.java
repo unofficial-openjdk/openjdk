@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,17 +51,17 @@ public abstract class JExpr {
     public static JInvocation _new(JType t) {
         return new JInvocation(t);
     }
-
+    
     public static JInvocation invoke(String method) {
         return new JInvocation((JExpression)null, method);
     }
-
+    
     public static JInvocation invoke(JMethod method) {
-        return new JInvocation((JExpression)null,method.name());
+        return new JInvocation((JExpression)null,method);
     }
 
     public static JInvocation invoke(JExpression lhs, JMethod method) {
-        return new JInvocation(lhs, method.name());
+        return new JInvocation(lhs, method);
     }
 
     public static JInvocation invoke(JExpression lhs, String method) {
@@ -129,8 +129,8 @@ public abstract class JExpr {
     public static JArray newArray(JType type, int size) {
         return newArray(type,lit(size));
     }
-
-
+    
+    
     private static final JExpression __this = new JAtom("this");
     /**
      * Returns a reference to "this", an implicit reference
@@ -144,20 +144,20 @@ public abstract class JExpr {
      * to the super class.
      */
     public static JExpression _super() { return __super; }
-
-
+    
+    
     /* -- Literals -- */
 
     private static final JExpression __null = new JAtom("null");
     public static JExpression _null() {
         return __null;
     }
-
+    
     /**
      * Boolean constant that represents <code>true</code>
      */
     public static final JExpression TRUE = new JAtom("true");
-
+    
     /**
      * Boolean constant that represents <code>false</code>
      */
@@ -166,7 +166,7 @@ public abstract class JExpr {
     public static JExpression lit(boolean b) {
         return b?TRUE:FALSE;
     }
-
+    
     public static JExpression lit(int n) {
         return new JAtom(Integer.toString(n));
     }
@@ -185,10 +185,10 @@ public abstract class JExpr {
 
     static final String charEscape = "\b\t\n\f\r\"\'\\";
     static final String charMacro  = "btnfr\"'\\";
-
+    
     /**
      * Escapes the given string, then surrounds it by the specified
-     * quotation mark.
+     * quotation mark. 
      */
     public static String quotify(char quote, String s) {
         int n = s.length();
@@ -203,12 +203,12 @@ public abstract class JExpr {
             } else {
                 // technically Unicode escape shouldn't be done here,
                 // for it's a lexical level handling.
-                //
+                // 
                 // However, various tools are so broken around this area,
                 // so just to be on the safe side, it's better to do
                 // the escaping here (regardless of the actual file encoding)
                 //
-                // see bug
+                // see bug 
                 if( c<0x20 || 0x7E<c ) {
                     // not printable. use Unicode escape
                     sb.append("\\u");
@@ -232,15 +232,15 @@ public abstract class JExpr {
     public static JExpression lit(String s) {
         return new JStringLiteral(s);
     }
-
+    
     /**
      * Creates an expression directly from a source code fragment.
-     *
+     * 
      * <p>
      * This method can be used as a short-cut to create a JExpression.
      * For example, instead of <code>_a.gt(_b)</code>, you can write
      * it as: <code>JExpr.direct("a>b")</code>.
-     *
+     * 
      * <p>
      * Be warned that there is a danger in using this method,
      * as it obfuscates the object model.
@@ -253,3 +253,4 @@ public abstract class JExpr {
         };
     }
 }
+

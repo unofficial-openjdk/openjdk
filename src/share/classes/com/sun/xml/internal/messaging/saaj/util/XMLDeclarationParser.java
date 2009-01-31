@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.messaging.saaj.util;
 
 import java.io.*;
@@ -30,11 +31,12 @@ import java.util.Iterator;
 
 import javax.xml.transform.TransformerException;
 
-/*
+/* 
  * Class that parses the very first construct in the document i.e.
  *  <?xml ... ?>
  *
  * @author Panos Kougiouris (panos@acm.org)
+ * @version $Revision: 1.1.1.1 $ $Date: 2006/01/27 13:10:58 $
  */
 
 public class XMLDeclarationParser {
@@ -44,7 +46,7 @@ public class XMLDeclarationParser {
     private String xmlDecl = null;
     static String gt16 = null;
     static String utf16Decl = null;
-
+   
     static {
          try {
              gt16 = new String(">".getBytes("utf-16"));
@@ -109,7 +111,7 @@ public class XMLDeclarationParser {
             return;
         }
         m_hasHeader = true;
-
+        
         if (utf16) {
             xmlDecl = new String(decl.getBytes(), "utf-16");
             xmlDecl = xmlDecl.substring(xmlDecl.indexOf("<"));
@@ -178,3 +180,4 @@ public class XMLDeclarationParser {
     }
 
 }
+    

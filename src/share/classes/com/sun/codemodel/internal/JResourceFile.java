@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,16 +34,16 @@ import java.io.OutputStream;
 public abstract class JResourceFile {
 
     private final String name;
-
+    
     protected JResourceFile( String name ) {
         this.name = name;
     }
-
+    
     /**
      * Gets the name of this property file
      */
-    public String name() {
-        return name;
+    public String name() { 
+        return name; 
     }
 
     /**

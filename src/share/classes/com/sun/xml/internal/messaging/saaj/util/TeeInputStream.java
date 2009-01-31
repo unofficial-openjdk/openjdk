@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,10 +23,11 @@
  * have any questions.
  */
 
+
 /*
  * Created on Feb 28, 2003
  *
- * To change this generated comment go to
+ * To change this generated comment go to 
  * Window>Preferences>Java>Code Generation>Code Template
  */
 package com.sun.xml.internal.messaging.saaj.util;
@@ -39,7 +40,7 @@ import java.io.*;
 public class TeeInputStream extends InputStream {
     protected InputStream source;
     protected OutputStream copySink;
-
+    
     public TeeInputStream(InputStream source, OutputStream sink) {
         super();
         this.copySink = sink;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,14 +28,14 @@ import com.sun.xml.internal.xsom.XSType;
 import com.sun.xml.internal.xsom.impl.Ref;
 
 /**
- *
- *
+ * 
+ * 
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public class SubstGroupBaseTypeRef implements Ref.Type {
     private final Ref.Element e;
-
+    
     public SubstGroupBaseTypeRef( Ref.Element _e ) {
         this.e = _e;
     }

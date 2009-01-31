@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,34 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
- *
- * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
- *
- */
+ 
 
 
 package com.sun.xml.internal.fastinfoset.vocab;
@@ -70,11 +43,11 @@ public abstract class Vocabulary {
     public static final int CHARACTER_CONTENT_CHUNK = 9;
     public static final int ELEMENT_NAME = 10;
     public static final int ATTRIBUTE_NAME = 11;
-
+        
     protected boolean _hasInitialReadOnlyVocabulary;
-
+    
     protected String _referencedVocabularyURI;
-
+    
     public boolean hasInitialVocabulary() {
         return _hasInitialReadOnlyVocabulary;
     }
@@ -82,15 +55,15 @@ public abstract class Vocabulary {
     protected void setInitialReadOnlyVocabulary(boolean hasInitialReadOnlyVocabulary) {
         _hasInitialReadOnlyVocabulary = hasInitialReadOnlyVocabulary;
     }
-
+    
     public boolean hasExternalVocabulary() {
         return _referencedVocabularyURI != null;
     }
-
+    
     public String getExternalVocabularyURI() {
         return _referencedVocabularyURI;
     }
-
+    
     protected void setExternalVocabularyURI(String referencedVocabularyURI) {
         _referencedVocabularyURI = referencedVocabularyURI;
     }

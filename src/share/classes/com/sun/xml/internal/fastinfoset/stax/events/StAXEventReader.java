@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,34 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
- *
- * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
- *
- */
+ 
 
 package com.sun.xml.internal.fastinfoset.stax.events;
 
@@ -74,7 +47,7 @@ public class StAXEventReader implements javax.xml.stream.XMLEventReader{
     private int size = 3;
     private int currentIndex = 0;
     private boolean hasEvent = false;   //true when current event exists, false initially & at end
-
+    
     //only constructor will do because we delegate everything to underlying XMLStreamReader
     public StAXEventReader(XMLStreamReader reader) throws  XMLStreamException {
         _streamReader = reader ;
@@ -93,15 +66,15 @@ public class StAXEventReader implements javax.xml.stream.XMLEventReader{
             throw new XMLStreamException(CommonResourceBundle.getInstance().getString("message.noElement"));
         }
     }
-
-    public boolean hasNext() {
+        
+    public boolean hasNext() {        
         return hasEvent;
-    }
-
+    }    
+    
     public XMLEvent nextEvent() throws XMLStreamException {
         XMLEvent event = null;
         XMLEvent nextEvent = null;
-        if (hasEvent)
+        if (hasEvent) 
         {
             event = events[currentIndex];
             events[currentIndex] = null;
@@ -122,19 +95,19 @@ public class StAXEventReader implements javax.xml.stream.XMLEventReader{
         }
         else{
             throw new NoSuchElementException();
-        }
+        }        
     }
-
+    
     public void remove(){
         //stream reader is read-only.
         throw new java.lang.UnsupportedOperationException();
     }
-
-
+    
+    
     public void close() throws XMLStreamException {
         _streamReader.close();
     }
-
+    
     /** Reads the content of a text-only element. Precondition:
      * the current event is START_ELEMENT. Postcondition:
      * The current event is the corresponding END_ELEMENT.
@@ -145,7 +118,7 @@ public class StAXEventReader implements javax.xml.stream.XMLEventReader{
         if(!hasEvent) {
             throw new NoSuchElementException();
         }
-
+                
         if(!_currentEvent.isStartElement()) {
             StAXDocumentParser parser = (StAXDocumentParser)_streamReader;
             return parser.getElementText(true);
@@ -153,7 +126,7 @@ public class StAXEventReader implements javax.xml.stream.XMLEventReader{
             return _streamReader.getElementText();
         }
     }
-
+    
     /** Get the value of a feature/property from the underlying implementation
      * @param name The name of the property
      * @return The value of the property
@@ -162,7 +135,7 @@ public class StAXEventReader implements javax.xml.stream.XMLEventReader{
     public Object getProperty(java.lang.String name) throws java.lang.IllegalArgumentException {
         return _streamReader.getProperty(name) ;
     }
-
+    
     /** Skips any insignificant space events until a START_ELEMENT or
      * END_ELEMENT is reached. If anything other than space characters are
      * encountered, an exception is thrown. This method should
@@ -179,7 +152,7 @@ public class StAXEventReader implements javax.xml.stream.XMLEventReader{
         parser.nextTag(true);
         return _eventAllocator.allocate(_streamReader);
     }
-
+    
     //XMLEventReader extends Iterator;
     public Object next() {
         try{
@@ -188,7 +161,7 @@ public class StAXEventReader implements javax.xml.stream.XMLEventReader{
             return null;
         }
     }
-
+    
     public XMLEvent peek() throws XMLStreamException{
         if (!hasEvent)
              throw new XMLStreamException(CommonResourceBundle.getInstance().getString("message.noElement"));
@@ -202,6 +175,6 @@ public class StAXEventReader implements javax.xml.stream.XMLEventReader{
 
         _eventAllocator = allocator;
     }
-
-
+    
+    
 }

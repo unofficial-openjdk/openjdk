@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.tools.internal.xjc.reader;
 
 
@@ -30,24 +29,24 @@ package com.sun.tools.internal.xjc.reader;
 
 /**
  * Useful constant values.
- *
+ * 
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public class Const {
-
+    
     /** XML namespace URI. */
     public final static String XMLNS_URI =
         "http://www.w3.org/2000/xmlns/";
-
+    
     /** JAXB customization URI. */
     public final static String JAXB_NSURI =
         "http://java.sun.com/xml/ns/jaxb";
-
+    
     /** XJC vendor extension namespace URI. */
     public final static String XJC_EXTENSION_URI =
         "http://java.sun.com/xml/ns/jaxb/xjc";
-
+    
     /** RELAX NG namespace URI. */
     public static final String RELAXNG_URI =
         "http://relaxng.org/ns/structure/1.0";
@@ -55,3 +54,4 @@ public class Const {
     /** URI to represent DTD. */
     public static final String DTD = "DTD";
 }
+

@@ -1,11 +1,5 @@
 /*
- * $Id: JaxmURI.java,v 1.4 2006/01/27 12:49:51 vj135062 Exp $
- * $Revision: 1.4 $
- * $Date: 2006/01/27 12:49:51 $
- */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,11 +22,18 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: JaxmURI.java,v 1.4 2006/01/27 12:49:51 vj135062 Exp $
+ * $Revision: 1.4 $
+ * $Date: 2006/01/27 12:49:51 $
+ */
+
+
 package com.sun.xml.internal.messaging.saaj.util;
 
 // Imported from: org.apache.xerces.util
 // Needed to work around differences in JDK1.2 and 1.3 and deal with userInfo
-
+    
 import java.io.IOException;
 import java.io.Serializable;
 
@@ -66,6 +67,7 @@ import java.io.Serializable;
 * default port for a specific scheme). Rather, it only knows the
 * grammar and basic set of operations that can be applied to a URI.
 *
+* @version  $Id: JaxmURI.java,v 1.4 2006/01/27 12:49:51 vj135062 Exp $
 *
 **********************************************************************/
  public class JaxmURI implements Serializable {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.tools.internal.xjc.outline;
 
 import java.util.Collection;
@@ -65,13 +64,13 @@ public interface Outline
 
     /** Gets the object that wraps the generated field for a given {@link CPropertyInfo}. */
     FieldOutline getField( CPropertyInfo fu );
-
+    
     /**
      * Gets per-package context information.
-     *
+     * 
      * This method works for every visible package
      * (those packages which are supposed to be used by client applications.)
-     *
+     * 
      * @return
      *      If this grammar doesn't produce anything in the specified
      *      package, return null.
@@ -103,13 +102,13 @@ public interface Outline
 
     /** Gets all package-wise contexts at once. */
     Iterable<? extends PackageOutline> getAllPackageContexts();
-
+   
     /**
      * Gets a reference to
      * <code>new CodeModelClassFactory(getErrorHandler())</code>.
      */
     CodeModelClassFactory getClassFactory();
-
+    
     /**
      * Any error during the back-end proccessing should be
      * sent to this object.

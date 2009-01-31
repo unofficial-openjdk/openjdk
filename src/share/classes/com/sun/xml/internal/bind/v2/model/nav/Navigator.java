@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.bind.v2.model.nav;
 
 import java.util.Collection;
@@ -139,7 +138,7 @@ public interface Navigator<T,C,F,M> {
      * Note that this method does not list methods declared on base classes.
      *
      * @return
-     *      can be empty but always non-null.
+     *      can be empty but always non-null. 
      */
     Collection<? extends M> getDeclaredMethods(C clazz);
 
@@ -335,7 +334,7 @@ public interface Navigator<T,C,F,M> {
      *
      * @return
      *      can be empty but never null.
-     */
+     */ 
     F[] getEnumConstants(C clazz);
 
     /**
@@ -368,9 +367,9 @@ public interface Navigator<T,C,F,M> {
 
     /**
      * Returns true if the given method is overriding another one
-     * defined in the base class.
+     * defined in the base class 'base' or its ancestors.
      */
-    boolean isOverriding(M method);
+    boolean isOverriding(M method, C base);
 
     /**
      * Returns true if 'clazz' is an interface.
@@ -381,4 +380,12 @@ public interface Navigator<T,C,F,M> {
      * Returns true if the field is transient.
      */
     boolean isTransient(F f);
+
+    /**
+     * Returns true if the given class is an inner class.
+     *
+     * This is only used to improve the error diagnostics, so
+     * it's OK to fail to detect some inner classes as such.
+     */
+    boolean isInnerClass(C clazz);
 }

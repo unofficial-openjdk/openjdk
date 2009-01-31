@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,39 +34,39 @@ import java.util.List;
  */
 
 public class JForLoop implements JStatement {
-
+    
     private List<Object> inits = new ArrayList<Object>();
     private JExpression test = null;
     private List<JExpression> updates = new ArrayList<JExpression>();
     private JBlock body = null;
-
+    
     public JVar init(int mods, JType type, String var, JExpression e) {
         JVar v = new JVar(JMods.forVar(mods), type, var, e);
         inits.add(v);
         return v;
     }
-
+    
     public JVar init(JType type, String var, JExpression e) {
         return init(JMod.NONE, type, var, e);
     }
-
+    
     public void init(JVar v, JExpression e) {
         inits.add(JExpr.assign(v, e));
     }
-
+    
     public void test(JExpression e) {
         this.test = e;
     }
-
+    
     public void update(JExpression e) {
         updates.add(e);
     }
-
+    
     public JBlock body() {
         if (body == null) body = new JBlock();
         return body;
     }
-
+    
     public void state(JFormatter f) {
         f.p("for (");
         boolean first = true;
@@ -84,5 +84,5 @@ public class JForLoop implements JStatement {
         else
             f.p(';').nl();
     }
-
+    
 }

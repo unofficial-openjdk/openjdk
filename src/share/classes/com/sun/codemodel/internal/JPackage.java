@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -65,12 +65,12 @@ public final class JPackage implements JDeclaration, JGenerable, JClassContainer
      * List of resources files inside this package.
      */
     private final Set<JResourceFile> resources = new HashSet<JResourceFile>();
-
+    
     /**
      * All {@link JClass}s in this package keyed the upper case class name.
-     *
+     * 
      * This field is non-null only on Windows, to detect
-     * "Foo" and "foo" as a collision.
+     * "Foo" and "foo" as a collision. 
      */
     private final Map<String,JDefinedClass> upperCaseClassMap;
 
@@ -101,7 +101,7 @@ public final class JPackage implements JDeclaration, JGenerable, JClassContainer
             String msg = "JPackage name . is not allowed";
             throw new IllegalArgumentException(msg);
         }
-
+        
         int dots = 1;
         for (int i = 0; i < name.length(); i++) {
             char c = name.charAt(i);
@@ -126,12 +126,12 @@ public final class JPackage implements JDeclaration, JGenerable, JClassContainer
             String msg = "JPackage name not allowed to end with .";
             throw new IllegalArgumentException(msg);
         }
-
+        
         if(JCodeModel.isCaseSensitiveFileSystem)
             upperCaseClassMap = null;
         else
             upperCaseClassMap = new HashMap<String,JDefinedClass>();
-
+        
         this.name = name;
     }
 
@@ -139,13 +139,13 @@ public final class JPackage implements JDeclaration, JGenerable, JClassContainer
     public JClassContainer parentContainer() {
         return parent();
     }
-
+    
     /**
      * Gets the parent package, or null if this class is the root package.
      */
     public JPackage parent() {
         if(name.length()==0)    return null;
-
+        
         int idx = name.lastIndexOf('.');
         return owner._package(name.substring(0,idx));
     }
@@ -153,7 +153,7 @@ public final class JPackage implements JDeclaration, JGenerable, JClassContainer
     public boolean isClass() { return false; }
     public boolean isPackage() { return true; }
     public JPackage getPackage() { return this; }
-
+    
     /**
      * Add a class to this package.
      *
@@ -164,7 +164,7 @@ public final class JPackage implements JDeclaration, JGenerable, JClassContainer
      *        Name of class to be added to this package
      *
      * @return Newly generated class
-     *
+     * 
      * @exception JClassAlreadyExistsException
      *      When the specified class/interface was already created.
      */
@@ -177,37 +177,37 @@ public final class JPackage implements JDeclaration, JGenerable, JClassContainer
      * @deprecated
      */
     public JDefinedClass _class( int mods, String name, boolean isInterface ) throws JClassAlreadyExistsException {
-        return _class(mods,name, isInterface?ClassType.INTERFACE:ClassType.CLASS );
+    	return _class(mods,name, isInterface?ClassType.INTERFACE:ClassType.CLASS );
     }
-
+    
     public JDefinedClass _class( int mods, String name, ClassType classTypeVal ) throws JClassAlreadyExistsException {
         if(classes.containsKey(name))
             throw new JClassAlreadyExistsException(classes.get(name));
         else {
             // XXX problems caught in the NC constructor
             JDefinedClass c = new JDefinedClass(this, mods, name, classTypeVal);
-
+            
             if( upperCaseClassMap!=null ) {
                 JDefinedClass dc = upperCaseClassMap.get(name.toUpperCase());
                 if(dc!=null)
                     throw new JClassAlreadyExistsException(dc);
                 upperCaseClassMap.put(name.toUpperCase(),c);
-            }
+            }            
             classes.put(name,c);
             return c;
         }
     }
 
-        /**
-         * Adds a public class to this package.
-         */
+	/**
+	 * Adds a public class to this package.
+	 */
     public JDefinedClass _class(String name) throws JClassAlreadyExistsException {
-                return _class( JMod.PUBLIC, name );
-        }
+		return _class( JMod.PUBLIC, name );
+	}
 
     /**
      * Gets a reference to the already created {@link JDefinedClass}.
-     *
+     * 
      * @return null
      *      If the class is not yet created.
      */
@@ -246,7 +246,7 @@ public final class JPackage implements JDeclaration, JGenerable, JClassContainer
     public JDefinedClass _interface(String name) throws JClassAlreadyExistsException {
         return _interface(JMod.PUBLIC, name);
     }
-
+    
     /**
      * Add an annotationType Declaration to this package
      * @param name
@@ -255,12 +255,12 @@ public final class JPackage implements JDeclaration, JGenerable, JClassContainer
      *      newly created Annotation Type Declaration
      * @exception JClassAlreadyExistsException
      *      When the specified class/interface was already created.
-
+     
      */
     public JDefinedClass _annotationTypeDeclaration(String name) throws JClassAlreadyExistsException {
-        return _class (JMod.PUBLIC,name,ClassType.ANNOTATION_TYPE_DECL);
+    	return _class (JMod.PUBLIC,name,ClassType.ANNOTATION_TYPE_DECL);
     }
-
+	
     /**
      * Add a public enum to this package
      * @param name
@@ -269,10 +269,10 @@ public final class JPackage implements JDeclaration, JGenerable, JClassContainer
      *      newly created Enum
      * @exception JClassAlreadyExistsException
      *      When the specified class/interface was already created.
-
+     
      */
     public JDefinedClass _enum (String name) throws JClassAlreadyExistsException {
-        return _class (JMod.PUBLIC,name,ClassType.ENUM);
+    	return _class (JMod.PUBLIC,name,ClassType.ENUM);
     }
     /**
      * Adds a new resource file to this package.
@@ -281,7 +281,7 @@ public final class JPackage implements JDeclaration, JGenerable, JClassContainer
         resources.add(rsrc);
         return rsrc;
     }
-
+    
     /**
      * Checks if a resource of the given name exists.
      */
@@ -291,7 +291,7 @@ public final class JPackage implements JDeclaration, JGenerable, JClassContainer
                 return true;
         return false;
     }
-
+    
     /**
      * Iterates all resource files in this package.
      */
@@ -325,7 +325,7 @@ public final class JPackage implements JDeclaration, JGenerable, JClassContainer
         if (upperCaseClassMap != null)
             upperCaseClassMap.remove(c.name().toUpperCase());
     }
-
+	
     /**
      * Reference a class within this package.
      */
@@ -340,7 +340,7 @@ public final class JPackage implements JDeclaration, JGenerable, JClassContainer
 
         return owner.ref(Class.forName(n));
     }
-
+    
     /**
      * Gets a reference to a sub package of this package.
      */
@@ -356,7 +356,7 @@ public final class JPackage implements JDeclaration, JGenerable, JClassContainer
     public Iterator<JDefinedClass> classes() {
         return classes.values().iterator();
     }
-
+    
     /**
      * Checks if a given name is already defined as a class/interface
      */
@@ -379,9 +379,9 @@ public final class JPackage implements JDeclaration, JGenerable, JClassContainer
      * Get the name of this package
      *
      * @return
-     *          The name of this package, or the empty string if this is the
-     *          null package. For example, this method returns strings like
-     *          <code>"java.lang"</code>
+     *		The name of this package, or the empty string if this is the
+     *		null package. For example, this method returns strings like
+     *		<code>"java.lang"</code>
      */
     public String name() {
         return name;

@@ -1,11 +1,5 @@
 /*
- * $Id: JAXMStreamSource.java,v 1.9 2006/01/27 12:49:51 vj135062 Exp $
- * $Revision: 1.9 $
- * $Date: 2006/01/27 12:49:51 $
- */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +22,13 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: JAXMStreamSource.java,v 1.9 2006/01/27 12:49:51 vj135062 Exp $
+ * $Revision: 1.9 $
+ * $Date: 2006/01/27 12:49:51 $
+ */
+
+
 package com.sun.xml.internal.messaging.saaj.util;
 
 import java.io.*;
@@ -42,40 +43,40 @@ import javax.xml.transform.stream.StreamSource;
 public class JAXMStreamSource extends StreamSource {
     ByteInputStream in;
     Reader reader;
-
+    
     public JAXMStreamSource(InputStream is) throws IOException {
-                if (is instanceof ByteInputStream) {
-                        this.in = (ByteInputStream)is;
-                } else {
-                        ByteOutputStream bout = new ByteOutputStream();
+		if (is instanceof ByteInputStream) {
+			this.in = (ByteInputStream)is;
+		} else {
+			ByteOutputStream bout = new ByteOutputStream();
                         bout.write(is);
-                        this.in = bout.newInputStream();
-                }
+			this.in = bout.newInputStream();
+		}
     }
 
     public JAXMStreamSource(Reader rdr) throws IOException {
         CharWriter cout = new CharWriter();
         char[] temp = new char[1024];
         int len;
-
+                                                                                
         while (-1 != (len = rdr.read(temp)))
             cout.write(temp, 0, len);
-
+                                                                                
         this.reader = new CharReader(cout.getChars(), cout.getCount());
     }
 
     public InputStream getInputStream() {
-        return in;
+	return in;
     }
-
+    
     public Reader getReader() {
-        return reader;
+	return reader;
     }
 
     public void reset() throws IOException {
-            if (in != null)
-                in.reset();
-            if (reader != null)
-                reader.reset();
+	    if (in != null)
+		in.reset();
+	    if (reader != null)
+		reader.reset();
     }
 }

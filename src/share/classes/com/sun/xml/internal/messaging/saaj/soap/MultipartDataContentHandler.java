@@ -1,11 +1,5 @@
 /*
- * $Id: MultipartDataContentHandler.java,v 1.3 2006/01/27 12:49:28 vj135062 Exp $
- * $Revision: 1.3 $
- * $Date: 2006/01/27 12:49:28 $
- */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +22,13 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: MultipartDataContentHandler.java,v 1.3 2006/01/27 12:49:28 vj135062 Exp $
+ * $Revision: 1.3 $
+ * $Date: 2006/01/27 12:49:28 $
+ */
+
+
 package com.sun.xml.internal.messaging.saaj.soap;
 
 import java.io.*;
@@ -39,9 +40,9 @@ import com.sun.xml.internal.messaging.saaj.util.ByteOutputStream;
 
 public class MultipartDataContentHandler implements DataContentHandler {
     private ActivationDataFlavor myDF = new ActivationDataFlavor(
-            com.sun.xml.internal.messaging.saaj.packaging.mime.internet.MimeMultipart.class,
-            "multipart/mixed",
-            "Multipart");
+	    com.sun.xml.internal.messaging.saaj.packaging.mime.internet.MimeMultipart.class,
+	    "multipart/mixed", 
+	    "Multipart");
 
     /**
      * Return the DataFlavors for this <code>DataContentHandler</code>.
@@ -49,7 +50,7 @@ public class MultipartDataContentHandler implements DataContentHandler {
      * @return The DataFlavors
      */
     public DataFlavor[] getTransferDataFlavors() { // throws Exception;
-        return new DataFlavor[] { myDF };
+	return new DataFlavor[] { myDF };
     }
 
     /**
@@ -60,46 +61,47 @@ public class MultipartDataContentHandler implements DataContentHandler {
      * @return String object
      */
     public Object getTransferData(DataFlavor df, DataSource ds) {
-        // use myDF.equals to be sure to get ActivationDataFlavor.equals,
-        // which properly ignores Content-Type parameters in comparison
-        if (myDF.equals(df))
-            return getContent(ds);
-        else
-            return null;
+	// use myDF.equals to be sure to get ActivationDataFlavor.equals,
+	// which properly ignores Content-Type parameters in comparison
+	if (myDF.equals(df))
+	    return getContent(ds);
+	else
+	    return null;
     }
-
+    
     /**
      * Return the content.
      */
     public Object getContent(DataSource ds) {
-        try {
-            return new MimeMultipart(
-                ds, new ContentType(ds.getContentType()));
-        } catch (Exception e) {
-            return null;
-        }
+	try {
+	    return new MimeMultipart(
+                ds, new ContentType(ds.getContentType())); 
+	} catch (Exception e) {
+	    return null;
+	}
     }
-
+    
     /**
      * Write the object to the output stream, using the specific MIME type.
      */
-    public void writeTo(Object obj, String mimeType, OutputStream os)
-                        throws IOException {
-        if (obj instanceof MimeMultipart) {
-            try {
+    public void writeTo(Object obj, String mimeType, OutputStream os) 
+			throws IOException {
+	if (obj instanceof MimeMultipart) {
+	    try {
                 //TODO: temporarily allow only ByteOutputStream
                 // Need to add writeTo(OutputStream) on MimeMultipart
-                ByteOutputStream baos = null;
+                ByteOutputStream baos = null; 
                 if (os instanceof ByteOutputStream) {
                     baos = (ByteOutputStream)os;
                 } else {
-                    throw new IOException("Input Stream expected to be a com.sun.xml.internal.messaging.saaj.util.ByteOutputStream, but found " +
+                    throw new IOException("Input Stream expected to be a com.sun.xml.internal.messaging.saaj.util.ByteOutputStream, but found " + 
                         os.getClass().getName());
                 }
-                ((MimeMultipart)obj).writeTo(baos);
-            } catch (Exception e) {
-                throw new IOException(e.toString());
-            }
-        }
+		((MimeMultipart)obj).writeTo(baos);
+	    } catch (Exception e) {
+		throw new IOException(e.toString());
+	    }
+	}
     }
 }
+

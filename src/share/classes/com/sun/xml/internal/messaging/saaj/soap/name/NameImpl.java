@@ -1,11 +1,5 @@
 /*
- * $Id: NameImpl.java,v 1.48 2006/01/27 12:49:38 vj135062 Exp $
- * $Revision: 1.48 $
- * $Date: 2006/01/27 12:49:38 $
- */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +22,13 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: NameImpl.java,v 1.48 2006/01/27 12:49:38 vj135062 Exp $
+ * $Revision: 1.48 $
+ * $Date: 2006/01/27 12:49:38 $
+ */
+
+
 package com.sun.xml.internal.messaging.saaj.soap.name;
 
 import java.util.logging.Level;
@@ -65,7 +66,7 @@ public class NameImpl implements Name {
     protected static Logger log =
         Logger.getLogger(LogDomainConstants.NAMING_DOMAIN,
                          "com.sun.xml.internal.messaging.saaj.soap.name.LocalStrings");
-
+    
     protected NameImpl(String name) {
         this.localName = name == null ? "" : name;
     }
@@ -84,15 +85,15 @@ public class NameImpl implements Name {
     }
 
     public static Name convertToName(QName qname) {
-        return new NameImpl(qname.getLocalPart(),
-                            qname.getPrefix(),
+        return new NameImpl(qname.getLocalPart(), 
+                            qname.getPrefix(), 
                             qname.getNamespaceURI());
     }
 
     public static QName convertToQName(Name name) {
         return new QName(name.getURI(),
-                         name.getLocalName(),
-                         name.getPrefix());
+			 name.getLocalName(),
+                         name.getPrefix()); 
     }
 
     public static NameImpl createFromUnqualifiedName(String name) {
@@ -128,7 +129,7 @@ public class NameImpl implements Name {
     protected static int getPrefixSeparatorIndex(String qualifiedName) {
         int index = qualifiedName.indexOf(':');
         if (index < 0) {
-            log.log(
+            log.log( 
                 Level.SEVERE,
                 "SAAJ0202.name.invalid.arg.format",
                 new String[] { qualifiedName });
@@ -469,7 +470,7 @@ static class FaultElement1_1Name extends NameImpl {
     FaultElement1_1Name(String localName) {
         super(localName);
     }
-
+    
     FaultElement1_1Name(String localName, String prefix) {
         super(localName, prefix, "");
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,24 +32,24 @@ import com.sun.tools.internal.xjc.outline.FieldOutline;
 
 /**
  * Abstract model of one field in a generated class.
- *
+ * 
  * <p>
  * Responsible for "realizing" a Java property by actually generating
  * members(s) to store the property value and a set of methods
  * to manipulate them.
- *
+ * 
  * <p>
  * Objects that implement this interface also encapsulates the
  * <b>internal</b> access to the field.
- *
+ * 
  * <p>
  * For discussion of the model this interface is representing, see
  * the "field meta model" design document.
- *
+ * 
  * REVISIT:
  *  refactor this to two interfaces that provide
  *  (1) internal access and (2) external access.
- *
+ * 
  * @author
  *  Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -60,7 +60,7 @@ public interface FieldRenderer {
      * the generated field.
      */
     public FieldOutline generate( ClassOutlineImpl context, CPropertyInfo prop );
-
+    
 //    //
 //    // field renderers
 //    //

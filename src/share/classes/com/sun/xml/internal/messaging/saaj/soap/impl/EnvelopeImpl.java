@@ -1,11 +1,5 @@
 /*
- * $Id: EnvelopeImpl.java,v 1.1.1.1 2006/01/27 13:10:56 kumarjayanti Exp $
- * $Revision: 1.1.1.1 $
- * $Date: 2006/01/27 13:10:56 $
- */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +22,13 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: EnvelopeImpl.java,v 1.1.1.1 2006/01/27 13:10:56 kumarjayanti Exp $
+ * $Revision: 1.1.1.1 $
+ * $Date: 2006/01/27 13:10:56 $
+ */
+
+
 package com.sun.xml.internal.messaging.saaj.soap.impl;
 
 import java.io.IOException;
@@ -63,7 +64,7 @@ public abstract class EnvelopeImpl extends ElementImpl implements Envelope {
     String omitXmlDecl = "yes";
     String charset = "utf-8";
     String xmlDecl = null;
-
+    
     protected EnvelopeImpl(SOAPDocumentImpl ownerDoc, Name name) {
         super(ownerDoc, name);
     }
@@ -97,16 +98,16 @@ public abstract class EnvelopeImpl extends ElementImpl implements Envelope {
     public SOAPHeader addHeader() throws SOAPException {
         return addHeader(null);
     }
-
+    
     public SOAPHeader addHeader(String prefix) throws SOAPException {
-
+        
         if (prefix == null || prefix.equals("")) {
             prefix = getPrefix();
         }
-
+        
         NameImpl headerName = getHeaderName(prefix);
         NameImpl bodyName = getBodyName(prefix);
-
+        
         HeaderImpl header = null;
         SOAPElement firstChild = null;
 
@@ -151,14 +152,14 @@ public abstract class EnvelopeImpl extends ElementImpl implements Envelope {
     public SOAPBody addBody() throws SOAPException {
         return addBody(null);
     }
-
+    
     public SOAPBody addBody(String prefix) throws SOAPException {
         lookForBody();
 
         if (prefix == null || prefix.equals("")) {
             prefix = getPrefix();
         }
-
+        
         if (body == null) {
             NameImpl bodyName = getBodyName(prefix);
             body = (BodyImpl) createElement(bodyName);
@@ -229,7 +230,7 @@ public abstract class EnvelopeImpl extends ElementImpl implements Envelope {
         if (namespace == null) {
             log.log(
                 Level.SEVERE,
-                "SAAJ0126.impl.cannot.locate.ns",
+                "SAAJ0126.impl.cannot.locate.ns", 
                 new String[] { prefix });
             throw new SOAPExceptionImpl(
                 "Unable to locate namespace for prefix " + prefix);
@@ -240,23 +241,23 @@ public abstract class EnvelopeImpl extends ElementImpl implements Envelope {
     public Name createName(String localName) throws SOAPException {
         return NameImpl.createFromUnqualifiedName(localName);
     }
-
+    
     public void setOmitXmlDecl(String value) {
-        this.omitXmlDecl = value;
+        this.omitXmlDecl = value;        
     }
 
     public void setXmlDecl(String value) {
-        this.xmlDecl = value;
+        this.xmlDecl = value;        
     }
-
+    
     private String getOmitXmlDecl() {
         return this.omitXmlDecl;
     }
-
+    
     public void setCharsetEncoding(String value) {
         charset = value;
     }
-
+    
     public void output(OutputStream out) throws IOException {
         try {
             Transformer transformer =
@@ -267,14 +268,14 @@ public abstract class EnvelopeImpl extends ElementImpl implements Envelope {
                 /*omitXmlDecl);*/
             // no equivalent for "setExpandEmptyElements"
             transformer.setOutputProperty(
-                OutputKeys.ENCODING,
+                OutputKeys.ENCODING, 
                 charset);
 
             if (omitXmlDecl.equals("no") && xmlDecl == null) {
-                xmlDecl = "<?xml version=\"" + getOwnerDocument().getXmlVersion() + "\" encoding=\"" +
+                xmlDecl = "<?xml version=\"" + getOwnerDocument().getXmlVersion() + "\" encoding=\"" + 
                     charset + "\" ?>";
             }
-
+        
            StreamResult result = new StreamResult(out);
             if (xmlDecl != null) {
                 OutputStreamWriter writer = new OutputStreamWriter(out, charset);
@@ -282,29 +283,29 @@ public abstract class EnvelopeImpl extends ElementImpl implements Envelope {
                 writer.flush();
                 result = new StreamResult(writer);
             }
-
+           
 
             log.log(
                 Level.FINE,
-                "SAAJ0190.impl.set.xml.declaration",
-                new String[] { omitXmlDecl });
+                "SAAJ0190.impl.set.xml.declaration", 
+                new String[] { omitXmlDecl });                
             log.log(
                 Level.FINE,
-                "SAAJ0191.impl.set.encoding",
+                "SAAJ0191.impl.set.encoding", 
                 new String[] { charset });
-
+                
             //StreamResult result = new StreamResult(out);
             transformer.transform(getContent(), result);
         } catch (Exception ex) {
             throw new IOException(ex.getMessage());
         }
     }
-
+            
     /**
      * Serialize to FI if boolean parameter set.
      */
-    public void output(OutputStream out, boolean isFastInfoset)
-        throws IOException
+    public void output(OutputStream out, boolean isFastInfoset) 
+        throws IOException 
     {
         if (!isFastInfoset) {
             output(out);
@@ -313,7 +314,7 @@ public abstract class EnvelopeImpl extends ElementImpl implements Envelope {
             try {
                 // Run transform and generate FI output from content
                 Source source = getContent();
-                Transformer transformer = EfficientStreamingTransformer.newTransformer();
+                Transformer transformer = EfficientStreamingTransformer.newTransformer(); 
                     transformer.transform(getContent(),
                         FastInfosetReflection.FastInfosetResult_new(out));
             }
@@ -366,3 +367,4 @@ public abstract class EnvelopeImpl extends ElementImpl implements Envelope {
                                 + newName.getLocalPart());
      }
 }
+

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +22,12 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.xsom;
 
 
 /**
  * Complex type.
- *
+ * 
  * @author
  *  Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -45,11 +44,11 @@ public interface XSComplexType extends XSType, XSAttContainer
      * for gory detail.
      */
     boolean isSubstitutionProhibited(int method);
-
+    
     /**
      * Gets the scope of this complex type.
      * This is not a property defined in the schema spec.
-     *
+     * 
      * @return
      *      null if this complex type is global. Otherwise
      *      return the element declaration that contains this anonymous
@@ -59,27 +58,27 @@ public interface XSComplexType extends XSType, XSAttContainer
 
     /**
      * The content of this complex type.
-     *
+     * 
      * @return
      *      always non-null.
      */
     XSContentType getContentType();
-
+    
     /**
      * Gets the explicit content of a complex type with a complex content
      * that was derived by extension.
-     *
+     * 
      * <p>
-     * Informally, the "explicit content" is the portion of the
+     * Informally, the "explicit content" is the portion of the 
      * content model added in this derivation. IOW, it's a delta between
      * the base complex type and this complex type.
-     *
+     * 
      * <p>
      * For example, when a complex type T2 derives fom T1, then:
      * <pre>
      * content type of T2 = SEQUENCE( content type of T1, explicit content of T2 )
      * </pre>
-     *
+     * 
      * @return
      *      If this complex type is derived by restriction or has a
      *      simple content, this method returns null.

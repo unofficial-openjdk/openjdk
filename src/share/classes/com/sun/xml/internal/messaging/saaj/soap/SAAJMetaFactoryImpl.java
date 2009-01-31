@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.messaging.saaj.soap;
 
 import javax.xml.soap.SAAJMetaFactory;
@@ -49,13 +48,13 @@ public class SAAJMetaFactoryImpl extends SAAJMetaFactory {
         } else if (SOAPConstants.SOAP_1_2_PROTOCOL.equals(protocol)) {
               return new com.sun.xml.internal.messaging.saaj.soap.ver1_2.SOAPMessageFactory1_2Impl();
         } else if (SOAPConstants.DYNAMIC_SOAP_PROTOCOL.equals(protocol)) {
-              return new com.sun.xml.internal.messaging.saaj.soap.dynamic.SOAPMessageFactoryDynamicImpl();
+              return new com.sun.xml.internal.messaging.saaj.soap.dynamic.SOAPMessageFactoryDynamicImpl(); 
         } else {
             log.log(
                 Level.SEVERE,
                 "SAAJ0569.soap.unknown.protocol",
                 new Object[] {protocol, "MessageFactory"});
-            throw new SOAPException("Unknown Protocol: " + protocol +
+            throw new SOAPException("Unknown Protocol: " + protocol + 
                                         "  specified for creating MessageFactory");
         }
     }
@@ -67,13 +66,13 @@ public class SAAJMetaFactoryImpl extends SAAJMetaFactory {
         } else if (SOAPConstants.SOAP_1_2_PROTOCOL.equals(protocol)) {
             return new com.sun.xml.internal.messaging.saaj.soap.ver1_2.SOAPFactory1_2Impl();
         } else if (SOAPConstants.DYNAMIC_SOAP_PROTOCOL.equals(protocol)) {
-            return new com.sun.xml.internal.messaging.saaj.soap.dynamic.SOAPFactoryDynamicImpl();
+            return new com.sun.xml.internal.messaging.saaj.soap.dynamic.SOAPFactoryDynamicImpl(); 
         } else {
             log.log(
                 Level.SEVERE,
                 "SAAJ0569.soap.unknown.protocol",
                 new Object[] {protocol, "SOAPFactory"});
-            throw new SOAPException("Unknown Protocol: " + protocol +
+            throw new SOAPException("Unknown Protocol: " + protocol + 
                                         "  specified for creating SOAPFactory");
         }
     }

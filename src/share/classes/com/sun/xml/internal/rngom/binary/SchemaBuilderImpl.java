@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.rngom.binary;
 
 import java.util.Enumeration;
@@ -48,6 +47,7 @@ import com.sun.xml.internal.rngom.ast.om.ParsedNameClass;
 import com.sun.xml.internal.rngom.ast.om.ParsedPattern;
 import com.sun.xml.internal.rngom.ast.util.LocatorImpl;
 import com.sun.xml.internal.rngom.dt.builtin.BuiltinDatatypeLibraryFactory;
+import com.sun.xml.internal.rngom.dt.CascadingDatatypeLibraryFactory;
 import com.sun.xml.internal.rngom.nc.NameClass;
 import com.sun.xml.internal.rngom.nc.NameClassBuilderImpl;
 import com.sun.xml.internal.rngom.parse.Context;
@@ -110,18 +110,21 @@ public class SchemaBuilderImpl implements SchemaBuilder, ElementAnnotationBuilde
         }
         throw new IllegalSchemaException();
     }
-
+  
   /**
-   *
+   * 
    * @param eh
    *        Error handler to receive errors while building the schema.
    */
   public SchemaBuilderImpl(ErrorHandler eh) {
-      this(eh,new BuiltinDatatypeLibraryFactory(new DatatypeLibraryLoader()),new SchemaPatternBuilder());
+      this(eh,
+          new CascadingDatatypeLibraryFactory(new DatatypeLibraryLoader(),
+            new BuiltinDatatypeLibraryFactory(new DatatypeLibraryLoader())),
+          new SchemaPatternBuilder());
   }
 
   /**
-   *
+   * 
    * @param eh
    *        Error handler to receive errors while building the schema.
    * @param datatypeLibraryFactory
@@ -150,7 +153,7 @@ public class SchemaBuilderImpl implements SchemaBuilder, ElementAnnotationBuilde
     this.inheritNs = inheritNs;
     this.openIncludes = new OpenIncludes(uri, parent.openIncludes);
   }
-
+  
   public NameClassBuilder getNameClassBuilder() {
       return ncb;
   }
@@ -297,7 +300,7 @@ public class SchemaBuilderImpl implements SchemaBuilder, ElementAnnotationBuilde
         dtb.addParameter(name, value, new ValidationContextImpl(context, ns));
       }
       catch (DatatypeException e) {
-        String detail = e.getMessage();
+	String detail = e.getMessage();
         int pos = e.getIndex();
         String displayedParam;
         if (pos == DatatypeException.UNKNOWN)
@@ -310,10 +313,10 @@ public class SchemaBuilderImpl implements SchemaBuilder, ElementAnnotationBuilde
           else
             error("invalid_param_display", displayedParam, (Locator)loc);
         }
-        else if (detail != null)
-          error("invalid_param_detail", detail, (Locator)loc);
-        else
-          error("invalid_param", (Locator)loc);
+	else if (detail != null)
+	  error("invalid_param_detail", detail, (Locator)loc);
+	else
+	  error("invalid_param", (Locator)loc);
       }
     }
 
@@ -331,11 +334,11 @@ public class SchemaBuilderImpl implements SchemaBuilder, ElementAnnotationBuilde
         return pb.makeData(dtb.createDatatype());
       }
       catch (DatatypeException e) {
-        String detail = e.getMessage();
-        if (detail != null)
-          error("invalid_params_detail", detail, (Locator)loc);
-        else
-          error("invalid_params", (Locator)loc);
+	String detail = e.getMessage();
+	if (detail != null)
+	  error("invalid_params_detail", detail, (Locator)loc);
+	else
+	  error("invalid_params", (Locator)loc);
         return pb.makeError();
       }
     }
@@ -346,11 +349,11 @@ public class SchemaBuilderImpl implements SchemaBuilder, ElementAnnotationBuilde
         return pb.makeDataExcept(dtb.createDatatype(), (Pattern)except, (Locator)loc);
       }
       catch (DatatypeException e) {
-        String detail = e.getMessage();
-        if (detail != null)
-          error("invalid_params_detail", detail, (Locator)loc);
-        else
-          error("invalid_params", (Locator)loc);
+	String detail = e.getMessage();
+	if (detail != null)
+	  error("invalid_params_detail", detail, (Locator)loc);
+	else
+	  error("invalid_params", (Locator)loc);
         return pb.makeError();
       }
     }
@@ -369,11 +372,11 @@ public class SchemaBuilderImpl implements SchemaBuilder, ElementAnnotationBuilde
         return new DataPatternBuilderImpl(dl.createDatatypeBuilder(type));
       }
       catch (DatatypeException e) {
-        String detail = e.getMessage();
-        if (detail != null)
-          error("unsupported_datatype_detail", datatypeLibrary, type, detail, (Locator)loc);
-        else
-          error("unrecognized_datatype", datatypeLibrary, type, (Locator)loc);
+	String detail = e.getMessage();
+	if (detail != null)
+	  error("unsupported_datatype_detail", datatypeLibrary, type, detail, (Locator)loc);
+	else
+	  error("unrecognized_datatype", datatypeLibrary, type, (Locator)loc);
       }
     }
     return new DummyDataPatternBuilder();
@@ -428,7 +431,7 @@ public class SchemaBuilderImpl implements SchemaBuilder, ElementAnnotationBuilde
       startRef = g.startRef;
       defines = g.defines;
     }
-
+    
     public ParsedPattern endGrammar(Location loc, Annotations anno) throws BuildException {
       for (Enumeration e = defines.keys();
            e.hasMoreElements();) {
@@ -716,7 +719,7 @@ public class SchemaBuilderImpl implements SchemaBuilder, ElementAnnotationBuilde
 
   public void addText(String value, Location loc, CommentList comments) throws BuildException {
   }
-
+  
   public boolean usesComments() {
     return false;
   }

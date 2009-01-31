@@ -1,9 +1,5 @@
 /*
- * $Id: Envelope1_2Impl.java,v 1.26 2006/01/27 12:49:47 vj135062 Exp $
- */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +22,11 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: Envelope1_2Impl.java,v 1.26 2006/01/27 12:49:47 vj135062 Exp $
+ */
+
+
 
 /**
 *
@@ -49,7 +50,7 @@ public class Envelope1_2Impl extends EnvelopeImpl {
     protected static Logger log =
         Logger.getLogger(Envelope1_2Impl.class.getName(),
                          "com.sun.xml.internal.messaging.saaj.soap.ver1_2.LocalStrings");
-
+    
     public Envelope1_2Impl(SOAPDocumentImpl ownerDoc, String prefix) {
         super(ownerDoc, NameImpl.createEnvelope1_2Name(prefix));
     }

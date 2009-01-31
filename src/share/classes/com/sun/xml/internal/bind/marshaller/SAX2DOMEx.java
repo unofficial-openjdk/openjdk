@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,7 +49,7 @@ import org.xml.sax.Locator;
 
 /**
  * Builds a DOM tree from SAX2 events.
- *
+ * 
  * @author  Vivek Pandey
  * @since 1.0
  */
@@ -87,7 +87,7 @@ public class SAX2DOMEx implements ContentHandler {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);
         factory.setValidating(false);
-
+        
         document = factory.newDocumentBuilder().newDocument();
         node = document;
         nodeStack.push( document );
@@ -109,11 +109,11 @@ public class SAX2DOMEx implements ContentHandler {
 
     public void startElement(String namespace, String localName, String qName, Attributes attrs){
         Node parent = nodeStack.peek();
-
+        
         // some broken DOM implementatino (we confirmed it with SAXON)
         // return null from this method.
         Element element = document.createElementNS(namespace, qName);
-
+        
         if( element==null ) {
             // if so, report an user-friendly error message,
             // rather than dying mysteriously with NPE.
@@ -122,18 +122,18 @@ public class SAX2DOMEx implements ContentHandler {
                     document.getClass().getName(),
                     Which.which(document.getClass())));
         }
-
+        
         // process namespace bindings
         for( int i=0; i<unprocessedNamespaces.size(); i+=2 ) {
             String prefix = unprocessedNamespaces.get(i+0);
             String uri = unprocessedNamespaces.get(i+1);
-
+            
             String qname;
             if( "".equals(prefix) || prefix==null )
                 qname = "xmlns";
             else
                 qname = "xmlns:"+prefix;
-
+            
             // older version of Xerces (I confirmed that the bug is gone with Xerces 2.4.0)
             // have a problem of re-setting the same namespace attribute twice.
             // work around this bug removing it first.
@@ -148,12 +148,12 @@ public class SAX2DOMEx implements ContentHandler {
                 element.removeAttributeNS("http://www.w3.org/2000/xmlns/",qname);
             }
             // workaround until here
-
+            
             element.setAttributeNS("http://www.w3.org/2000/xmlns/",qname, uri);
         }
         unprocessedNamespaces.clear();
-
-
+        
+        
         int length = attrs.getLength();
         for(int i=0;i<length;i++){
             String namespaceuri = attrs.getURI(i);
@@ -166,7 +166,7 @@ public class SAX2DOMEx implements ContentHandler {
         // push this node onto stack
         nodeStack.push(element);
     }
-
+    
     public void endElement(String namespace, String localName, String qName){
         nodeStack.pop();
     }
@@ -186,7 +186,7 @@ public class SAX2DOMEx implements ContentHandler {
     public void processingInstruction(String target, String data) throws org.xml.sax.SAXException{
         Node parent = nodeStack.peek();
         Node node = document.createProcessingInstruction(target, data);
-        parent.appendChild(node);
+        parent.appendChild(node);	
     }
 
     public void setDocumentLocator(Locator locator) {

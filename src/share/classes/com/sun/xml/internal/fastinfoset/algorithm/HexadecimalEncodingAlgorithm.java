@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,34 +23,6 @@
  * have any questions.
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
- */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
- *
- * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
- *
  */
 
 
@@ -66,7 +38,7 @@ public class HexadecimalEncodingAlgorithm extends BuiltInEncodingAlgorithm {
     private static final char NIBBLE_TO_HEXADECIMAL_TABLE[] =
         {   '0','1','2','3','4','5','6','7',
             '8','9','A','B','B','D','E','F' };
-
+    
     private static final int HEXADECIMAL_TO_NIBBLE_TABLE[] = {
         /*'0'*/ 0,
         /*'1'*/ 1,
@@ -98,31 +70,31 @@ public class HexadecimalEncodingAlgorithm extends BuiltInEncodingAlgorithm {
         System.arraycopy(b, start, data, 0, length);
         return data;
     }
-
+    
     public final Object decodeFromInputStream(InputStream s) throws IOException {
         throw new UnsupportedOperationException(CommonResourceBundle.getInstance().getString("message.notImplemented"));
     }
-
-
+    
+    
     public void encodeToOutputStream(Object data, OutputStream s) throws IOException {
         if (!(data instanceof byte[])) {
             throw new IllegalArgumentException(CommonResourceBundle.getInstance().getString("message.dataNotByteArray"));
         }
-
+        
         s.write((byte[])data);
     }
-
+    
     public final Object convertFromCharacters(char[] ch, int start, int length) {
         if (length == 0) {
             return new byte[0];
         }
-
+        
         StringBuffer encodedValue = removeWhitespace(ch, start, length);
         int encodedLength = encodedValue.length();
         if (encodedLength == 0) {
             return new byte[0];
         }
-
+        
         int valueLength = encodedValue.length() / 2;
         byte[] value = new byte[valueLength];
 
@@ -135,7 +107,7 @@ public class HexadecimalEncodingAlgorithm extends BuiltInEncodingAlgorithm {
 
         return value;
     }
-
+    
     public final void convertToCharacters(Object data, StringBuffer s) {
         if (data == null) {
             return;
@@ -151,9 +123,9 @@ public class HexadecimalEncodingAlgorithm extends BuiltInEncodingAlgorithm {
             s.append(NIBBLE_TO_HEXADECIMAL_TABLE[value[i] & 0xf]);
         }
     }
-
-
-
+    
+    
+        
     public final int getPrimtiveLengthFromOctetLength(int octetLength) throws EncodingAlgorithmException {
         return octetLength * 2;
     }
@@ -161,8 +133,8 @@ public class HexadecimalEncodingAlgorithm extends BuiltInEncodingAlgorithm {
     public int getOctetLengthFromPrimitiveLength(int primitiveLength) {
         return primitiveLength / 2;
     }
-
+    
     public final void encodeToBytes(Object array, int astart, int alength, byte[] b, int start) {
         System.arraycopy((byte[])array, astart, b, start, alength);
-    }
+    }    
 }

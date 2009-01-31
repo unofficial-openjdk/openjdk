@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.tools.internal.xjc.generator.bean.field;
 
 import com.sun.codemodel.internal.JBlock;
@@ -36,19 +35,19 @@ import com.sun.tools.internal.xjc.generator.bean.ClassOutlineImpl;
 import com.sun.tools.internal.xjc.model.CPropertyInfo;
 
 /**
- *
- *
+ * 
+ * 
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 abstract class AbstractFieldWithVar extends AbstractField {
-
+    
     /**
      * Field declaration of the actual list object that we use
      * to store data.
      */
     private JFieldVar field;
-
+    
     /**
      * Invoke {@link #createField()} after calling the
      * constructor.
@@ -56,7 +55,7 @@ abstract class AbstractFieldWithVar extends AbstractField {
     AbstractFieldWithVar( ClassOutlineImpl outline, CPropertyInfo prop ) {
         super(outline,prop);
     }
-
+    
     protected final void createField() {
         field = outline.implClass.field( JMod.PROTECTED,
             getFieldType(), prop.getName(false) );
@@ -85,14 +84,14 @@ abstract class AbstractFieldWithVar extends AbstractField {
     public final JType getRawType() {
         return exposedType;
     }
-
+    
     protected abstract class Accessor extends AbstractField.Accessor {
-
+    
         protected Accessor(JExpression $target) {
             super($target);
             this.$ref = $target.ref(AbstractFieldWithVar.this.ref());
         }
-
+        
         /**
          * Reference to the field bound by the target object.
          */

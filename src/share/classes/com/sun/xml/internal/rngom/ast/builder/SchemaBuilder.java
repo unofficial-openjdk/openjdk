@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.rngom.ast.builder;
 
 import com.sun.xml.internal.rngom.ast.om.Location;
@@ -49,7 +48,7 @@ public interface SchemaBuilder<
      * classes for this {@link SchemaBuilder}. The
      * {@link com.sun.xml.internal.rngom.nc.NameClass}es that are built will then be
      * fed into this {@link SchemaBuilder}to further build RELAX NG patterns.
-     *
+     * 
      * @return always return a non-null valid object. This method can (and
      *         probably should) always return the same object.
      */
@@ -87,7 +86,7 @@ public interface SchemaBuilder<
             Context c, String ns, L loc, A anno) throws BuildException;
 
     /**
-     *
+     * 
      * @param parent
      *      The parent scope. null if there's no parent scope.
      *      For example, if the complete document looks like the following:
@@ -132,7 +131,7 @@ public interface SchemaBuilder<
     P commentAfter(P p, CL comments) throws BuildException;
 
     /**
-     *
+     * 
      * @param current
      *      Current grammar that we are parsing. This is what contains
      *      externalRef.
@@ -170,10 +169,10 @@ public interface SchemaBuilder<
      * skiping comment-related handlings.
      */
     boolean usesComments();
-
+    
     /**
      * Called after all the parsing is done.
-     *
+     * 
      * <p>
      * This hook typically allows as {@link SchemaBuilder} to expand
      * notAllowed (if it's following the simplification as in the spec.)

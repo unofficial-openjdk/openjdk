@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,8 +31,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.RetentionPolicy;
 
-/**
- * Used to annotate service specific exception classes to customize
+/** 
+ * Used to annotate service specific exception classes to customize 
  * to the local and namespace name of the fault element and the name
  * of the fault bean.
  *
@@ -43,12 +43,12 @@ import java.lang.annotation.RetentionPolicy;
 @Documented
 public @interface WebFault {
   /**
-   *  Elements local name.
+   *  Element's local name.
   **/
   public String name() default "";
 
   /**
-   *  Elements namespace name.
+   *  Element's namespace name.
   **/
   public String targetNamespace() default "";
 

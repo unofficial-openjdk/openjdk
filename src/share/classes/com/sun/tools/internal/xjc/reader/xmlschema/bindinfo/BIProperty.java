@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.tools.internal.xjc.reader.xmlschema.bindinfo;
 
 import java.util.Collection;
@@ -78,10 +77,10 @@ import org.xml.sax.Locator;
 
 /**
  * Property customization.
- *
+ * 
  * This customization turns an arbitrary schema component
  * into a Java property (some restrictions apply.)
- *
+ * 
  * <p>
  * All the getter methods (such as <code>getBaseType</code> or
  * <code>getBindStyle</code>) honors the delegation chain of
@@ -89,27 +88,27 @@ import org.xml.sax.Locator;
  * if two property customizations are attached to an attribute
  * use and an attribute decl, then anything unspecified in the
  * attribute use defaults to attribute decl.
- *
+ * 
  * <p>
  * Property customizations are acknowledged
  * (1) when they are actually used, and
  * (2) when they are given at the component, which is mapped to a class.
  *     (so-called "point of declaration" customization)
- *
+ * 
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 @XmlRootElement(name="property")
 public final class BIProperty extends AbstractDeclarationImpl {
-
+    
     // can be null
     @XmlAttribute
     private String name = null;
-
+    
     // can be null
     @XmlElement
     private String javadoc = null;
-
+    
     // can be null
     @XmlElement
     private BaseTypeBean baseType = null;
@@ -151,21 +150,21 @@ public final class BIProperty extends AbstractDeclarationImpl {
             baseType.conv.setParent(parent);
     }
 
-
-
+    
+    
     /**
      * Returns the customized property name.
-     *
+     * 
      * This method honors the "enableJavaNamingConvention" customization
      * and formats the property name accordingly if necessary.
-     *
+     * 
      * Thus the caller should <em>NOT</em> apply the XML-to-Java name
      * conversion algorithm to the value returned from this method.
-     *
+     * 
      * @param forConstant
      *      If the property name is intended for a constant property name,
      *      set to true. This will change the result
-     *
+     * 
      * @return
      *      This method can return null if the customization doesn't
      *      specify the name.
@@ -185,17 +184,17 @@ public final class BIProperty extends AbstractDeclarationImpl {
         if(next!=null)  return next.getPropertyName(forConstant);
         else            return null;
     }
-
+    
     /**
      * Gets the associated javadoc.
-     *
+     * 
      * @return
      *      null if none is specfieid.
      */
     public String getJavadoc() {
         return javadoc;
     }
-
+    
     // can be null
     public JType getBaseType() {
         if(baseType!=null && baseType.name!=null) {
@@ -207,8 +206,8 @@ public final class BIProperty extends AbstractDeclarationImpl {
         if(next!=null)  return next.getBaseType();
         else            return null;
     }
-
-
+    
+    
     // can be null
     @XmlAttribute
     private CollectionTypeAttribute collectionType = null;
@@ -258,29 +257,29 @@ public final class BIProperty extends AbstractDeclarationImpl {
     private Boolean isConstantProperty;
     /**
      * Gets the inherited value of the "fixedAttrToConstantProperty" customization.
-     *
+     * 
      * <p>
      * Note that returning true from this method doesn't necessarily mean
      * that a property needs to be mapped to a constant property.
      * It just means that it's mapped to a constant property
      * <b>if an attribute use carries a fixed value.</b>
-     *
+     * 
      * <p>
      * I don't like this semantics but that's what the spec implies.
      */
     public boolean isConstantProperty() {
         if(isConstantProperty!=null)    return isConstantProperty;
-
+        
         BIProperty next = getDefault();
         if(next!=null)      return next.isConstantProperty();
-
+        
         // globalBinding always has true or false in this property,
         // so this can't happen
         throw new AssertionError();
     }
 
     public CValuePropertyInfo createValueProperty(String defaultName,boolean forConstant,
-        XSComponent source,TypeUse tu) {
+        XSComponent source,TypeUse tu, QName typeName) {
 
         markAsAcknowledged();
         constantPropertyErrorCheck();
@@ -292,7 +291,7 @@ public final class BIProperty extends AbstractDeclarationImpl {
                 name = JJavaName.getPluralForm(name);
         }
 
-        return wrapUp(new CValuePropertyInfo(name, source,getCustomizations(source),source.getLocator(), tu ),source);
+        return wrapUp(new CValuePropertyInfo(name, source,getCustomizations(source),source.getLocator(), tu, typeName ),source);
     }
 
     public CAttributePropertyInfo createAttributeProperty( XSAttributeUse use, TypeUse tu ) {
@@ -312,16 +311,16 @@ public final class BIProperty extends AbstractDeclarationImpl {
                 name = JJavaName.getPluralForm(name);
         }
 
-        QName n = new QName(use.getDecl().getTargetNamespace(),use.getDecl().getName());
-
         markAsAcknowledged();
         constantPropertyErrorCheck();
 
-        return wrapUp(new CAttributePropertyInfo(name,use,getCustomizations(use),use.getLocator(), n, tu, use.isRequired() ),use);
+        return wrapUp(new CAttributePropertyInfo(name,use,getCustomizations(use),use.getLocator(),
+                BGMBuilder.getName(use.getDecl()), tu,
+                BGMBuilder.getName(use.getDecl().getType()), use.isRequired() ),use);
     }
 
     /**
-     *
+     * 
      *
      * @param defaultName
      *      If the name is not customized, this name will be used
@@ -523,14 +522,14 @@ public final class BIProperty extends AbstractDeclarationImpl {
 
     public void markAsAcknowledged() {
         if( isAcknowledged() )  return;
-
+        
         // mark the parent as well.
         super.markAsAcknowledged();
-
+        
         BIProperty def = getDefault();
         if(def!=null)   def.markAsAcknowledged();
     }
-
+    
     private void constantPropertyErrorCheck() {
         if( isConstantProperty!=null && getOwner()!=null ) {
             // run additional check on the isCOnstantProperty value.
@@ -540,7 +539,7 @@ public final class BIProperty extends AbstractDeclarationImpl {
             // the setParent method associates a customization with the rest of
             // XSOM object graph, so this is the earliest possible moment where
             // we can test this.
-
+            
             if( !hasFixedValue.find(getOwner()) ) {
                 Ring.get(ErrorReceiver.class).error(
                     getLocation(),
@@ -564,17 +563,17 @@ public final class BIProperty extends AbstractDeclarationImpl {
         public Boolean attributeUse(XSAttributeUse use) {
             return use.getFixedValue()!=null;
         }
-
+        
         public Boolean schema(XSSchema s) {
             // we allow globalBindings to have isConstantProperty==true,
             // so this method returns true to allow this.
             return true;
         }
     };
-
+    
     /**
      * Finds a BIProperty which this object should delegate to.
-     *
+     * 
      * @return
      *      always return non-null for normal BIProperties.
      *      If this object is contained in the BIGlobalBinding, then
@@ -586,7 +585,7 @@ public final class BIProperty extends AbstractDeclarationImpl {
         if(next==this)  return null;    // global.
         else            return next;
     }
-
+    
     private static BIProperty getDefault( BGMBuilder builder, XSComponent c ) {
         while(c!=null) {
             c = c.apply(defaultCustomizationFinder);
@@ -595,35 +594,35 @@ public final class BIProperty extends AbstractDeclarationImpl {
                 if(prop!=null)  return prop;
             }
         }
-
+        
         // default to the global one
         return builder.getGlobalBinding().getDefaultProperty();
     }
-
-
+    
+    
     /**
      * Finds a property customization that describes how the given
      * component should be mapped to a property (if it's mapped to
      * a property at all.)
-     *
+     * 
      * <p>
      * Consider an attribute use that does NOT carry a property
      * customization. This schema component is nonetheless considered
      * to carry a (sort of) implicit property customization, whose values
      * are defaulted.
-     *
+     * 
      * <p>
      * This method can be think of the method that returns this implied
      * property customization.
-     *
+     * 
      * <p>
      * Note that this doesn't mean the given component needs to be
      * mapped to a property. But if it does map to a property, it needs
      * to follow this customization.
-     *
+     * 
      * I think this semantics is next to non-sense but I couldn't think
      * of any other way to follow the spec.
-     *
+     * 
      * @param c
      *      A customization effective on this component will be returned.
      *      Can be null just to get the global customization.
@@ -638,11 +637,11 @@ public final class BIProperty extends AbstractDeclarationImpl {
             BIProperty prop = builder.getBindInfo(c).get(BIProperty.class);
             if(prop!=null)  return prop;
         }
-
+        
         // if no such thing exists, defeault.
         return getDefault(builder,c);
     }
-
+    
     private final static XSFunction<XSComponent> defaultCustomizationFinder = new XSFunction<XSComponent>() {
 
         public XSComponent attributeUse(XSAttributeUse use) {
@@ -676,16 +675,16 @@ public final class BIProperty extends AbstractDeclarationImpl {
         public XSComponent identityConstraint(XSIdentityConstraint x) { throw new IllegalStateException(); }
         public XSComponent xpath(XSXPath xsxPath) { throw new IllegalStateException(); }
     };
-
-
+    
+    
     private static String concat( String s1, String s2 ) {
         if(s1==null)    return s2;
         if(s2==null)    return s1;
         return s1+"\n\n"+s2;
     }
-
+    
     public QName getName() { return NAME; }
-
+    
     /** Name of this declaration. */
     public static final QName NAME = new QName(
         Const.JAXB_NSURI, "property" );
@@ -715,3 +714,4 @@ public final class BIProperty extends AbstractDeclarationImpl {
         String name;
     }
 }
+

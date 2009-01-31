@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import java.util.Set;
 /** The <code>SOAPHandler</code> class extends <code>Handler</code>
  *  to provide typesafety for the message context parameter and add a method
  *  to obtain access to the headers that may be processed by the handler.
- *
+ * 
  *  @since JAX-WS 2.0
 **/
 public interface SOAPHandler<T extends SOAPMessageContext>
@@ -41,8 +41,8 @@ public interface SOAPHandler<T extends SOAPMessageContext>
   /** Gets the header blocks that can be processed by this Handler
    *  instance.
    *
-   *  @return Set of QNames of header blocks processed by this
-   *           handler instance. <code>QName</code> is the qualified
+   *  @return Set of <code>QNames</code> of header blocks processed by this
+   *           handler instance. <code>QName</code> is the qualified 
    *           name of the outermost element of the Header block.
   **/
   Set<QName> getHeaders();

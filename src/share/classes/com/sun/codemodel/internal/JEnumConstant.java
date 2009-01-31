@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.codemodel.internal;
 
 import java.util.ArrayList;
@@ -89,7 +88,7 @@ public final class JEnumConstant extends JExpressionImpl implements JDeclaration
      * @return never null.
      */
     public String getName() {
-        return this.type.fullName().concat(".").concat(this.name);
+    	return this.type.fullName().concat(".").concat(this.name);
     }
 
     /**
@@ -144,6 +143,6 @@ public final class JEnumConstant extends JExpressionImpl implements JDeclaration
     }
 
     public void generate(JFormatter f) {
-        f.t(type).p('.').p(name);
+    	f.t(type).p('.').p(name);
     }
 }

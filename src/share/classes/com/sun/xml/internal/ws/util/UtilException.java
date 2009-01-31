@@ -1,5 +1,5 @@
 /*
- * Portions Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,9 +31,9 @@ import com.sun.xml.internal.ws.util.localization.Localizable;
 /**
  * UtilException represents an exception that occurred while
  * one of the util classes is operating.
- *
+ * 
  * @see JAXWSExceptionBase
- *
+ * 
  * @author JAX-WS Development Team
  */
 public class UtilException extends JAXWSExceptionBase {
@@ -49,7 +49,7 @@ public class UtilException extends JAXWSExceptionBase {
         super("nestedUtilError", arg);
     }
 
-    public String getResourceBundleName() {
+    public String getDefaultResourceBundleName() {
         return "com.sun.xml.internal.ws.resources.util";
     }
 

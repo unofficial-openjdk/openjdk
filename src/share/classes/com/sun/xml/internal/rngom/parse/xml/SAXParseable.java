@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.rngom.parse.xml;
 
 import java.io.IOException;
@@ -44,7 +43,7 @@ import org.xml.sax.XMLReader;
 
 /**
  * RELAX NG schema in the XML syntax.
- *
+ * 
  */
 public class SAXParseable implements Parseable {
   private final InputSource in;
@@ -61,7 +60,7 @@ public class SAXParseable implements Parseable {
   public SAXParseable(InputSource in, ErrorHandler eh) {
       this(in,eh,new JAXPXMLReaderCreator());
   }
-
+  
   public ParsedPattern parse(SchemaBuilder schemaBuilder) throws BuildException, IllegalSchemaException {
     try {
       XMLReader xr = xrc.createXMLReader();

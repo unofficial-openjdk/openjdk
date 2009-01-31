@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.tools.internal.xjc.reader.dtd.bindinfo;
 
 import java.io.IOException;
@@ -44,6 +43,8 @@ import com.sun.istack.internal.SAXParseException2;
 import com.sun.tools.internal.xjc.AbortException;
 import com.sun.tools.internal.xjc.ErrorReceiver;
 import com.sun.tools.internal.xjc.SchemaCache;
+import com.sun.tools.internal.xjc.model.CCustomizations;
+import com.sun.tools.internal.xjc.model.CPluginCustomization;
 import com.sun.tools.internal.xjc.model.Model;
 import com.sun.tools.internal.xjc.reader.Const;
 import com.sun.tools.internal.xjc.util.CodeModelClassFactory;
@@ -72,12 +73,11 @@ public class BindInfo
      * precedence over the value specified in the binding file.
      */
     private final String defaultPackage;
-
+    
     public BindInfo(Model model, InputSource source, ErrorReceiver _errorReceiver) throws AbortException {
-
-        this( model, parse(source,_errorReceiver), _errorReceiver);
+        this( model, parse(model,source,_errorReceiver), _errorReceiver);
     }
-
+    
     public BindInfo(Model model, Document _dom, ErrorReceiver _errorReceiver) {
         this.model = model;
         this.dom = _dom.getDocumentElement();
@@ -88,6 +88,9 @@ public class BindInfo
 
         this.defaultPackage = model.options.defaultPackage;
 
+        // copy global customizations to the model
+        model.getCustomizations().addAll(getGlobalCustomizations());
+
         // process element declarations
         for( Element ele : DOMUtil.getChildElements(dom,"element")) {
             BIElement e = new BIElement(this,ele);
@@ -96,7 +99,7 @@ public class BindInfo
 
         // add built-in conversions
         BIUserConversion.addBuiltinConversions(this,conversions);
-
+        
         // process conversion declarations
         for( Element cnv : DOMUtil.getChildElements(dom,"conversion")) {
             BIConversion c = new BIUserConversion(this,cnv);
@@ -107,19 +110,19 @@ public class BindInfo
             conversions.put(c.name(),c);
         }
         // TODO: check the uniquness of conversion name
-
-
+        
+        
         // process interface definitions
         for( Element itf : DOMUtil.getChildElements(dom,"interface")) {
             BIInterface c = new BIInterface(itf);
             interfaces.put(c.name(),c);
         }
     }
-
-
+    
+    
     /** CodeModel object that is used by this binding file. */
     final JCodeModel codeModel;
-
+    
     /** Wrap the codeModel object and automate error reporting. */
     final CodeModelClassFactory classFactory;
 
@@ -131,14 +134,14 @@ public class BindInfo
 
     /** Element declarations keyed by names. */
     private final Map<String,BIElement> elements = new HashMap<String,BIElement>();
-
+    
     /** interface declarations keyed by names. */
     private final Map<String,BIInterface> interfaces = new HashMap<String,BIInterface>();
-
-
+  
+    
     /** XJC extension namespace. */
     private static final String XJC_NS = Const.XJC_EXTENSION_URI;
-
+    
 //
 //
 //    Exposed public methods
@@ -153,7 +156,7 @@ public class BindInfo
         if(v==null) v="1";
         return new Long(v);
     }
-
+    
     /** Gets the xjc:superClass customization if it's turned on. */
     public JClass getSuperClass() {
         Element sc = DOMUtil.getElement(dom,XJC_NS,"superClass");
@@ -193,8 +196,14 @@ public class BindInfo
         return c;
     }
 
-    /** Gets the specified package name (options/@package). */
+    /**
+     * Gets the specified package name (options/@package).
+     */
     public JPackage getTargetPackage() {
+        if(model.options.defaultPackage!=null)
+            // "-p" takes precedence over everything else
+            return codeModel._package(model.options.defaultPackage);
+
         String p;
         if( defaultPackage!=null )
             p = defaultPackage;
@@ -205,7 +214,7 @@ public class BindInfo
 
     /**
      * Gets the conversion declaration from the binding info.
-     *
+     * 
      * @return
      *        A non-null valid BIConversion object.
      */
@@ -215,10 +224,10 @@ public class BindInfo
             throw new AssertionError("undefined conversion name: this should be checked by the validator before we read it");
         return r;
     }
-
+    
     /**
      * Gets the element declaration from the binding info.
-     *
+     * 
      * @return
      *        If there is no declaration with a given name,
      *        this method returns null.
@@ -230,21 +239,39 @@ public class BindInfo
     public Collection<BIElement> elements() {
         return elements.values();
     }
-
+    
     /** Returns all {@link BIInterface}s in a read-only set. */
     public Collection<BIInterface> interfaces() {
         return interfaces.values();
     }
 
+    /**
+     * Gets the list of top-level {@link CPluginCustomization}s.
+     */
+    private CCustomizations getGlobalCustomizations() {
+        CCustomizations r=null;
+        for( Element e : DOMUtil.getChildElements(dom) ) {
+            if(!model.options.pluginURIs.contains(e.getNamespaceURI()))
+                continue;   // this isn't a plugin customization
+            if(r==null)
+                r = new CCustomizations();
+            r.add(new CPluginCustomization(e, DOMLocator.getLocationInfo(e)));
+        }
 
-
+        if(r==null)     r = CCustomizations.EMPTY;
+        return new CCustomizations(r);
+    }
+    
+    
+    
+    
 //
 //
 //    Internal utility methods
 //
 //
-
-
+    
+    
     /** Gets the value from the option element. */
     private String getOption(String attName, String defaultValue) {
         Element opt = DOMUtil.getElement(dom,"options");
@@ -265,12 +292,14 @@ public class BindInfo
      * Parses an InputSource into dom4j Document.
      * Returns null in case of an exception.
      */
-    private static Document parse( InputSource is, ErrorReceiver receiver ) throws AbortException {
+    private static Document parse( Model model, InputSource is, ErrorReceiver receiver ) throws AbortException {
         try {
             ValidatorHandler validator = bindingFileSchema.newValidator();
 
             // set up the pipe line as :
-            //   parser->validator->factory
+            //              /-> extensionChecker -> validator
+            //   parser-> -<
+            //              \-> DOM builder
             SAXParserFactory pf = SAXParserFactory.newInstance();
             pf.setNamespaceAware(true);
             DOMBuilder builder = new DOMBuilder();
@@ -279,10 +308,14 @@ public class BindInfo
             validator.setErrorHandler(controller);
             XMLReader reader = pf.newSAXParser().getXMLReader();
             reader.setErrorHandler(controller);
-            reader.setContentHandler(new ForkContentHandler(validator,builder));
+
+            DTDExtensionBindingChecker checker = new DTDExtensionBindingChecker("", model.options, controller);
+            checker.setContentHandler(validator);
+
+            reader.setContentHandler(new ForkContentHandler(checker,builder));
 
             reader.parse(is);
-
+            
             if(controller.hadError())   throw new AbortException();
             return (Document)builder.getDOM();
         } catch( IOException e ) {
@@ -292,7 +325,7 @@ public class BindInfo
         } catch( ParserConfigurationException e ) {
             receiver.error( new SAXParseException2(e.getMessage(),null,e) );
         }
-
+        
         throw new AbortException();
     }
 }

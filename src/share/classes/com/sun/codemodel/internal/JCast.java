@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,7 +42,7 @@ final class JCast extends JExpressionImpl {
     private final JExpression object;
 
     /**
-     * JCast constructor
+     * JCast constructor 
      *
      * @param type
      *        JType to which the expression is cast

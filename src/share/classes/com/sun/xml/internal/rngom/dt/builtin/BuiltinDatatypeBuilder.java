@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.rngom.dt.builtin;
 
 import org.relaxng.datatype.Datatype;
@@ -34,16 +33,16 @@ import com.sun.xml.internal.rngom.util.Localizer;
 
 class BuiltinDatatypeBuilder implements DatatypeBuilder {
   private final Datatype dt;
-
+  
   private static final Localizer localizer = new Localizer(BuiltinDatatypeBuilder.class);
-
+  
   BuiltinDatatypeBuilder(Datatype dt) {
     this.dt = dt;
   }
 
   public void addParameter(String name,
-                           String value,
-                           ValidationContext context) throws DatatypeException {
+			   String value,
+			   ValidationContext context) throws DatatypeException {
     throw new DatatypeException(localizer.message("builtin_param"));
   }
 

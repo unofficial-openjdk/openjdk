@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.bind.api;
 
 import java.lang.annotation.Annotation;
@@ -92,7 +91,7 @@ public final class TypeReference {
      * Otherwise returns an identical type.
      */
     public TypeReference toItemType() {
-        // if we are to reinstitute this check, check JAXB annotations only
+        // if we are to reinstitute this check, check JAXB annotations only 
         // assert annotations.length==0;   // not designed to work with adapters.
 
         Type base = Navigator.REFLECTION.getBaseClass(type, Collection.class);

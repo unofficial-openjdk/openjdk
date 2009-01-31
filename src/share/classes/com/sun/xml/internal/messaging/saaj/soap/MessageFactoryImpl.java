@@ -1,11 +1,5 @@
 /*
- * $Id: MessageFactoryImpl.java,v 1.23 2006/01/27 12:49:27 vj135062 Exp $
- * $Revision: 1.23 $
- * $Date: 2006/01/27 12:49:27 $
- */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +22,13 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: MessageFactoryImpl.java,v 1.23 2006/01/27 12:49:27 vj135062 Exp $
+ * $Revision: 1.23 $
+ * $Date: 2006/01/27 12:49:27 $
+ */
+
+
 package com.sun.xml.internal.messaging.saaj.soap;
 
 import java.io.*;
@@ -60,23 +61,23 @@ public class MessageFactoryImpl extends MessageFactory {
     protected static OutputStream listener;
 
     protected boolean lazyAttachments = false;
-
+    
     public static OutputStream listen(OutputStream newListener) {
         OutputStream oldListener = listener;
         listener = newListener;
         return oldListener;
     }
-
+    
     public SOAPMessage createMessage() throws SOAPException {
         throw new UnsupportedOperationException();
     }
 
-    public SOAPMessage createMessage(boolean isFastInfoset,
-        boolean acceptFastInfoset) throws SOAPException
+    public SOAPMessage createMessage(boolean isFastInfoset, 
+        boolean acceptFastInfoset) throws SOAPException 
     {
         throw new UnsupportedOperationException();
     }
-
+    
     public SOAPMessage createMessage(MimeHeaders headers, InputStream in)
         throws SOAPException, IOException {
         String contentTypeString = MessageImpl.getContentType(headers);
@@ -97,7 +98,7 @@ public class MessageFactoryImpl extends MessageFactory {
                 log.severe("SAAJ0530.soap.unknown.Content-Type");
                 throw new SOAPExceptionImpl("Unrecognized Content-Type");
             }
-        } catch (ParseException e) {
+        } catch (ParseException e) {            
             log.severe("SAAJ0531.soap.cannot.parse.Content-Type");
             throw new SOAPExceptionImpl(
                 "Unable to parse content type: " + e.getMessage());

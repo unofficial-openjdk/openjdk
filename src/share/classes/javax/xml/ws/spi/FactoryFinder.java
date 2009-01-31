@@ -37,7 +37,7 @@ import javax.xml.ws.WebServiceException;
 class FactoryFinder {
 
     /**
-     * Creates an instance of the specified class using the specified
+     * Creates an instance of the specified class using the specified 
      * <code>ClassLoader</code> object.
      *
      * @exception WebServiceException if the given class could not be found
@@ -67,7 +67,7 @@ class FactoryFinder {
     /**
      * Finds the implementation <code>Class</code> object for the given
      * factory name, or if that fails, finds the <code>Class</code> object
-     * for the given fallback class name. The arguments supplied must be
+     * for the given fallback class name. The arguments supplied MUST be
      * used in order. If using the first argument is successful, the second
      * one will not be used.
      * <P>
@@ -102,11 +102,11 @@ class FactoryFinder {
             } else {
                 is=classLoader.getResourceAsStream(serviceId);
             }
-
+        
             if( is!=null ) {
                 BufferedReader rd =
                     new BufferedReader(new InputStreamReader(is, "UTF-8"));
-
+        
                 String factoryClassName = rd.readLine();
                 rd.close();
 
@@ -117,7 +117,7 @@ class FactoryFinder {
             }
         } catch( Exception ex ) {
         }
-
+        
 
         // try to read from $java.home/lib/jaxws.properties
         try {

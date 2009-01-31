@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,44 +23,6 @@
  * have any questions.
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
- */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
- *
- * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
- *
- */
-/*
- * ====================================================================
- *
- * This code is subject to the freebxml License, Version 1.1
- *
- * Copyright (c) 2001 - 2005 freebxml.org.  All rights reserved.
- *
- * $Header: /cvs/fi/FastInfoset/src/com/sun/xml/internal/fastinfoset/AbstractResourceBundle.java,v 1.2 2005/05/17 20:53:19 joehw Exp $
- * ====================================================================
  */
 package com.sun.xml.internal.fastinfoset;
 
@@ -76,14 +38,14 @@ import java.util.ResourceBundle;
  * @author  Paul Sterk / Sun Microsystems
  */
 public abstract class AbstractResourceBundle extends ResourceBundle {
-
+        
     public static final String LOCALE = "com.sun.xml.internal.fastinfoset.locale";
     static String _bundleName = null;
-
+    
     public static String getBundleName() {
         return _bundleName;
     }
-    public void setBundleName(String name) {
+    public static void setBundleName(String name) {
         _bundleName = name;
     }
     /**
@@ -97,7 +59,7 @@ public abstract class AbstractResourceBundle extends ResourceBundle {
         String pattern = getBundle().getString(key);
         return MessageFormat.format(pattern, args);
     }
-
+    
     /**
      * Gets 'key' from ResourceBundle and format mesage using 'args'.
      *
@@ -123,7 +85,7 @@ public abstract class AbstractResourceBundle extends ResourceBundle {
      * Name for the locale of interest.  If null, use VM default locale.
      * @return New Locale instance.
      */
-    public static Locale parseLocale(String localeString) {
+    public static Locale parseLocale(String localeString) {        
         Locale locale = null;
         if (localeString == null) {
             locale = Locale.getDefault();
@@ -143,9 +105,9 @@ public abstract class AbstractResourceBundle extends ResourceBundle {
         }
         return locale;
     }
-
+    
     /**
-     * Subclasses of this class must implement this method so that the
+     * Subclasses of this class must implement this method so that the 
      * correct resource bundle is passed to methods in this class
      *
      * @return
@@ -153,7 +115,7 @@ public abstract class AbstractResourceBundle extends ResourceBundle {
      *  will use this reference.
      */
     public abstract ResourceBundle getBundle();
-
+    
 
     /**
      * Since we are changing the ResourceBundle extension point, must

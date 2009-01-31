@@ -1,10 +1,4 @@
 /*
- * $Id: SOAPHeader.java,v 1.5.2.12 2004/11/17 13:59:28 vj135062 Exp $
- * $Revision: 1.5.2.12 $
- * $Date: 2004/11/17 13:59:28 $
- */
-
-/*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -28,6 +22,13 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: SOAPHeader.java,v 1.14 2005/04/05 22:46:27 mk125090 Exp $
+ * $Revision: 1.14 $
+ * $Date: 2005/04/05 22:46:27 $
+ */
+
+
 package javax.xml.soap;
 
 import java.util.Iterator;
@@ -108,7 +109,7 @@ public interface SOAPHeader extends SOAPElement {
      * that have the specified <i>actor</i> and that have a MustUnderstand attribute
      * whose value is equivalent to <code>true</code>.
      * <p>
-     * In SOAP 1.2 the <i>env:actor</i> attribute is replaced by the <i>env:role</i>
+     * In SOAP 1.2 the <i>env:actor</i> attribute is replaced by the <i>env:role</i> 
      * attribute, but with essentially the same semantics.
      *
      * @param actor a <code>String</code> giving the URI of the <code>actor</code> / <code>role</code>
@@ -137,7 +138,7 @@ public interface SOAPHeader extends SOAPElement {
      * <code>SOAPHeader</code> object, it is sent to the ultimate receiver
      * along with the message body.
      * <p>
-     * In SOAP 1.2 the <i>env:actor</i> attribute is replaced by the <i>env:role</i>
+     * In SOAP 1.2 the <i>env:actor</i> attribute is replaced by the <i>env:role</i> 
      * attribute, but with essentially the same semantics.
      *
      * @param actor a <code>String</code> giving the URI of the <code>actor</code> / <code>role</code>
@@ -160,7 +161,7 @@ public interface SOAPHeader extends SOAPElement {
      * <code>SOAPHeader</code> object that apply to it and to remove
      * them before passing the message on to the next actor.
      * <p>
-     * In SOAP 1.2 the <i>env:actor</i> attribute is replaced by the <i>env:role</i>
+     * In SOAP 1.2 the <i>env:actor</i> attribute is replaced by the <i>env:role</i> 
      * attribute, but with essentially the same semantics.
      *
      * @param actor a <code>String</code> giving the URI of the <code>actor</code> / <code>role</code>
@@ -265,3 +266,5 @@ public interface SOAPHeader extends SOAPElement {
     public Iterator extractAllHeaderElements();
 
 }
+
+

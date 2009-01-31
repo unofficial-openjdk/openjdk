@@ -31,13 +31,13 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import static java.lang.annotation.ElementType.FIELD;
 
 /**
- * Maps an enum constant in {@link Enum} type to XML representation.
- *
+ * Maps an enum constant in {@link Enum} type to XML representation.  
+ * 
  * <p> <b>Usage</b> </p>
  *
  * <p> The <tt>@XmlEnumValue</tt> annotation can be used with the
- *     following program elements:
- * <ul>
+ *     following program elements:  
+ * <ul> 
  *   <li>enum constant</li>
  * </ul>
  *
@@ -51,7 +51,7 @@ import static java.lang.annotation.ElementType.FIELD;
  * facets. The schema type is derived from the Java type specified in
  * <tt>@XmlEnum.value()</tt>. Each enum constant <tt>@XmlEnumValue</tt>
  * must have a valid lexical representation for the type
- * <tt>@XmlEnum.value()</tt>
+ * <tt>@XmlEnum.value()</tt> 
  *
  * <p> In the absence of this annotation, {@link Enum#name()} is used
  * as the XML representation.
@@ -77,7 +77,7 @@ import static java.lang.annotation.ElementType.FIELD;
  *     //Example: code fragment
  *     &#64;XmlType
  *     &#64;XmlEnum(Integer.class)
- *     public enum Coin {
+ *     public enum Coin { 
  *         &#64;XmlEnumValue("1") PENNY(1),
  *         &#64;XmlEnumValue("5") NICKEL(5),
  *         &#64;XmlEnumValue("10") DIME(10),
@@ -95,7 +95,7 @@ import static java.lang.annotation.ElementType.FIELD;
  * </pre>
  *
  * <p><b>Example 3: </b>Map enum constant name -> enumeration facet </p>
- *
+ * 
  * <pre>
  *     //Code fragment
  *     &#64;XmlType
@@ -104,7 +104,7 @@ import static java.lang.annotation.ElementType.FIELD;
  *         &#64;XmlEnumValue("1") ONE,
  *         &#64;XmlEnumValue("2") TWO;
  *     }
- *
+ * 
  *     &lt;!-- Example: XML Schema fragment -->
  *     &lt;xs:simpleType name="Code">
  *       &lt;xs:restriction base="xs:int">

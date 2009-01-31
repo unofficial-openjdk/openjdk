@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,11 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * @(#)MessagingException.java        1.10 02/06/13
+ */
+
+
 
 package com.sun.xml.internal.messaging.saaj.packaging.mime;
 
@@ -46,29 +51,29 @@ public class MessagingException extends Exception {
      * Constructs a MessagingException with no detail message.
      */
     public MessagingException() {
-        super();
+	super();
     }
 
     /**
      * Constructs a MessagingException with the specified detail message.
-     * @param s         the detail message
+     * @param s		the detail message
      */
     public MessagingException(String s) {
-        super(s);
+	super(s);
     }
 
     /**
-     * Constructs a MessagingException with the specified
+     * Constructs a MessagingException with the specified 
      * Exception and detail message. The specified exception is chained
      * to this exception.
-     * @param s         the detail message
-     * @param e         the embedded exception
-     * @see     #getNextException
-     * @see     #setNextException
+     * @param s		the detail message
+     * @param e		the embedded exception
+     * @see	#getNextException
+     * @see	#setNextException
      */
     public MessagingException(String s, Exception e) {
-        super(s);
-        next = e;
+	super(s);
+	next = e;
     }
 
     /**
@@ -76,34 +81,34 @@ public class MessagingException extends Exception {
      * next exception is a MessagingException, the chain
      * may extend further.
      *
-     * @return  next Exception, null if none.
+     * @return	next Exception, null if none.
      */
     public Exception getNextException() {
-        return next;
+	return next;
     }
 
     /**
      * Add an exception to the end of the chain. If the end
-     * is <strong>not</strong> a MessagingException, this
+     * is <strong>not</strong> a MessagingException, this 
      * exception cannot be added to the end.
      *
-     * @param   ex      the new end of the Exception chain
-     * @return          <code>true</code> if the this Exception
-     *                  was added, <code>false</code> otherwise.
+     * @param	ex	the new end of the Exception chain
+     * @return		<code>true</code> if the this Exception
+     *			was added, <code>false</code> otherwise.
      */
     public synchronized boolean setNextException(Exception ex) {
-        Exception theEnd = this;
-        while (theEnd instanceof MessagingException &&
-               ((MessagingException)theEnd).next != null) {
-            theEnd = ((MessagingException)theEnd).next;
-        }
-        // If the end is a MessagingException, we can add this
-        // exception to the chain.
-        if (theEnd instanceof MessagingException) {
-            ((MessagingException)theEnd).next = ex;
-            return true;
-        } else
-            return false;
+	Exception theEnd = this;
+	while (theEnd instanceof MessagingException &&
+	       ((MessagingException)theEnd).next != null) {
+	    theEnd = ((MessagingException)theEnd).next;
+	}
+	// If the end is a MessagingException, we can add this 
+	// exception to the chain.
+	if (theEnd instanceof MessagingException) {
+	    ((MessagingException)theEnd).next = ex;
+	    return true;
+	} else
+	    return false;
     }
 
     /**
@@ -111,31 +116,31 @@ public class MessagingException extends Exception {
      * exception if there is one.
      */
     public String getMessage() {
-        if (next == null)
-            return super.getMessage();
-        Exception n = next;
-        String s = super.getMessage();
-        StringBuffer sb = new StringBuffer(s == null ? "" : s);
-        while (n != null) {
-            sb.append(";\n  nested exception is:\n\t");
-            if (n instanceof MessagingException) {
-                MessagingException mex = (MessagingException)n;
-                sb.append(n.getClass().toString());
-                String msg = mex.getSuperMessage();
-                if (msg != null) {
-                    sb.append(": ");
-                    sb.append(msg);
-                }
-                n = mex.next;
-            } else {
-                sb.append(n.toString());
-                n = null;
-            }
-        }
-        return sb.toString();
+	if (next == null)
+	    return super.getMessage();
+	Exception n = next;
+	String s = super.getMessage();
+	StringBuffer sb = new StringBuffer(s == null ? "" : s);
+	while (n != null) {
+	    sb.append(";\n  nested exception is:\n\t");
+	    if (n instanceof MessagingException) {
+		MessagingException mex = (MessagingException)n;
+		sb.append(n.getClass().toString());
+		String msg = mex.getSuperMessage();
+		if (msg != null) {
+		    sb.append(": ");
+		    sb.append(msg);
+		}
+		n = mex.next;
+	    } else {
+		sb.append(n.toString());
+		n = null;
+	    }
+	}
+	return sb.toString();
     }
 
     private String getSuperMessage() {
-        return super.getMessage();
+	return super.getMessage();
     }
 }

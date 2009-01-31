@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.xsom.parser;
 
 import java.io.IOException;
@@ -35,7 +34,7 @@ import org.xml.sax.SAXException;
 
 /**
  * Interface that hides the detail of parsing mechanism.
- *
+ * 
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -43,10 +42,10 @@ public interface XMLParser {
     /**
      * Parses the document identified by the given input source
      * and sends SAX events to the given content handler.
-     *
+     * 
      * <p>
      * This method must be re-entrant.
-     *
+     * 
      * @param errorHandler
      *      Errors found during the parsing must be reported to
      *      this handler so that XSOM can recognize that something went wrong.
@@ -54,7 +53,7 @@ public interface XMLParser {
      * @param entityResolver
      *      Entity resolution should be done through this interface.
      *      Can be null.
-     *
+     * 
      * @exception SAXException
      *      If ErrorHandler throws a SAXException, this method
      *      will tunnel it to the caller. All the other errors
@@ -62,6 +61,6 @@ public interface XMLParser {
      */
     void parse( InputSource source, ContentHandler handler,
         ErrorHandler errorHandler, EntityResolver entityResolver )
-
+        
         throws SAXException, IOException;
 }

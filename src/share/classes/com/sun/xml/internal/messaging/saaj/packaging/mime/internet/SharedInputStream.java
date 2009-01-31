@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,11 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * @(#)SharedInputStream.java 1.2 02/03/27
+ */
+
+
 
 package com.sun.xml.internal.messaging.saaj.packaging.mime.internet;
 
@@ -37,6 +42,7 @@ import java.io.OutputStream;
  * original InputStream.  The new InputStream will access the same
  * underlying data as the original, without copying the data.
  *
+ * @version 1.2, 02/03/27
  * @author  Bill Shannon
  * @since JavaMail 1.2
  */
@@ -46,7 +52,7 @@ public interface SharedInputStream {
      * Return the current position in the InputStream, as an
      * offset from the beginning of the InputStream.
      *
-     * @return  the current position
+     * @return	the current position
      */
     public long getPosition();
 
@@ -58,9 +64,9 @@ public interface SharedInputStream {
      * at the same place as this stream.  The returned InputStream
      * will also implement the SharedInputStream interface.
      *
-     * @param   start   the starting position
-     * @param   end     the ending position + 1
-     * @return          the new stream
+     * @param	start	the starting position
+     * @param	end	the ending position + 1
+     * @return		the new stream
      */
     public InputStream newStream(long start, long end);
 

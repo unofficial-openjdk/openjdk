@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -76,7 +76,7 @@ public class JFieldVar extends JVar {
      * @return JDocComment containing javadocs for this class
      */
     public JDocComment javadoc() {
-        if( jdoc == null )
+        if( jdoc == null ) 
             jdoc = new JDocComment(owner.owner());
         return jdoc;
     }
@@ -87,5 +87,6 @@ public class JFieldVar extends JVar {
         super.declare( f );
     }
 
-
+   
 }
+

@@ -1,9 +1,5 @@
 /*
- * $Id: Body1_2Impl.java,v 1.32 2006/01/27 12:49:44 vj135062 Exp $
- */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +22,11 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: Body1_2Impl.java,v 1.32 2006/01/27 12:49:44 vj135062 Exp $
+ */
+
+
 
 /**
 *
@@ -48,11 +49,11 @@ import com.sun.xml.internal.messaging.saaj.soap.impl.BodyImpl;
 import com.sun.xml.internal.messaging.saaj.soap.name.NameImpl;
 
 public class Body1_2Impl extends BodyImpl {
-
+    
     protected static Logger log =
         Logger.getLogger(Body1_2Impl.class.getName(),
                          "com.sun.xml.internal.messaging.saaj.soap.ver1_2.LocalStrings");
-
+    
     public Body1_2Impl(SOAPDocumentImpl ownerDocument, String prefix) {
             super(ownerDocument, NameImpl.createBody1_2Name(prefix));
     }
@@ -154,7 +155,7 @@ public class Body1_2Impl extends BodyImpl {
     }
 
     protected SOAPElement addElement(Name name) throws SOAPException {
-        if (hasFault()) {
+        if (hasFault()) {            
             log.severe("SAAJ0402.ver1_2.only.fault.allowed.in.body");
             throw new SOAPExceptionImpl(
                 "No other element except Fault allowed in SOAPBody");
@@ -163,7 +164,7 @@ public class Body1_2Impl extends BodyImpl {
     }
 
     protected SOAPElement addElement(QName name) throws SOAPException {
-        if (hasFault()) {
+        if (hasFault()) {            
             log.severe("SAAJ0402.ver1_2.only.fault.allowed.in.body");
             throw new SOAPExceptionImpl(
                 "No other element except Fault allowed in SOAPBody");
@@ -172,7 +173,7 @@ public class Body1_2Impl extends BodyImpl {
     }
 
     public SOAPElement addChildElement(Name name) throws SOAPException {
-        if (hasFault()) {
+        if (hasFault()) {            
             log.severe("SAAJ0402.ver1_2.only.fault.allowed.in.body");
             throw new SOAPExceptionImpl(
                 "No other element except Fault allowed in SOAPBody");
@@ -181,7 +182,7 @@ public class Body1_2Impl extends BodyImpl {
     }
 
     public SOAPElement addChildElement(QName name) throws SOAPException {
-        if (hasFault()) {
+        if (hasFault()) {            
             log.severe("SAAJ0402.ver1_2.only.fault.allowed.in.body");
             throw new SOAPExceptionImpl(
                 "No other element except Fault allowed in SOAPBody");

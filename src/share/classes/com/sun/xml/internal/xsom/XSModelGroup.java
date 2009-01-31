@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,11 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.xsom;
 
 /**
  * Model group.
- *
+ * 
  * @author
  *  Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -47,7 +46,7 @@ public interface XSModelGroup extends XSComponent, XSTerm, Iterable<XSParticle>
         private final String value;
         /**
          * Returns the human-readable compositor name.
-         *
+         * 
          * @return
          *      Either "all", "sequence", or "choice".
          */

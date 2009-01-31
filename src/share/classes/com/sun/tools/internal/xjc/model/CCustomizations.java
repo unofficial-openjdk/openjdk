@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.tools.internal.xjc.model;
 
 import java.util.ArrayList;
@@ -70,7 +69,7 @@ public final class CCustomizations extends ArrayList<CPluginCustomization> {
 //        // loop check
 //        for( CCustomizations c = model.customizations; c!=null; c=c.next )
 //            assert c!=this;
-
+        
         this.next = model.customizations;
         model.customizations = this;
         assert owner!=null;

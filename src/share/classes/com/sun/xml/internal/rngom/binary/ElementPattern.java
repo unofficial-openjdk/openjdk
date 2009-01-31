@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.rngom.binary;
 
 import com.sun.xml.internal.rngom.binary.visitor.PatternFunction;
@@ -41,10 +40,10 @@ public final class ElementPattern extends Pattern {
 
   ElementPattern(NameClass nameClass, Pattern p, Locator loc) {
     super(false,
-          ELEMENT_CONTENT_TYPE,
-          combineHashCode(ELEMENT_HASH_CODE,
-                          nameClass.hashCode(),
-                          p.hashCode()));
+	  ELEMENT_CONTENT_TYPE,
+	  combineHashCode(ELEMENT_HASH_CODE,
+			  nameClass.hashCode(),
+			  p.hashCode()));
     this.nameClass = nameClass;
     this.origNameClass = nameClass;
     this.p = p;

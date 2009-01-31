@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.tools.internal.xjc.outline;
 
 import com.sun.codemodel.internal.JExpression;
@@ -31,7 +30,7 @@ import com.sun.tools.internal.xjc.model.CPropertyInfo;
 
 /**
  * Representation of a field of {@link ClassOutline}.
- *
+ * 
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -44,10 +43,10 @@ public interface FieldOutline {
 
     /** Gets the corresponding model object. */
     CPropertyInfo getPropertyInfo();
-
+    
     /**
      * Gets the type of the "raw value".
-     *
+     * 
      * <p>
      * This type can represent the entire value of this field.
      * For fields that can carry multiple values, this is an array.
@@ -57,11 +56,11 @@ public interface FieldOutline {
      * to set/get values from a property.
      */
     JType getRawType();
-
+    
     /**
      * Creates a new {@link FieldAccessor} of this field
      * for the specified object.
-     *
+     * 
      * @param targetObject
      *      Evaluates to an object, and the field on this object
      *      will be accessed.

@@ -1,9 +1,5 @@
 /*
- * $Id: HeaderElement1_1Impl.java,v 1.29 2006/01/27 12:49:41 vj135062 Exp $
- */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +22,11 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: HeaderElement1_1Impl.java,v 1.29 2006/01/27 12:49:41 vj135062 Exp $
+ */
+
+
 
 /**
 *
@@ -47,11 +48,11 @@ import com.sun.xml.internal.messaging.saaj.soap.name.NameImpl;
 import com.sun.xml.internal.messaging.saaj.util.LogDomainConstants;
 
 public class HeaderElement1_1Impl extends HeaderElementImpl {
-
+    
     protected static Logger log =
         Logger.getLogger(LogDomainConstants.SOAP_VER1_1_DOMAIN,
                          "com.sun.xml.internal.messaging.saaj.soap.ver1_1.LocalStrings");
-
+    
     public HeaderElement1_1Impl(SOAPDocumentImpl ownerDoc, Name qname) {
         super(ownerDoc, qname);
     }
@@ -94,7 +95,7 @@ public class HeaderElement1_1Impl extends HeaderElementImpl {
     }
 
     // relay not supported by SOAP 1.1
-    protected NameImpl getRelayAttributeName() {
+    protected NameImpl getRelayAttributeName() {        
         log.log(
             Level.SEVERE,
             "SAAJ0302.ver1_1.hdr.attr.unsupported.in.SOAP1.1",

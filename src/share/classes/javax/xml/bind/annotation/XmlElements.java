@@ -52,7 +52,7 @@ import java.lang.annotation.Target;
  * </ul>
  *
  * This annotation is intended for annotation a JavaBean collection
- * property (e.g. List).
+ * property (e.g. List). 
  *
  * <p><b>Usage</b></p>
  *
@@ -69,10 +69,10 @@ import java.lang.annotation.Target;
  * additional common information.</p>
  *
  * <hr>
- *
+ * 
  * <p><b>Example 1:</b> Map to a list of elements</p>
  * <pre>
- *
+ *    
  *    // Mapped code fragment
  *    public class Foo {
  *        &#64;XmlElements(
@@ -82,7 +82,7 @@ import java.lang.annotation.Target;
  *         public List items;
  *    }
  *
- *    &lt;!-- XML Representation for a List of {1,2.5}
+ *    &lt;!-- XML Representation for a List of {1,2.5} 
  *            XML output is not wrapped using another element -->
  *    ...
  *    <A> 1 </A>
@@ -104,7 +104,7 @@ import java.lang.annotation.Target;
  * <p><b>Example 2:</b> Map to a list of elements wrapped with another element
  * </p>
  * <pre>
- *
+ * 
  *    // Mapped code fragment
  *    public class Foo {
  *        &#64;XmlElementWrapper(name="bar")
@@ -130,7 +130,7 @@ import java.lang.annotation.Target;
  *    &lt;/xs:complexType>
  * </pre>
  *
- * <p><b>Example 3:</b> Change element name based on type using an adapter.
+ * <p><b>Example 3:</b> Change element name based on type using an adapter. 
  * </p>
  * <pre>
  *    class Foo {
@@ -141,7 +141,7 @@ import java.lang.annotation.Target;
  *       })
  *       Q bar;
  *    }
- *
+ * 
  *    &#64;XmlType abstract class P {...}
  *    &#64;XmlType(name="PX") class PX extends P {...}
  *    &#64;XmlType(name="PY") class PY extends P {...}
@@ -160,9 +160,9 @@ import java.lang.annotation.Target;
  *      &lt;/xs:sequence>
  *    &lt;/xs:complexType>
  * </pre>
- *
+ * 
  * @author <ul><li>Kohsuke Kawaguchi, Sun Microsystems, Inc.</li><li>Sekhar Vajjhala, Sun Microsystems, Inc.</li></ul>
- * @see XmlElement
+ * @see XmlElement 
  * @see XmlElementRef
  * @see XmlElementRefs
  * @see XmlJavaTypeAdapter

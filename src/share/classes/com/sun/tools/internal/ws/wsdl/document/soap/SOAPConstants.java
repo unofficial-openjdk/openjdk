@@ -1,5 +1,5 @@
 /*
- * Portions Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,9 @@
 
 package com.sun.tools.internal.ws.wsdl.document.soap;
 
-import javax.xml.namespace.QName;
-
 import com.sun.xml.internal.ws.encoding.soap.streaming.SOAPNamespaceConstants;
+
+import javax.xml.namespace.QName;
 
 /**
  * Interface defining SOAP-related constants.
@@ -59,7 +59,7 @@ public interface SOAPConstants {
     public static final QName QNAME_OPERATION =
         new QName(NS_WSDL_SOAP, "operation");
     public static final QName QNAME_MUSTUNDERSTAND =
-        new QName(URI_ENVELOPE, "mustUnderstand");
+        new QName(URI_ENVELOPE, "mustUnderstand");   
 
 
     // SOAP encoding QNames
@@ -255,5 +255,5 @@ public interface SOAPConstants {
     // SOAP attributes with non-colonized names
     public static final QName QNAME_ATTR_ID = new QName("", "id");
     public static final QName QNAME_ATTR_HREF = new QName("", "href");
-
+    
 }

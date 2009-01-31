@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.bind.v2.runtime;
 
 import javax.xml.bind.Binder;
@@ -45,11 +44,11 @@ import org.xml.sax.SAXException;
 
 /**
  * Implementation of {@link Binder}.
- *
+ * 
  * TODO: investigate how much in-place unmarshalling is implemented
  *      - some preliminary work is there. Probably buggy.
  * TODO: work on the marshaller side.
- *
+ * 
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -59,7 +58,7 @@ public class BinderImpl<XmlNode> extends Binder<XmlNode> {
      * The parent context object.
      */
     private final JAXBContextImpl context;
-
+    
     /**
      * Lazily created unmarshaller to do XML->Java binding.
      * @see #getUnmarshaller()
@@ -73,18 +72,18 @@ public class BinderImpl<XmlNode> extends Binder<XmlNode> {
     private MarshallerImpl marshaller;
 
     private final InfosetScanner<XmlNode> scanner;
-
+    
     /**
      * A {@link Binder} always works with the same
      * association map.
      */
     private final AssociationMap<XmlNode> assoc = new AssociationMap<XmlNode>();
-
+    
     BinderImpl(JAXBContextImpl _context,InfosetScanner<XmlNode> scanner) {
         this.context = _context;
         this.scanner = scanner;
     }
-
+    
     private UnmarshallerImpl getUnmarshaller() {
         if(unmarshaller==null)
             unmarshaller = new UnmarshallerImpl(context,assoc);
@@ -123,6 +122,7 @@ public class BinderImpl<XmlNode> extends Binder<XmlNode> {
     }
 
     public void setSchema(Schema schema) {
+        getMarshaller().setSchema(schema);
         getUnmarshaller().setSchema(schema);
     }
 
@@ -146,7 +146,7 @@ public class BinderImpl<XmlNode> extends Binder<XmlNode> {
         } catch( SAXException e ) {
             throw unmarshaller.createUnmarshalException(e);
         }
-
+        
         return handler.getContext().getResult();
     }
 
@@ -157,6 +157,8 @@ public class BinderImpl<XmlNode> extends Binder<XmlNode> {
     }
 
     public Object getJAXBNode(XmlNode xmlNode) {
+        if(xmlNode==null)
+            throw new IllegalArgumentException();
         AssociationMap.Entry e = assoc.byElement(xmlNode);
         if(e==null)     return null;
         if(e.outer()!=null)     return e.outer();

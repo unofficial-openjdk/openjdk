@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,33 +36,33 @@ public class AttributeUseImpl extends ComponentImpl implements XSAttributeUse
 {
     public AttributeUseImpl( SchemaDocumentImpl owner, AnnotationImpl ann, Locator loc, ForeignAttributesImpl fa, Ref.Attribute _decl,
         XmlString def, XmlString fixed, boolean req ) {
-
+        
         super(owner,ann,loc,fa);
-
+        
         this.att = _decl;
         this.defaultValue = def;
         this.fixedValue = fixed;
         this.required = req;
     }
-
-    private final Ref.Attribute att;
+    
+    private final Ref.Attribute att;    
     public XSAttributeDecl getDecl() { return att.getAttribute(); }
-
+    
     private final XmlString defaultValue;
     public XmlString getDefaultValue() {
         if( defaultValue!=null )    return defaultValue;
         else                        return getDecl().getDefaultValue();
     }
-
+    
     private final XmlString fixedValue;
     public XmlString getFixedValue() {
         if( fixedValue!=null )      return fixedValue;
         else                        return getDecl().getFixedValue();
     }
-
+    
     private final boolean required;
     public boolean isRequired() { return required; }
-
+    
     public Object apply( XSFunction f ) {
         return f.attributeUse(this);
     }

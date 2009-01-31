@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.rngom.binary;
 
 import com.sun.xml.internal.rngom.nc.ChoiceNameClass;
@@ -48,8 +47,8 @@ class Alphabet {
 
   void checkOverlap(Alphabet a) throws RestrictionViolationException {
     if (nameClass != null
-        && a.nameClass != null
-        && nameClass.hasOverlapWith(a.nameClass))
+	&& a.nameClass != null
+	&& nameClass.hasOverlapWith(a.nameClass))
       throw new RestrictionViolationException("interleave_element_overlap");
   }
 }

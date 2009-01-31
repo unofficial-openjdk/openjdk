@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,9 +21,9 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
+ *
+ * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
-
-
 package com.sun.xml.internal.fastinfoset.util;
 
 import com.sun.xml.internal.org.jvnet.fastinfoset.FastInfosetException;
@@ -32,29 +32,29 @@ import com.sun.xml.internal.fastinfoset.CommonResourceBundle;
 
 public class DuplicateAttributeVerifier {
     public static final int MAP_SIZE = 256;
-
+    
     public int _currentIteration;
-
+    
     private static class Entry {
         private int iteration;
         private int value;
-
+        
         private Entry hashNext;
-
+        
         private Entry poolNext;
     }
-
+    
     private Entry[] _map;
-
+       
     public final Entry _poolHead;
     public Entry _poolCurrent;
     private Entry _poolTail;
-
-
+    
+    
     public DuplicateAttributeVerifier() {
         _poolTail = _poolHead = new Entry();
     }
-
+    
     public final void clear() {
         _currentIteration = 0;
 
@@ -63,17 +63,17 @@ public class DuplicateAttributeVerifier {
             e.iteration = 0;
             e = e.poolNext;
         }
-
+        
         reset();
     }
-
+    
     public final void reset() {
         _poolCurrent = _poolHead;
         if (_map == null) {
             _map = new Entry[MAP_SIZE];
         }
     }
-
+    
     private final void increasePool(int capacity) {
         if (_map == null) {
             _map = new Entry[MAP_SIZE];
@@ -89,12 +89,12 @@ public class DuplicateAttributeVerifier {
             _poolCurrent = tail.poolNext;
         }
     }
-
+    
     public final void checkForDuplicateAttribute(int hash, int value) throws FastInfosetException {
         if (_poolCurrent == null) {
             increasePool(16);
         }
-
+        
         // Get next free entry
         final Entry newEntry = _poolCurrent;
         _poolCurrent = _poolCurrent.poolNext;
@@ -113,11 +113,11 @@ public class DuplicateAttributeVerifier {
                     throw new FastInfosetException(CommonResourceBundle.getInstance().getString("message.duplicateAttribute"));
                 }
             } while ((e = e.hashNext) != null);
-
+            
             newEntry.hashNext = head;
             _map[hash] = newEntry;
             newEntry.iteration = _currentIteration;
             newEntry.value = value;
-        }
+        }        
     }
 }

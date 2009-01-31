@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,15 +21,17 @@
  * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
+ *
+ * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
-
 package com.sun.xml.internal.org.jvnet.fastinfoset.sax;
 
 import com.sun.xml.internal.org.jvnet.fastinfoset.FastInfosetSerializer;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.ext.LexicalHandler;
 
-public interface FastInfosetWriter extends ContentHandler, LexicalHandler,
+public interface FastInfosetWriter extends ContentHandler, LexicalHandler, 
         EncodingAlgorithmContentHandler, PrimitiveTypeContentHandler,
-        RestrictedAlphabetContentHandler, FastInfosetSerializer {
+        RestrictedAlphabetContentHandler, ExtendedContentHandler,
+        FastInfosetSerializer {
 }

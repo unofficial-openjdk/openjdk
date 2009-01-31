@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.xsom.parser;
 
 import org.xml.sax.ContentHandler;
@@ -31,17 +30,17 @@ import org.xml.sax.ErrorHandler;
 
 /**
  * Used to parse &lt;xs:annotation>.
- *
+ * 
  * @author Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public abstract class AnnotationParser {
     /**
      * Called every time a new &lt;xs:annotation> element
      * is found.
-     *
+     * 
      * The sub-tree rooted at &lt;xs:annotation> will be
      * sent to this ContentHandler as if it is a whole document.
-     *
+     * 
      * @param context
      *      indicates the schema component that owns this annotation.
      *      Always non-null.
@@ -62,11 +61,11 @@ public abstract class AnnotationParser {
         String parentElementName,
         ErrorHandler errorHandler,
         EntityResolver entityResolver );
-
+    
     /**
      * Once the SAX events are fed to the ContentHandler,
      * this method will be called to retrieve the parsed result.
-     *
+     * 
      * @param existing
      *      An annotation object which was returned from another
      *      AnnotationParser before. Sometimes, one schema component
@@ -79,3 +78,4 @@ public abstract class AnnotationParser {
      */
     public abstract Object getResult( Object existing );
 }
+

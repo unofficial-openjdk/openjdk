@@ -1,11 +1,5 @@
 /*
- * $Id: ParserPool.java,v 1.5 2006/01/27 12:49:52 vj135062 Exp $
- * $Revision: 1.5 $
- * $Date: 2006/01/27 12:49:52 $
- */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +22,13 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: ParserPool.java,v 1.5 2006/01/27 12:49:52 vj135062 Exp $
+ * $Revision: 1.5 $
+ * $Date: 2006/01/27 12:49:52 $
+ */
+
+
 
 package com.sun.xml.internal.messaging.saaj.util;
 
@@ -47,14 +48,14 @@ public class ParserPool {
     private int capacity;
 
     public ParserPool(int capacity) {
-                this.capacity = capacity;
+		this.capacity = capacity;
         factory = new com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl(); //SAXParserFactory.newInstance();
         factory.setNamespaceAware(true);
         parsers = new Stack();
     }
 
     public synchronized SAXParser get() throws ParserConfigurationException,
-                SAXException {
+		SAXException {
 
         try {
             return (SAXParser) parsers.pop();

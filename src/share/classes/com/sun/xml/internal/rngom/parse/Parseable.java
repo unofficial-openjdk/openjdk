@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.rngom.parse;
 
 import com.sun.xml.internal.rngom.ast.builder.*;
@@ -30,7 +29,7 @@ import com.sun.xml.internal.rngom.ast.om.*;
 
 /**
  * An input that can be turned into a RELAX NG pattern.
- *
+ * 
  * <p>
  * This is either a RELAX NG schema in the XML format, or a RELAX NG
  * schema in the compact syntax.
@@ -38,11 +37,11 @@ import com.sun.xml.internal.rngom.ast.om.*;
 public interface Parseable {
     /**
      * Parses this {@link Parseable} object into a RELAX NG pattern.
-     *
+     * 
      * @param sb
      *      The builder of the schema object model. This object
      *      dictates how the actual pattern is constructed.
-     *
+     * 
      * @return
      *      a parsed object. Always returns a non-null valid object.
      */

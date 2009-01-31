@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ public class Messages
             Messages.class.getName()).getString(property);
         return MessageFormat.format(text,args);
     }
-
+    
 //
 //
 // Message resources
@@ -67,10 +67,13 @@ public class Messages
         "DoubleDefinition"; // arg:1
     public static final String ERR_DOUBLE_DEFINITION_ORIGINAL =
         "DoubleDefinition.Original"; // arg:0
-
+    
     public static final String ERR_MISSING_SCHEMALOCATION =
         "MissingSchemaLocation"; // arg:0
-
+        
     public static final String ERR_ENTITY_RESOLUTION_FAILURE =
         "EntityResolutionFailure"; // arg:2
+
+    public static final String ERR_SIMPLE_CONTENT_EXPECTED =
+        "SimpleContentExpected"; // arg:2
 }

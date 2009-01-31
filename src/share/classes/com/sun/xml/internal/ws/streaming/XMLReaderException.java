@@ -1,5 +1,5 @@
 /*
- * Portions Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,10 +31,10 @@ import com.sun.xml.internal.ws.util.localization.Localizable;
 /**
  * <p> XMLReaderException represents an exception that occurred while reading an
  * XML document. </p>
- *
+ * 
  * @see XMLReader
  * @see JAXWSExceptionBase
- *
+ * 
  * @author WS Development Team
  */
 public class XMLReaderException extends JAXWSExceptionBase {
@@ -51,7 +51,7 @@ public class XMLReaderException extends JAXWSExceptionBase {
         super("xmlreader.nestedError", arg);
     }
 
-    public String getResourceBundleName() {
+    public String getDefaultResourceBundleName() {
         return "com.sun.xml.internal.ws.resources.streaming";
     }
 }

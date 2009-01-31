@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,34 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
- *
- * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
- *
- */
+ 
 
 
 package com.sun.xml.internal.fastinfoset.stax.events;
@@ -86,7 +59,7 @@ public class StAXEventAllocator implements XMLEventAllocator {
     StartDocumentEvent startDoc = new StartDocumentEvent();
     EndDocumentEvent endDoc = new EndDocumentEvent();
     DTDEvent dtd = new DTDEvent();
-
+    
     /** Creates a new instance of StAXEventAllocator */
     public StAXEventAllocator() {
     }
@@ -95,9 +68,9 @@ public class StAXEventAllocator implements XMLEventAllocator {
     }
 
   /**
-   * This method allocates an event given the current state of the XMLStreamReader.
+   * This method allocates an event given the current state of the XMLStreamReader.  
    * If this XMLEventAllocator does not have a one-to-one mapping between reader state
-   * and events this method will return null.
+   * and events this method will return null.  
    * @param streamReader The XMLStreamReader to allocate from
    * @return the event corresponding to the current reader state
    */
@@ -106,11 +79,11 @@ public class StAXEventAllocator implements XMLEventAllocator {
             throw new XMLStreamException(CommonResourceBundle.getInstance().getString("message.nullReader"));
         return getXMLEvent(streamReader);
     }
-
+    
   /**
-   * This method allocates an event or set of events given the current state of
-   * the XMLStreamReader and adds the event or set of events to the consumer that
-   * was passed in.
+   * This method allocates an event or set of events given the current state of 
+   * the XMLStreamReader and adds the event or set of events to the consumer that 
+   * was passed in.  
    * @param streamReader The XMLStreamReader to allocate from
    * @param consumer The XMLEventConsumer to add to.
    */
@@ -119,14 +92,14 @@ public class StAXEventAllocator implements XMLEventAllocator {
 
     }
     // ---------------------end of methods defined by XMLEventAllocator-----------------//
-
-
+    
+    
     XMLEvent getXMLEvent(XMLStreamReader reader){
         EventBase event = null;
         int eventType = reader.getEventType();
-
+        
         switch(eventType){
-
+            
             case XMLEvent.START_ELEMENT:
             {
                 startElement.reset();
@@ -167,7 +140,7 @@ public class StAXEventAllocator implements XMLEventAllocator {
                     event = space;
                 }
                 else {
-                    characters.setData(reader.getText());
+                    characters.setData(reader.getText()); 
                     event = characters;
                 }
                  */
@@ -206,7 +179,7 @@ public class StAXEventAllocator implements XMLEventAllocator {
                 entity.setDeclaration(new EntityDeclarationImpl(reader.getLocalName(),reader.getText()));
                 event = entity;
                 break;
-
+                
             }
             case XMLEvent.ATTRIBUTE:{
                 event = null ;
@@ -218,7 +191,7 @@ public class StAXEventAllocator implements XMLEventAllocator {
                 break;
             }
             case XMLEvent.CDATA:{
-                cData.setData(reader.getText());
+                cData.setData(reader.getText()); 
                 event = cData;
                 break;
             }
@@ -232,9 +205,9 @@ public class StAXEventAllocator implements XMLEventAllocator {
         event.setLocation(reader.getLocation());
         return event ;
     }
-
+    
     //use event.addAttribute instead of addAttributes to avoid creating another list
-    protected void addAttributes(StartElementEvent event,XMLStreamReader reader){
+    protected void addAttributes(StartElementEvent event,XMLStreamReader reader){        
         AttributeBase attr = null;
         for(int i=0; i<reader.getAttributeCount() ;i++){
             attr =  new AttributeBase(reader.getAttributeName(i), reader.getAttributeValue(i));
@@ -243,7 +216,7 @@ public class StAXEventAllocator implements XMLEventAllocator {
             event.addAttribute(attr);
         }
     }
-
+    
     //add namespaces to StartElement/EndElement
     protected void addNamespaces(StartElementEvent event,XMLStreamReader reader){
         Namespace namespace = null;
@@ -252,7 +225,7 @@ public class StAXEventAllocator implements XMLEventAllocator {
             event.addNamespace(namespace);
         }
     }
-
+    
     protected void addNamespaces(EndElementEvent event,XMLStreamReader reader){
         Namespace namespace = null;
         for(int i=0; i<reader.getNamespaceCount(); i++){
@@ -260,5 +233,5 @@ public class StAXEventAllocator implements XMLEventAllocator {
             event.addNamespace(namespace);
         }
     }
-
+        
 }

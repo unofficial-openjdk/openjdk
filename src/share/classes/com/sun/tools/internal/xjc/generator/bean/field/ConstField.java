@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.tools.internal.xjc.generator.bean.field;
 
 import com.sun.codemodel.internal.JBlock;
@@ -41,7 +40,7 @@ import com.sun.tools.internal.xjc.outline.FieldAccessor;
  * Realizes a property as a "public static final" property on the interface.
  * This class can handle both boxed/unboxed types and both
  * single/colllection.
- *
+ * 
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -71,22 +70,22 @@ final class ConstField extends AbstractField {
         $ref = outline.ref.field(JMod.PUBLIC|JMod.STATIC|JMod.FINAL,
             ptype!=null?ptype:implType, prop.getName(true), defaultValue );
         $ref.javadoc().append(prop.javadoc);
-
+        
         annotate($ref);
     }
-
+    
     public JType getRawType() {
 //        if( isCollection )      return getInfo().array();
         return exposedType;
     }
-
-
+    
+    
     public FieldAccessor create(JExpression target) {
         return new Accessor(target);
     }
-
+    
     private class Accessor extends AbstractField.Accessor {
-
+        
         Accessor( JExpression $target ) {
             super($target);
         }

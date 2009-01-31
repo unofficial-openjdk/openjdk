@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.rngom.binary;
 
 import com.sun.xml.internal.rngom.binary.visitor.PatternFunction;
@@ -36,8 +35,8 @@ public class ListPattern extends Pattern {
 
   ListPattern(Pattern p, Locator locator) {
     super(false,
-          DATA_CONTENT_TYPE,
-          combineHashCode(LIST_HASH_CODE, p.hashCode()));
+	  DATA_CONTENT_TYPE,
+	  combineHashCode(LIST_HASH_CODE, p.hashCode()));
     this.p = p;
     this.locator = locator;
   }
@@ -56,7 +55,7 @@ public class ListPattern extends Pattern {
 
   boolean samePattern(Pattern other) {
     return (other instanceof ListPattern
-            && p == ((ListPattern)other).p);
+	    && p == ((ListPattern)other).p);
   }
 
   public void accept(PatternVisitor visitor) {
@@ -85,7 +84,7 @@ public class ListPattern extends Pattern {
       throw e;
     }
   }
-
+  
   Pattern getOperand() {
     return p;
   }

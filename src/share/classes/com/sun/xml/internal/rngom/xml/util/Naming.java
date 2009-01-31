@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.rngom.xml.util;
 
 public class Naming {
@@ -98,11 +97,11 @@ public class Naming {
       setCharType(nameStartSingles.charAt(i), CT_NMSTRT);
     for (int i = 0; i < nameStartRanges.length(); i += 2)
       setCharType(nameStartRanges.charAt(i), nameStartRanges.charAt(i + 1),
-                  CT_NMSTRT);
+		  CT_NMSTRT);
     byte[] other = new byte[256];
     for (int i = 0; i < 256; i++)
       if (charTypeTable[i] == null)
-        charTypeTable[i] = other;
+	charTypeTable[i] = other;
   }
 
   private static void setCharType(char c, int type) {
@@ -116,16 +115,16 @@ public class Naming {
     byte[] shared = null;
     do {
       if ((min & 0xFF) == 0) {
-        for (; min + 0xFF <= max; min += 0x100) {
-          if (shared == null) {
-            shared = new byte[256];
-            for (int i = 0; i < 256; i++)
-              shared[i] = (byte)type;
-          }
-          charTypeTable[min >> 8] = shared;
-          if (min + 0xFF == max)
-            return;
-        }
+	for (; min + 0xFF <= max; min += 0x100) {
+	  if (shared == null) {
+	    shared = new byte[256];
+	    for (int i = 0; i < 256; i++)
+	      shared[i] = (byte)type;
+	  }
+	  charTypeTable[min >> 8] = shared;
+	  if (min + 0xFF == max)
+	    return;
+	}
       }
       setCharType(min, type);
     } while (min++ != max);

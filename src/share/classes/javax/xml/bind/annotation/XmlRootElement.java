@@ -37,22 +37,22 @@ import static java.lang.annotation.ElementType.TYPE;
  * <p> <b>Usage</b> </p>
  * <p>
  * The &#64;XmlRootElement annotation can be used with the following program
- * elements:
- * <ul>
+ * elements: 
+ * <ul> 
  *   <li> a top level class </li>
  *   <li> an enum type </li>
  * </ul>
  *
  * <p>See "Package Specification" in javax.xml.bind.package javadoc for
  * additional common information.</p>
- *
+ * 
  * <p>
- * When a top level class or an enum type is annotated with the
- * &#64;XmlRootElement annotation, then its value is represented
+ * When a top level class or an enum type is annotated with the 
+ * &#64;XmlRootElement annotation, then its value is represented 
  * as XML element in an XML document.
  *
  * <p> This annotation can be used with the following annotations:
- * {@link XmlType}, {@link XmlEnum}, {@link XmlAccessorType},
+ * {@link XmlType}, {@link XmlEnum}, {@link XmlAccessorType}, 
  * {@link XmlAccessorOrder}.
  * <p>
 
@@ -99,7 +99,7 @@ import static java.lang.annotation.ElementType.TYPE;
  * <p>
  *
  * <b>Example 2: Orthogonality to type inheritance </b>
- *
+ * 
  * <p>
  * An element declaration annotated on a type is not inherited by its
  * derived types. The following example shows this.
@@ -111,7 +111,7 @@ import static java.lang.annotation.ElementType.TYPE;
  *         Point3D(int _x,int _y,int _z) {super(_x,_y);z=_z;}
  *     }
  *
- *     //Example: Code fragment corresponding to XML output *
+ *     //Example: Code fragment corresponding to XML output * 
  *     marshal( new Point3D(3,5,0), System.out );
  *
  *     &lt;!-- Example: XML output -->
@@ -174,7 +174,7 @@ public @interface XmlRootElement {
      * local name of the XML element.
      * <p>
      * If the value is "##default", then the name is derived from the
-     * class name.
+     * class name. 
      *
      */
     String name() default "##default";

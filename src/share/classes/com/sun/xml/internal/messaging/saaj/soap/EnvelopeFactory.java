@@ -1,11 +1,5 @@
 /*
- * $Id: EnvelopeFactory.java,v 1.24 2006/01/27 12:49:26 vj135062 Exp $
- * $Revision: 1.24 $
- * $Date: 2006/01/27 12:49:26 $
- */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +22,13 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: EnvelopeFactory.java,v 1.24 2006/01/27 12:49:26 vj135062 Exp $
+ * $Revision: 1.24 $
+ * $Date: 2006/01/27 12:49:26 $
+ */
+
+
 package com.sun.xml.internal.messaging.saaj.soap;
 
 import java.util.logging.Logger;
@@ -53,15 +54,15 @@ import com.sun.xml.internal.messaging.saaj.util.transform.EfficientStreamingTran
  * underlying implementations.
  */
 public class EnvelopeFactory {
-
+    
     protected static Logger
         log = Logger.getLogger(LogDomainConstants.SOAP_DOMAIN,
         "com.sun.xml.internal.messaging.saaj.soap.LocalStrings");
-
+    
     private static ParserPool parserPool = new ParserPool(5);
-
+        
     public static Envelope createEnvelope(Source src, SOAPPartImpl soapPart)
-        throws SOAPException
+        throws SOAPException 
     {
         // Insert SAX filter to disallow Document Type Declarations since
         // they are not legal in SOAP
@@ -95,13 +96,13 @@ public class EnvelopeFactory {
             }
             src = new SAXSource(rejectFilter, is);
         }
-
+        
         try {
             Transformer transformer =
                 EfficientStreamingTransformer.newTransformer();
             DOMResult result = new DOMResult(soapPart);
             transformer.transform(src, result);
-
+            
             Envelope env = (Envelope) soapPart.getEnvelope();
             if (saxParser != null) {
                 parserPool.put(saxParser);

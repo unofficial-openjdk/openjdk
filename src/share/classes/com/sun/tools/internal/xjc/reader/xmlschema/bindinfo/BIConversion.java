@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.tools.internal.xjc.reader.xmlschema.bindinfo;
 
 import javax.xml.bind.DatatypeConverter;
@@ -42,6 +41,7 @@ import com.sun.codemodel.internal.JMod;
 import com.sun.codemodel.internal.JPackage;
 import com.sun.codemodel.internal.JType;
 import com.sun.codemodel.internal.JVar;
+import com.sun.codemodel.internal.JConditional;
 import com.sun.tools.internal.xjc.ErrorReceiver;
 import com.sun.tools.internal.xjc.model.CAdapter;
 import com.sun.tools.internal.xjc.model.CBuiltinLeafInfo;
@@ -58,11 +58,11 @@ import org.xml.sax.Locator;
 
 /**
  * Conversion declaration.
- *
+ * 
  * <p>
  * A conversion declaration specifies how an XML type gets mapped
  * to a Java type.
- *
+ * 
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -89,7 +89,7 @@ public abstract class BIConversion extends AbstractDeclarationImpl {
     public abstract TypeUse getTypeUse( XSSimpleType owner );
 
     public QName getName() { return NAME; }
-
+    
     /** Name of the conversion declaration. */
     public static final QName NAME = new QName(
         Const.JAXB_NSURI, "conversion" );
@@ -233,6 +233,10 @@ public abstract class BIConversion extends AbstractDeclarationImpl {
 
                 // RESULT: <value>.<method>()
                 inv = $value.invoke(printMethod);
+                
+                // check value is not null ... if(value == null) return null;
+                JConditional jcon = marshal.body()._if($value.eq(JExpr._null()));
+                jcon._then()._return(JExpr._null());
             } else {
                 // RESULT: <className>.<method>(<value>)
                 if(this.printMethod==null) {
@@ -338,3 +342,4 @@ public abstract class BIConversion extends AbstractDeclarationImpl {
         }
     }
 }
+

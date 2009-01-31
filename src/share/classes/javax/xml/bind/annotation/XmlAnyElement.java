@@ -43,12 +43,12 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * Maps a JavaBean property to XML infoset representation and/or JAXB element.
  *
  * <p>
- * This annotation serves as a "catch-all" property while unmarshalling
+ * This annotation serves as a "catch-all" property while unmarshalling 
  * xml content into a instance of a JAXB annotated class. It typically
  * annotates a multi-valued JavaBean property, but it can occur on
- * single value JavaBean property. During unmarshalling, each xml element
- * that does not match a static &#64;XmlElement or &#64;XmlElementRef
- * annotation for the other JavaBean properties on the class, is added to this
+ * single value JavaBean property. During unmarshalling, each xml element 
+ * that does not match a static &#64;XmlElement or &#64;XmlElementRef 
+ * annotation for the other JavaBean properties on the class, is added to this 
  * "catch-all" property.
  *
  * <p>
@@ -56,7 +56,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * <pre>
  * &#64;XmlAnyElement
  * public {@link Element}[] others;
- *
+ * 
  * // Collection of {@link Element} or JAXB elements.
  * &#64;XmlAnyElement(lax="true")
  * public {@link Object}[] others;
@@ -81,7 +81,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * <h2>Relationship to other annotations</h2>
  * <p>
  * This annotation can be used with {@link XmlJavaTypeAdapter}, so that users
- * can map their own data structure to DOM, which in turn can be composed
+ * can map their own data structure to DOM, which in turn can be composed 
  * into XML.
  *
  * <p>
@@ -270,7 +270,7 @@ public @interface XmlAnyElement {
      * instead of unmarshalling it to DOM. Additionally, if the element is
      * unknown but it has a known xsi:type, the unmarshaller eagerly unmarshals
      * the element to a {@link JAXBElement}, with the unknown element name and
-     * the JAXBElement value is set to an instance of the JAXB mapping of the
+     * the JAXBElement value is set to an instance of the JAXB mapping of the 
      * known xsi:type.
      *
      * <p>

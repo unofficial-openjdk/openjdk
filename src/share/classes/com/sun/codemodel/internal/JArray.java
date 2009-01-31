@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,25 +54,25 @@ public final class JArray extends JExpressionImpl {
     }
 
     public void generate(JFormatter f) {
-
+        
         // generally we produce new T[x], but when T is an array type (T=T'[])
         // then new T'[][x] is wrong. It has to be new T'[x][].
         int arrayCount = 0;
         JType t = type;
-
+        
         while( t.isArray() ) {
             t = t.elementType();
             arrayCount++;
         }
-
+        
         f.p("new").g(t).p('[');
         if (size != null)
             f.g(size);
         f.p(']');
-
+        
         for( int i=0; i<arrayCount; i++ )
             f.p("[]");
-
+        
         if ((size == null) || (exprs != null))
             f.p('{');
         if (exprs != null) {

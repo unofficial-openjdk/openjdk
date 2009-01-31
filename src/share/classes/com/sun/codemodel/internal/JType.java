@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,7 +62,7 @@ public abstract class JType implements JGenerable, Comparable {
 
     /** Gets the owner code model object. */
     public abstract JCodeModel owner();
-
+    
     /**
      * Gets the full name of the type.
      *
@@ -93,10 +93,10 @@ public abstract class JType implements JGenerable, Comparable {
      *     Names like "int", "void", "BigInteger".
      */
     public abstract String name();
-
+    
     /**
      * Create an array type of this type.
-     *
+     * 
      * This method is undefined for primitive void type, which
      * doesn't have any corresponding array representation.
      *
@@ -138,12 +138,12 @@ public abstract class JType implements JGenerable, Comparable {
     public JType erasure() {
         return this;
     }
-
+    
     /**
      * Returns true if this is a referenced type.
      */
     public final boolean isReference() {
-        return !isPrimitive();
+    	return !isPrimitive();
     }
 
     /**

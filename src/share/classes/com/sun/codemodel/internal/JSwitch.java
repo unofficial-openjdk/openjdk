@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.codemodel.internal;
 
 import java.util.ArrayList;
@@ -43,7 +42,7 @@ public final class JSwitch implements JStatement {
      * vector of JCases.
      */
     private List<JCase> cases = new ArrayList<JCase>();
-
+    
     /**
      * a single default case
      */
@@ -68,12 +67,12 @@ public final class JSwitch implements JStatement {
 
     public JCase _default() {
         // what if (default != null) ???
-
+        
         // default cases statements don't have a label
         defaultCase = new JCase(null, true);
         return defaultCase;
     }
-
+    
     public void state(JFormatter f) {
         if (JOp.hasTopOp(test)) {
             f.p("switch ").g(test).p(" {").nl();

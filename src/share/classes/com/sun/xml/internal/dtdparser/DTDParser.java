@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,6 +58,7 @@ import java.util.Vector;
  * @author David Brownell
  * @author Janet Koenig
  * @author Kohsuke KAWAGUCHI
+ * @version $Id: DTDParser.java,v 1.1 2005/05/15 04:24:19 kohsuke Exp $
  */
 public class DTDParser {
     public final static String TYPE_CDATA = "CDATA";
@@ -625,7 +626,7 @@ public class DTDParser {
 
     // [11] SystemLiteral ::= ('"' [^"]* '"') | ("'" [^']* "'")
     // for PUBLIC and SYSTEM literals, also "<?xml ...type='literal'?>'
-
+    
     // NOTE:  XML spec should explicitly say that PE ref syntax is
     // ignored in PIs, comments, SystemLiterals, and Pubid Literal
     // values ... can't process the XML spec's own DTD without doing
@@ -786,7 +787,7 @@ public class DTDParser {
     //
     //    ... handled by InputEntity.unparsedContent()
 
-    // collapsing several rules together ...
+    // collapsing several rules together ... 
     // simpler than attribute literals -- no reference parsing!
     private String maybeReadAttribute(String name, boolean must)
             throws IOException, SAXException {
@@ -1162,7 +1163,7 @@ public class DTDParser {
 //        ContentModel       retval, temp, current;
 
 //        retval = temp = current = null;
-
+        
         dtdHandler.startModelGroup();
 
         do {
@@ -1277,7 +1278,7 @@ public class DTDParser {
         }
     }
 
-    // '(' S? '#PCDATA' already consumed
+    // '(' S? '#PCDATA' already consumed 
     // matching ')' must be in "start" entity if validating
     private void getMixed(String elementName, /*Element element,*/ InputEntity start)
             throws IOException, SAXException {
@@ -1489,13 +1490,13 @@ public class DTDParser {
                     defaultValue = normalize(false);
                 else
                     defaultValue = strTmp.toString();
-
-// TODO: implement this check
+            
+// TODO: implement this check        
 ///            if (a.type() != Attribute.CDATA)
 ///                validateAttributeSyntax (a, a.defaultValue());
             } else if (!peek("#IMPLIED")) {
                 attributeUse = DTDEventListener.USE_IMPLIED;
-
+            
 ///            if (a.type() == Attribute.ID)
                 if (typeName == TYPE_ID)
                     error("V-018", new Object[]{attName});
@@ -1508,8 +1509,8 @@ public class DTDParser {
                     defaultValue = normalize(false);
                 else
                     defaultValue = strTmp.toString();
-
-// TODO: implement this check
+            
+// TODO: implement this check        
 ///            if (a.type() != Attribute.CDATA)
 ///                validateAttributeSyntax (a, a.defaultValue());
             } else {
@@ -2132,7 +2133,7 @@ public class DTDParser {
 
         return in.peek(s, null);
     }
-
+    
     // Return the entity starting the specified declaration
     // (for validating declaration nesting) else null.
 

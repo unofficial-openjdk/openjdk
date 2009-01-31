@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,13 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.xsom.impl;
 
 import java.util.Comparator;
 
 /**
  * UName.
- *
+ * 
  * @author Kohsuke Kawaguchi (kk@kohsuke.org)
  */
 public final class UName {
@@ -45,19 +44,19 @@ public final class UName {
         this.localName = _localName.intern();
         this.qname = _qname.intern();
     }
-
+    
     public UName( String nsUri, String localName ) {
         this(nsUri,localName,localName);
     }
-
+    
     private final String nsUri;
     private final String localName;
     private final String qname;
-
+    
     public String getName() { return localName; }
     public String getNamespaceURI() { return nsUri; }
     public String getQualifiedName() { return qname; }
-
+    
     /**
      * Compares {@link UName}s by their names.
      */

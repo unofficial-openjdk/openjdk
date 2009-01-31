@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.rngom.binary;
 
 import com.sun.xml.internal.rngom.binary.visitor.PatternFunction;
@@ -31,9 +30,9 @@ import com.sun.xml.internal.rngom.binary.visitor.PatternVisitor;
 public class InterleavePattern extends BinaryPattern {
   InterleavePattern(Pattern p1, Pattern p2) {
     super(p1.isNullable() && p2.isNullable(),
-          combineHashCode(INTERLEAVE_HASH_CODE, p1.hashCode(), p2.hashCode()),
-          p1,
-          p2);
+	  combineHashCode(INTERLEAVE_HASH_CODE, p1.hashCode(), p2.hashCode()),
+	  p1,
+	  p2);
   }
   Pattern expand(SchemaPatternBuilder b) {
     Pattern ep1 = p1.expand(b);
@@ -68,16 +67,16 @@ public class InterleavePattern extends BinaryPattern {
       p2.checkRestrictions(context, dad, a2);
       a1.checkOverlap(a2);
       if (alpha != null) {
-        if (alpha != a1)
-          alpha.addAlphabet(a1);
-        alpha.addAlphabet(a2);
+	if (alpha != a1)
+	  alpha.addAlphabet(a1);
+	alpha.addAlphabet(a2);
       }
     }
     if (context != LIST_CONTEXT
-        && !contentTypeGroupable(p1.getContentType(), p2.getContentType()))
+	&& !contentTypeGroupable(p1.getContentType(), p2.getContentType()))
       throw new RestrictionViolationException("interleave_string");
     if (p1.getContentType() == MIXED_CONTENT_TYPE
-        && p2.getContentType() == MIXED_CONTENT_TYPE)
+	&& p2.getContentType() == MIXED_CONTENT_TYPE)
       throw new RestrictionViolationException("interleave_text_overlap");
   }
 

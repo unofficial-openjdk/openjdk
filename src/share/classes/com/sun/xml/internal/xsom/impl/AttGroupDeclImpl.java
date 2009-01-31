@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,18 +39,18 @@ public class AttGroupDeclImpl extends AttributesHolder implements XSAttGroupDecl
 {
     public AttGroupDeclImpl( SchemaDocumentImpl _parent, AnnotationImpl _annon,
         Locator _loc, ForeignAttributesImpl _fa, String _name, WildcardImpl _wildcard ) {
-
+        
         this(_parent,_annon,_loc,_fa,_name);
         setWildcard(_wildcard);
     }
-
+        
     public AttGroupDeclImpl( SchemaDocumentImpl _parent, AnnotationImpl _annon,
         Locator _loc, ForeignAttributesImpl _fa, String _name ) {
-
+            
         super(_parent,_annon,_loc,_fa,_name,false);
     }
-
-
+    
+    
     private WildcardImpl wildcard;
     public void setWildcard( WildcardImpl wc ) { wildcard=wc; }
     public XSWildcard getAttributeWildcard() { return wildcard; }
@@ -58,23 +58,23 @@ public class AttGroupDeclImpl extends AttributesHolder implements XSAttGroupDecl
     public XSAttributeUse getAttributeUse( String nsURI, String localName ) {
         UName name = new UName(nsURI,localName);
         XSAttributeUse o=null;
-
+        
         Iterator itr = iterateAttGroups();
         while(itr.hasNext() && o==null)
             o = ((XSAttGroupDecl)itr.next()).getAttributeUse(nsURI,localName);
-
+        
         if(o==null)     o = attributes.get(name);
-
+        
         return o;
     }
-
+    
     public void redefine( AttGroupDeclImpl ag ) {
         for (Iterator itr = attGroups.iterator(); itr.hasNext();) {
             DelayedRef.AttGroup r = (DelayedRef.AttGroup) itr.next();
             r.redefine(ag);
         }
     }
-
+    
     public void visit( XSVisitor visitor ) {
         visitor.attGroupDecl(this);
     }

@@ -1,11 +1,5 @@
 /*
- * $Id: ElementFactory.java,v 1.16 2006/01/27 12:49:35 vj135062 Exp $
- * $Revision: 1.16 $
- * $Date: 2006/01/27 12:49:35 $
- */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +22,13 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: ElementFactory.java,v 1.16 2006/01/27 12:49:35 vj135062 Exp $
+ * $Revision: 1.16 $
+ * $Date: 2006/01/27 12:49:35 $
+ */
+
+
 package com.sun.xml.internal.messaging.saaj.soap.impl;
 
 import javax.xml.namespace.QName;
@@ -151,8 +152,8 @@ public class ElementFactory {
                 return new Detail1_2Impl(ownerDocument, prefix);
             }
         }
-        if (localName.equalsIgnoreCase("faultcode")
-            || localName.equalsIgnoreCase("faultstring")
+        if (localName.equalsIgnoreCase("faultcode") 
+            || localName.equalsIgnoreCase("faultstring") 
             || localName.equalsIgnoreCase("faultactor")) {
             // SOAP 1.2 does not have fault(code/string/actor)
             // So there is no else case required
@@ -165,7 +166,7 @@ public class ElementFactory {
 
         return null;
     }
-
+    
     protected static void invalidCreate(String msg) {
         throw new TreeException(msg);
     }

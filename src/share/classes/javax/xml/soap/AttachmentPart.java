@@ -1,10 +1,4 @@
 /*
- * $Id: AttachmentPart.java,v 1.11 2005/08/17 08:13:01 vj135062 Exp $
- * $Revision: 1.11 $
- * $Date: 2005/08/17 08:13:01 $
- */
-
-/*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -28,6 +22,13 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: AttachmentPart.java,v 1.12 2005/09/08 14:19:50 vj135062 Exp $
+ * $Revision: 1.12 $
+ * $Date: 2005/09/08 14:19:50 $
+ */
+
+
 package javax.xml.soap;
 
 import java.io.InputStream;
@@ -59,7 +60,7 @@ import javax.activation.DataHandler;
  *       Content-Type:  application/xml
  *       </PRE>
  *       The following line of code, in which <code>ap</code> is an
- *       <code>AttachmentPart</code> object, sets the header shown in
+ *       <code>AttachmentPart</code> object, sets the header shown in 
  *       the previous example.
  *       <PRE>
  *       ap.setMimeHeader("Content-Type", "application/xml");
@@ -82,9 +83,9 @@ import javax.activation.DataHandler;
  * The following code fragment, in which <code>m</code> is a
  * <code>SOAPMessage</code> object and <code>contentStringl</code> is a
  * <code>String</code>, creates an instance of <code>AttachmentPart</code>,
- * sets the <code>AttachmentPart</code> object with some content and
- * header information, and adds the <code>AttachmentPart</code> object to
- * the <code>SOAPMessage</code> object.
+ * sets the <code>AttachmentPart</code> object with some content and 
+ * header information, and adds the <code>AttachmentPart</code> object to 
+ * the <code>SOAPMessage</code> object. 
  * <PRE>
  *     AttachmentPart ap1 = m.createAttachmentPart();
  *     ap1.setContent(contentString1, "text/plain");
@@ -93,8 +94,8 @@ import javax.activation.DataHandler;
  *
  *
  * <p>
- * The following code fragment creates and adds a second
- * <code>AttachmentPart</code> instance to the same message. <code>jpegData</code>
+ * The following code fragment creates and adds a second 
+ * <code>AttachmentPart</code> instance to the same message. <code>jpegData</code> 
  * is a binary byte buffer representing the jpeg file.
  * <PRE>
  *     AttachmentPart ap2 = m.createAttachmentPart();
@@ -103,7 +104,7 @@ import javax.activation.DataHandler;
  *     m.addAttachmentPart(ap2);
  * </PRE>
  * <p>
- * The <code>getContent</code> method retrieves the contents and header from
+ * The <code>getContent</code> method retrieves the contents and header from 
  * an <code>AttachmentPart</code> object. Depending on the
  * <code>DataContentHandler</code> objects present, the returned
  * <code>Object</code> can either be a typed Java object corresponding
@@ -147,9 +148,9 @@ public abstract class AttachmentPart {
      * and (2) the <code>Content-Type</code> given in the header.
      * <p>
      * For the MIME content types "text/plain", "text/html" and "text/xml", the
-     * <code>DataContentHandler</code> object does the conversions to and
+     * <code>DataContentHandler</code> object does the conversions to and 
      * from the Java types corresponding to the MIME types.
-     * For other MIME types,the <code>DataContentHandler</code> object
+     * For other MIME types,the <code>DataContentHandler</code> object 
      * can return an <code>InputStream</code> object that contains the content data
      * as raw bytes.
      * <p>
@@ -162,10 +163,10 @@ public abstract class AttachmentPart {
      * <code>text/xml</code>, a <code>java.awt.Image</code> object
      * corresponding to a content stream with a
      * <code>Content-Type</code> value of <code>image/gif</code> or
-     * <code>image/jpeg</code>.  For those content types that an
+     * <code>image/jpeg</code>.  For those content types that an 
      * installed <code>DataContentHandler</code> object does not understand, the
      * <code>DataContentHandler</code> object is required to return a
-     * <code>java.io.InputStream</code> object with the raw bytes.
+     * <code>java.io.InputStream</code> object with the raw bytes. 
      *
      * @return a Java object with the content of this <code>AttachmentPart</code>
      *         object
@@ -175,80 +176,80 @@ public abstract class AttachmentPart {
      *            transformation error
      */
     public abstract Object getContent() throws SOAPException;
-
+    
     /**
-     * Gets the content of this <code>AttachmentPart</code> object as an
+     * Gets the content of this <code>AttachmentPart</code> object as an 
      * InputStream as if a call had been made to <code>getContent</code> and no
-     * <code>DataContentHandler</code> had been registered for the
+     * <code>DataContentHandler</code> had been registered for the 
      * <code>content-type</code> of this <code>AttachmentPart</code>.
      *<p>
-     * Note that reading from the returned InputStream would result in consuming
+     * Note that reading from the returned InputStream would result in consuming 
      * the data in the stream. It is the responsibility of the caller to reset
      * the InputStream appropriately before calling a Subsequent API. If a copy
-     * of the raw attachment content is required then the {@link #getRawContentBytes} API
+     * of the raw attachment content is required then the {@link #getRawContentBytes} API 
      * should be used instead.
-     *
+     *  
      * @return an <code>InputStream</code> from which the raw data contained by
      *      the <code>AttachmentPart</code> can be accessed.
-     *
-     * @throws SOAPException if there is no content set into this
-     *      <code>AttachmentPart</code> object or if there was a data
+     * 
+     * @throws SOAPException if there is no content set into this 
+     *      <code>AttachmentPart</code> object or if there was a data 
      *      transformation error.
-     *
+     * 
      * @since SAAJ 1.3
      * @see #getRawContentBytes
      */
     public abstract InputStream getRawContent() throws SOAPException;
 
     /**
-     * Gets the content of this <code>AttachmentPart</code> object as a
+     * Gets the content of this <code>AttachmentPart</code> object as a 
      * byte[] array as if a call had been made to <code>getContent</code> and no
-     * <code>DataContentHandler</code> had been registered for the
+     * <code>DataContentHandler</code> had been registered for the 
      * <code>content-type</code> of this <code>AttachmentPart</code>.
-     *
-     * @return a <code>byte[]</code> array containing the raw data of the
+     *  
+     * @return a <code>byte[]</code> array containing the raw data of the 
      *      <code>AttachmentPart</code>.
-     *
-     * @throws SOAPException if there is no content set into this
-     *      <code>AttachmentPart</code> object or if there was a data
+     * 
+     * @throws SOAPException if there is no content set into this 
+     *      <code>AttachmentPart</code> object or if there was a data 
      *      transformation error.
-     *
+     * 
      * @since SAAJ 1.3
      */
     public abstract byte[] getRawContentBytes() throws SOAPException;
 
     /**
-     * Returns an <code>InputStream</code> which can be used to obtain the
-     * content of <code>AttachmentPart</code>  as Base64 encoded
-     * character data, this method would base64 encode the raw bytes
+     * Returns an <code>InputStream</code> which can be used to obtain the 
+     * content of <code>AttachmentPart</code>  as Base64 encoded 
+     * character data, this method would base64 encode the raw bytes 
      * of the attachment and return.
-     *
+     *  
      * @return an <code>InputStream</code> from which the Base64 encoded
      *       <code>AttachmentPart</code> can be read.
-     *
-     * @throws SOAPException if there is no content set into this
-     *      <code>AttachmentPart</code> object or if there was a data
+     * 
+     * @throws SOAPException if there is no content set into this 
+     *      <code>AttachmentPart</code> object or if there was a data 
      *      transformation error.
-     *
+     * 
      * @since SAAJ 1.3
      */
     public abstract InputStream getBase64Content() throws SOAPException;
 
     /**
-     * Sets the content of this attachment part to that of the given
+     * Sets the content of this attachment part to that of the given 
      * <code>Object</code> and sets the value of the <code>Content-Type</code>
      * header to the given type. The type of the
      * <code>Object</code> should correspond to the value given for the
      * <code>Content-Type</code>. This depends on the particular
-     * set of <code>DataContentHandler</code> objects in use.
+     * set of <code>DataContentHandler</code> objects in use. 
      *
      *
      * @param object the Java object that makes up the content for
      *               this attachment part
      * @param contentType the MIME string that specifies the type of
-     *                  the content
+     *                  the content 
      *
-     * @exception IllegalArgumentException may be thrown if the contentType
+     * @exception IllegalArgumentException may be thrown if the contentType 
      *            does not match the type of the content object, or if there
      *            was no <code>DataContentHandler</code> object for this
      *            content object
@@ -260,17 +261,17 @@ public abstract class AttachmentPart {
     /**
      * Sets the content of this attachment part to that contained by the
      * <code>InputStream</code> <code>content</code> and sets the value of the
-     * <code>Content-Type</code> header to the value contained in
+     * <code>Content-Type</code> header to the value contained in 
      * <code>contentType</code>.
      * <P>
-     *  A subsequent call to getSize() may not be an exact measure
+     *  A subsequent call to getSize() may not be an exact measure 
      *  of the content size.
-     *
+     * 
      * @param content the raw data to add to the attachment part
-     * @param contentType the value to set into the <code>Content-Type</code>
+     * @param contentType the value to set into the <code>Content-Type</code> 
      * header
-     *
-     * @exception SOAPException if an there is an error in setting the content
+     * 
+     * @exception SOAPException if an there is an error in setting the content 
      * @exception NullPointerException if <code>content</code> is null
      * @since SAAJ 1.3
      */
@@ -279,41 +280,41 @@ public abstract class AttachmentPart {
     /**
      * Sets the content of this attachment part to that contained by the
      * <code>byte[]</code> array <code>content</code> and sets the value of the
-     * <code>Content-Type</code> header to the value contained in
+     * <code>Content-Type</code> header to the value contained in 
      * <code>contentType</code>.
-     *
+     * 
      * @param content the raw data to add to the attachment part
-     * @param contentType the value to set into the <code>Content-Type</code>
+     * @param contentType the value to set into the <code>Content-Type</code> 
      * header
      * @param offset the offset in the byte array of the content
      * @param len the number of bytes that form the content
-     *
-     * @exception SOAPException if an there is an error in setting the content
+     * 
+     * @exception SOAPException if an there is an error in setting the content 
      * or content is null
      * @since SAAJ 1.3
      */
     public abstract void setRawContentBytes(
-        byte[] content, int offset, int len,  String contentType)
+        byte[] content, int offset, int len,  String contentType) 
         throws SOAPException;
 
 
     /**
      * Sets the content of this attachment part from the Base64 source
      * <code>InputStream</code>  and sets the value of the
-     * <code>Content-Type</code> header to the value contained in
-     * <code>contentType</code>, This method would first decode the base64
-     * input and write the resulting raw bytes to the attachment.
+     * <code>Content-Type</code> header to the value contained in 
+     * <code>contentType</code>, This method would first decode the base64 
+     * input and write the resulting raw bytes to the attachment. 
      * <P>
-     *  A subsequent call to getSize() may not be an exact measure
+     *  A subsequent call to getSize() may not be an exact measure 
      *  of the content size.
-     *
+     * 
      * @param content the base64 encoded data to add to the attachment part
-     * @param contentType the value to set into the <code>Content-Type</code>
+     * @param contentType the value to set into the <code>Content-Type</code> 
      * header
-     *
+     * 
      * @exception SOAPException if an there is an error in setting the content
      * @exception NullPointerException if <code>content</code> is null
-     *
+     * 
      * @since SAAJ 1.3
      */
     public abstract void setBase64Content(
@@ -347,10 +348,10 @@ public abstract class AttachmentPart {
      *            the specified <code>DataHandler</code> object
      */
     public abstract void setDataHandler(DataHandler dataHandler);
-
+    
 
     /**
-     * Gets the value of the MIME header whose name is "Content-ID".
+     * Gets the value of the MIME header whose name is "Content-ID". 
      *
      * @return a <code>String</code> giving the value of the
      *          "Content-ID" header or <code>null</code> if there
@@ -363,9 +364,9 @@ public abstract class AttachmentPart {
             return values[0];
         return null;
     }
-
+    
     /**
-     * Gets the value of the MIME header whose name is "Content-Location".
+     * Gets the value of the MIME header whose name is "Content-Location". 
      *
      * @return a <code>String</code> giving the value of the
      *          "Content-Location" header or <code>null</code> if there
@@ -377,9 +378,9 @@ public abstract class AttachmentPart {
             return values[0];
         return null;
     }
-
+    
     /**
-     * Gets the value of the MIME header whose name is "Content-Type".
+     * Gets the value of the MIME header whose name is "Content-Type". 
      *
      * @return a <code>String</code> giving the value of the
      *          "Content-Type" header or <code>null</code> if there
@@ -391,33 +392,33 @@ public abstract class AttachmentPart {
             return values[0];
         return null;
     }
-
+    
     /**
      * Sets the MIME header whose name is "Content-ID" with the given value.
      *
      * @param contentId a <code>String</code> giving the value of the
-     *          "Content-ID" header
+     *          "Content-ID" header 
      *
      * @exception IllegalArgumentException if there was a problem with
      *            the specified <code>contentId</code> value
      * @see #getContentId
      */
-    public void setContentId(String contentId)
+    public void setContentId(String contentId) 
     {
         setMimeHeader("Content-ID", contentId);
     }
-
-
+    
+    
     /**
      * Sets the MIME header whose name is "Content-Location" with the given value.
      *
      *
      * @param contentLocation a <code>String</code> giving the value of the
-     *          "Content-Location" header
+     *          "Content-Location" header 
      * @exception IllegalArgumentException if there was a problem with
      *            the specified content location
      */
-    public void setContentLocation(String contentLocation)
+    public void setContentLocation(String contentLocation) 
     {
         setMimeHeader("Content-Location", contentLocation);
     }
@@ -426,12 +427,12 @@ public abstract class AttachmentPart {
      * Sets the MIME header whose name is "Content-Type" with the given value.
      *
      * @param contentType a <code>String</code> giving the value of the
-     *          "Content-Type" header
+     *          "Content-Type" header 
      *
      * @exception IllegalArgumentException if there was a problem with
      *            the specified content type
      */
-    public void setContentType(String contentType)
+    public void setContentType(String contentType) 
     {
         setMimeHeader("Content-Type", contentType);
     }
@@ -440,7 +441,7 @@ public abstract class AttachmentPart {
      * Removes all MIME headers that match the given name.
      *
      * @param header the string name of the MIME header/s to
-     *               be removed
+     *               be removed  
      */
     public abstract void removeMimeHeader(String header);
 
@@ -448,7 +449,7 @@ public abstract class AttachmentPart {
      * Removes all the MIME header entries.
      */
     public abstract void removeAllMimeHeaders();
-
+    
 
     /**
      * Gets all the values of the header identified by the given
@@ -460,7 +461,7 @@ public abstract class AttachmentPart {
      * @see #setMimeHeader
      */
     public abstract String[] getMimeHeader(String name);
-
+    
 
     /**
      * Changes the first header entry that matches the given name
@@ -469,16 +470,16 @@ public abstract class AttachmentPart {
      *
      * Note that RFC822 headers can only contain US-ASCII characters.
      *
-     * @param   name    a <code>String</code> giving the name of the header
+     * @param	name	a <code>String</code> giving the name of the header 
      *                  for which to search
-     * @param   value   a <code>String</code> giving the value to be set for
+     * @param	value	a <code>String</code> giving the value to be set for
      *                  the header whose name matches the given name
      *
      * @exception IllegalArgumentException if there was a problem with
      *            the specified mime header name or value
      */
     public abstract void setMimeHeader(String name, String value);
-
+    
 
     /**
      * Adds a MIME header with the specified name and value to this
@@ -486,21 +487,21 @@ public abstract class AttachmentPart {
      * <p>
      * Note that RFC822 headers can contain only US-ASCII characters.
      *
-     * @param   name    a <code>String</code> giving the name of the header
+     * @param	name	a <code>String</code> giving the name of the header 
      *                  to be added
-     * @param   value   a <code>String</code> giving the value of the header
+     * @param	value	a <code>String</code> giving the value of the header 
      *                  to be added
      *
      * @exception IllegalArgumentException if there was a problem with
      *            the specified mime header name or value
-     */
+     */ 
     public abstract void addMimeHeader(String name, String value);
 
     /**
      * Retrieves all the headers for this <code>AttachmentPart</code> object
      * as an iterator over the <code>MimeHeader</code> objects.
      *
-     * @return  an <code>Iterator</code> object with all of the Mime
+     * @return	an <code>Iterator</code> object with all of the Mime
      *          headers for this <code>AttachmentPart</code> object
      */
     public abstract Iterator getAllMimeHeaders();
@@ -511,20 +512,20 @@ public abstract class AttachmentPart {
      *
      * @param names a <code>String</code> array with the name(s) of the
      *        MIME headers to be returned
-     * @return  all of the MIME headers that match one of the names in the
+     * @return	all of the MIME headers that match one of the names in the
      *           given array as an <code>Iterator</code> object
      */
     public abstract Iterator getMatchingMimeHeaders(String[] names);
-
+    
     /**
      * Retrieves all <code>MimeHeader</code> objects whose name does
      * not match a name in the given array.
      *
      * @param names a <code>String</code> array with the name(s) of the
      *        MIME headers not to be returned
-     * @return  all of the MIME headers in this <code>AttachmentPart</code> object
+     * @return	all of the MIME headers in this <code>AttachmentPart</code> object
      *          except those that match one of the names in the
-     *           given array.  The nonmatching MIME headers are returned as an
+     *           given array.  The nonmatching MIME headers are returned as an 
      *           <code>Iterator</code> object.
      */
     public abstract Iterator getNonMatchingMimeHeaders(String[] names);

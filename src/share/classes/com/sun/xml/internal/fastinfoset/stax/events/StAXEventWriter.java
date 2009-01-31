@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,34 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
- *
- * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
- *
- */
+ 
 
 package com.sun.xml.internal.fastinfoset.stax.events;
 
@@ -67,7 +40,7 @@ import com.sun.xml.internal.fastinfoset.stax.events.Util;
 import com.sun.xml.internal.fastinfoset.CommonResourceBundle;
 
 public class StAXEventWriter implements XMLEventWriter {
-
+    
     private XMLStreamWriter _streamWriter ;
     /**
      *
@@ -91,7 +64,7 @@ public class StAXEventWriter implements XMLEventWriter {
     public void close() throws javax.xml.stream.XMLStreamException {
         _streamWriter.close();
     }
-
+    
     /**
      *
      * @param eventReader
@@ -103,10 +76,10 @@ public class StAXEventWriter implements XMLEventWriter {
             add(eventReader.nextEvent());
         }
     }
-
+    
     /**
     * Add an event to the output stream
-    * Adding a START_ELEMENT will open a new namespace scope that
+    * Adding a START_ELEMENT will open a new namespace scope that 
     * will be closed when the corresponding END_ELEMENT is written.
     *
     * @param event
@@ -129,7 +102,7 @@ public class StAXEventWriter implements XMLEventWriter {
                 StartElement startElement = event.asStartElement() ;
                 QName qname = startElement.getName();
                 _streamWriter.writeStartElement(qname.getPrefix(), qname.getLocalPart(), qname.getNamespaceURI());
-
+                
                 Iterator iterator = startElement.getNamespaces();
                 while(iterator.hasNext()){
                     Namespace namespace = (Namespace)iterator.next();
@@ -140,7 +113,7 @@ public class StAXEventWriter implements XMLEventWriter {
                 while(attributes.hasNext()){
                     Attribute attribute = (Attribute)attributes.next();
                     QName name = attribute.getName();
-                    _streamWriter.writeAttribute(name.getPrefix(), name.getNamespaceURI(),
+                    _streamWriter.writeAttribute(name.getPrefix(), name.getNamespaceURI(), 
                                                 name.getLocalPart(),attribute.getValue());
                 }
                 break;
@@ -191,7 +164,7 @@ public class StAXEventWriter implements XMLEventWriter {
                 }
                 break;
             }
-
+            
             case XMLEvent.END_ELEMENT:{
                 _streamWriter.writeEndElement();
                 break;
@@ -204,9 +177,9 @@ public class StAXEventWriter implements XMLEventWriter {
                 throw new XMLStreamException(CommonResourceBundle.getInstance().getString("message.eventTypeNotSupported", new Object[]{Util.getEventTypeString(type)}));
             //throw new XMLStreamException("Unknown Event type = " + type);
         };
-
+        
     }
-
+    
     /**
     * Gets the prefix the uri is bound to
     * @param uri the uri to look up
@@ -215,8 +188,8 @@ public class StAXEventWriter implements XMLEventWriter {
     public String getPrefix(String uri) throws XMLStreamException {
         return _streamWriter.getPrefix(uri);
     }
-
-
+    
+    
     /**
     * Returns the current namespace context.
     * @return the current namespace context
@@ -224,8 +197,8 @@ public class StAXEventWriter implements XMLEventWriter {
     public NamespaceContext getNamespaceContext() {
         return _streamWriter.getNamespaceContext();
     }
-
-
+    
+    
     /**
     * Binds a URI to the default namespace
     * This URI is bound
@@ -238,7 +211,7 @@ public class StAXEventWriter implements XMLEventWriter {
     public void setDefaultNamespace(String uri) throws XMLStreamException {
         _streamWriter.setDefaultNamespace(uri);
     }
-
+    
     /**
     * Sets the current namespace context for prefix and uri bindings.
     * This context becomes the root namespace context for writing and
@@ -264,5 +237,5 @@ public class StAXEventWriter implements XMLEventWriter {
     public void setPrefix(String prefix, String uri) throws XMLStreamException {
         _streamWriter.setPrefix(prefix, uri);
     }
-
+        
 }

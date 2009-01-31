@@ -1,11 +1,5 @@
 /*
- * $Id: CDATAImpl.java,v 1.19 2006/01/27 12:49:34 vj135062 Exp $
- * $Revision: 1.19 $
- * $Date: 2006/01/27 12:49:34 $
- */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +22,13 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: CDATAImpl.java,v 1.19 2006/01/27 12:49:34 vj135062 Exp $
+ * $Revision: 1.19 $
+ * $Date: 2006/01/27 12:49:34 $
+ */
+
+
 package com.sun.xml.internal.messaging.saaj.soap.impl;
 
 import java.util.logging.Logger;
@@ -45,7 +46,7 @@ public class CDATAImpl
     protected static Logger log =
         Logger.getLogger(LogDomainConstants.SOAP_IMPL_DOMAIN,
                          "com.sun.xml.internal.messaging.saaj.soap.impl.LocalStrings");
-
+    
     static final String cdataUC = "<![CDATA[";
     static final String cdataLC = "<![cdata[";
 
@@ -57,7 +58,7 @@ public class CDATAImpl
         String nodeValue = getNodeValue();
         return (nodeValue.equals("") ? null : nodeValue);
     }
-
+    
     public void setValue(String text) {
         setNodeValue(text);
     }

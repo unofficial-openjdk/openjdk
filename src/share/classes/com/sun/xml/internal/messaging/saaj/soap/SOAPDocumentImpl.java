@@ -1,9 +1,5 @@
 /*
- * $Id: SOAPDocumentImpl.java,v 1.15 2006/01/27 12:49:29 vj135062 Exp $
- */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +22,11 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: SOAPDocumentImpl.java,v 1.15 2006/01/27 12:49:29 vj135062 Exp $
+ */
+
+
 
 /**
 *
@@ -47,7 +48,7 @@ public class SOAPDocumentImpl extends DocumentImpl implements SOAPDocument {
     protected static Logger log =
         Logger.getLogger(LogDomainConstants.SOAP_DOMAIN,
                          "com.sun.xml.internal.messaging.saaj.soap.LocalStrings");
-
+    
     SOAPPartImpl enclosingSOAPPart;
 
     public SOAPDocumentImpl(SOAPPartImpl enclosingDocument) {
@@ -134,7 +135,7 @@ public class SOAPDocumentImpl extends DocumentImpl implements SOAPDocument {
     }
 
     public EntityReference createEntityReference(String name)
-        throws DOMException {
+        throws DOMException {        
             log.severe("SAAJ0543.soap.entity.refs.not.allowed.in.docs");
             throw new UnsupportedOperationException("Entity References are not allowed in SOAP documents");
     }

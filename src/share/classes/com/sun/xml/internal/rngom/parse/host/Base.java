@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,14 +22,13 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.rngom.parse.host;
 
 import com.sun.xml.internal.rngom.ast.builder.Annotations;
 import com.sun.xml.internal.rngom.ast.om.Location;
 
 /**
- *
+ * 
  * @author
  *      Kohsuke Kawaguchi (kk@kohsuke.org)
  */
@@ -40,14 +39,14 @@ public class Base {
         else
             return (AnnotationsHost)ann;
     }
-
+    
     protected LocationHost cast( Location loc ) {
         if(loc==null)
             return nullLocation;
         else
             return (LocationHost)loc;
     }
-
+    
     private static final AnnotationsHost nullAnnotations = new AnnotationsHost(null,null);
     private static final LocationHost nullLocation = new LocationHost(null,null);
 }

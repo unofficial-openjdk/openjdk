@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.xsom;
 
 import com.sun.xml.internal.xsom.parser.SchemaDocument;
@@ -32,9 +31,9 @@ import java.util.Map;
 
 /**
  * Schema.
- *
+ * 
  * Container of declarations that belong to the same target namespace.
- *
+ * 
  * @author
  *  Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -129,4 +128,11 @@ public interface XSSchema extends XSComponent
      *      there's something wrong with your code.
      */
     SchemaDocument getSourceDocument();
+
+    /**
+     * Gets the root schema set that includes this schema.
+     *
+     * @return never null.
+     */
+    XSSchemaSet getRoot();
 }

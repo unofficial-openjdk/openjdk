@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.tools.internal.xjc.generator.bean.field;
 
 import java.util.ArrayList;
@@ -45,7 +44,7 @@ import com.sun.tools.internal.xjc.outline.FieldOutline;
 final class DefaultFieldRenderer implements FieldRenderer {
 
     private final FieldRendererFactory frf;
-
+    
     /**
      * Use {@link FieldRendererFactory#getDefault()}.
      */
@@ -57,14 +56,14 @@ final class DefaultFieldRenderer implements FieldRenderer {
         this.frf = frf;
         this.defaultCollectionFieldRenderer = defaultCollectionFieldRenderer;
     }
-
+    
     private FieldRenderer defaultCollectionFieldRenderer;
 
 
     public FieldOutline generate(ClassOutlineImpl outline, CPropertyInfo prop) {
         return decideRenderer(outline,prop).generate(outline,prop);
     }
-
+    
     private FieldRenderer decideRenderer(ClassOutlineImpl outline,CPropertyInfo prop) {
         if(!prop.isCollection()) {
             // non-collection field
@@ -78,11 +77,11 @@ final class DefaultFieldRenderer implements FieldRenderer {
                 // otherwise use the default non-collection field
                 return frf.getSingle();
         }
-
+        
         if( defaultCollectionFieldRenderer==null ) {
             return frf.getList(outline.parent().getCodeModel().ref(ArrayList.class));
         }
-
+        
         // this field is a collection field.
         // use untyped list as the default. This is consistent
         // to the JAXB spec.

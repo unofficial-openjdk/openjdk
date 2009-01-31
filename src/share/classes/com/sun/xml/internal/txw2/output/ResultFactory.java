@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+
 package com.sun.xml.internal.txw2.output;
 
 import javax.xml.transform.Result;
@@ -47,7 +48,7 @@ public abstract class ResultFactory {
      * This method supports {@link javax.xml.transform.sax.SAXResult},
      * {@link javax.xml.transform.stream.StreamResult}, and {@link javax.xml.transform.dom.DOMResult}.
      *
-     * @param result the Result that will receive output from the XmlSerializer
+     * @param result the Result that will receive output from the XmlSerializer 
      * @return an implementation of XmlSerializer that will produce output on the supplied Result
      */
     public static XmlSerializer createSerializer(Result result) {

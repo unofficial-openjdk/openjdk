@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.bind.v2.runtime.output;
 
 import java.io.IOException;
@@ -59,7 +58,7 @@ public class UTF8XmlOutput extends XmlOutputAbstractImpl {
     private final Encoded[] localNames;
 
     /** Temporary buffer used to encode text. */
-    /*
+    /* 
      * TODO
      * The textBuffer could write directly to the _octetBuffer
      * when encoding a string if Encoder is modified.
@@ -70,7 +69,7 @@ public class UTF8XmlOutput extends XmlOutputAbstractImpl {
     /** Buffer of octets for writing. */
     // TODO: Obtain buffer size from property on the JAXB context
     protected final byte[] octetBuffer = new byte[1024];
-
+    
     /** Index in buffer to write to. */
     protected int octetBufferIndex;
 
@@ -327,7 +326,7 @@ public class UTF8XmlOutput extends XmlOutputAbstractImpl {
 
             if(batchSize<dataLen)
                 flushBuffer();
-
+            
             start += batchSize;
             dataLen -= batchSize;
 
@@ -360,7 +359,7 @@ public class UTF8XmlOutput extends XmlOutputAbstractImpl {
     protected final void write(byte[] b) throws IOException {
         write(b, 0,  b.length);
     }
-
+    
     protected final void write(byte[] b, int start, int length) throws IOException {
         if ((octetBufferIndex + length) < octetBuffer.length) {
             System.arraycopy(b, start, octetBuffer, octetBufferIndex, length);
@@ -376,13 +375,6 @@ public class UTF8XmlOutput extends XmlOutputAbstractImpl {
         out.write(octetBuffer, 0, octetBufferIndex);
         octetBufferIndex = 0;
     }
-
-    public void flush() throws IOException {
-        flushBuffer();
-        out.flush();
-    }
-
-
 
     static byte[] toBytes(String s) {
         byte[] buf = new byte[s.length()];

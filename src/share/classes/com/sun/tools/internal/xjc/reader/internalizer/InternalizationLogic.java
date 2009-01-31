@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.tools.internal.xjc.reader.internalizer;
 
 import org.w3c.dom.Element;
@@ -30,11 +29,11 @@ import org.xml.sax.helpers.XMLFilterImpl;
 
 /**
  * Encapsulates schema-language dependent internalization logic.
- *
+ * 
  * {@link Internalizer} and {@link DOMForest} are responsible for
  * doing schema language independent part, and this object is responsible
  * for schema language dependent part.
- *
+ * 
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -42,31 +41,31 @@ public interface InternalizationLogic {
     /**
      * Creates a new instance of XMLFilter that can be used to
      * find references to external schemas.
-     *
+     * 
      * <p>
      * Schemas that are included/imported need to be a part of
      * {@link DOMForest}, and this filter will be expected to
      * find such references.
-     *
+     * 
      * <p>
      * Once such a reference is found, the filter is expected to
      * call the parse method of DOMForest.
-     *
+     * 
      * <p>
      * {@link DOMForest} will register ErrorHandler to the returned
      * object, so any error should be sent to that error handler.
-     *
+     * 
      * @return
      *      This method returns {@link XMLFilterImpl} because
      *      the filter has to be usable for two directions
      *      (wrapping a reader and wrapping a ContentHandler)
      */
     XMLFilterImpl createExternalReferenceFinder( DOMForest parent );
-
+    
     /**
      * Checks if the specified element is a valid target node
      * to attach a customization.
-     *
+     * 
      * @param parent
      *      The owner DOMForest object. Probably useful only
      *      to obtain context information, such as error handler.
@@ -76,15 +75,15 @@ public interface InternalizationLogic {
      *      true if it's OK, false if not.
      */
     boolean checkIfValidTargetNode( DOMForest parent, Element bindings, Element target );
-
+    
     /**
      * Prepares an element that actually receives customizations.
-     *
+     * 
      * <p>
      * For example, in XML Schema, target nodes can be any schema
      * element but it is always the &lt;xsd:appinfo> element that
      * receives customization.
-     *
+     * 
      * @param target
      *      The target node designated by the customization.
      * @return

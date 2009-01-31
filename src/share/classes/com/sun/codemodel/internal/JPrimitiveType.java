@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,7 @@ public final class JPrimitiveType extends JType {
      * For example, this would be "java.lang.Short" for short.
      */
     private final JClass wrapperClass;
-
+    
     JPrimitiveType(JCodeModel owner, String typeName, Class wrapper ) {
         this.owner = owner;
         this.typeName = typeName;
@@ -53,7 +53,7 @@ public final class JPrimitiveType extends JType {
     public String fullName() {
         return typeName;
     }
-
+        
     public String name() {
         return fullName();
     }
@@ -68,7 +68,7 @@ public final class JPrimitiveType extends JType {
             arrayClass = new JArrayClass(owner,this);
         return arrayClass;
     }
-
+    
     /**
      * Obtains the wrapper class for this primitive type.
      * For example, this method returns a reference to java.lang.Integer
@@ -99,16 +99,16 @@ public final class JPrimitiveType extends JType {
      * Wraps an expression of this type to the corresponding wrapper class.
      * For example, if this class represents "float", this method will return
      * the expression <code>new Float(x)</code> for the paramter x.
-     *
+     * 
      * REVISIT: it's not clear how this method works for VOID.
      */
     public JExpression wrap( JExpression exp ) {
         return JExpr._new(boxify()).arg(exp);
     }
-
+    
     /**
      * Do the opposite of the wrap method.
-     *
+     * 
      * REVISIT: it's not clear how this method works for VOID.
      */
     public JExpression unwrap( JExpression exp ) {

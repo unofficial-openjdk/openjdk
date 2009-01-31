@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package javax.xml.bind.annotation;
 
 import java.lang.annotation.Retention;
@@ -38,8 +37,8 @@ import static java.lang.annotation.ElementType.PARAMETER;
  * <p><b>Usage</b> </p>
  * <p>
  * The <tt>@XmlList</tt> annotation can be used with the
- * following program elements:
- * <ul>
+ * following program elements: 
+ * <ul> 
  *   <li> JavaBean property </li>
  *   <li> field </li>
  * </ul>
@@ -66,7 +65,7 @@ import static java.lang.annotation.ElementType.PARAMETER;
  * </foo>
  * </xmp></pre>
  *
- * &#64;XmlList annotation, on the other hand, allows multiple values to be
+ * &#64;XmlList annotation, on the other hand, allows multiple values to be 
  * represented as whitespace-separated tokens in a single element. For example,
  *
  * <pre>
@@ -87,7 +86,7 @@ import static java.lang.annotation.ElementType.PARAMETER;
  * </xmp></pre>
  *
  * <p>This annotation can be used with the following annotations:
- *        {@link XmlElement},
+ *        {@link XmlElement}, 
  *        {@link XmlAttribute},
  *        {@link XmlValue},
  *        {@link XmlIDREF}.
@@ -95,12 +94,12 @@ import static java.lang.annotation.ElementType.PARAMETER;
  *    <li> The use of <tt>@XmlList</tt> with {@link XmlValue} while
  *         allowed, is redundant since  {@link XmlList} maps a
  *         collection type to a simple schema type that derives by
- *         list just as {@link XmlValue} would. </li>
+ *         list just as {@link XmlValue} would. </li> 
  *
  *    <li> The use of <tt>@XmlList</tt> with {@link XmlAttribute} while
  *         allowed, is redundant since  {@link XmlList} maps a
  *         collection type to a simple schema type that derives by
- *         list just as {@link XmlAttribute} would. </li>
+ *         list just as {@link XmlAttribute} would. </li> 
  *  </ul>
  *
  * @author <ul><li>Kohsuke Kawaguchi, Sun Microsystems, Inc.</li><li>Sekhar Vajjhala, Sun Microsystems, Inc.</li></ul>

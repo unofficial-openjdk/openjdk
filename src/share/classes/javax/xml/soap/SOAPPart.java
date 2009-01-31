@@ -1,10 +1,4 @@
 /*
- * $Id: SOAPPart.java,v 1.8 2005/06/20 12:07:05 vj135062 Exp $
- * $Revision: 1.8 $
- * $Date: 2005/06/20 12:07:05 $
- */
-
-/*
  * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -28,6 +22,13 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: SOAPPart.java,v 1.9 2005/06/21 17:32:45 mk125090 Exp $
+ * $Revision: 1.9 $
+ * $Date: 2005/06/21 17:32:45 $
+ */
+
+
 package javax.xml.soap;
 
 import java.util.Iterator;
@@ -154,7 +155,7 @@ public abstract class SOAPPart implements org.w3c.dom.Document, Node {
      * <code>SOAPEnvelope</code> object.
      */
     public abstract void removeAllMimeHeaders();
-
+    
     /**
      * Gets all the values of the <code>MimeHeader</code> object
      * in this <code>SOAPPart</code> object that
@@ -166,7 +167,7 @@ public abstract class SOAPPart implements org.w3c.dom.Document, Node {
      * @see #setMimeHeader
      */
     public abstract String[] getMimeHeader(String name);
-
+    
     /**
      * Changes the first header entry that matches the given header name
      * so that its value is the given value, adding a new header with the
@@ -244,8 +245,8 @@ public abstract class SOAPPart implements org.w3c.dom.Document, Node {
     public abstract Iterator getNonMatchingMimeHeaders(String[] names);
 
     /**
-     * Sets the content of the <code>SOAPEnvelope</code> object with the data
-     * from the given <code>Source</code> object. This <code>Source</code>
+     * Sets the content of the <code>SOAPEnvelope</code> object with the data 
+     * from the given <code>Source</code> object. This <code>Source</code> 
      * must contain a valid SOAP document.
      *
      * @param source the <code>javax.xml.transform.Source</code> object with the

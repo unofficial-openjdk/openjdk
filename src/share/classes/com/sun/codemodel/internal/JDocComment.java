@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.codemodel.internal;
 
 import java.util.HashMap;
@@ -43,18 +42,18 @@ public class JDocComment extends JCommentPart implements JGenerable {
 
     /** list of @param tags */
     private final Map<String,JCommentPart> atParams = new HashMap<String,JCommentPart>();
-
+    
     /** list of xdoclets */
     private final Map<String,Map<String,String>> atXdoclets = new HashMap<String,Map<String,String>>();
-
+    
     /** list of @throws tags */
     private final Map<JClass,JCommentPart> atThrows = new HashMap<JClass,JCommentPart>();
-
+    
     /**
      * The @return tag part.
      */
     private JCommentPart atReturn = null;
-
+    
     /** The @deprecated tag */
     private JCommentPart atDeprecated = null;
 
@@ -94,7 +93,7 @@ public class JDocComment extends JCommentPart implements JGenerable {
     public JCommentPart addThrows( Class exception ) {
         return addThrows( owner.ref(exception) );
     }
-
+    
     /**
      * add an @throws tag to the javadoc
      */
@@ -104,7 +103,7 @@ public class JDocComment extends JCommentPart implements JGenerable {
             atThrows.put(exception,p=new JCommentPart());
         return p;
     }
-
+    
     /**
      * Appends a text to @return tag.
      */
@@ -194,3 +193,4 @@ public class JDocComment extends JCommentPart implements JGenerable {
 
     private static final String INDENT = " *     ";
 }
+

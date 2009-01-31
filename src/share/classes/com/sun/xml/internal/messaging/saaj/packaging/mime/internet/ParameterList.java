@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,11 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * @(#)ParameterList.java     1.10 03/02/12
+ */
+
+
 
 package com.sun.xml.internal.messaging.saaj.packaging.mime.internet;
 
@@ -32,6 +37,7 @@ import java.util.Map;
 /**
  * This class holds MIME parameters (attribute-value pairs).
  *
+ * @version 1.10, 03/02/12
  * @author  John Mani
  */
 
@@ -53,98 +59,98 @@ public final class ParameterList {
     /**
      * Constructor that takes a parameter-list string. The String
      * is parsed and the parameters are collected and stored internally.
-     * A ParseException is thrown if the parse fails.
-     * Note that an empty parameter-list string is valid and will be
+     * A ParseException is thrown if the parse fails. 
+     * Note that an empty parameter-list string is valid and will be 
      * parsed into an empty ParameterList.
      *
-     * @param   s       the parameter-list string.
-     * @exception       ParseException if the parse fails.
+     * @param	s	the parameter-list string.
+     * @exception	ParseException if the parse fails.
      */
     public ParameterList(String s) throws ParseException {
-        HeaderTokenizer h = new HeaderTokenizer(s, HeaderTokenizer.MIME);
-        HeaderTokenizer.Token tk;
-        int type;
-        String name;
+	HeaderTokenizer h = new HeaderTokenizer(s, HeaderTokenizer.MIME);
+	HeaderTokenizer.Token tk;
+	int type;
+	String name;
 
         list = new HashMap();
-        while (true) {
-            tk = h.next();
-            type = tk.getType();
+	while (true) {
+	    tk = h.next();
+	    type = tk.getType();
 
-            if (type == HeaderTokenizer.Token.EOF) // done
-                return;
+	    if (type == HeaderTokenizer.Token.EOF) // done
+		return;
 
-            if ((char)type == ';') {
-                // expect parameter name
-                tk = h.next();
-                // tolerate trailing semicolon, even though it violates the spec
-                if (tk.getType() == HeaderTokenizer.Token.EOF)
-                    return;
-                // parameter name must be a MIME Atom
-                if (tk.getType() != HeaderTokenizer.Token.ATOM)
-                    throw new ParseException();
-                name = tk.getValue().toLowerCase();
+	    if ((char)type == ';') {
+		// expect parameter name
+		tk = h.next();
+		// tolerate trailing semicolon, even though it violates the spec
+		if (tk.getType() == HeaderTokenizer.Token.EOF)
+		    return;
+		// parameter name must be a MIME Atom
+		if (tk.getType() != HeaderTokenizer.Token.ATOM)
+		    throw new ParseException();
+		name = tk.getValue().toLowerCase();
 
-                // expect '='
-                tk = h.next();
-                if ((char)tk.getType() != '=')
-                    throw new ParseException();
-
-                // expect parameter value
-                tk = h.next();
-                type = tk.getType();
-                // parameter value must be a MIME Atom or Quoted String
-                if (type != HeaderTokenizer.Token.ATOM &&
-                    type != HeaderTokenizer.Token.QUOTEDSTRING)
-                    throw new ParseException();
-
-                list.put(name, tk.getValue());
-            } else
-                throw new ParseException();
-        }
+		// expect '='
+		tk = h.next();
+		if ((char)tk.getType() != '=')
+		    throw new ParseException();
+		
+		// expect parameter value
+		tk = h.next();
+		type = tk.getType();
+		// parameter value must be a MIME Atom or Quoted String
+		if (type != HeaderTokenizer.Token.ATOM &&
+		    type != HeaderTokenizer.Token.QUOTEDSTRING)
+		    throw new ParseException();
+		
+		list.put(name, tk.getValue());
+	    } else
+		throw new ParseException();
+	}
     }
 
     /**
      * Return the number of parameters in this list.
-     *
+     * 
      * @return  number of parameters.
      */
     public int size() {
-        return list.size();
+	return list.size();
     }
 
     /**
-     * Returns the value of the specified parameter. Note that
+     * Returns the value of the specified parameter. Note that 
      * parameter names are case-insensitive.
      *
-     * @param name      parameter name.
-     * @return          Value of the parameter. Returns
-     *                  <code>null</code> if the parameter is not
-     *                  present.
+     * @param name	parameter name.
+     * @return		Value of the parameter. Returns 
+     *			<code>null</code> if the parameter is not 
+     *			present.
      */
     public String get(String name) {
-        return (String)list.get(name.trim().toLowerCase());
+	return (String)list.get(name.trim().toLowerCase());
     }
 
     /**
      * Set a parameter. If this parameter already exists, it is
      * replaced by this new value.
      *
-     * @param   name    name of the parameter.
-     * @param   value   value of the parameter.
+     * @param	name 	name of the parameter.
+     * @param	value	value of the parameter.
      */
     public void set(String name, String value) {
-        list.put(name.trim().toLowerCase(), value);
+	list.put(name.trim().toLowerCase(), value);
     }
 
     /**
      * Removes the specified parameter from this ParameterList.
      * This method does nothing if the parameter is not present.
      *
-     * @param   name    name of the parameter.
+     * @param	name	name of the parameter.
      */
     public void remove(String name) {
-        list.remove(name.trim().toLowerCase());
+	list.remove(name.trim().toLowerCase());
     }
 
     /**
@@ -154,24 +160,24 @@ public final class ParameterList {
      * @return Enumeration of all parameter names in this list.
      */
     public Iterator getNames() {
-        return list.keySet().iterator();
+	return list.keySet().iterator();
     }
-
-
+    
+    
     /**
      * Convert this ParameterList into a MIME String. If this is
      * an empty list, an empty string is returned.
      *
-     * @return          String
+     * @return		String
      */
     public String toString() {
-        return toString(0);
+	return toString(0);
     }
 
     /**
      * Convert this ParameterList into a MIME String. If this is
      * an empty list, an empty string is returned.
-     *
+     *   
      * The 'used' parameter specifies the number of character positions
      * already taken up in the field into which the resulting parameter
      * list is to be inserted. It's used to determine where to fold the
@@ -181,7 +187,7 @@ public final class ParameterList {
      *                  the field into which the parameter list is to
      *                  be inserted.
      * @return          String
-     */
+     */  
     public String toString(int used) {
         StringBuffer sb = new StringBuffer();
         Iterator itr = list.entrySet().iterator();
@@ -197,29 +203,29 @@ public final class ParameterList {
                 sb.append("\r\n\t"); // .. start new continuation line
                 used = 8; // account for the starting <tab> char
             }
-            sb.append(name).append('=');
-            used += name.length() + 1;
-            if (used + value.length() > 76) { // still overflows ...
-                // have to fold value
-                String s = MimeUtility.fold(used, value);
-                sb.append(s);
-                int lastlf = s.lastIndexOf('\n');
-                if (lastlf >= 0)        // always true
-                    used += s.length() - lastlf - 1;
-                else
-                    used += s.length();
-            } else {
-                sb.append(value);
-                used += value.length();
-            }
+	    sb.append(name).append('=');
+	    used += name.length() + 1;
+	    if (used + value.length() > 76) { // still overflows ...
+		// have to fold value
+		String s = MimeUtility.fold(used, value);
+		sb.append(s);
+		int lastlf = s.lastIndexOf('\n');
+		if (lastlf >= 0)	// always true
+		    used += s.length() - lastlf - 1;
+		else
+		    used += s.length();
+	    } else {
+		sb.append(value);
+		used += value.length();
+	    }
         }
-
+ 
         return sb.toString();
     }
-
+  
     // Quote a parameter value token if required.
     private String quote(String value) {
-        return MimeUtility.quote(value, HeaderTokenizer.MIME);
+	return MimeUtility.quote(value, HeaderTokenizer.MIME);
     }
 
     public ParameterList copy() {

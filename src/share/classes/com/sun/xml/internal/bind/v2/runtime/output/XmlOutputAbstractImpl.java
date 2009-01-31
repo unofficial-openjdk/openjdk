@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.bind.v2.runtime.output;
 
 import java.io.IOException;
@@ -38,7 +37,7 @@ import org.xml.sax.SAXException;
 /**
  * Abstract implementation of {@link XmlOutput}
  *
- * Implements the optimal methods, where defer to
+ * Implements the optimal methods, where defer to 
  * the non-optimal methods.
  *
  * @author Kohsuke Kawaguchi
@@ -109,14 +108,6 @@ public abstract class XmlOutputAbstractImpl implements XmlOutput {
         endTag( nsUriIndex2prefixIndex[name.nsUriIndex], name.localName);
     }
     public abstract void endTag(int prefix, String localName) throws IOException, SAXException, XMLStreamException;
-
-    /**
-     * Flush the output.
-     *
-     * @see OutputStream#flush()
-     */
-    public void flush() throws IOException, XMLStreamException {
-    }
 
 
 

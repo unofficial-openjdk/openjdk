@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,35 +24,6 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
- *
- * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
- *
- */
-
 
 package com.sun.xml.internal.fastinfoset.util;
 
@@ -64,11 +35,11 @@ import com.sun.xml.internal.org.jvnet.fastinfoset.FastInfosetException;
 
 public class PrefixArray extends ValueArray {
     public static final int PREFIX_MAP_SIZE = 64;
-
+    
     private int _initialCapacity;
-
+    
     public String[] _array;
-
+    
     private PrefixArray _readOnlyArray;
 
     private static class PrefixEntry {
@@ -77,41 +48,41 @@ public class PrefixArray extends ValueArray {
     }
 
     private PrefixEntry[] _prefixMap = new PrefixEntry[PREFIX_MAP_SIZE];
-
+    
     private PrefixEntry _prefixPool;
-
+    
     private static class NamespaceEntry {
         private NamespaceEntry next;
         private int declarationId;
         private int namespaceIndex;
-
+        
         private String prefix;
         private String namespaceName;
         private int prefixEntryIndex;
     }
 
     private NamespaceEntry _namespacePool;
-
+    
     private NamespaceEntry[] _inScopeNamespaces;
-
+    
     public int[] _currentInScope;
-
+    
     public int _declarationId;
-
+    
     public PrefixArray(int initialCapacity, int maximumCapacity) {
         _initialCapacity = initialCapacity;
         _maximumCapacity = maximumCapacity;
-
+        
         _array = new String[initialCapacity];
         // Sizes of _inScopeNamespaces and _currentInScope need to be two
         // greater than _array because 0 represents the empty string and
         // 1 represents the xml prefix
         _inScopeNamespaces = new NamespaceEntry[initialCapacity + 2];
         _currentInScope = new int[initialCapacity + 2];
-
+        
         increaseNamespacePool(initialCapacity);
         increasePrefixPool(initialCapacity);
-
+        
         initializeEntries();
     }
 
@@ -122,25 +93,25 @@ public class PrefixArray extends ValueArray {
     private final void initializeEntries() {
         _inScopeNamespaces[0] = _namespacePool;
         _namespacePool = _namespacePool.next;
-        _inScopeNamespaces[0].next = null;
+        _inScopeNamespaces[0].next = null;        
         _inScopeNamespaces[0].prefix = "";
         _inScopeNamespaces[0].namespaceName = "";
         _inScopeNamespaces[0].namespaceIndex = _currentInScope[0] = 0;
-
+        
         int index = KeyIntMap.indexFor(KeyIntMap.hashHash(_inScopeNamespaces[0].prefix.hashCode()), _prefixMap.length);
         _prefixMap[index] = _prefixPool;
         _prefixPool = _prefixPool.next;
         _prefixMap[index].next = null;
         _prefixMap[index].prefixId = 0;
-
-
+        
+        
         _inScopeNamespaces[1] = _namespacePool;
         _namespacePool = _namespacePool.next;
         _inScopeNamespaces[1].next = null;
         _inScopeNamespaces[1].prefix = EncodingConstants.XML_NAMESPACE_PREFIX;
         _inScopeNamespaces[1].namespaceName = EncodingConstants.XML_NAMESPACE_NAME;
         _inScopeNamespaces[1].namespaceIndex = _currentInScope[1] = 1;
-
+        
         index = KeyIntMap.indexFor(KeyIntMap.hashHash(_inScopeNamespaces[1].prefix.hashCode()), _prefixMap.length);
         if (_prefixMap[index] == null) {
             _prefixMap[index] = _prefixPool;
@@ -154,24 +125,24 @@ public class PrefixArray extends ValueArray {
         }
         _prefixMap[index].prefixId = 1;
     }
-
+    
     private final void increaseNamespacePool(int capacity) {
         if (_namespacePool == null) {
             _namespacePool = new NamespaceEntry();
         }
-
+        
         for (int i = 0; i < capacity; i++) {
             NamespaceEntry ne = new NamespaceEntry();
             ne.next = _namespacePool;
             _namespacePool = ne;
         }
     }
-
+    
     private final void increasePrefixPool(int capacity) {
         if (_prefixPool == null) {
             _prefixPool = new PrefixEntry();
         }
-
+        
         for (int i = 0; i < capacity; i++) {
             PrefixEntry pe = new PrefixEntry();
             pe.next = _prefixPool;
@@ -188,7 +159,7 @@ public class PrefixArray extends ValueArray {
         }
         return i;
     }
-
+    
     public int countPrefixPool() {
         int i = 0;
         PrefixEntry e = _prefixPool;
@@ -198,7 +169,7 @@ public class PrefixArray extends ValueArray {
         }
         return i;
     }
-
+    
     public final void clear() {
         for (int i = _readOnlyArraySize; i < _size; i++) {
             _array[i] = null;
@@ -209,36 +180,36 @@ public class PrefixArray extends ValueArray {
     public final void clearCompletely() {
         _prefixPool = null;
         _namespacePool = null;
-
+        
         for (int i = 0; i < _size + 2; i++) {
             _currentInScope[i] = 0;
-            _inScopeNamespaces[i] = null;
+            _inScopeNamespaces[i] = null;            
         }
-
+        
         for (int i = 0; i < _prefixMap.length; i++) {
             _prefixMap[i] = null;
         }
-
+                
         increaseNamespacePool(_initialCapacity);
         increasePrefixPool(_initialCapacity);
-
+        
         initializeEntries();
-
+        
         _declarationId = 0;
-
+        
         clear();
     }
-
+    
     public final String[] getArray() {
         return _array;
     }
-
+    
     public final void setReadOnlyArray(ValueArray readOnlyArray, boolean clear) {
         if (!(readOnlyArray instanceof PrefixArray)) {
             throw new IllegalArgumentException(CommonResourceBundle.getInstance().
                     getString("message.illegalClass", new Object[]{readOnlyArray}));
-        }
-
+        }       
+        
         setReadOnlyArray((PrefixArray)readOnlyArray, clear);
     }
 
@@ -246,15 +217,15 @@ public class PrefixArray extends ValueArray {
         if (readOnlyArray != null) {
             _readOnlyArray = readOnlyArray;
             _readOnlyArraySize = readOnlyArray.getSize();
-
+            
             clearCompletely();
-
+            
             // Resize according to size of read only arrays
             _inScopeNamespaces = new NamespaceEntry[_readOnlyArraySize + _inScopeNamespaces.length];
             _currentInScope = new int[_readOnlyArraySize + _currentInScope.length];
             // Intialize first two entries
             initializeEntries();
-
+            
             if (clear) {
                 clear();
             }
@@ -274,20 +245,20 @@ public class PrefixArray extends ValueArray {
             return a;
         }
     }
-
+    
     public final String get(int i) {
         return _array[i];
    }
-
+ 
     public final int add(String s) {
         if (_size == _array.length) {
             resize();
         }
-
+            
        _array[_size++] = s;
        return _size;
     }
-
+    
     protected final void resize() {
         if (_size == _maximumCapacity) {
             throw new ValueArrayResourceException(CommonResourceBundle.getInstance().getString("message.arrayMaxCapacity"));
@@ -302,16 +273,16 @@ public class PrefixArray extends ValueArray {
         System.arraycopy(_array, 0, newArray, 0, _size);
         _array = newArray;
 
-        newSize += _readOnlyArraySize;
-        final NamespaceEntry[] newInScopeNamespaces = new NamespaceEntry[newSize + 2];
-        System.arraycopy(_inScopeNamespaces, 0, newInScopeNamespaces, 0, _readOnlyArraySize + _size + 2);
+        newSize += 2;
+        final NamespaceEntry[] newInScopeNamespaces = new NamespaceEntry[newSize];
+        System.arraycopy(_inScopeNamespaces, 0, newInScopeNamespaces, 0, _inScopeNamespaces.length);
         _inScopeNamespaces = newInScopeNamespaces;
 
-        final int[] newCurrentInScope = new int[newSize + 2];
-        System.arraycopy(_currentInScope, 0, newCurrentInScope, 0, _readOnlyArraySize + _size + 2);
-        _currentInScope = newCurrentInScope;
+        final int[] newCurrentInScope = new int[newSize];
+        System.arraycopy(_currentInScope, 0, newCurrentInScope, 0, _currentInScope.length);
+        _currentInScope = newCurrentInScope;            
     }
-
+    
     public final void clearDeclarationIds() {
         for (int i = 0; i < _size; i++) {
             final NamespaceEntry e = _inScopeNamespaces[i];
@@ -322,12 +293,12 @@ public class PrefixArray extends ValueArray {
 
         _declarationId = 1;
     }
-
+    
     public final void pushScope(int prefixIndex, int namespaceIndex) throws FastInfosetException {
         if (_namespacePool == null) {
             increaseNamespacePool(16);
         }
-
+        
         final NamespaceEntry e = _namespacePool;
         _namespacePool = e.next;
 
@@ -336,20 +307,20 @@ public class PrefixArray extends ValueArray {
             e.declarationId = _declarationId;
             e.namespaceIndex = _currentInScope[prefixIndex] = ++namespaceIndex;
             e.next = null;
-
+            
             _inScopeNamespaces[prefixIndex] = e;
         } else if (current.declarationId < _declarationId) {
             e.declarationId = _declarationId;
             e.namespaceIndex = _currentInScope[prefixIndex] = ++namespaceIndex;
             e.next = current;
-
+            
             current.declarationId = 0;
             _inScopeNamespaces[prefixIndex] = e;
         } else {
             throw new FastInfosetException(CommonResourceBundle.getInstance().getString("message.duplicateNamespaceAttribute"));
         }
     }
-
+    
     public final void pushScopeWithPrefixEntry(String prefix, String namespaceName,
             int prefixIndex, int namespaceIndex) throws FastInfosetException {
         if (_namespacePool == null) {
@@ -358,7 +329,7 @@ public class PrefixArray extends ValueArray {
         if (_prefixPool == null) {
             increasePrefixPool(16);
         }
-
+        
         final NamespaceEntry e = _namespacePool;
         _namespacePool = e.next;
 
@@ -367,51 +338,51 @@ public class PrefixArray extends ValueArray {
             e.declarationId = _declarationId;
             e.namespaceIndex = _currentInScope[prefixIndex] = ++namespaceIndex;
             e.next = null;
-
+            
             _inScopeNamespaces[prefixIndex] = e;
         } else if (current.declarationId < _declarationId) {
             e.declarationId = _declarationId;
             e.namespaceIndex = _currentInScope[prefixIndex] = ++namespaceIndex;
             e.next = current;
-
+            
             current.declarationId = 0;
             _inScopeNamespaces[prefixIndex] = e;
         } else {
             throw new FastInfosetException(CommonResourceBundle.getInstance().getString("message.duplicateNamespaceAttribute"));
         }
-
+ 
         final PrefixEntry p = _prefixPool;
         _prefixPool = _prefixPool.next;
         p.prefixId = prefixIndex;
-
+                
         e.prefix = prefix;
         e.namespaceName = namespaceName;
         e.prefixEntryIndex = KeyIntMap.indexFor(KeyIntMap.hashHash(prefix.hashCode()), _prefixMap.length);
-
+        
         final PrefixEntry pCurrent = _prefixMap[e.prefixEntryIndex];
         p.next = pCurrent;
         _prefixMap[e.prefixEntryIndex] = p;
     }
-
+    
     public final void popScope(int prefixIndex) {
         final NamespaceEntry e = _inScopeNamespaces[++prefixIndex];
         _inScopeNamespaces[prefixIndex] = e.next;
         _currentInScope[prefixIndex] = (e.next != null) ? e.next.namespaceIndex : 0;
-
+        
         e.next = _namespacePool;
         _namespacePool = e;
     }
 
     public final void popScopeWithPrefixEntry(int prefixIndex) {
         final NamespaceEntry e = _inScopeNamespaces[++prefixIndex];
-
+        
         _inScopeNamespaces[prefixIndex] = e.next;
         _currentInScope[prefixIndex] = (e.next != null) ? e.next.namespaceIndex : 0;
-
+        
         e.prefix = e.namespaceName = null;
         e.next = _namespacePool;
         _namespacePool = e;
-
+        
         PrefixEntry current = _prefixMap[e.prefixEntryIndex];
         if (current.prefixId == prefixIndex) {
             _prefixMap[e.prefixEntryIndex] = current.next;
@@ -429,10 +400,10 @@ public class PrefixArray extends ValueArray {
                 }
                 prev = current;
                 current = current.next;
-            }
-        }
+            }        
+        }        
     }
-
+    
     public final String getNamespaceFromPrefix(String prefix) {
         final int index = KeyIntMap.indexFor(KeyIntMap.hashHash(prefix.hashCode()), _prefixMap.length);
         PrefixEntry pe = _prefixMap[index];
@@ -443,10 +414,10 @@ public class PrefixArray extends ValueArray {
             }
             pe = pe.next;
         }
-
+        
         return null;
     }
-
+    
     public final String getPrefixFromNamespace(String namespaceName) {
         int position = 0;
         while (++position < _size + 2) {
@@ -455,33 +426,33 @@ public class PrefixArray extends ValueArray {
                 return ne.prefix;
             }
         }
-
+        
         return null;
     }
-
+    
     public final Iterator getPrefixes() {
         return new Iterator() {
             int _position = 1;
             NamespaceEntry _ne = _inScopeNamespaces[_position];
-
+            
             public boolean hasNext() {
                 return _ne != null;
             }
-
+            
             public Object next() {
                 if (_position == _size + 2) {
                     throw new NoSuchElementException();
                 }
-
+                
                 final String prefix = _ne.prefix;
-                moveToNext();
+                moveToNext();                
                 return prefix;
             }
-
+            
             public void remove() {
                 throw new UnsupportedOperationException();
             }
-
+            
             private final void moveToNext() {
                 while (++_position < _size + 2) {
                     _ne = _inScopeNamespaces[_position];
@@ -491,38 +462,38 @@ public class PrefixArray extends ValueArray {
                 }
                 _ne = null;
             }
-
-        };
+            
+        };        
     }
-
+    
     public final Iterator getPrefixesFromNamespace(final String namespaceName) {
         return new Iterator() {
             String _namespaceName = namespaceName;
             int _position = 0;
             NamespaceEntry _ne;
-
+            
             {
                 moveToNext();
             }
-
+            
             public boolean hasNext() {
                 return _ne != null;
             }
-
+            
             public Object next() {
                 if (_position == _size + 2) {
                     throw new NoSuchElementException();
                 }
-
+                                
                 final String prefix = _ne.prefix;
                 moveToNext();
                 return prefix;
             }
-
+            
             public void remove() {
                 throw new UnsupportedOperationException();
             }
-
+            
             private final void moveToNext() {
                 while (++_position < _size + 2) {
                     _ne = _inScopeNamespaces[_position];
@@ -532,6 +503,6 @@ public class PrefixArray extends ValueArray {
                 }
                 _ne = null;
             }
-        };
+        };        
     }
 }

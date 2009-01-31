@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.rngom.binary;
 
 import com.sun.xml.internal.rngom.binary.visitor.PatternFunction;
@@ -45,7 +44,7 @@ public class ValuePattern extends StringPattern {
     if (!(other instanceof ValuePattern))
       return false;
     return (dt.equals(((ValuePattern)other).dt)
-            && dt.sameValue(obj, ((ValuePattern)other).obj));
+	    && dt.sameValue(obj, ((ValuePattern)other).obj));
   }
 
   public void accept(PatternVisitor visitor) {

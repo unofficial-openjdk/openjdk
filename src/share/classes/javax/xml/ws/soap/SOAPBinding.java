@@ -33,7 +33,7 @@ import javax.xml.soap.MessageFactory;
 
 /** The <code>SOAPBinding</code> interface is an abstraction for
  *  the SOAP binding.
- *
+ * 
  *  @since JAX-WS 2.0
 **/
 public interface SOAPBinding extends Binding {
@@ -59,7 +59,8 @@ public interface SOAPBinding extends Binding {
    * with MTOM enabled by default.
    */
   public static final String SOAP12HTTP_MTOM_BINDING = "http://www.w3.org/2003/05/soap/bindings/HTTP/?mtom=true";
-
+    
+  
   /** Gets the roles played by the SOAP binding instance.
    *
    *  @return Set<String> The set of roles played by the binding instance.
@@ -79,26 +80,27 @@ public interface SOAPBinding extends Binding {
    *
    * @return <code>true</code> if and only if the use of MTOM is enabled.
   **/
-
+  
   public boolean isMTOMEnabled();
-
+  
   /**
    * Enables or disables use of MTOM.
    *
    * @param flag   A <code>boolean</code> specifying whether the use of MTOM should
    *               be enabled or disabled.
-   *  @throws WebServiceException If the specified setting is not supported
+   * @throws WebServiceException If the specified setting is not supported
    *                  by this binding instance.
-  **/
+   * 
+   **/
   public void setMTOMEnabled(boolean flag);
-
+  
   /**
    * Gets the SAAJ <code>SOAPFactory</code> instance used by this SOAP binding.
    *
    * @return SOAPFactory instance used by this SOAP binding.
   **/
   public SOAPFactory getSOAPFactory();
-
+  
   /**
    * Gets the SAAJ <code>MessageFactory</code> instance used by this SOAP binding.
    *

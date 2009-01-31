@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,34 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
- *
- * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
- *
- */
+ 
 
 
 package com.sun.xml.internal.fastinfoset.sax;
@@ -73,20 +46,20 @@ public class AttributesHolder implements EncodingAlgorithmAttributes {
     private static final int DEFAULT_CAPACITY = 8;
 
     private Map _registeredEncodingAlgorithms;
-
+    
     private int _attributeCount;
-
+    
     private QualifiedName[] _names;
     private String[] _values;
-
+    
     private String[] _algorithmURIs;
     private int[] _algorithmIds;
     private Object[] _algorithmData;
-
+    
     public AttributesHolder() {
         _names = new QualifiedName[DEFAULT_CAPACITY];
         _values = new String[DEFAULT_CAPACITY];
-
+        
         _algorithmURIs = new String[DEFAULT_CAPACITY];
         _algorithmIds = new int[DEFAULT_CAPACITY];
         _algorithmData = new Object[DEFAULT_CAPACITY];
@@ -96,9 +69,9 @@ public class AttributesHolder implements EncodingAlgorithmAttributes {
         this();
         _registeredEncodingAlgorithms = registeredEncodingAlgorithms;
     }
-
+    
     // org.xml.sax.Attributes
-
+    
     public final int getLength() {
         return _attributeCount;
     }
@@ -124,11 +97,11 @@ public class AttributesHolder implements EncodingAlgorithmAttributes {
         if (value != null) {
             return value;
         }
-
+        
         if (_algorithmData[index] == null || _registeredEncodingAlgorithms == null) {
             return null;
         }
-
+                
         try {
             return _values[index] = convertEncodingAlgorithmDataToString(
                     _algorithmIds[index],
@@ -149,7 +122,7 @@ public class AttributesHolder implements EncodingAlgorithmAttributes {
             prefix = qName.substring(0, i);
             localName = qName.substring(i + 1);
         }
-
+        
         for (i = 0; i < _attributeCount; i++) {
             QualifiedName name = _names[i];
             if (localName.equals(name.localName) &&
@@ -216,22 +189,29 @@ public class AttributesHolder implements EncodingAlgorithmAttributes {
     }
 
     // EncodingAlgorithmAttributes
-
+    
     public final String getAlgorithmURI(int index) {
         return _algorithmURIs[index];
     }
-
+ 
     public final int getAlgorithmIndex(int index) {
         return _algorithmIds[index];
     }
-
+    
     public final Object getAlgorithmData(int index) {
         return _algorithmData[index];
     }
 
+    public String getAlpababet(int index) {
+        return null;
+    }
 
+    public boolean getToIndex(int index) {
+        return false;
+    }
+    
     // -----
-
+    
     public final void addAttribute(QualifiedName name, String value) {
         if (_attributeCount == _names.length) {
             resize();
@@ -255,11 +235,11 @@ public class AttributesHolder implements EncodingAlgorithmAttributes {
     public final QualifiedName getQualifiedName(int index) {
         return _names[index];
     }
-
+    
     public final String getPrefix(int index) {
         return _names[index].prefix;
     }
-
+        
     private final void resize() {
         final int newLength = _attributeCount * 3 / 2 + 1;
 
@@ -284,18 +264,18 @@ public class AttributesHolder implements EncodingAlgorithmAttributes {
         _algorithmIds = algorithmIds;
         _algorithmData = algorithmData;
     }
-
+    
     private final StringBuffer convertEncodingAlgorithmDataToString(int identifier, String URI, Object data) throws FastInfosetException, IOException {
         EncodingAlgorithm ea = null;
         if (identifier < EncodingConstants.ENCODING_ALGORITHM_BUILTIN_END) {
             ea = BuiltInEncodingAlgorithmFactory.table[identifier];
         } else if (identifier == EncodingAlgorithmIndexes.CDATA) {
-            throw new EncodingAlgorithmException(CommonResourceBundle.getInstance().getString("message.CDATAAlgorithmNotSupported"));
+            throw new EncodingAlgorithmException(CommonResourceBundle.getInstance().getString("message.CDATAAlgorithmNotSupported"));            
         } else if (identifier >= EncodingConstants.ENCODING_ALGORITHM_APPLICATION_START) {
             if (URI == null) {
                 throw new EncodingAlgorithmException(CommonResourceBundle.getInstance().getString("message.URINotPresent") + identifier);
             }
-
+            
             ea = (EncodingAlgorithm)_registeredEncodingAlgorithms.get(URI);
             if (ea == null) {
                 throw new EncodingAlgorithmException(CommonResourceBundle.getInstance().getString("message.algorithmNotRegistered") + URI);
@@ -310,5 +290,6 @@ public class AttributesHolder implements EncodingAlgorithmAttributes {
         final StringBuffer sb = new StringBuffer();
         ea.convertToCharacters(data, sb);
         return sb;
-    }
+    }    
+
 }

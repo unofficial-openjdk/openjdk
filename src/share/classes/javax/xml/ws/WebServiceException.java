@@ -1,5 +1,5 @@
 /*
- * Copyright 2005 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,45 +25,45 @@
 
 package javax.xml.ws;
 
-/** The <code>WebServiceException</code> class is the base
+/** The <code>WebServiceException</code> class is the base 
  *  exception class for all JAX-WS API runtime exceptions.
  *
  *  @since JAX-WS 2.0
 **/
 
 public class WebServiceException extends java.lang.RuntimeException {
-
-  /** Constructs a new exception with <code>null</code> as its
+  
+  /** Constructs a new exception with <code>null</code> as its 
    *  detail message. The cause is not initialized.
   **/
-  public WebServiceException() {
+  public WebServiceException() { 
     super();
   }
 
-  /** Constructs a new exception with the specified detail
+  /** Constructs a new exception with the specified detail 
    *  message.  The cause is not initialized.
-   *  @param message The detail message which is later
+   *  @param message The detail message which is later 
    *                 retrieved using the getMessage method
   **/
   public WebServiceException(String message) {
     super(message);
   }
 
-  /** Constructs a new exception with the specified detail
+  /** Constructs a new exception with the specified detail 
    *  message and cause.
    *
    *  @param message The detail message which is later retrieved
    *                 using the getMessage method
    *  @param cause   The cause which is saved for the later
-   *                 retrieval throw by the getCause method
-  **/
+   *                 retrieval throw by the getCause method 
+  **/ 
   public WebServiceException(String message, Throwable cause) {
     super(message,cause);
   }
 
   /** Constructs a new WebServiceException with the specified cause
-   *  and a detail message of <tt>(cause==null ? null :
-   *  cause.toString())</tt> (which typically contains the
+   *  and a detail message of <tt>(cause==null ? null : 
+   *  cause.toString())</tt> (which typically contains the 
    *  class and detail message of <tt>cause</tt>).
    *
    *  @param cause   The cause which is saved for the later
@@ -71,7 +71,7 @@ public class WebServiceException extends java.lang.RuntimeException {
    *                 (A <tt>null</tt> value is permitted, and
    *                 indicates that the cause is nonexistent or
      *               unknown.)
-  **/
+  **/ 
   public WebServiceException(Throwable cause) {
     super(cause);
   }

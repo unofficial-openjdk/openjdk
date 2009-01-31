@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.codemodel.internal.util;
 
 import java.io.FilterWriter;
@@ -32,15 +31,15 @@ import java.io.Writer;
 /**
  * {@link Writer} that escapes non US-ASCII characters into
  * Java Unicode escape \\uXXXX.
- *
+ * 
  * This process is necessary if the method names or field names
  * contain non US-ASCII characters.
- *
+ * 
  * @author
- *      Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
+ * 	Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public class UnicodeEscapeWriter extends FilterWriter {
-
+    
     public UnicodeEscapeWriter( Writer next ) {
         super(next);
     }
@@ -59,17 +58,17 @@ public class UnicodeEscapeWriter extends FilterWriter {
 
     /**
      * Can be overrided. Return true if the character
-     * needs to be escaped.
+     * needs to be escaped. 
      */
     protected boolean requireEscaping(int ch) {
         if(ch>=128)     return true;
-
+        
         // control characters
         if( ch<0x20 && " \t\r\n".indexOf(ch)==-1 )  return true;
-
+        
         return false;
     }
-
+    
     public final void write(char[] buf, int off, int len) throws IOException {
         for( int i=0; i<len; i++ )
             write(buf[off+i]);
@@ -82,7 +81,7 @@ public class UnicodeEscapeWriter extends FilterWriter {
     public final void write(String buf, int off, int len) throws IOException {
         write( buf.toCharArray(), off, len );
     }
-
+    
     public final void write(String buf) throws IOException {
         write( buf.toCharArray(), 0, buf.length() );
     }

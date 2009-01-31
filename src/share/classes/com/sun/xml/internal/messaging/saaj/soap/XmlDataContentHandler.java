@@ -1,11 +1,5 @@
 /*
- * $Id: XmlDataContentHandler.java,v 1.12 2006/01/27 12:49:30 vj135062 Exp $
- * $Revision: 1.12 $
- * $Date: 2006/01/27 12:49:30 $
- */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +22,13 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
+/*
+ * $Id: XmlDataContentHandler.java,v 1.12 2006/01/27 12:49:30 vj135062 Exp $
+ * $Revision: 1.12 $
+ * $Date: 2006/01/27 12:49:30 $
+ */
+
+
 package com.sun.xml.internal.messaging.saaj.soap;
 
 import java.awt.datatransfer.DataFlavor;
@@ -80,7 +81,7 @@ public class XmlDataContentHandler implements DataContentHandler {
      */
     public Object getTransferData(DataFlavor flavor, DataSource dataSource)
         throws IOException {
-        if (flavor.getMimeType().startsWith("text/xml") ||
+        if (flavor.getMimeType().startsWith("text/xml") || 
                 flavor.getMimeType().startsWith("application/xml")) {
             if (flavor.getRepresentationClass().getName().equals(STR_SRC)) {
                 return new StreamSource(dataSource.getInputStream());
@@ -107,13 +108,13 @@ public class XmlDataContentHandler implements DataContentHandler {
             throw new IOException(
                 "Invalid content type \"" + mimeType + "\" for XmlDCH");
 
-
+            
         try {
             Transformer transformer = EfficientStreamingTransformer.newTransformer();
             StreamResult result = new StreamResult(os);
             if (obj instanceof DataSource) {
-                // Streaming transform applies only to javax.xml.transform.StreamSource
-                transformer.transform((Source) getContent((DataSource)obj), result);
+                // Streaming transform applies only to javax.xml.transform.StreamSource 
+                transformer.transform((Source) getContent((DataSource)obj), result);                
             } else {
                 transformer.transform((Source) obj, result);
             }

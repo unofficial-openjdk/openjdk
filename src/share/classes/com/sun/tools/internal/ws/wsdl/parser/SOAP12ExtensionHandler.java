@@ -1,5 +1,5 @@
 /*
- * Portions Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,16 +24,21 @@
  */
 package com.sun.tools.internal.ws.wsdl.parser;
 
-import javax.xml.namespace.QName;
-
+import com.sun.tools.internal.ws.wsdl.document.soap.SOAP12Binding;
 import com.sun.tools.internal.ws.wsdl.document.soap.SOAP12Constants;
 import com.sun.tools.internal.ws.wsdl.document.soap.SOAPBinding;
-import com.sun.tools.internal.ws.wsdl.document.soap.SOAP12Binding;
+import org.xml.sax.Locator;
+
+import javax.xml.namespace.QName;
+import java.util.Map;
 
 
 public class SOAP12ExtensionHandler extends SOAPExtensionHandler {
+    public SOAP12ExtensionHandler(Map<String, AbstractExtensionHandler> extensionHandlerMap) {
+        super(extensionHandlerMap);
+    }
 
-    /*
+    /* 
      * @see SOAPExtensionHandler#getNamespaceURI()
      */
     @Override
@@ -41,7 +46,7 @@ public class SOAP12ExtensionHandler extends SOAPExtensionHandler {
         return Constants.NS_WSDL_SOAP12;
     }
 
-    /*
+    /* 
      * @see SOAPExtensionHandler#getAddressQName()
      */
     @Override
@@ -49,7 +54,7 @@ public class SOAP12ExtensionHandler extends SOAPExtensionHandler {
         return SOAP12Constants.QNAME_ADDRESS;
     }
 
-    /*
+    /* 
      * @see SOAPExtensionHandler#getBindingQName()
      */
     @Override
@@ -57,8 +62,8 @@ public class SOAP12ExtensionHandler extends SOAPExtensionHandler {
         return SOAP12Constants.QNAME_BINDING;
     }
 
-    @Override protected SOAPBinding getSOAPBinding() {
-        return new SOAP12Binding();
+    @Override protected SOAPBinding getSOAPBinding(Locator location) {
+        return new SOAP12Binding(location);
     }
 
     /*
@@ -69,7 +74,7 @@ public class SOAP12ExtensionHandler extends SOAPExtensionHandler {
         return SOAP12Constants.QNAME_BODY;
     }
 
-    /*
+    /* 
      * @see SOAPExtensionHandler#getFaultQName()
      */
     @Override
@@ -77,7 +82,7 @@ public class SOAP12ExtensionHandler extends SOAPExtensionHandler {
         return SOAP12Constants.QNAME_FAULT;
     }
 
-    /*
+    /* 
      * @see SOAPExtensionHandler#getHeaderfaultQName()
      */
     @Override
@@ -85,7 +90,7 @@ public class SOAP12ExtensionHandler extends SOAPExtensionHandler {
         return SOAP12Constants.QNAME_HEADERFAULT;
     }
 
-    /*
+    /* 
      * @see SOAPExtensionHandler#getHeaderQName()
      */
     @Override
@@ -93,7 +98,7 @@ public class SOAP12ExtensionHandler extends SOAPExtensionHandler {
         return SOAP12Constants.QNAME_HEADER;
     }
 
-    /*
+    /* 
      * @see SOAPExtensionHandler#getOperationQName()
      */
     @Override

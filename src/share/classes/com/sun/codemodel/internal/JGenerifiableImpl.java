@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.codemodel.internal;
 
 import java.util.ArrayList;
@@ -30,17 +29,17 @@ import java.util.List;
 
 /**
  * Implementation of {@link JGenerifiable}.
- *
+ * 
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 abstract class JGenerifiableImpl implements JGenerifiable, JDeclaration {
-
+    
     /** Lazily created list of {@link JTypeVar}s. */
     private List<JTypeVar> typeVariables = null;
-
+    
     protected abstract JCodeModel owner();
-
+    
     public void declare( JFormatter f ) {
         if(typeVariables!=null) {
             f.p('<');
@@ -68,7 +67,7 @@ abstract class JGenerifiableImpl implements JGenerifiable, JDeclaration {
     public JTypeVar generify(String name, JClass bound) {
         return generify(name).bound(bound);
     }
-
+    
     public JTypeVar[] typeParams() {
         if(typeVariables==null)
             return JTypeVar.EMPTY_ARRAY;

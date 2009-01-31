@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.tools.internal.xjc.generator.bean.field;
 
 import java.util.List;
@@ -44,18 +43,18 @@ import com.sun.tools.internal.xjc.model.CPropertyInfo;
 /**
  * Common code for property renderer that generates a List as
  * its underlying data structure.
- *
+ * 
  * <p>
  * For performance reaons, the actual list object used to store
  * data is lazily created.
- *
+ * 
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 abstract class AbstractListField extends AbstractField {
     /** The field that stores the list. */
     protected JFieldVar field;
-
+    
     /**
      * a method that lazily initializes a List.
      * Lazily created.
@@ -102,7 +101,7 @@ abstract class AbstractListField extends AbstractField {
         } else
             primitiveType = null;
     }
-
+    
     protected final void generate() {
 
         // for the collectionType customization to take effect, the field needs to be strongly typed,
@@ -140,43 +139,43 @@ abstract class AbstractListField extends AbstractField {
     public final JType getRawType() {
         return codeModel.ref(List.class).narrow(exposedType.boxify());
     }
-
+    
     private JExpression newCoreList() {
         return JExpr._new(getCoreListType());
     }
-
+    
     /**
      * Concrete class that implements the List interface.
      * Used as the actual data storage.
      */
     protected abstract JClass getCoreListType();
-
-
+    
+    
     /** Generates accessor methods. */
     protected abstract void generateAccessors();
-
-
-
+    
+    
+    
     /**
-     *
-     *
+     * 
+     * 
      * @author
      *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
      */
     protected abstract class Accessor extends AbstractField.Accessor {
-
+        
         /**
          * Reference to the {@link AbstractListField#field}
          * of the target object.
          */
         protected final JFieldRef field;
-
+        
         protected Accessor( JExpression $target ) {
             super($target);
             field = $target.ref(AbstractListField.this.field);
         }
-
-
+        
+        
         protected final JExpression unbox( JExpression exp ) {
             if(primitiveType==null) return exp;
             else                    return primitiveType.unwrap(exp);
@@ -185,20 +184,20 @@ abstract class AbstractListField extends AbstractField {
             if(primitiveType==null) return exp;
             else                    return primitiveType.wrap(exp);
         }
-
+        
         /**
          * Returns a reference to the List field that stores the data.
          * <p>
          * Using this method hides the fact that the list is lazily
          * created.
-         *
+         * 
          * @param canBeNull
          *      if true, the returned expression may be null (this is
          *      when the list is still not constructed.) This could be
          *      useful when the caller can deal with null more efficiently.
          *      When the list is null, it should be treated as if the list
          *      is empty.
-         *
+         * 
          *      if false, the returned expression will never be null.
          *      This is the behavior users would see.
          */
@@ -213,7 +212,7 @@ abstract class AbstractListField extends AbstractField {
         public JExpression count() {
             return JOp.cond( field.eq(JExpr._null()), JExpr.lit(0), field.invoke("size") );
         }
-
+        
         public void unsetValues( JBlock body ) {
             body.assign(field,JExpr._null());
         }
@@ -221,5 +220,5 @@ abstract class AbstractListField extends AbstractField {
             return field.ne(JExpr._null()).cand(field.invoke("isEmpty").not());
         }
     }
-
+    
 }

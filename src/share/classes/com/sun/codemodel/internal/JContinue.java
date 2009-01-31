@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,12 +30,12 @@ package com.sun.codemodel.internal;
  * JContinue statement
  */
 class JContinue implements JStatement {
-
+    
     private final JLabel label;
-
+    
     /**
      * JContinue constructor.
-     *
+     * 
      * @param _label
      *      a valid label or null.
      */

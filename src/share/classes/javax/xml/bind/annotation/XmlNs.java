@@ -34,7 +34,7 @@ import java.lang.annotation.Target;
  * Associates a namespace prefix with a XML namespace URI.
  *
  * <p><b>Usage</b></p>
- * <p><tt>@XmlNs</tt> annotation is intended for use from other
+ * <p><tt>@XmlNs</tt> annotation is intended for use from other 
  * program annotations.
  *
  * <p>See "Package Specification" in javax.xml.bind.package javadoc for
@@ -43,6 +43,7 @@ import java.lang.annotation.Target;
  * <p><b>Example:</b>See <tt>XmlSchema</tt> annotation type for an example.
  * @author Sekhar Vajjhala, Sun Microsystems, Inc.
  * @since JAXB2.0
+ * @version $Revision: 1.2 $
  */
 
 @Retention(RUNTIME) @Target({})
@@ -55,5 +56,7 @@ public @interface XmlNs {
     /**
      * Namespace URI
      */
-    String namespaceURI();
+    String namespaceURI(); 
 }
+
+

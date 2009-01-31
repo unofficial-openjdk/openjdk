@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.tools.internal.xjc.reader.internalizer;
 
 import java.net.MalformedURLException;
@@ -31,6 +30,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.text.ParseException;
 
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
@@ -38,10 +38,13 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import com.sun.istack.internal.SAXParseException2;
+import com.sun.istack.internal.NotNull;
+import com.sun.istack.internal.Nullable;
 import com.sun.tools.internal.xjc.ErrorReceiver;
 import com.sun.tools.internal.xjc.reader.Const;
 import com.sun.tools.internal.xjc.util.DOMUtils;
 import com.sun.xml.internal.bind.v2.util.EditDistance;
+import com.sun.xml.internal.xsom.SCD;
 
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
@@ -55,9 +58,10 @@ import org.xml.sax.SAXParseException;
 
 /**
  * Internalizes external binding declarations.
- * <p>
- * The static "transform" method is the entry point.
  *
+ * <p>
+ * The {@link #transform(DOMForest,boolean)} method is the entry point.
+ * 
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
@@ -69,49 +73,66 @@ class Internalizer {
 
     /**
      * Internalize all &lt;jaxb:bindings> customizations in the given forest.
+     *
+     * @return
+     *      if the SCD support is enabled, the return bindings need to be applied
+     *      after schema components are parsed.
+     *      If disabled, the returned binding set will be empty.
+     *      SCDs are only for XML Schema, and doesn't make any sense for other
+     *      schema languages.
      */
-    static void transform( DOMForest forest ) {
-        new Internalizer( forest ).transform();
+    static SCDBasedBindingSet transform( DOMForest forest, boolean enableSCD ) {
+        return new Internalizer( forest, enableSCD ).transform();
     }
 
-
-    private Internalizer( DOMForest forest ) {
+    
+    private Internalizer( DOMForest forest, boolean enableSCD ) {
         this.errorHandler = forest.getErrorHandler();
         this.forest = forest;
+        this.enableSCD = enableSCD;
     }
-
+    
     /**
      * DOMForest object currently being processed.
      */
     private final DOMForest forest;
-
+    
     /**
      * All errors found during the transformation is sent to this object.
      */
     private ErrorReceiver errorHandler;
 
+    /**
+     * If true, the SCD-based target selection is supported.
+     */
+    private boolean enableSCD;
+    
+    
+    private SCDBasedBindingSet transform() {
 
-
-    private void transform() {
-
+        // either target nodes are conventional DOM nodes (as per spec),
         Map<Element,Node> targetNodes = new HashMap<Element,Node>();
-
+        // ... or it will be schema components by means of SCD (RI extension)
+        SCDBasedBindingSet scd = new SCDBasedBindingSet(forest);
+        
         //
         // identify target nodes for all <jaxb:bindings>
         //
         for (Element jaxbBindings : forest.outerMostBindings) {
             // initially, the inherited context is itself
-            buildTargetNodeMap(jaxbBindings, jaxbBindings, targetNodes);
+            buildTargetNodeMap(jaxbBindings, jaxbBindings, null, targetNodes, scd);
         }
-
+        
         //
         // then move them to their respective positions.
         //
         for (Element jaxbBindings : forest.outerMostBindings) {
             move(jaxbBindings, targetNodes);
         }
-    }
 
+        return scd;
+    }
+    
     /**
      * Validates attributes of a &lt;jaxb:bindings> element.
      */
@@ -125,26 +146,38 @@ class Internalizer {
                 continue;
             if( a.getLocalName().equals("schemaLocation"))
                 continue;
+            if( a.getLocalName().equals("scd") )
+                continue;
 
             // TODO: flag error for this undefined attribute
         }
     }
-
+    
     /**
      * Determines the target node of the "bindings" element
      * by using the inherited target node, then put
-     * the result into the "result" map.
+     * the result into the "result" map and the "scd" map.
+     *
+     * @param inheritedTarget
+     *      The current target node. This always exists, even if
+     *      the user starts specifying targets via SCD (in that case
+     *      this inherited target is just not going to be used.)
+     * @param inheritedSCD
+     *      If the ancestor &lt;bindings> node specifies @scd to
+     *      specify the target via SCD, then this parameter represents that context.
      */
-    private void buildTargetNodeMap( Element bindings, Node inheritedTarget, Map<Element,Node> result ) {
+    private void buildTargetNodeMap( Element bindings, @NotNull Node inheritedTarget,
+                                     @Nullable SCDBasedBindingSet.Target inheritedSCD,
+                                     Map<Element,Node> result, SCDBasedBindingSet scdResult ) {
         // start by the inherited target
         Node target = inheritedTarget;
-
+        
         validate(bindings); // validate this node
-
+        
         // look for @schemaLocation
         if( bindings.getAttributeNode("schemaLocation")!=null ) {
             String schemaLocation = bindings.getAttribute("schemaLocation");
-
+            
             try {
                 // absolutize this URI.
                 // TODO: use the URI class
@@ -153,24 +186,26 @@ class Internalizer {
                     new URL( forest.getSystemId(bindings.getOwnerDocument()) ),
                     schemaLocation ).toExternalForm();
             } catch( MalformedURLException e ) {
-                ;   // continue with the original schemaLocation value
+                // continue with the original schemaLocation value
             }
-
+            
             target = forest.get(schemaLocation);
             if(target==null) {
                 reportError( bindings,
                     Messages.format(Messages.ERR_INCORRECT_SCHEMA_REFERENCE,
                         schemaLocation,
                         EditDistance.findNearest(schemaLocation,forest.listSystemIDs())));
-
+                
                 return; // abort processing this <jaxb:bindings>
             }
-        }
 
+            target = ((Document)target).getDocumentElement();
+        }
+        
         // look for @node
         if( bindings.getAttributeNode("node")!=null ) {
             String nodeXPath = bindings.getAttribute("node");
-
+            
             // evaluate this XPath
             NodeList nlst;
             try {
@@ -178,53 +213,71 @@ class Internalizer {
                 nlst = (NodeList)xpath.evaluate(nodeXPath,target,XPathConstants.NODESET);
             } catch (XPathExpressionException e) {
                 reportError( bindings,
-                    Messages.format(Messages.ERR_XPATH_EVAL,e.getMessage()),
-                    e );
+                    Messages.format(Messages.ERR_XPATH_EVAL,e.getMessage()), e );
                 return; // abort processing this <jaxb:bindings>
             }
-
+            
             if( nlst.getLength()==0 ) {
                 reportError( bindings,
-                    Messages.format(Messages.NO_XPATH_EVAL_TO_NO_TARGET,
-                        nodeXPath) );
+                    Messages.format(Messages.NO_XPATH_EVAL_TO_NO_TARGET, nodeXPath) );
                 return; // abort
             }
-
+            
             if( nlst.getLength()!=1 ) {
                 reportError( bindings,
-                    Messages.format(Messages.NO_XPATH_EVAL_TOO_MANY_TARGETS,
-                        nodeXPath,nlst.getLength()) );
+                    Messages.format(Messages.NO_XPATH_EVAL_TOO_MANY_TARGETS, nodeXPath,nlst.getLength()) );
                 return; // abort
             }
-
+            
             Node rnode = nlst.item(0);
             if(!(rnode instanceof Element )) {
                 reportError( bindings,
-                    Messages.format(Messages.NO_XPATH_EVAL_TO_NON_ELEMENT,
-                        nodeXPath) );
+                    Messages.format(Messages.NO_XPATH_EVAL_TO_NON_ELEMENT, nodeXPath) );
                 return; // abort
             }
-
+            
             if( !forest.logic.checkIfValidTargetNode(forest,bindings,(Element)rnode) ) {
                 reportError( bindings,
                     Messages.format(Messages.XPATH_EVAL_TO_NON_SCHEMA_ELEMENT,
-                        nodeXPath,
-                        rnode.getNodeName() ) );
+                        nodeXPath, rnode.getNodeName() ) );
                 return; // abort
             }
-
+            
             target = rnode;
         }
 
-        // update the result map
-        result.put( bindings, target );
+        // look for @scd
+        if( bindings.getAttributeNode("scd")!=null ) {
+            String scdPath = bindings.getAttribute("scd");
+            if(!enableSCD) {
+                // SCD selector was found, but it's not activated. report an error
+                // but recover by handling it anyway. this also avoids repeated error messages.
+                reportError(bindings,
+                    Messages.format(Messages.SCD_NOT_ENABLED));
+                enableSCD = true;
+            }
 
+            try {
+                inheritedSCD = scdResult.createNewTarget( inheritedSCD, bindings,
+                        SCD.create(scdPath, new NamespaceContextImpl(bindings)) );
+            } catch (ParseException e) {
+                reportError( bindings, Messages.format(Messages.ERR_SCD_EVAL,e.getMessage()),e );
+                return; // abort processing this bindings
+            }
+        }
+
+        // update the result map
+        if(inheritedSCD!=null)
+            inheritedSCD.addBinidng(bindings);
+        else
+            result.put( bindings, target );
+        
         // look for child <jaxb:bindings> and process them recursively
         Element[] children = DOMUtils.getChildElements( bindings, Const.JAXB_NSURI, "bindings" );
         for (Element value : children)
-            buildTargetNodeMap(value, target, result);
+            buildTargetNodeMap(value, target, inheritedSCD, result, scdResult);
     }
-
+    
     /**
      * Moves JAXB customizations under their respective target nodes.
      */
@@ -235,21 +288,20 @@ class Internalizer {
             // recover from the error by ignoring this node
             return;
 
-        Element[] children = DOMUtils.getChildElements(bindings);
-        for (Element item : children) {
-            if ("bindings".equals(item.getLocalName()))
-            // process child <jaxb:bindings> recursively
+        for (Element item : DOMUtils.getChildElements(bindings)) {
+            String localName = item.getLocalName();
+
+            if ("bindings".equals(localName)) {
+                // process child <jaxb:bindings> recursively
                 move(item, targetNodes);
-            else {
+            } else
+            if ("globalBindings".equals(localName)) {
+                // <jaxb:globalBindings> always go to the root of document.
+                moveUnder(item,forest.getOneDocument().getDocumentElement());
+            } else {
                 if (!(target instanceof Element)) {
-                    if(target instanceof Document) {
-                        // we set the context node to the document when @schemaLocation is used.
-                        reportError(item,
-                                Messages.format(Messages.NO_CONTEXT_NODE_SPECIFIED));
-                    } else {
-                        reportError(item,
-                                Messages.format(Messages.CONTEXT_NODE_IS_NOT_ELEMENT));
-                    }
+                    reportError(item,
+                            Messages.format(Messages.CONTEXT_NODE_IS_NOT_ELEMENT));
                     return; // abort
                 }
 
@@ -258,27 +310,28 @@ class Internalizer {
                             Messages.format(Messages.ORPHANED_CUSTOMIZATION, item.getNodeName()));
                     return; // abort
                 }
+
                 // move this node under the target
                 moveUnder(item,(Element)target);
             }
         }
     }
-
+    
     /**
      * Moves the "decl" node under the "target" node.
-     *
+     * 
      * @param decl
      *      A JAXB customization element (e.g., &lt;jaxb:class>)
-     *
+     * 
      * @param target
      *      XML Schema element under which the declaration should move.
      *      For example, &lt;xs:element>
      */
     private void moveUnder( Element decl, Element target ) {
         Element realTarget = forest.logic.refineTarget(target);
-
+        
         declExtensionNamespace( decl, target );
-
+        
         // copy in-scope namespace declarations of the decl node
         // to the decl node itself so that this move won't change
         // the in-scope namespace bindings.
@@ -292,24 +345,24 @@ class Internalizer {
                     String prefix;
                     if( a.getName().indexOf(':')==-1 )  prefix = "";
                     else                                prefix = a.getLocalName();
-
+                    
                     if( inscopes.add(prefix) && p!=decl ) {
                         // if this is the first time we see this namespace bindings,
                         // copy the declaration.
                         // if p==decl, there's no need to. Note that
                         // we want to add prefix to inscopes even if p==Decl
-
+                        
                         decl.setAttributeNodeNS( (Attr)a.cloneNode(true) );
                     }
                 }
             }
-
+            
             if( p.getParentNode() instanceof Document )
                 break;
-
+            
             p = (Element)p.getParentNode();
         }
-
+        
         if( !inscopes.contains("") ) {
             // if the default namespace was undeclared in the context of decl,
             // it must be explicitly set to "" since the new environment might
@@ -323,15 +376,15 @@ class Internalizer {
             // if they belong to different DOM documents, we need to clone them
             Element original = decl;
             decl = (Element)realTarget.getOwnerDocument().importNode(decl,true);
-
+            
             // this effectively clones a ndoe,, so we need to copy locators.
             copyLocators( original, decl );
         }
-
-
+        
+        
         realTarget.appendChild( decl );
     }
-
+    
     /**
      * Recursively visits sub-elements and declare all used namespaces.
      * TODO: the fact that we recognize all namespaces in the extension
@@ -342,7 +395,7 @@ class Internalizer {
         // @extensionBindingPrefixes.
         if( !Const.JAXB_NSURI.equals(decl.getNamespaceURI()) )
             declareExtensionNamespace( target, decl.getNamespaceURI() );
-
+        
         NodeList lst = decl.getChildNodes();
         for( int i=0; i<lst.getLength(); i++ ) {
             Node n = lst.item(i);
@@ -354,7 +407,7 @@ class Internalizer {
 
     /** Attribute name. */
     private static final String EXTENSION_PREFIXES = "extensionBindingPrefixes";
-
+    
     /**
      * Adds the specified namespace URI to the jaxb:extensionBindingPrefixes
      * attribute of the target document.
@@ -370,13 +423,13 @@ class Internalizer {
                 Const.JAXB_NSURI,jaxbPrefix+':'+EXTENSION_PREFIXES);
             root.setAttributeNodeNS(att);
         }
-
+        
         String prefix = allocatePrefix(root,nsUri);
         if( att.getValue().indexOf(prefix)==-1 )
             // avoid redeclaring the same namespace twice.
             att.setValue( att.getValue()+' '+prefix);
     }
-
+    
     /**
      * Declares a new prefix on the given element and associates it
      * with the specified namespace URI.
@@ -391,24 +444,24 @@ class Internalizer {
             Attr a = (Attr)atts.item(i);
             if( Const.XMLNS_URI.equals(a.getNamespaceURI()) ) {
                 if( a.getName().indexOf(':')==-1 )  continue;
-
+                
                 if( a.getValue().equals(nsUri) )
                     return a.getLocalName();    // found one
             }
         }
-
+        
         // none found. allocate new.
         while(true) {
             String prefix = "p"+(int)(Math.random()*1000000)+'_';
             if(e.getAttributeNodeNS(Const.XMLNS_URI,prefix)!=null)
                 continue;   // this prefix is already allocated.
-
+            
             e.setAttributeNS(Const.XMLNS_URI,"xmlns:"+prefix,nsUri);
             return prefix;
         }
     }
-
-
+    
+    
     /**
      * Copies location information attached to the "src" node to the "dst" node.
      */
@@ -417,23 +470,23 @@ class Internalizer {
             dst, forest.locatorTable.getStartLocation(src) );
         forest.locatorTable.storeEndLocation(
             dst, forest.locatorTable.getEndLocation(src) );
-
+        
         // recursively process child elements
         Element[] srcChilds = DOMUtils.getChildElements(src);
         Element[] dstChilds = DOMUtils.getChildElements(dst);
-
+        
         for( int i=0; i<srcChilds.length; i++ )
             copyLocators( srcChilds[i], dstChilds[i] );
     }
-
+    
 
     private void reportError( Element errorSource, String formattedMsg ) {
         reportError( errorSource, formattedMsg, null );
     }
-
+    
     private void reportError( Element errorSource,
         String formattedMsg, Exception nestedException ) {
-
+        
         SAXParseException e = new SAXParseException2( formattedMsg,
             forest.locatorTable.getStartLocation(errorSource),
             nestedException );

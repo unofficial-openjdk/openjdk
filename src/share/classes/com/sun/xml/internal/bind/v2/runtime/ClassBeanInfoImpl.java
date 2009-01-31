@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.bind.v2.runtime;
 
 import java.io.IOException;
@@ -116,7 +115,7 @@ public final class ClassBeanInfoImpl<BeanT> extends JaxBeanInfo<BeanT> {
     private /*final*/ Property<BeanT>[] uriProperties;
 
     private final Method factoryMethod;
-
+    
     /*package*/ ClassBeanInfoImpl(JAXBContextImpl owner, RuntimeClassInfo ci) {
         super(owner,ci,ci.getClazz(),ci.getTypeName(),ci.isElement(),false,true);
 
@@ -140,7 +139,7 @@ public final class ClassBeanInfoImpl<BeanT> extends JaxBeanInfo<BeanT> {
             }
         }
 
-
+        
         if(ci.getBaseClass()==null)
             this.superClazz = null;
         else
@@ -240,8 +239,8 @@ public final class ClassBeanInfoImpl<BeanT> extends JaxBeanInfo<BeanT> {
     }
 
     public BeanT createInstance(UnmarshallingContext context) throws IllegalAccessException, InvocationTargetException, InstantiationException, SAXException {
-
-        BeanT bean = null;
+        
+        BeanT bean = null;        
         if (factoryMethod == null){
            bean = ClassFactory.create0(jaxbType);
         }else {
@@ -252,7 +251,7 @@ public final class ClassBeanInfoImpl<BeanT> extends JaxBeanInfo<BeanT> {
                 throw new InstantiationException("The factory method didn't return a correct object");
             }
         }
-
+        
         if(xmlLocatorField!=null)
             // need to copy because Locator is mutable
             try {
@@ -371,3 +370,4 @@ public final class ClassBeanInfoImpl<BeanT> extends JaxBeanInfo<BeanT> {
 
     private static final Logger logger = Util.getClassLogger();
 }
+

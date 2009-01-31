@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.codemodel.internal.writer;
 
 import java.io.FilterOutputStream;
@@ -36,17 +35,17 @@ import com.sun.codemodel.internal.JPackage;
 /**
  * Output all source files into a single stream with a little
  * formatting header in front of each file.
- *
+ * 
  * This is primarily for human consumption of the generated source
  * code, such as to debug/test CodeModel or to quickly inspect the result.
- *
+ * 
  * @author
- *      Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
+ * 	Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public class SingleStreamCodeWriter extends CodeWriter {
-
+    
     private final PrintStream out;
-
+    
     /**
      * @param os
      *      This stream will be closed at the end of the code generation.
@@ -58,11 +57,11 @@ public class SingleStreamCodeWriter extends CodeWriter {
     public OutputStream openBinary(JPackage pkg, String fileName) throws IOException {
         String pkgName = pkg.name();
         if(pkgName.length()!=0)     pkgName += '.';
-
+        
         out.println(
             "-----------------------------------" + pkgName+fileName +
             "-----------------------------------");
-
+            
         return new FilterOutputStream(out) {
             public void close() {
                 // don't let this stream close

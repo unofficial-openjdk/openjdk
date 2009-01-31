@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,25 +22,24 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.codemodel.internal;
 
 /**
  * Indicates that the class is already created.
- *
+ * 
  * @author
- *      Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
+ * 	Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 public class JClassAlreadyExistsException extends Exception {
     private final JDefinedClass existing;
-
+    
     public JClassAlreadyExistsException( JDefinedClass _existing ) {
         this.existing = _existing;
     }
-
+    
     /**
      * Gets a reference to the existing {@link JDefinedClass}.
-     *
+     * 
      * @return
      *      This method always return non-null valid object.
      */

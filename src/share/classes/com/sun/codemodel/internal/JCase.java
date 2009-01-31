@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.codemodel.internal;
 
 /**
@@ -31,7 +30,7 @@ package com.sun.codemodel.internal;
 public final class JCase implements JStatement {
 
     /**
-     * label part of the case statement
+     * label part of the case statement 
      */
     private JExpression label;
 
@@ -44,7 +43,7 @@ public final class JCase implements JStatement {
      * is this a regular case statement or a default case statement?
      */
     private boolean isDefaultCase = false;
-
+    
     /**
      * Construct a case statement
      */
@@ -60,7 +59,7 @@ public final class JCase implements JStatement {
         this.label = label;
         this.isDefaultCase = isDefaultCase;
     }
-
+    
     public JExpression label() {
         return label;
     }
@@ -77,7 +76,7 @@ public final class JCase implements JStatement {
         } else {
             f.p("default:").nl();
         }
-        if (body != null)
+    	if (body != null)
             f.s(body);
         f.o();
     }

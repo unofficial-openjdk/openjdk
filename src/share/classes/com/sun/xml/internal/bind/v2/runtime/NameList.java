@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.bind.v2.runtime;
 
 /**
@@ -50,19 +49,19 @@ public final class NameList {
     /**
      * Local names by their indices. No nulls in this array.
      * Read-only.
-     */
+     */ 
     public final String[] localNames;
 
     /**
      * Number of Names for elements
      */
     public final int numberOfElementNames;
-
+    
     /**
      * Number of Names for attributes
      */
     public final int numberOfAttributeNames;
-
+    
     public NameList(String[] namespaceURIs, boolean[] nsUriCannotBeDefaulted, String[] localNames, int numberElementNames, int numberAttributeNames) {
         this.namespaceURIs = namespaceURIs;
         this.nsUriCannotBeDefaulted = nsUriCannotBeDefaulted;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,11 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.xsom;
 
 /**
  * Constants that represent variety of simple types.
- *
+ * 
  * @author
  *     Kohsuke Kawaguchi (kohsuke,kawaguchi@sun.com)
  */
@@ -35,8 +34,9 @@ public final class XSVariety {
     public static final XSVariety ATOMIC = new XSVariety("atomic");
     public static final XSVariety UNION  = new XSVariety("union");
     public static final XSVariety LIST   = new XSVariety("list");
-
+    
     private XSVariety(String _name) { this.name=_name; }
     private final String name;
     public String toString() { return name; }
 }
+

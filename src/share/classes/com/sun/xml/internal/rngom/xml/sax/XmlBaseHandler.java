@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.xml.internal.rngom.xml.sax;
 
 import com.sun.xml.internal.rngom.util.Uri;
@@ -73,7 +72,7 @@ public class XmlBaseHandler {
 
   private static String getBaseUri1(String baseUri, Entry stack) {
     if (stack == null
-        || (baseUri != null && !baseUri.equals(stack.systemId)))
+	|| (baseUri != null && !baseUri.equals(stack.systemId)))
       return baseUri;
     baseUri = stack.attValue;
     if (Uri.isAbsolute(baseUri))

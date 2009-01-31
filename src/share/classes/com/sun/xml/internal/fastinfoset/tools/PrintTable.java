@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,34 +24,7 @@
  *
  * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
  */
-
-/*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
- * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
- *
- * This code is free software; you can redistribute it and/or modify it
- * under the terms of the GNU General Public License version 2 only, as
- * published by the Free Software Foundation.  Sun designates this
- * particular file as subject to the "Classpath" exception as provided
- * by Sun in the LICENSE file that accompanied this code.
- *
- * This code is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
- * version 2 for more details (a copy is included in the LICENSE file that
- * accompanied this code).
- *
- * You should have received a copy of the GNU General Public License version
- * 2 along with this work; if not, write to the Free Software Foundation,
- * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
- *
- * Please contact Sun Microsystems, Inc., 4150 Network Circle, Santa Clara,
- * CA 95054 USA or visit www.sun.com if you need additional information or
- * have any questions.
- *
- * THIS FILE WAS MODIFIED BY SUN MICROSYSTEMS, INC.
- *
- */
+ 
 
 
 package com.sun.xml.internal.fastinfoset.tools;
@@ -72,11 +45,11 @@ import com.sun.xml.internal.fastinfoset.vocab.ParserVocabulary;
 
 
 public class PrintTable {
-
+    
     /** Creates a new instance of PrintTable */
     public PrintTable() {
     }
-
+    
     public static void printVocabulary(ParserVocabulary vocabulary) {
         printArray("Attribute Name Table", vocabulary.attributeName);
         printArray("Attribute Value Table", vocabulary.attributeValue);
@@ -89,13 +62,13 @@ public class PrintTable {
         printArray("Other URI Table", vocabulary.otherURI);
         printArray("Prefix Table", vocabulary.prefix);
     }
-
+    
     public static void printArray(String title, StringArray a) {
         System.out.println(title);
 
         for (int i = 0; i < a.getSize(); i++) {
             System.out.println("" + (i + 1) + ": " + a.getArray()[i]);
-        }
+        }        
     }
 
     public static void printArray(String title, PrefixArray a) {
@@ -103,15 +76,15 @@ public class PrintTable {
 
         for (int i = 0; i < a.getSize(); i++) {
             System.out.println("" + (i + 1) + ": " + a.getArray()[i]);
-        }
+        }        
     }
-
+    
     public static void printArray(String title, CharArrayArray a) {
         System.out.println(title);
 
         for (int i = 0; i < a.getSize(); i++) {
             System.out.println("" + (i + 1) + ": " + a.getArray()[i]);
-        }
+        }        
     }
 
     public static void printArray(String title, ContiguousCharArrayArray a) {
@@ -119,7 +92,7 @@ public class PrintTable {
 
         for (int i = 0; i < a.getSize(); i++) {
             System.out.println("" + (i + 1) + ": " + a.getString(i));
-        }
+        }        
     }
 
     public static void printArray(String title, QualifiedNameArray a) {
@@ -127,12 +100,12 @@ public class PrintTable {
 
         for (int i = 0; i < a.getSize(); i++) {
             QualifiedName name = a.getArray()[i];
-            System.out.println("" + (name.index + 1) + ": " +
-                    "{" + name.namespaceName + "}" +
+            System.out.println("" + (name.index + 1) + ": " + 
+                    "{" + name.namespaceName + "}" + 
                     name.prefix + ":" + name.localName);
-        }
+        }        
     }
-
+    
     /**
      * @param args the command line arguments
      */
@@ -144,11 +117,11 @@ public class PrintTable {
             SAXParser saxParser = saxParserFactory.newSAXParser();
 
             ParserVocabulary referencedVocabulary = new ParserVocabulary();
-
+        
             VocabularyGenerator vocabularyGenerator = new VocabularyGenerator(referencedVocabulary);
             File f = new File(args[0]);
             saxParser.parse(f, vocabularyGenerator);
-
+                        
             printVocabulary(referencedVocabulary);
         } catch (Exception e) {
             e.printStackTrace();

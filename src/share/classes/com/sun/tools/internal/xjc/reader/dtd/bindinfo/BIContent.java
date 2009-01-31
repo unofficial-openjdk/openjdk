@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.tools.internal.xjc.reader.dtd.bindinfo;
 
 import java.util.ArrayList;
@@ -35,13 +34,13 @@ import org.w3c.dom.Element;
 
 /**
  * Particles in the &lt;content> declaration in the binding file.
- *
+ * 
  */
 public class BIContent
 {
     /**
      * Wraps a given particle.
-     *
+     * 
      * <p>
      * This object should be created through
      * the {@link #create(Element, BIElement)} method.
@@ -51,57 +50,57 @@ public class BIContent
         this.parent = _parent;
         this.opts = parent.parent.model.options;
     }
-
+    
     /** The particle element which this object is wrapping. */
     protected final Element element;
-
+    
     /** The parent object.*/
     protected final BIElement parent;
 
     private final Options opts;
-
+    
     /**
      * Gets the realization of this particle, if any.
-     *
+     * 
      * @return
      *      null if the "collection" attribute was not specified.
      */
     public final FieldRenderer getRealization() {
         String v = DOMUtil.getAttribute(element,"collection");
         if(v==null)     return null;
-
+        
         v = v.trim();
         if(v.equals("array"))   return opts.getFieldRendererFactory().getArray();
         if(v.equals("list"))
             return opts.getFieldRendererFactory().getList(
                 parent.parent.codeModel.ref(ArrayList.class));
-
-        // the correctness of the attribute value must be
+        
+        // the correctness of the attribute value must be 
         // checked by the validator.
         throw new InternalError("unexpected collection value: "+v);
     }
-
+    
     /**
      * Gets the property name of this particle.
-     *
+     * 
      * @return
      *      always a non-null, valid string.
      */
     public final String getPropertyName() {
         String r = DOMUtil.getAttribute(element,"property");
-
+        
         // in case of <element-ref>, @property is optional and
         // defaults to @name.
         // in all other cases, @property is mandatory.
         if(r!=null)     return r;
         return DOMUtil.getAttribute(element,"name");
     }
-
+    
     /**
      * Gets the type of this property, if any.
      * <p>
      * &lt;element-ref> particle doesn't have the type.
-     *
+     * 
      * @return
      *      null if none is specified.
      */
@@ -109,7 +108,7 @@ public class BIContent
         try {
             String type = DOMUtil.getAttribute(element,"supertype");
             if(type==null)     return null;
-
+            
             // TODO: does this attribute defaults to the current package?
             int idx = type.lastIndexOf('.');
             if(idx<0)   return parent.parent.codeModel.ref(type);
@@ -120,10 +119,10 @@ public class BIContent
         }
     }
 
-
-
-
-
+    
+    
+    
+    
     /**
      * Creates an appropriate subclass of BIContent
      * by sniffing the tag name.
@@ -133,6 +132,6 @@ public class BIContent
     static BIContent create( Element e, BIElement _parent ) {
         return new BIContent(e,_parent);
     }
-
-
+    
+    
 }

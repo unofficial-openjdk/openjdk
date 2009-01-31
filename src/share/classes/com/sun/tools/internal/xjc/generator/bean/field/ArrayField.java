@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  * CA 95054 USA or visit www.sun.com if you need additional information or
  * have any questions.
  */
-
 package com.sun.tools.internal.xjc.generator.bean.field;
 
 import java.util.ArrayList;
@@ -45,7 +44,7 @@ import com.sun.tools.internal.xjc.model.CPropertyInfo;
 /**
  * Realizes a property as an "indexed property"
  * as specified in the JAXB spec.
- *
+ * 
  * <p>
  * We will generate the following set of methods:
  * <pre>
@@ -54,21 +53,21 @@ import com.sun.tools.internal.xjc.model.CPropertyInfo;
  * void setX(T[] values);
  * void setX( int idx, T value );
  * </pre>
- *
+ * 
  * We still use List as our back storage.
  * This renderer also handles boxing/unboxing if
  * T is a boxed type.
- *
+ * 
  * @author
  *     Kohsuke Kawaguchi (kohsuke.kawaguchi@sun.com)
  */
 final class ArrayField extends AbstractListField {
-
+    
     class Accessor extends AbstractListField.Accessor {
         protected Accessor( JExpression $target ) {
             super($target);
         }
-
+        
         public void toRawValue(JBlock block, JVar $var) {
             block.assign($var,codeModel.ref(Arrays.class).staticInvoke("asList").arg($target.invoke($getAll)));
         }
@@ -77,24 +76,24 @@ final class ArrayField extends AbstractListField {
             block.invoke($target,$setAll).arg($var.invoke("toArray").arg(JExpr.newArray(exposedType,$var.invoke("size"))));
         }
     }
-
+    
     private JMethod $setAll;
-
+    
     private JMethod $getAll;
-
+    
     ArrayField(ClassOutlineImpl context, CPropertyInfo prop) {
         super(context,prop,false);
         generate();
     }
-
+    
     public void generateAccessors() {
-
+        
         MethodWriter writer = outline.createMethodWriter();
         Accessor acc = create(JExpr._this());
-
+        
         JVar $idx,$value; JBlock body;
         JType arrayType = exposedType.array();
-
+        
         // [RESULT] T[] getX() {
         //     if( <var>==null )    return new T[0];
         //     return (T[]) <var>.toArray(new T[<var>.size()]);
@@ -127,7 +126,7 @@ final class ArrayField extends AbstractListField {
 
         List<Object> returnTypes = listPossibleTypes(prop);
         writer.javadoc().addReturn().append("array of\n").append(returnTypes);
-
+                        
         // [RESULT]
         // ET getX(int idx) {
         //     if( <var>==null )    throw new IndexOutOfBoundsException();
@@ -144,7 +143,7 @@ final class ArrayField extends AbstractListField {
 
         writer.javadoc().addReturn().append("one of\n").append(returnTypes);
 
-
+                        
         // [RESULT] int getXLength() {
         //     if( <var>==null )    throw new IndexOutOfBoundsException();
         //     return <ref>.size();
@@ -153,8 +152,8 @@ final class ArrayField extends AbstractListField {
         $getLength.body()._if(acc.ref(true).eq(JExpr._null()))._then()
                 ._return(JExpr.lit(0));
         $getLength.body()._return(acc.ref(true).invoke("size"));
-
-
+        
+                        
         // [RESULT] void setX(ET[] values) {
         //     clear();
         //     int len = values.length;
@@ -164,9 +163,9 @@ final class ArrayField extends AbstractListField {
         $setAll = writer.declareMethod(
             codeModel.VOID,
             "set"+prop.getName(true));
-
+        
         writer.javadoc().append(prop.javadoc);
-
+        
         $value = writer.addParameter(exposedType.array(),"values");
         $setAll.body().invoke(acc.ref(false),"clear");
         JVar $len = $setAll.body().decl(codeModel.INT,"len", $value.ref("length"));
@@ -179,7 +178,7 @@ final class ArrayField extends AbstractListField {
         writer.javadoc().addParam($value)
             .append("allowed objects are\n")
             .append(returnTypes);
-
+                        
         // [RESULT] ET setX(int,ET)
         JMethod $set = writer.declareMethod(
             exposedType,
@@ -188,7 +187,7 @@ final class ArrayField extends AbstractListField {
         $value = writer.addParameter( exposedType, "value" );
 
         writer.javadoc().append(prop.javadoc);
-
+                        
         body = $set.body();
         body._return( acc.unbox(
             acc.ref(true).invoke("set").arg($idx).arg(castToImplType(acc.box($value)))));
@@ -197,11 +196,11 @@ final class ArrayField extends AbstractListField {
             .append("allowed object is\n")
             .append(returnTypes);
     }
-
+    
     protected JClass getCoreListType() {
         return codeModel.ref(ArrayList.class).narrow(exposedType.boxify());
     }
-
+    
     public Accessor create(JExpression targetObject) {
         return new Accessor(targetObject);
     }
