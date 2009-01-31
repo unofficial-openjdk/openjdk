@@ -216,7 +216,6 @@ public class SoftJitterCorrector extends AudioInputStream {
             };
 
             thread = new Thread(runnable);
-            thread.setDaemon(true);
             thread.setPriority(Thread.MAX_PRIORITY);
             thread.start();
         }
