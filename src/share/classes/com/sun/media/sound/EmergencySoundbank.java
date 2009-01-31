@@ -678,7 +678,7 @@ public class EmergencySoundbank {
         SF2LayerRegion region = new SF2LayerRegion();
         region.putInteger(SF2Region.GENERATOR_RELEASEVOLENV, 12000);
         //region.putInteger(SF2Region.GENERATOR_SCALETUNING, 0);
-//		region.putInteger(SF2Region.GENERATOR_INITIALATTENUATION, -100);
+//              region.putInteger(SF2Region.GENERATOR_INITIALATTENUATION, -100);
 /*
         region.putInteger(SF2Region.GENERATOR_ATTACKMODENV, 0);
         region.putInteger(SF2Region.GENERATOR_SUSTAINMODENV, 1000);

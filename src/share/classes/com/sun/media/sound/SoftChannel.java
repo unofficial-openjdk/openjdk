@@ -272,9 +272,9 @@ public class SoftChannel implements MidiChannel, ModelDirectedPlayer {
         } else {
             // Default Voice Allocation
             //  * Find voice that is on
-            //  	and Find voice which has lowest voiceID ( oldest voice)
+            //          and Find voice which has lowest voiceID ( oldest voice)
             //  * Or find voice that is off
-            //  	and Find voice which has lowest voiceID ( oldest voice)
+            //          and Find voice which has lowest voiceID ( oldest voice)
 
             int voiceNo = -1;
 

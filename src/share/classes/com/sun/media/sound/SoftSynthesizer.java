@@ -185,7 +185,7 @@ public class SoftSynthesizer implements AudioSynthesizer,
         return true;
     }
 
-    private void processPropertyInfo(Map<String, Object> info)	{
+    private void processPropertyInfo(Map<String, Object> info)  {
         AudioSynthesizerPropertyInfo[] items = getPropertyInfo(info);
 
         String resamplerType = (String)items[0].value;

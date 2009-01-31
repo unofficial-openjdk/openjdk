@@ -96,7 +96,7 @@ public class SoftTuning {
                 {
                     // http://www.midi.org/about-midi/tuning.shtml
                     //if (!checksumOK2(data))
-                    //	break;
+                    //  break;
                     try {
                         name = new String(data, 6, 16, "ascii");
                     } catch (UnsupportedEncodingException e) {

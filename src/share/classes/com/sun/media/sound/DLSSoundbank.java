@@ -790,7 +790,7 @@ public class DLSSoundbank implements Soundbank {
                                 chunk.getFilePointer(), chunk.available()));
                     } else {
                         byte[] buffer = new byte[chunk.available()];
-                        //	chunk.read(buffer);
+                        //      chunk.read(buffer);
                         sample.setData(buffer);
 
                         int read = 0;
