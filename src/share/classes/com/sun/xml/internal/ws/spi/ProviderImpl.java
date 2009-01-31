@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2006 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 2005-2008 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,6 +56,8 @@ import javax.xml.ws.spi.Provider;
 import javax.xml.ws.spi.ServiceDelegate;
 import javax.xml.ws.wsaddressing.W3CEndpointReference;
 import java.net.URL;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.List;
 
 /**
@@ -94,14 +96,20 @@ public class ProviderImpl extends Provider {
         return endpoint;
     }
 
-    public EndpointReference readEndpointReference(Source eprInfoset) {
-        Unmarshaller unmarshaller;
-        try {
-            unmarshaller = eprjc.createUnmarshaller();
-            return (EndpointReference) unmarshaller.unmarshal(eprInfoset);
-        } catch (JAXBException e) {
-            throw new WebServiceException("Error creating Marshaller or marshalling.", e);
-        }
+    public EndpointReference readEndpointReference(final Source eprInfoset) {
+        // EPR constructors are private, so we need privilege escalation.
+        // this unmarshalling can only access instances of a fixed, known set of classes,
+        // so doing that shouldn't introduce security vulnerability.
+        return AccessController.doPrivileged(new PrivilegedAction<EndpointReference>() {
+            public EndpointReference run() {
+                try {
+                    Unmarshaller unmarshaller = eprjc.createUnmarshaller();
+                    return (EndpointReference) unmarshaller.unmarshal(eprInfoset);
+                } catch (JAXBException e) {
+                    throw new WebServiceException("Error creating Marshaller or marshalling.", e);
+                }
+            }
+        });
     }
 
     public <T> T getPort(EndpointReference endpointReference, Class<T> clazz, WebServiceFeature... webServiceFeatures) {
@@ -185,10 +193,17 @@ public class ProviderImpl extends Provider {
     }
 
     private static JAXBContext getEPRJaxbContext() {
-        try {
-            return JAXBContext.newInstance(MemberSubmissionEndpointReference.class, W3CEndpointReference.class);
-        } catch (JAXBException e) {
-            throw new WebServiceException("Error creating JAXBContext for W3CEndpointReference. ", e);
-        }
+        // EPRs have package and private fields, so we need privilege escalation.
+        // this access only fixed, known set of classes, so doing that
+        // shouldn't introduce security vulnerability.
+        return AccessController.doPrivileged(new PrivilegedAction<JAXBContext>() {
+            public JAXBContext run() {
+                try {
+                    return JAXBContext.newInstance(MemberSubmissionEndpointReference.class, W3CEndpointReference.class);
+                } catch (JAXBException e) {
+                    throw new WebServiceException("Error creating JAXBContext for W3CEndpointReference. ", e);
+                }
+            }
+        });
     }
 }
