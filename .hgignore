@@ -167,4 +167,5 @@
 ^build/linux/jdk-linux-x64/
 ^build/linux/export-linux-x64/
 ^dist/
+^webrev/
 ^nbproject/private/
