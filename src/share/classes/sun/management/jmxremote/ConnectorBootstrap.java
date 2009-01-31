@@ -94,6 +94,7 @@ public final class ConnectorBootstrap {
     public static interface DefaultValues {
         public static final String PORT="0";
         public static final String CONFIG_FILE_NAME="management.properties";
+        public static final String USE_LOCAL_ONLY="true";
         public static final String USE_SSL="true";
         public static final String USE_REGISTRY_SSL="false";
         public static final String USE_AUTHENTICATION="true";
@@ -110,6 +111,8 @@ public final class ConnectorBootstrap {
                 "com.sun.management.jmxremote.port";
         public static final String CONFIG_FILE_NAME =
                 "com.sun.management.config.file";
+        public static final String USE_LOCAL_ONLY =
+                "com.sun.management.jmxremote.local.only";
         public static final String USE_SSL =
                 "com.sun.management.jmxremote.ssl";
         public static final String USE_REGISTRY_SSL =
@@ -254,7 +257,6 @@ public final class ConnectorBootstrap {
         if (props == null) return null;
 
         final String portStr = props.getProperty(PropertyNames.PORT);
-
 
         // System.out.println("initializing: {port=" + portStr + ",
         //                     properties="+props+"}");
@@ -442,6 +444,18 @@ public final class ConnectorBootstrap {
         MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
         try {
             JMXServiceURL url = new JMXServiceURL("rmi", localhost, 0);
+            // Do we accept connections from local interfaces only?
+            Properties props = Agent.getManagementProperties();
+            if (props ==  null) {
+                props = new Properties();
+            }
+            String useLocalOnlyStr = props.getProperty(
+                    PropertyNames.USE_LOCAL_ONLY, DefaultValues.USE_LOCAL_ONLY);
+            boolean useLocalOnly = Boolean.valueOf(useLocalOnlyStr).booleanValue();
+            if (useLocalOnly) {
+                env.put(RMIConnectorServer.RMI_SERVER_SOCKET_FACTORY_ATTRIBUTE,
+                        new LocalRMIServerSocketFactory());
+            }
             JMXConnectorServer server =
                     JMXConnectorServerFactory.newJMXConnectorServer(url, env, mbs);
             server.start();
@@ -489,12 +503,11 @@ public final class ConnectorBootstrap {
         if (!file.exists()) {
             throw new AgentConfigurationError(ACCESS_FILE_NOT_FOUND, accessFileName);
         }
-
         if (!file.canRead()) {
             throw new AgentConfigurationError(ACCESS_FILE_NOT_READABLE, accessFileName);
         }
     }
-
+    
     private static void checkRestrictedFile(String restrictedFileName) {
         if (restrictedFileName == null || restrictedFileName.length() == 0) {
             throw new AgentConfigurationError(FILE_NOT_SET);
@@ -726,5 +739,4 @@ public final class ConnectorBootstrap {
     private static final ClassLogger log =
         new ClassLogger(ConnectorBootstrap.class.getPackage().getName(),
                         "ConnectorBootstrap");
-
 }

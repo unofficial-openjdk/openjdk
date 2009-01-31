@@ -137,16 +137,6 @@ COPYRIGHT HOLDERS WILL NOT BE LIABLE FOR ANY DIRECT, INDIRECT, SPECIAL OR CONSEQ
 The name and trademarks of copyright holders may NOT be used in advertising or publicity pertaining to the software without specific, written prior permission. Title to copyright in this software and any associated documentation will at all times remain with copyright holders.
 ____________________________________
 This formulation of W3C's notice and license became active on August 14 1998 so as to improve compatibility with GPL. This version ensures that W3C software licensing terms are no more restrictive than GPL and consequently W3C software may be distributed in GPL packages. See the older formulation for the policy prior to this date. Please see our Copyright FAQ for common questions about using materials from our site, including specific terms and conditions for packages like libwww, Amaya, and Jigsaw. Other questions about this notice can be directed to site-policy@w3.org.
- 
-%% This notice is provided with respect to jscheme.jar, which may be included with this software: 
-Software License Agreement
-Copyright © 1998-2002 by Peter Norvig. 
-Permission is granted to anyone to use this software, in source or object code form, on any computer system, and to modify, compile, decompile, run, and redistribute it to anyone else, subject to the following restrictions: 
-1.The author makes no warranty of any kind, either expressed or implied, about the suitability of this software for any purpose.
-2.The author accepts no liability of any kind for damages or other consequences of the use of this software, even if they arise from defects in the software.
-3.The origin of this software must not be misrepresented, either by explicit claim or by omission.
-4.Altered versions must be plainly marked as such, and must not be misrepresented as being the original software. Altered versions may be distributed in packages under other licenses (such as the GNU license). 
-If you find this software useful, it would be nice if you let me (peter@norvig.com) know about it, and nicer still if you send me modifications that you are willing to share. However, you are not required to do so.
 
 
 %% This notice is provided with respect to PC/SC Lite for Suse Linux v. 1.1.1, which may be included with this software: 

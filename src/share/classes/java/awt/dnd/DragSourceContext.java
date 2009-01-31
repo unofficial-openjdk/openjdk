@@ -466,8 +466,9 @@ public class DragSourceContext
 
         Cursor c = null;
 
-        targetAct = DnDConstants.ACTION_NONE;
         switch (status) {
+            default:
+                targetAct = DnDConstants.ACTION_NONE;
             case ENTER:
             case OVER:
             case CHANGED:
