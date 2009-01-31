@@ -1420,7 +1420,7 @@ class MetaData {
         registerConstructor("javax.swing.plaf.BorderUIResource$EmptyBorderUIResource", new String[]{"borderInsets"});
         registerConstructor("javax.swing.border.EtchedBorder", new String[]{"etchType", "highlightColor", "shadowColor"});
         registerConstructor("javax.swing.plaf.BorderUIResource$EtchedBorderUIResource", new String[]{"etchType", "highlightColor", "shadowColor"});
-        registerConstructor("javax.swing.border.LineBorder", new String[]{"lineColor", "thickness"});
+        registerConstructor("javax.swing.border.LineBorder", new String[]{"lineColor", "thickness", "roundedCorners"});
         registerConstructor("javax.swing.plaf.BorderUIResource$LineBorderUIResource", new String[]{"lineColor", "thickness"});
         registerConstructor("javax.swing.border.SoftBevelBorder", new String[]{"bevelType", "highlightOuterColor", "highlightInnerColor", "shadowOuterColor", "shadowInnerColor"});
         // registerConstructorWithBadEqual("javax.swing.plaf.BorderUIResource$SoftBevelBorderUIResource", new String[]{"bevelType", "highlightOuter", "highlightInner", "shadowOuter", "shadowInner"});

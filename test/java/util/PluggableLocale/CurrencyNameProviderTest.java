@@ -21,7 +21,6 @@
  * have any questions.
  */
 /*
- *
  */
 
 import java.text.*;
@@ -48,7 +47,7 @@ public class CurrencyNameProviderTest extends ProviderTest {
 
         for (Locale target: availloc) {
             // pure JRE implementation
-            OpenListResourceBundle rb = (OpenListResourceBundle)LocaleData.getCurrencyNames(target);
+            ResourceBundle rb = LocaleData.getCurrencyNames(target);
             boolean jreHasBundle = rb.getLocale().equals(target);
 
             for (Locale test: testloc) {
@@ -65,38 +64,23 @@ public class CurrencyNameProviderTest extends ProviderTest {
                 // the localized symbol for the target locale
                 String currencyresult = c.getSymbol(target);
 
-                // the localized name for the target locale
-                String nameresult = c.getDisplayName(target);
-
                 // provider's name (if any)
                 String providerscurrency = null;
-                String providersname = null;
                 if (providerloc.contains(target)) {
                     providerscurrency = cnp.getSymbol(c.getCurrencyCode(), target);
-                    providersname = cnp.getDisplayName(c.getCurrencyCode(), target);
                 }
 
                 // JRE's name (if any)
                 String jrescurrency = null;
-                String jresname = null;
-                String key = c.getCurrencyCode();
-                String nameKey = key.toLowerCase(Locale.ROOT);
                 if (jreHasBundle) {
                     try {
-                        jrescurrency = rb.getString(key);
+                        jrescurrency = rb.getString(c.getCurrencyCode());
                     } catch (MissingResourceException mre) {
                         // JRE does not have any resource, "jrescurrency" should remain null
-                    }
-                    try {
-                        jresname = rb.getString(nameKey);
-                    } catch (MissingResourceException mre) {
-                        // JRE does not have any resource, "jresname" should remain null
                     }
                 }
 
                 checkValidity(target, jrescurrency, providerscurrency, currencyresult, jrescurrency!=null);
-                checkValidity(target, jresname, providersname, nameresult,
-                              jreHasBundle && rb.handleGetKeys().contains(nameKey));
             }
         }
     }
