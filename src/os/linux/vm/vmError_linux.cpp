@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)vmError_linux.cpp	1.13 07/05/05 17:04:37 JVM"
+#pragma ident "@(#)vmError_linux.cpp	1.14 08/06/17 09:14:15 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -49,11 +49,7 @@ extern char** environ;
 // Unlike system(), this function can be called from signal handler. It
 // doesn't block SIGINT et al.
 int VMError::fork_and_exec(char* cmd) {
-  char * argv[4];
-  argv[0] = "sh";
-  argv[1] = "-c";
-  argv[2] = cmd;
-  argv[3] = NULL;
+  const char * argv[4] = {"sh", "-c", cmd, NULL};
 
   // fork() in LinuxThreads/NPTL is not async-safe. It needs to run 
   // pthread_atfork handlers and reset pthread library. All we need is a 
@@ -78,7 +74,7 @@ int VMError::fork_and_exec(char* cmd) {
     // IA64 should use normal execve() from glibc to match the glibc fork() 
     // above.
     NOT_IA64(syscall(__NR_execve, "/bin/sh", argv, environ);)
-    IA64_ONLY(execve("/bin/sh", argv, environ);)
+    IA64_ONLY(execve("/bin/sh", (char* const*)argv, environ);)
 
     // execve failed
     _exit(-1);

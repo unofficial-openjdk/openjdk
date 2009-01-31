@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)methodOop.cpp	1.312 07/06/08 15:21:45 JVM"
+#pragma ident "@(#)methodOop.cpp	1.313 08/06/19 12:45:47 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -765,6 +765,28 @@ bool methodOopDesc::is_overridden_in(klassOop k) const {
     methodOop vt_m = ik->method_at_vtable(vtable_index());
     return vt_m != methodOop(this);
   }
+}
+
+
+// give advice about whether this methodOop should be cached or not
+bool methodOopDesc::should_not_be_cached() const {
+  if (is_old()) {
+    // This method has been redefined. It is either EMCP or obsolete
+    // and we don't want to cache it because that would pin the method
+    // down and prevent it from being collectible if and when it
+    // finishes executing.
+    return true;
+  }
+
+  if (mark()->should_not_be_cached()) {
+    // It is either not safe or not a good idea to cache this
+    // method at this time because of the state of the embedded
+    // markOop. See markOop.cpp for the gory details.
+    return true;
+  }
+
+  // caching this method should be just fine
+  return false;
 }
 
 

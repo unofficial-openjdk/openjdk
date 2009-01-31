@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)loopopts.cpp	1.220 07/06/29 13:39:54 JVM"
+#pragma ident "@(#)loopopts.cpp	1.221 08/06/19 12:08:11 JVM"
 #endif
 /*
  * Copyright 1999-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -32,6 +32,11 @@
 //------------------------------split_thru_phi---------------------------------
 // Split Node 'n' through merge point if there is enough win.
 Node *PhaseIdealLoop::split_thru_phi( Node *n, Node *region, int policy ) {
+  if (n->Opcode() == Op_ConvI2L && n->bottom_type() != TypeLong::LONG) {
+    // ConvI2L may have type information on it which is unsafe to push up
+    // so disable this for now
+    return NULL;
+  }
   int wins = 0;
   assert( !n->is_CFG(), "" );
   assert( region->is_Region(), "" );

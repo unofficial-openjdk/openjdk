@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)vmError_solaris.cpp	1.12 07/05/05 17:04:43 JVM"
+#pragma ident "@(#)vmError_solaris.cpp	1.13 08/06/17 09:14:34 JVM"
 #endif
 /*
  * Copyright 2003-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -39,11 +39,7 @@ extern char** environ;
 // Unlike system(), this function can be called from signal handler. It
 // doesn't block SIGINT et al.
 int VMError::fork_and_exec(char* cmd) {
-  char * argv[4];
-  argv[0] = (char *)"sh";
-  argv[1] = (char *)"-c";
-  argv[2] = cmd;
-  argv[3] = NULL;
+  const char * argv[4] = {"sh", "-c", cmd, NULL};
 
   // fork is async-safe, fork1 is not so can't use in signal handler
   pid_t pid;
@@ -63,7 +59,7 @@ int VMError::fork_and_exec(char* cmd) {
     // child process
 
     // try to be consistent with system(), which uses "/usr/bin/sh" on Solaris
-    execve("/usr/bin/sh", argv, environ);
+    execve("/usr/bin/sh", (char* const*)argv, environ);
 
     // execve failed
     _exit(-1);

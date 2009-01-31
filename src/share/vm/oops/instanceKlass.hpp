@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)instanceKlass.hpp	1.199 07/05/29 09:44:20 JVM"
+#pragma ident "@(#)instanceKlass.hpp	1.200 08/06/19 10:32:39 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -818,11 +818,20 @@ class BreakpointInfo;
 // A collection point for interesting information about the previous
 // version(s) of an instanceKlass. This class uses weak references to
 // the information so that the information may be collected as needed
-// by the system. A GrowableArray of PreviousVersionNodes is attached
+// by the system. If the information is shared, then a regular
+// reference must be used because a weak reference would be seen as
+// collectible. A GrowableArray of PreviousVersionNodes is attached
 // to the instanceKlass as needed. See PreviousVersionWalker below.
 class PreviousVersionNode : public CHeapObj {
  private:
-  jweak _prev_constant_pool;
+  // A shared ConstantPool is never collected so we'll always have
+  // a reference to it so we can update items in the cache. We'll
+  // have a weak reference to a non-shared ConstantPool until all
+  // of the methods (EMCP or obsolete) have been collected; the
+  // non-shared ConstantPool becomes collectible at that point.
+  jobject _prev_constant_pool;  // regular or weak reference
+  bool    _prev_cp_is_weak;     // true if not a shared ConstantPool
+
   // If the previous version of the instanceKlass doesn't have any
   // EMCP methods, then _prev_EMCP_methods will be NULL. If all the
   // EMCP methods have been collected, then _prev_EMCP_methods can
@@ -830,10 +839,10 @@ class PreviousVersionNode : public CHeapObj {
   GrowableArray<jweak>* _prev_EMCP_methods;
 
 public:
-  PreviousVersionNode(jweak prev_constant_pool,
+  PreviousVersionNode(jobject prev_constant_pool, bool prev_cp_is_weak,
     GrowableArray<jweak>* prev_EMCP_methods);
   ~PreviousVersionNode();
-  jweak prev_constant_pool() const {
+  jobject prev_constant_pool() const {
     return _prev_constant_pool;
   }
   GrowableArray<jweak>* prev_EMCP_methods() const {

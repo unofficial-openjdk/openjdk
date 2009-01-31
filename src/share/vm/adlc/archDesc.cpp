@@ -22,10 +22,6 @@
 //  
 //
 
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)archDesc.cpp	1.273 07/05/05 17:05:01 JVM"
-#endif
-
 // archDesc.cpp - Internal format for architecture definition
 #include "adlc.hpp"
 
@@ -1029,17 +1025,11 @@ void ArchDesc::initBaseOpTypes() {
 
 //---------------------------addSUNcopyright-------------------------------
 // output SUN copyright info
-void ArchDesc::addSunCopyright(FILE *fp) {
+void ArchDesc::addSunCopyright(char* legal, int size, FILE *fp) {
+  fwrite(legal, size, 1, fp);
+  fprintf(fp,"\n");
   fprintf(fp,"// Machine Generated File.  Do Not Edit!\n");
   fprintf(fp,"\n");
-  fprintf(fp,"// Copyright 1997-2006 Sun Microsystems, Inc.  All rights reserved.\n");
-  fprintf(fp,"// SUN PROPRIETARY/CONFIDENTIAL.  Use is subject to license terms.\n");
-  fprintf(fp,"// This software is the confidential and proprietary information of Sun\n");
-  fprintf(fp,"// Microsystems, Inc. (\"Confidential Information\").  You shall not\n");
-  fprintf(fp,"// disclose such Confidential Information and shall use it only in\n");
-  fprintf(fp,"// accordance with the terms of the license agreement you entered into\n");
-  fprintf(fp,"// with Sun.\n");
-  fprintf(fp,"//\n");
 }
 
 //---------------------------machineDependentIncludes--------------------------

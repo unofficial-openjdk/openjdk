@@ -299,7 +299,7 @@ JAVA_FLAG/64 = -d64
 WRONG_DATA_MODE_MSG = \
 	echo "JAVA_HOME must point to $(DATA_MODE)bit JDK."
 
-test_gamma:  $(BUILDTREE_MAKE)
+test_gamma:  $(BUILDTREE_MAKE) Queens.class
 	@echo Creating $@ ...
 	$(QUIETLY) ( \
 	echo '#!/bin/ksh'; \
@@ -310,11 +310,16 @@ test_gamma:  $(BUILDTREE_MAKE)
 	echo "then"; \
 	echo "  $(WRONG_DATA_MODE_MSG); exit 0;"; \
 	echo "fi"; \
-	echo 'CLASSPATH="$(GAMMADIR)/build/$(OS_FAMILY):$$CLASSPATH"'; \
 	echo '[ -f gamma_g ] && { gamma=gamma_g; }'; \
 	echo './$${gamma:-gamma} $(TESTFLAGS) Queens < /dev/null'; \
 	) > $@
 	$(QUIETLY) chmod +x $@
+
+include $(GAMMADIR)/build/solaris/makefiles/rules.make
+
+Queens.class: $(GAMMADIR)/build/test/Queens.java
+	$(RM) -f $@
+	$(REMOTE) $(COMPILE.JAVAC) -d . $<
 
 FORCE:
 

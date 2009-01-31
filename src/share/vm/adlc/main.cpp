@@ -1,6 +1,3 @@
-#ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)main.cpp	1.100 07/05/05 17:05:01 JVM"
-#endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -33,6 +30,7 @@ static void  usage(ArchDesc& AD);          // Print usage message and exit
 static char *strip_ext(char *fname);       // Strip off name extension
 static char *base_plus_suffix(const char* base, const char *suffix);// New concatenated string 
 static char *prefix_plus_base_plus_suffix(const char* prefix, const char* base, const char *suffix);// New concatenated string 
+static int get_legal_text(FileBuff &fbuf, char **legal_text); // Get pointer to legal text
 
 ArchDesc* globalAD = NULL;      // global reference to Architecture Description object
 
@@ -161,6 +159,11 @@ int main(int argc, char *argv[])
   // Build the File Buffer, Parse the input, & Generate Code
   FileBuff  ADL_Buf(&AD._ADL_file, AD); // Create a file buffer for input file
 
+  // Get pointer to legal text at the beginning of AD file.
+  // It will be used in generated ad files.
+  char* legal_text;
+  int legal_sz = get_legal_text(ADL_Buf, &legal_text);
+
   ADL_Parse = new ADLParser(ADL_Buf, AD); // Create a parser to parse the buffer
   ADL_Parse->parse();           // Parse buffer & build description lists
 
@@ -179,15 +182,17 @@ int main(int argc, char *argv[])
   AD.identify_cisc_spill_instructions();
   AD.identify_short_branches();
   // Make sure every file starts with a copyright:
-  AD.addSunCopyright(AD._HPP_file._fp);           // .hpp
-  AD.addSunCopyright(AD._CPP_file._fp);           // .cpp
-  AD.addSunCopyright(AD._CPP_CLONE_file._fp);     // .cpp
-  AD.addSunCopyright(AD._CPP_EXPAND_file._fp);    // .cpp
-  AD.addSunCopyright(AD._CPP_FORMAT_file._fp);    // .cpp
-  AD.addSunCopyright(AD._CPP_GEN_file._fp);       // .cpp
-  AD.addSunCopyright(AD._CPP_MISC_file._fp);      // .cpp
-  AD.addSunCopyright(AD._CPP_PEEPHOLE_file._fp);  // .cpp
-  AD.addSunCopyright(AD._CPP_PIPELINE_file._fp);  // .cpp
+  AD.addSunCopyright(legal_text, legal_sz, AD._HPP_file._fp);           // .hpp
+  AD.addSunCopyright(legal_text, legal_sz, AD._CPP_file._fp);           // .cpp
+  AD.addSunCopyright(legal_text, legal_sz, AD._CPP_CLONE_file._fp);     // .cpp
+  AD.addSunCopyright(legal_text, legal_sz, AD._CPP_EXPAND_file._fp);    // .cpp
+  AD.addSunCopyright(legal_text, legal_sz, AD._CPP_FORMAT_file._fp);    // .cpp
+  AD.addSunCopyright(legal_text, legal_sz, AD._CPP_GEN_file._fp);       // .cpp
+  AD.addSunCopyright(legal_text, legal_sz, AD._CPP_MISC_file._fp);      // .cpp
+  AD.addSunCopyright(legal_text, legal_sz, AD._CPP_PEEPHOLE_file._fp);  // .cpp
+  AD.addSunCopyright(legal_text, legal_sz, AD._CPP_PIPELINE_file._fp);  // .cpp
+  AD.addSunCopyright(legal_text, legal_sz, AD._VM_file._fp);            // .hpp
+  AD.addSunCopyright(legal_text, legal_sz, AD._DFA_file._fp);           // .cpp
   // Make sure each .cpp file starts with include lines:
   // files declaring and defining generators for Mach* Objects (hpp,cpp)
   AD.machineDependentIncludes(AD._CPP_file);      // .cpp
@@ -239,7 +244,6 @@ int main(int argc, char *argv[])
   AD.addPreprocessorChecks(AD._CPP_PIPELINE_file._fp);  // .cpp
 
   // define the finite automata that selects lowest cost production
-  AD.addSunCopyright(AD._DFA_file._fp);           // .cpp
   AD.machineDependentIncludes(AD._DFA_file);      // .cpp
   AD.buildDFA(AD._DFA_file._fp);
 
@@ -410,6 +414,24 @@ static char *prefix_plus_base_plus_suffix(const char* prefix, const char* base, 
   char* fname = new char[len];
   sprintf(fname,"%s%s%s",prefix,base,suffix);
   return fname;
+}
+
+//------------------------------get_legal_text---------------------------------
+// Get pointer to legal text at the beginning of AD file.
+// This code assumes that a legal text starts at the beginning of .ad files,
+// is commented by "//" at each line and ends with empty line.
+// 
+int get_legal_text(FileBuff &fbuf, char **legal_text)
+{
+  char* legal_start = fbuf.get_line();
+  assert(legal_start[0] == '/' && legal_start[1] == '/', "Incorrect header of AD file");
+  char* legal_end = fbuf.get_line();
+  assert(strncmp(legal_end, "// Copyright", 12) == 0, "Incorrect header of AD file");
+  while(legal_end[0] == '/' && legal_end[1] == '/') {
+    legal_end = fbuf.get_line();
+  }
+  *legal_text = legal_start;
+  return (legal_end - legal_start);
 }
 
 // VS2005 has its own definition, identical to this one.

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)parse3.cpp	1.267 07/11/21 11:31:54 JVM"
+#pragma ident "@(#)parse3.cpp	1.268 08/04/22 01:46:50 JVM"
 #endif
 /*
  * Copyright 1998-2006 Sun Microsystems, Inc.  All Rights Reserved.
@@ -398,7 +398,7 @@ void Parse::do_multianewarray() {
   // fill the lowest dimensions with unknown sizes
   for (int index = 0; index < mdimensions - ndimensions; index++) {
     const TypeAry* arr0 = TypeAry::make(prev_type, TypeInt::POS);
-    prev_type = TypeAryPtr::make(TypePtr::BotPTR, arr0, prev_array, true, 0);
+    prev_type = TypeAryPtr::make(TypePtr::BotPTR, arr0, prev_array, false, 0);
     prev_array = NULL; // array klasses can be lazy, except the first
   }
 

@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)jvm_linux.cpp	1.21 07/05/05 17:04:36 JVM"
+#pragma ident "@(#)jvm_linux.cpp	1.22 08/06/16 14:15:16 JVM"
 #endif
 /*
  * Copyright 1999-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -135,7 +135,7 @@ JVM_END
 */
 
 struct siglabel {
-  char *name;
+  const char *name;
   int   number;
 };
 

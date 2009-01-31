@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2007 Sun Microsystems, Inc.  All Rights Reserved.
+ * Copyright 1997-2002 Sun Microsystems, Inc.  All Rights Reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,40 @@
  *
  */
 
-#define VM_TYPES_PARNEW(declare_type)                                     \
-           declare_type(ParNewGeneration,             DefNewGeneration)
+/*
+ * @test
+ * @bug 6659207
+ * @summary access violation in CompilerThread0
+ */
 
-#define VM_INT_CONSTANTS_PARNEW(declare_constant)                         \
-  declare_constant(Generation::ParNew)
+public class Test {
+    static int[] array = new int[12];
+
+    static int index(int i) {
+        if (i == 0) return 0;
+        for (int n = 0; n < array.length; n++)
+            if (i < array[n]) return n;
+        return -1;
+    }
+
+    static int test(int i) {
+        int result = 0;
+        i = index(i);
+        if (i >= 0)
+            if (array[i] != 0)
+                result++;
+
+        if (i != -1)
+            array[i]++;
+
+        return result;
+    }
+
+    public static void main(String[] args) {
+        int total = 0;
+        for (int i = 0; i < 100000; i++) {
+            total += test(10);
+        }
+        System.out.println(total);
+    }
+}

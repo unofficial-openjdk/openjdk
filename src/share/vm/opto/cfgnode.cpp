@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_SRC
-#pragma ident "@(#)cfgnode.cpp	1.260 07/05/17 15:57:27 JVM"
+#pragma ident "@(#)cfgnode.cpp	1.261 08/06/22 00:57:20 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -1549,45 +1549,6 @@ Node *PhiNode::Ideal(PhaseGVN *phase, bool can_reshape) {
     // This optimization only modifies phi - don't need to check for dead loop.
     assert(opt == NULL || phase->eqv(opt, this), "do not elide phi");
     if (opt != NULL)  return opt;
-  }
-
-  if (in(1) != NULL && in(1)->Opcode() == Op_AddP && can_reshape) {
-    // Try to undo Phi of AddP:
-    //   (Phi (AddP base base y) (AddP base2 base2 y))
-    // becomes:
-    //   newbase := (Phi base base2)
-    //   (AddP newbase newbase y)
-    //
-    // This occurs as a result of unsuccessful split_thru_phi and
-    // interferes with taking advantage of addressing modes.  See the
-    // clone_shift_expressions code in matcher.cpp
-    Node* addp = in(1);
-    const Type* type = addp->in(AddPNode::Base)->bottom_type();
-    Node* y = addp->in(AddPNode::Offset);
-    if (y != NULL && addp->in(AddPNode::Base) == addp->in(AddPNode::Address)) {
-      // make sure that all the inputs are similar to the first one,
-      // i.e. AddP with base == address and same offset as first AddP
-      bool doit = true;
-      for (uint i = 2; i < req(); i++) {
-        if (in(i) == NULL ||
-            in(i)->Opcode() != Op_AddP ||
-            in(i)->in(AddPNode::Base) != in(i)->in(AddPNode::Address) ||
-            in(i)->in(AddPNode::Offset) != y) {
-          doit = false;
-          break;
-        }
-        // Accumulate type for resulting Phi
-        type = type->meet(in(i)->in(AddPNode::Base)->bottom_type());
-      }
-      if (doit) {
-        Node* base = new (phase->C, in(0)->req()) PhiNode(in(0), type, NULL);
-        for (uint i = 1; i < req(); i++) {
-          base->init_req(i, in(i)->in(AddPNode::Base));
-        }
-        phase->is_IterGVN()->register_new_node_with_optimizer(base);
-        return new (phase->C, 4) AddPNode(base, base, y);
-      }
-    }
   }
 
   // Split phis through memory merges, so that the memory merges will go away.

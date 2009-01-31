@@ -1,5 +1,5 @@
 #ifdef USE_PRAGMA_IDENT_HDR
-#pragma ident "@(#)methodOop.hpp	1.219 07/05/17 15:57:04 JVM"
+#pragma ident "@(#)methodOop.hpp	1.220 08/06/19 12:45:48 JVM"
 #endif
 /*
  * Copyright 1997-2007 Sun Microsystems, Inc.  All Rights Reserved.
@@ -524,6 +524,8 @@ class methodOopDesc : public oopDesc {
   void set_is_old()                                 { _access_flags.set_is_old(); }
   bool is_obsolete() const                          { return access_flags().is_obsolete(); }
   void set_is_obsolete()                            { _access_flags.set_is_obsolete(); }
+  // see the definition in methodOop.cpp for the gory details
+  bool should_not_be_cached() const;
 
   // JVMTI Native method prefixing support:
   bool is_prefixed_native() const                   { return access_flags().is_prefixed_native(); }
